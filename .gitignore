@@ -1,4 +1,5 @@
 node_modules
+*.sh
 *.log
 *.pptx
 idock/obj
