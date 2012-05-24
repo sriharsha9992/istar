@@ -1,0 +1,26 @@
+.ribbon {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 2000;
+  opacity: .7;
+  -webkit-transition: opacity .5s linear;
+     -moz-transition: opacity .5s linear;
+      -ms-transition: opacity .5s linear;
+       -o-transition: opacity .5s linear;
+          transition: opacity .5s linear;
+}
+
+.ribbon:hover {
+  opacity: 1;
+}
+
+.logo {
+  width: 80px;
+  height: 38px;
+}
+
+header, footer, h1 {
+  text-align: center;
+}
+

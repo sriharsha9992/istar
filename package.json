@@ -1,0 +1,15 @@
+{
+  "name": "istar",
+  "description": "SaaS platform for idock",
+  "version": "0.0.1",
+  "author": "Jacky Lee <JackyLeeHongJian@Gmail.com>",
+  "dependencies": {
+    "express": ">= 2.5.5",
+    "express-validator": ">= 0.2.1",
+    "mongodb": ">= 1.0.2"
+  },
+  "keywords": ["idock", "SaaS", "framework", "web", "rest", "restful"],
+  "repository": "git://github.com/HongjianLi/istar",
+  "main": "server",
+  "engines": { "node": ">= 0.6.0 < 0.7.0" }
+}
