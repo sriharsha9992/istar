@@ -42,7 +42,8 @@ Supported browsers
 Licenses
 --------
 
-Code licensed under the [Apache License 2.0]. Documentation licensed under [CC BY 3.0].
+* Code licensed under the [Apache License 2.0].
+* Documentation licensed under [CC BY 3.0].
 
 
 Contact Author
