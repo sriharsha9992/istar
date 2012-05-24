@@ -2,9 +2,12 @@ $(function() {
 
   // Fetch and display jobs
   function query() {
-    $.get('http://127.0.0.1:28017/istar/jobs/', function(jobs) { // http://www.mongodb.org/display/DOCS/Http+Interface
-      $('#jobs').append(jobs);
-    });
+    var d = $('#jobs');
+    $.get('http://137.189.90.124:28017/istar/jobs/', function(jobs) { // http://www.mongodb.org/display/DOCS/Http+Interface
+      jobs.rows.forEach(function(r) {
+        d.append(r.name + ' ' + r.email);
+      });
+    }).error(function() { d.text("Failed to get jobs"); });
   }
   query();
 
