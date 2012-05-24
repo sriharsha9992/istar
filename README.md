@@ -31,6 +31,18 @@ Features
 * [idock] v1.4
 
 
+REST API
+--------
+
+### Get jobs
+
+    curl http://istar.cse.cuhk.edu.hk:28017/istar/jobs/
+
+### Post a new job
+
+    curl -d $'receptor=ATOM      1  N   ASN A  21      63.845  98.298   0.035  1.00113.44    -0.066 N\nATOM      2  HN1 ASN A  21      64.058  99.036  -0.636  1.00  0.00     0.275 HD&center_x=1.234&center_y=5.678&center_z=9.012&size_x=20&size_y=18&size_z=22&description=Screen drug-like ligands for HIV RT&email=Jacky@cuhk.edu.hk' http://istar.cse.cuhk.edu.hk/jobs
+
+
 Supported browsers
 ------------------
 
