@@ -1,7 +1,7 @@
 istar
 =====
 
-istar is a SaaS (Software as a Service) platform for [idock].
+istar is a [SaaS] (Software as a Service) platform for [idock].
 
 
 Features
@@ -28,15 +28,16 @@ Features
 * Intel Core i5-2400 CPU @ 3.10GHz
 * 4GB DDR3 SDRAM
 * Mac OS X Lion 10.7.4 Build 11E53
-* [idock] 1.4
+* [idock] v1.4
 
 
 Supported browsers
 ------------------
 
-* Google Chrome 19.0.1084.46
-* Mozilla Firefox 12.0
+* Google Chrome 19
+* Mozilla Firefox 12
 * Microsoft Internet Explorer 9
+* Apple Safari 5
 
 
 Licenses
@@ -60,6 +61,7 @@ Logo
 The logo image is collected from [Open Clip Art].
 
 
+[SaaS]: http://en.wikipedia.org/wiki/Software_as_a_service
 [idock]: https://github.com/HongjianLi/idock
 [Twitter Bootstrap]: https://github.com/twitter/bootstrap
 [HTML5 Boilerplate]: https://github.com/h5bp/html5-boilerplate
