@@ -3,5 +3,4 @@ node_modules
 *.pptx
 idock/obj
 mongodb
-!mongodb/mongod.conf
 public/jobs
