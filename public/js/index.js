@@ -2,20 +2,25 @@ $(function() {
 
   // Fetch and display jobs
   function query() {
-    var d = $('#jobs');
     $.get('http://137.189.90.124:28017/istar/jobs/', function(jobs) { // http://www.mongodb.org/display/DOCS/Http+Interface
       jobs.rows.forEach(function(r) {
-        d.append(r.name + ' ' + r.email);
+        $('#jobs').append(r.name);
       });
-    }).error(function() { d.text("Failed to get jobs"); });
+    }).error(function(r) {
+      $('#jobs').text(r.statusText);
+    });
   }
   query();
 
   // Fetch and display jobs every 10 seconds
-  setInterval(query, 10000);
+//  setInterval(query, 10000);
 
   // Initialize tooltips.
   $('.control-label a[rel=tooltip]').tooltip();
+
+  // Fetch email from cookie
+  var cookieName = 'istar',
+      cookieNameLength = cookieName.length;
 
   $('#submitbtn').click(function(){
 
@@ -43,10 +48,29 @@ $(function() {
         return;
       }
 
-      // Save result._id into cookie. Can be done in server side
-
       // Refresh jobs
       query();
+
+      // Save email into cookie
+      var cookieValue;
+      if (document.cookie) {
+        var cookies = document.cookie.split('; ');
+        for (var i = 0; i < cookies.length; i++) {
+          var cookie = cookies[i];
+          if (cookie.substring(0, cookieNameLength + 1) == (cookieName + '=')) {
+            cookieValue = cookie.substring(cookieNameLength + 1);
+            break;
+          }
+        }
+      }
+      var record = $('#email').val();
+      if (cookieValue) {
+        document.cookie = cookieName + "=" + record;
+      } else {
+        var expireDate = new Date();
+        expireDate.setTime(expireDate.getTime() + (7 * 24 * 60 * 60 * 1000));
+        document.cookie = cookieName + "=" + record + ";expires=" + expireDate.toUTCString();
+      }
 
     }, 'json');
   });
