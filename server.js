@@ -64,7 +64,7 @@ app.post('/jobs', function(req, res) {
   // Insert the new job into MongoDB
 
   var mongodb = require("mongodb");
-  new mongodb.Db('istar', new mongodb.Server("127.0.0.1", 27017)).open(function(err, db) {
+  new mongodb.Db('istar', new mongodb.Server('137.189.90.124', 27017)).open(function(err, db) {
     db.authenticate('daemon', '2qR8dVM9d', function(err, result) {
       db.collection('jobs', function(err, collection) {
         collection.insert({ // Note that receptor is not inserted.
@@ -115,5 +115,5 @@ if (cluster.isMaster) {
 } else {
   var port = 3000;
   app.listen(port);
-  console.log("Express server worker %d listening on port %d in %s mode", process.env.NODE_WORKER_ID, port, app.settings.env);
+  console.log('Express server worker %d listening on port %d in %s mode', process.env.NODE_WORKER_ID, port, app.settings.env);
 }
