@@ -9,13 +9,21 @@ var ctxioClient = new ContextIO.Client({
   secret: process.argv[3]
 });
 
-// Get messages
-ctxioClient.accounts(process.argv[4]).messages().get({ include_body: 1, body_type: 'text/plain', offset: 0, limit: 10 }, function (err, res) {
-  if (err) throw err;
-  res.body.forEach(function(msg) {
-    var content = msg.body[0].content;
-	console.log(content);
-    var data = JSON.parse(content);
-	console.log(data.center_x);
+// Obtain offset from file
+var offset = 0;
+
+// Get messages every minute
+//setInterval(function() {
+  ctxioClient.accounts(process.argv[4]).messages().get({ include_body: 1, body_type: 'text/plain', offset: offset, limit: 10 }, function (err, res) {
+    if (err) throw err;
+	console.log(res.body.length);
+    res.body.forEach(function(msg) {
+	  console.log(msg);
+      var content = msg.body[0].content;
+	  console.log(content);
+      var data = JSON.parse(content);
+	  console.log(data.center_x);
+    });
+	offset += res.body.length;
   });
-});
+//}, 1000 * 60);
