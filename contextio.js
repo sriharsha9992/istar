@@ -1,7 +1,9 @@
 #!/usr/bin/env node
 // node contextio.js key secret account_id
 
-var ContextIO = require('contextio');
+var fs = require('fs'),
+    path = require('path'),
+    ContextIO = require('contextio');
 
 // Initialize the context.io client
 var ctxioClient = new ContextIO.Client({
@@ -9,21 +11,33 @@ var ctxioClient = new ContextIO.Client({
   secret: process.argv[3]
 });
 
-// Obtain offset from file
+// Read offset from file
 var offset = 0;
 
 // Get messages every minute
 //setInterval(function() {
-  ctxioClient.accounts(process.argv[4]).messages().get({ include_body: 1, body_type: 'text/plain', offset: offset, limit: 10 }, function (err, res) {
+  ctxioClient.accounts(process.argv[4]).messages().get({ offset: offset }, function (err, res) {
     if (err) throw err;
-	console.log(res.body.length);
     res.body.forEach(function(msg) {
-	  console.log(msg);
-      var content = msg.body[0].content;
-	  console.log(content);
-      var data = JSON.parse(content);
-	  console.log(data.center_x);
+	  console.log(msg.subject);
+	  console.log(msg.addresses.from.email);
+	  msg.files.forEach(function(file) {
+	    if (file.size > 10485760) return;
+        ctxioClient.accounts(process.argv[4]).files(file.file_id).content().get(function (err, res) {
+          if (err) throw err;
+	      switch (path.extname(file.file_name)) {
+	        case '.pdbqt':
+	          fs.writeFile(file.file_name, res.body);
+              break;
+			case '.txt':
+              var config = JSON.parse(res.body.toString());
+              console.log(config.center_x);
+              break;
+          }
+        });
+      });
     });
-	offset += res.body.length;
+    offset += res.body.length; // Number of messages actually returned
+	// Save offset to file
   });
-//}, 1000 * 60);
+//}, 1000 * 60 * 60);
