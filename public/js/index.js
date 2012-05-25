@@ -19,8 +19,7 @@ $(function() {
   $('.control-label a[rel=tooltip]').tooltip();
 
   // Fetch email from cookie
-  var cookieName = 'istar',
-      cookieNameLength = cookieName.length;
+  $('#email').val($.cookie('email'));
 
   $('#submitbtn').click(function(){
 
@@ -48,29 +47,11 @@ $(function() {
         return;
       }
 
+      // Save email into cookie
+	  $.cookie('email', $('#email').val(), { expires: 7 });
+
       // Refresh jobs
       query();
-
-      // Save email into cookie
-      var cookieValue;
-      if (document.cookie) {
-        var cookies = document.cookie.split('; ');
-        for (var i = 0; i < cookies.length; i++) {
-          var cookie = cookies[i];
-          if (cookie.substring(0, cookieNameLength + 1) == (cookieName + '=')) {
-            cookieValue = cookie.substring(cookieNameLength + 1);
-            break;
-          }
-        }
-      }
-      var record = $('#email').val();
-      if (cookieValue) {
-        document.cookie = cookieName + "=" + record;
-      } else {
-        var expireDate = new Date();
-        expireDate.setTime(expireDate.getTime() + (7 * 24 * 60 * 60 * 1000));
-        document.cookie = cookieName + "=" + record + ";expires=" + expireDate.toUTCString();
-      }
 
     }, 'json');
   });
