@@ -7,7 +7,7 @@ istar is a [SaaS] (Software as a Service) platform for [idock].
 Architecture
 ------------
 
-![istar architecture](https://github.com/HongjianLi/istar/architecture.png)
+![istar architecture](https://github.com/HongjianLi/istar/raw/master/architecture.png)
 
 
 Features
@@ -95,7 +95,7 @@ The email attachment must contain your receptor in PDBQT format.
 
 ### Example
 
-![istar mail example](https://github.com/HongjianLi/istar/mail.png)
+![istar mail example](https://github.com/HongjianLi/istar/raw/master/mail.png)
 
 Our email crawler retrieves new emails every hour. If your job is successfully created, you can see it at [istar] web site in an hour.
 
