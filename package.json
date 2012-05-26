@@ -5,6 +5,7 @@
   "author": "Jacky Lee <JackyLeeHongJian@Gmail.com>",
   "dependencies": {
     "express": ">= 2.5.5",
+    "validator": ">= 0.4.6",
     "express-validator": ">= 0.2.1",
     "mongodb": ">= 1.0.2"
   },
