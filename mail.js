@@ -121,9 +121,11 @@ fs.readFile('mail.offset', function(err, data) {
         });
       });
 
-      // Save offset to file 
-      offset += res.body.length; // Number of messages actually returned
-      fs.writeFile(log, offset, function(err) {
+      // Aggregate the number of messages actually returned
+      offset += res.body.length;
+
+      // Save offset to file
+      fs.writeFile('mail.offset', offset, function(err) {
         if (err) throw err;
       });
     });
