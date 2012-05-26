@@ -31,8 +31,17 @@ Features
 * [idock] v1.4
 
 
-REST API
---------
+Supported browsers
+------------------
+
+* Google Chrome 19
+* Mozilla Firefox 12
+* Microsoft Internet Explorer 9
+* Apple Safari 5
+
+
+RESTful API
+-----------
 
 ### Get jobs
 
@@ -43,13 +52,35 @@ REST API
     curl -d $'receptor=ATOM      1  N   ASN A  21      63.845  98.298   0.035  1.00113.44    -0.066 N\nATOM      2  HN1 ASN A  21      64.058  99.036  -0.636  1.00  0.00     0.275 HD&center_x=1.234&center_y=5.678&center_z=9.012&size_x=20&size_y=18&size_z=22&description=Screen drug-like ligands for HIV RT&email=Jacky@cuhk.edu.hk' http://istar.cse.cuhk.edu.hk/jobs
 
 
-Supported browsers
-------------------
+Send email to submit job
+------------------------
 
-* Google Chrome 19
-* Mozilla Firefox 12
-* Microsoft Internet Explorer 9
-* Apple Safari 5
+You can submit a new job simply by sending an email to [istar.cuhk@gmail.com], without opening your browser or programming against the restful api.
+
+### Subject
+
+The email subject must be your job description, e.g.
+
+    Screen drug-like ligands for HIV RT
+
+### Body
+
+The email body must be your job configuration in JSON format, e.g.
+
+    {
+     "center_x": 1.234,
+     "center_y": 5.678,
+     "center_z": 9.012,
+     "size_x": 20,
+     "size_y": 18,
+     "size_z": 22
+    }
+
+Note the double quotes around parameters.
+
+### Attachment
+
+The email attachment must contain your receptor in PDBQT format.
 
 
 Licenses
@@ -82,6 +113,7 @@ The logo image is collected from [Open Clip Art].
 [node.js]: https://github.com/joyent/node
 [express]: https://github.com/visionmedia/express
 [MongoDB]: https://github.com/mongodb/mongo
+[istar.cuhk@gmail.com]: mailto:istar.cuhk@gmail.com
 [Apache License 2.0]: http://www.apache.org/licenses/LICENSE-2.0
 [CC BY 3.0]: http://creativecommons.org/licenses/by/3.0
 [Jacky Lee]: http://www.cse.cuhk.edu.hk/~hjli
