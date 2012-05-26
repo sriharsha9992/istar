@@ -1,16 +1,24 @@
 {
   "name": "istar",
   "description": "SaaS platform for idock",
+  "keywords": [ "idock", "SaaS", "framework", "web", "rest", "restful", "email" ],
   "version": "0.0.1",
-  "author": "Jacky Lee <JackyLeeHongJian@Gmail.com>",
+  "author": {
+    "name": "Jacky Lee",
+    "email": "JackyLeeHongJian@Gmail.com"
+  },
   "dependencies": {
     "express": ">= 2.5.5",
-    "validator": ">= 0.4.6",
-    "express-validator": ">= 0.2.1",
-    "mongodb": ">= 1.0.2"
+    "mongodb": ">= 1.0.2",
+    "validator": ">= 0.4.6"
   },
-  "keywords": ["idock", "SaaS", "framework", "web", "rest", "restful"],
-  "repository": "git://github.com/HongjianLi/istar",
-  "main": "server",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/HongjianLi/istar.git"
+  },
+  "bugs": {
+    "email": "JackyLeeHongJian@Gmail.com",
+    "url": "http://github.com/HongjianLi/istar/issues"
+  },
   "engines": { "node": ">= 0.6.0 < 0.7.0" }
 }
