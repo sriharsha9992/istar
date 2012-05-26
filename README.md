@@ -4,6 +4,12 @@ istar
 istar is a [SaaS] (Software as a Service) platform for [idock].
 
 
+Architecture
+------------
+
+![istar architecture](https://github.com/HongjianLi/istar/architecture.png)
+
+
 Features
 --------
 
