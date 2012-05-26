@@ -1,13 +1,11 @@
 #!/usr/bin/env node
 
 // Require express
-
 var express = require('express'),
     app = express.createServer(),
     expressValidator = require('express-validator');
 
 // Configure express
-
 app.configure(function(){
   app.use(express.bodyParser());
 //  app.use(express.cookieParser());
@@ -29,21 +27,20 @@ app.configure('production', function(){
 });
 
 // Configure routes
-
 app.post('/jobs', function(req, res) {
 
   // Validate user input
+  req.check('receptor', 'receptor must be provided').len(1, 10485760);
+  req.check('center_x', 'center_x must be a decimal').isDecimal();
+  req.check('center_y', 'center_y must be a decimal').isDecimal();
+  req.check('center_z', 'center_z must be a decimal').isDecimal();
+  req.check('size_x', 'size_x must be within [1, 30]').isInt().min(1).max(30);
+  req.check('size_y', 'size_y must be within [1, 30]').isInt().min(1).max(30);
+  req.check('size_z', 'size_z must be within [1, 30]').isInt().min(1).max(30);
+  req.check('description', 'description must be provided').len(1, 1000);
+  req.check('email', 'email must be provided').isEmail();
 
-  req.assert('receptor', 'receptor must be provided').len(1, 10485760);
-  req.assert('center_x', 'center_x must be a decimal').isDecimal();
-  req.assert('center_y', 'center_y must be a decimal').isDecimal();
-  req.assert('center_z', 'center_z must be a decimal').isDecimal();
-  req.assert('size_x', 'size_x must be within [1, 30]').isInt().min(1).max(30);
-  req.assert('size_y', 'size_y must be within [1, 30]').isInt().min(1).max(30);
-  req.assert('size_z', 'size_z must be within [1, 30]').isInt().min(1).max(30);
-  req.assert('description', 'description must be provided').len(1, 1000);
-  req.assert('email', 'email must be provided').isEmail();
-
+  // Obtain validation errors
   var err = req.validationErrors();
   if (err) {
     res.json(err);
@@ -51,7 +48,6 @@ app.post('/jobs', function(req, res) {
   }
 
   // Sanitize user input
-
   req.sanitize('receptor').xss();
   req.sanitize('center_x').toFloat();
   req.sanitize('center_y').toFloat();
@@ -62,7 +58,6 @@ app.post('/jobs', function(req, res) {
   req.sanitize('description').xss();
 
   // Insert the new job into MongoDB
-
   var mongodb = require("mongodb");
   new mongodb.Db('istar', new mongodb.Server('137.189.90.124', 27017)).open(function(err, db) {
     db.authenticate('daemon', '2qR8dVM9d', function(err, result) {
@@ -86,7 +81,6 @@ app.post('/jobs', function(req, res) {
           db.close();
 
           // Create a job folder and dump the receptor.
-
           var _id = docs[0]._id,
               folder = __dirname + '/public/jobs/' + _id,
               fs = require('fs');
@@ -101,7 +95,6 @@ app.post('/jobs', function(req, res) {
 });
 
 // Fork child processes with cluster
-
 var cluster = require('cluster');
 if (cluster.isMaster) {
   var numCPUs = require('os').cpus().length;
@@ -112,6 +105,7 @@ if (cluster.isMaster) {
     console.log('Worker process ' + worker.pid + ' died. restart...');
     cluster.fork();
   });
+  console.log('master');
 } else {
   var port = 3000;
   app.listen(port);
