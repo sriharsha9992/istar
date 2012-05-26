@@ -33,7 +33,7 @@ Features
 * Intel Core i5-2400 CPU @ 3.10GHz
 * 4GB DDR3 SDRAM
 * Mac OS X Lion 10.7.4 Build 11E53
-* [idock] v1.4
+* Customized [idock] v1.4
 
 
 Supported browsers
@@ -123,6 +123,7 @@ The logo image is collected from [Open Clip Art].
 [jQuery]: https://github.com/jquery/jquery
 [node.js]: https://github.com/joyent/node
 [express]: https://github.com/visionmedia/express
+[contextio]: https://github.com/ContextIO/ContextIO-node
 [MongoDB]: https://github.com/mongodb/mongo
 [istar.cuhk@gmail.com]: mailto:istar.cuhk@gmail.com
 [istar]: http://istar.cse.cuhk.edu.hk
