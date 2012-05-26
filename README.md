@@ -91,7 +91,7 @@ The email attachment must contain your receptor in PDBQT format.
 
 ![istar mail example](https://github.com/HongjianLi/istar/mail.png)
 
-If your job is successfully created, you can see it at [istar] web site.
+Our email crawler retrieves new emails every hour. If your job is successfully created, you can see it at [istar] web site in an hour.
 
 
 Licenses
