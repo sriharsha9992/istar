@@ -34,7 +34,7 @@ create = function(config, receptor, cb) {
 
   var errors = val.getErrors();
   if (errors) {
-    cb(errors);
+    cb && cb(errors);
     return;
   }
 
@@ -54,62 +54,78 @@ create = function(config, receptor, cb) {
 
   // Insert the new job into MongoDB
   new mongodb.Db('istar', new mongodb.Server('137.189.90.124', 27017)).open(function(err, db) {
+    if (err) throw err;
     db.authenticate('daemon', '2qR8dVM9d', function(err, result) {
+      if (err) throw err;
       db.collection('jobs', function(err, collection) {
+        if (err) throw err;
         collection.insert(job, { safe: true }, function(err, docs) {
+          if (err) throw err;
           db.close();
           var _id = docs[0]._id;
-          cb(_id);
+          cb && cb(_id);
 
           // Create job folder and save receptor
           var folder = __dirname + '/public/jobs/' + _id;
-          fs.mkdir(folder, function() {
-            fs.writeFile(folder + '/receptor.pdbqt', receptor);
+          fs.mkdir(folder, function(err) {
+            if (err) throw err;
+            fs.writeFile(folder + '/receptor.pdbqt', receptor, function(err) {
+              if (err) throw err;
+            });
           });
         });
       });
     });
   });
-};
+}
 
 // Initialize context.io client
-var ctxioClient = new require('contextio').Client({
+var ContextIO = require('contextio');
+var ctxioClient = new ContextIO.Client({
   key: conf.key,
   secret: conf.secret
 });
 
 // Read offset from file
-var log = 'mail.log',
-    offset = parseInt(fs.readFileSync(log));
+fs.readFile('mail.offset', function(err, data) {
+  if (err) throw err;
+  var offset = parseInt(data);
 
-// Get messages every hour
+  // Get messages every hour
 //setInterval(function() {
-  ctxioClient.accounts(conf.account_id).messages().get({ include_body: 1, body_type: 'text/plain', offset: offset, limit: 10 }, function (err, res) {
-    if (err) throw err;
-    res.body.forEach(function(msg) {
-      var config = JSON.parse(msg.body[0].content);
+    ctxioClient.accounts(conf.account_id).messages().get({ include_body: 1, body_type: 'text/plain', offset: offset, limit: 10 }, function(err, res) {
+      if (err) throw err;
+      res.body.forEach(function(msg) {
 
+        // Parse JSON body into config
+        var config = JSON.parse(msg.body[0].content);
 
-      if (msg.files.length !== 1) return;
-	  var file = msg.files[0];
-      if (file.size > 10485760) return;
-      ctxioClient.accounts(process.argv[4]).files(file.file_id).content().get(function (err, res) {
+        // There should be only one attachment and its size should not exceed 10MB
+        if (msg.files.length !== 1) return;
+        var file = msg.files[0];
+        if (file.size > 10485760) return;
+
+        // Retrieve file content as receptor
+        ctxioClient.accounts(conf.account_id).files(file.file_id).content().get(function(err, res) {
+          if (err) throw err;
+          create({
+            center_x: config.center_x,
+            center_y: config.center_y,
+            center_z: config.center_z,
+            size_x: config.size_x,
+            size_y: config.size_y,
+            size_z: config.size_z,
+            description: msg.subject,
+            email: msg.addresses.from.email
+          }, res.body);
+        });
+      });
+
+      // Save offset to file 
+      offset += res.body.length; // Number of messages actually returned
+      fs.writeFile(log, offset, function(err) {
         if (err) throw err;
-        job.create({
-          center_x: config.center_x,
-          center_y: config.center_y,
-          center_z: config.center_z,
-          size_x: config.size_x,
-          size_y: config.size_y,
-          size_z: config.size_z,
-          description: msg.subject,
-          email: msg.addresses.from.email
-        }, res.body);
       });
     });
-
-    // Save offset to file
-    offset += res.body.length; // Number of messages actually returned
-    fs.readFileSync(log, offset);
-  });
 //}, 1000 * 60 * 60);
+});
