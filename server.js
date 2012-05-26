@@ -105,9 +105,8 @@ if (cluster.isMaster) {
     console.log('Worker process ' + worker.pid + ' died. restart...');
     cluster.fork();
   });
-  console.log('master');
 } else {
   var port = 3000;
   app.listen(port);
-  console.log('Express server worker %d listening on port %d in %s mode', process.env.NODE_WORKER_ID, port, app.settings.env);
+  console.log('Worker %d running express server listening on port %d in %s mode', process.env.NODE_WORKER_ID, port, app.settings.env);
 }
