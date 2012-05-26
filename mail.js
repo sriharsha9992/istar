@@ -4,7 +4,7 @@ var fs = require('fs'),
     mongodb = require("mongodb");
 
 // Parse server configuration file
-var conf = JSON.parse(fs.readFileSync('server.conf'));
+var conf = JSON.parse(fs.readFileSync('mail.conf'));
 
 // Set up validator
 var validator = require('validator'),
@@ -79,7 +79,7 @@ var ctxioClient = new require('contextio').Client({
 });
 
 // Read offset from file
-var log = 'contextio.log',
+var log = 'mail.log',
     offset = parseInt(fs.readFileSync(log));
 
 // Get messages every hour
