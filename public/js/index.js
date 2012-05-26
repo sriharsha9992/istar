@@ -42,7 +42,7 @@ $(function() {
       // If server side validation failed, show the tooltips
       if (result._id == null) {
         result.forEach(function(err) {
-          $('#' + err.param + '_label').tooltip('show');
+          $('#' + err.substring(0, err.indexOf(' ')) + '_label').tooltip('show');
         });
         return;
       }

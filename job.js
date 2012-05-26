@@ -3,35 +3,50 @@ var validator = require('validator'),
     Validator = validator.Validator;
 
 Validator.prototype.error = function(msg) {
-    this._errors.push(msg);
+  this._errors.push(msg);
 }
 
 Validator.prototype.getErrors = function() {
-    return this._errors;
+  return this._errors;
 }
 
+var center_x_fail_msg = 'center_x must be a decimal',
+    center_y_fail_msg = 'center_y must be a decimal',
+    center_z_fail_msg = 'center_z must be a decimal',
+    size_x_fail_msg = 'size_x must be within [1, 30]',
+    size_y_fail_msg = 'size_y must be within [1, 30]',
+    size_z_fail_msg = 'size_z must be within [1, 30]',
+    description_fail_msg = 'description must be provided',
+    email_fail_msg = 'email must be provided';
+
 // Create a new job
-create = function(config, receptor, cb) {
+exports.create = function(config, receptor, error, success) {
 
   // Validate config
   var val = new Validator();
-  val.check(config.center_x, 'center_x must be a decimal').isDecimal();
-  val.check(config.center_y, 'center_y must be a decimal').isDecimal();
-  val.check(config.center_z, 'center_z must be a decimal').isDecimal();
-  val.check(config.size_x, 'size_x must be within [1, 30]').isInt().min(1).max(30);
-  val.check(config.size_y, 'size_y must be within [1, 30]').isInt().min(1).max(30);
-  val.check(config.size_z, 'size_z must be within [1, 30]').isInt().min(1).max(30);
-  val.check(config.description, 'description must be provided').len(1, 1000);
-  val.check(config.email, 'email must be provided').isEmail();
+  val.check(config.center_x, center_x_fail_msg).isDecimal();
+  val.check(config.center_y, center_y_fail_msg).isDecimal();
+  val.check(config.center_z, center_z_fail_msg).isDecimal();
+  val.check(config.size_x, size_x_fail_msg).isInt();
+  val.check(config.size_x, size_x_fail_msg).min(1);
+  val.check(config.size_x, size_x_fail_msg).max(30);
+  val.check(config.size_y, size_y_fail_msg).isInt();
+  val.check(config.size_y, size_y_fail_msg).min(1);
+  val.check(config.size_y, size_y_fail_msg).max(30);
+  val.check(config.size_z, size_z_fail_msg).isInt()
+  val.check(config.size_z, size_z_fail_msg).min(1);
+  val.check(config.size_z, size_z_fail_msg).max(30);
+  val.check(config.description, description_fail_msg).len(1, 1000);
+  val.check(config.email, email_fail_msg).isEmail();
 
   var errors = val.getErrors();
-  if (errors) {
-    cb && cb(errors);
+  if (errors.length) {
+    error && error(errors);
     return;
   }
 
   // Sanitize config
-  var job;
+  var job = {};
   job.center_x = validator.sanitize(config.center_x).toFloat();
   job.center_y = validator.sanitize(config.center_y).toFloat();
   job.center_z = validator.sanitize(config.center_z).toFloat();
@@ -56,7 +71,7 @@ create = function(config, receptor, cb) {
           if (err) throw err;
           db.close();
           var _id = docs[0]._id;
-          cb && cb(_id);
+          success && success(_id);
 
           // Create job folder and save receptor
           var fs = require('fs'),
