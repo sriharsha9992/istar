@@ -4,8 +4,8 @@
 var fs = require('fs'),
     path = require('path'),
     ContextIO = require('contextio'),
-//	validator = require('node-validator'),
-	job = require('./job.js');
+//    validator = require('node-validator'),
+    job = require('./job.js');
 
 // Initialize the context.io client
 var ctxioClient = new ContextIO.Client({
@@ -14,7 +14,8 @@ var ctxioClient = new ContextIO.Client({
 });
 
 // Read offset from file
-var offset = 0;
+var log = 'contextio.log',
+    offset = parseInt(fs.readFileSync(log));
 
 // Get messages every minute
 //setInterval(function() {
@@ -36,11 +37,13 @@ var offset = 0;
           size_y: config.size_y,
           size_z: config.size_z,
           description: msg.subject,
-	      email: msg.addresses.from.email
-	    }, res.body);
+          email: msg.addresses.from.email
+        }, res.body);
       });
     });
+
+    // Save offset to file
     offset += res.body.length; // Number of messages actually returned
-	// Save offset to file
+    fs.readFileSync(log, offset);
   });
 //}, 1000 * 60 * 60);
