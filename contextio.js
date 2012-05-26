@@ -84,7 +84,7 @@ var log = 'contextio.log',
 
 // Get messages every hour
 //setInterval(function() {
-  ctxioClient.accounts(process.argv[4]).messages().get({ include_body: 1, body_type: 'text/plain', offset: offset, limit: 10 }, function (err, res) {
+  ctxioClient.accounts(conf.account_id).messages().get({ include_body: 1, body_type: 'text/plain', offset: offset, limit: 10 }, function (err, res) {
     if (err) throw err;
     res.body.forEach(function(msg) {
       var config = JSON.parse(msg.body[0].content);
