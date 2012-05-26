@@ -15,12 +15,125 @@ $(function() {
   // Fetch and display jobs every 10 seconds
 //  setInterval(query, 10000);
 
-  // Initialize tooltips.
+  // Initialize tooltips
   $('.control-label a[rel=tooltip]').tooltip();
 
   // Fetch email from cookie
   $('#email').val($.cookie('email'));
 
+  // Initialize mwt slider
+  $('#mwt_slider').slider({
+    range: true,
+    min: 10,
+    max: 550,
+    values: [ 400, 500 ],
+    slide: function(event, ui) {
+      $('#mwt_lb').text(ui.values[0]);
+      $('#mwt_ub').text(ui.values[1]);
+    }
+  });
+  $('#mwt_lb').text($('#mwt_slider').slider("values", 0));
+  $('#mwt_ub').text($('#mwt_slider').slider("values", 1));
+
+  // Initialize logp slider
+  $('#logp_slider').slider({
+    range: true,
+    min: -6,
+    max: 9,
+    values: [ -1, 6 ],
+    slide: function(event, ui) {
+      $('#logp_lb').text(ui.values[0]);
+      $('#logp_ub').text(ui.values[1]);
+    }
+  });
+  $('#logp_lb').text($('#logp_slider').slider("values", 0));
+  $('#logp_ub').text($('#logp_slider').slider("values", 1));
+
+  // Initialize hbd slider
+  $('#hbd_slider').slider({
+    range: true,
+    min: 0,
+    max: 10,
+    values: [ 1, 6 ],
+    slide: function(event, ui) {
+      $('#hbd_lb').text(ui.values[0]);
+      $('#hbd_ub').text(ui.values[1]);
+    }
+  });
+  $('#hbd_lb').text($('#hbd_slider').slider("values", 0));
+  $('#hbd_ub').text($('#hbd_slider').slider("values", 1));
+
+  // Initialize hba slider
+  $('#hba_slider').slider({
+    range: true,
+    min: 0,
+    max: 20,
+    values: [ 1, 10 ],
+    slide: function(event, ui) {
+      $('#hba_lb').text(ui.values[0]);
+      $('#hba_ub').text(ui.values[1]);
+    }
+  });
+  $('#hba_lb').text($('#hba_slider').slider("values", 0));
+  $('#hba_ub').text($('#hba_slider').slider("values", 1));
+
+  // Initialize nrb slider
+  $('#nrb_slider').slider({
+    range: true,
+    min: 0,
+    max: 15,
+    values: [ 2, 9 ],
+    slide: function(event, ui) {
+      $('#nrb_lb').text(ui.values[0]);
+      $('#nrb_ub').text(ui.values[1]);
+    }
+  });
+  $('#nrb_lb').text($('#nrb_slider').slider("values", 0));
+  $('#nrb_ub').text($('#nrb_slider').slider("values", 1));
+
+  // Initialize tpsa slider
+  $('#tpsa_slider').slider({
+    range: true,
+    min: 0,
+    max: 200,
+    values: [ 20, 80 ],
+    slide: function(event, ui) {
+      $('#tpsa_lb').text(ui.values[0]);
+      $('#tpsa_ub').text(ui.values[1]);
+    }
+  });
+  $('#tpsa_lb').text($('#tpsa_slider').slider("values", 0));
+  $('#tpsa_ub').text($('#tpsa_slider').slider("values", 1));
+
+  // Initialize ad slider
+  $('#ad_slider').slider({
+    range: true,
+    min: -100,
+    max: 100,
+    values: [ -50, 50 ],
+    slide: function(event, ui) {
+      $('#ad_lb').text(ui.values[0]);
+      $('#ad_ub').text(ui.values[1]);
+    }
+  });
+  $('#ad_lb').text($('#ad_slider').slider("values", 0));
+  $('#ad_ub').text($('#ad_slider').slider("values", 1));
+
+  // Initialize pd slider
+  $('#pd_slider').slider({
+    range: true,
+    min: -200,
+    max: 50,
+    values: [ -150, 0 ],
+    slide: function(event, ui) {
+      $('#pd_lb').text(ui.values[0]);
+      $('#pd_ub').text(ui.values[1]);
+    }
+  });
+  $('#pd_lb').text($('#pd_slider').slider("values", 0));
+  $('#pd_ub').text($('#pd_slider').slider("values", 1));
+
+  // Process submission
   $('#submitbtn').click(function(){
 
     // Hide tooltips
