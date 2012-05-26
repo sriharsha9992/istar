@@ -87,7 +87,7 @@ The email body must be your job configuration in JSON format, e.g.
       "size_z": 22
     }
 
-Note the double quotes around parameters.
+Note the double quotes around parameters. Make sure there is no signature.
 
 ### Attachment
 
