@@ -19,6 +19,11 @@ Features
 * [node.js] v0.6.18
 * [express] v2.5.9
 
+### Mail crawler
+
+* [node.js] v0.6.18
+* [contextio] v0.3.0
+
 ### Database
 
 * [MongoDB] v2.0.5
@@ -68,12 +73,12 @@ The email subject must be your job description, e.g.
 The email body must be your job configuration in JSON format, e.g.
 
     {
-     "center_x": 1.234,
-     "center_y": 5.678,
-     "center_z": 9.012,
-     "size_x": 20,
-     "size_y": 18,
-     "size_z": 22
+      "center_x": 1.234,
+      "center_y": 5.678,
+      "center_z": 9.012,
+      "size_x": 20,
+      "size_y": 18,
+      "size_z": 22
     }
 
 Note the double quotes around parameters.
@@ -81,6 +86,12 @@ Note the double quotes around parameters.
 ### Attachment
 
 The email attachment must contain your receptor in PDBQT format.
+
+### Example
+
+![istar mail example](https://github.com/HongjianLi/istar/mail.png)
+
+If your job is successfully created, you can see it at [istar] web site.
 
 
 Licenses
@@ -114,6 +125,7 @@ The logo image is collected from [Open Clip Art].
 [express]: https://github.com/visionmedia/express
 [MongoDB]: https://github.com/mongodb/mongo
 [istar.cuhk@gmail.com]: mailto:istar.cuhk@gmail.com
+[istar]: http://istar.cse.cuhk.edu.hk
 [Apache License 2.0]: http://www.apache.org/licenses/LICENSE-2.0
 [CC BY 3.0]: http://creativecommons.org/licenses/by/3.0
 [Jacky Lee]: http://www.cse.cuhk.edu.hk/~hjli
