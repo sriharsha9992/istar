@@ -48,7 +48,7 @@ $(function() {
       }
 
       // Save email into cookie
-	  $.cookie('email', $('#email').val(), { expires: 7 });
+      $.cookie('email', $('#email').val(), { expires: 7 });
 
       // Refresh jobs
       query();
