@@ -31,39 +31,23 @@
 #include "monte_carlo_task.hpp"
 #include "summary.hpp"
 
+using std::string;
+using std::cout;
+
 int main(int argc, char* argv[])
 {
-	using namespace idock;
-	path receptor_path, ligand_folder_path, output_folder_path, log_path, csv_path;
-	fl center_x, center_y, center_z, size_x, size_y, size_z;
-	size_t num_threads, seed, num_mc_tasks, max_conformations;
-	fl energy_range, grid_granularity;
-
-	// Initialize the default values of optional arguments.
-	const path default_output_folder_path = "output";
-	const path default_log_path = "log.txt";
-	const path default_csv_path = "log.csv";
-	const unsigned int concurrency = boost::thread::hardware_concurrency();
-	const size_t default_num_threads = concurrency ? concurrency : 1;
-	const size_t default_seed = random_seed();
-	const size_t default_num_mc_tasks = 32;
-	const size_t default_max_conformations = 9;
-	const fl default_energy_range = 3.0;
-	const fl default_grid_granularity = 0.15625;
-
 	// Create program options.
-	string host, db, user, pwd;
 	using namespace boost::program_options;
+	string host, db, user, pwd;
 	options_description options("input (required)");
 	options.add_options()
 		("host", value<string>(&host)->required(), "server to connect to")
 		("db"  , value<string>(&db  )->required(), "database to login to")
 		("user", value<string>(&user)->required(), "username for authentication")
-		("pwd" , value<string>(&pwd )->required(), "password for authentication")
+		("pwd" , value<string>(&pwd )->required(), "password for authentication")	
 		;
 
 	// If no command line argument is supplied, simply print the usage and exit.
-	using std::cout;
 	if (argc == 1)
 	{
 		cout << options;
@@ -75,10 +59,8 @@ int main(int argc, char* argv[])
 	store(parse_command_line(argc, argv, options), vm);
 	vm.notify();
 
-	using namespace mongo;
-	using namespace bson;
-
 	// Connect to host.
+	using namespace mongo;
 	DBClientConnection c;
 	cout << "Connecting to " << host << '\n';
 	c.connect(host);
@@ -88,14 +70,112 @@ int main(int argc, char* argv[])
 	string errmsg;
 	c.auth(db, user, pwd, errmsg);
 
-	// Fetch a pending job.
-	// Start a transaction, fetch a job where machine == null, and update machine.
-	auto cursor = c.query("istar.jobs", QUERY("progress" << 0), 1);
-	if (cursor->more())
+	// Initialize the default values of immutable arguments.
+	using namespace idock;
+	const path jobs_path = "jobs";
+	const path slices_path = "slices";
+	const path csv_path = "log.csv";
+	const size_t num_threads = boost::thread::hardware_concurrency();
+	const size_t seed = random_seed();
+	const size_t num_mc_tasks = 32;
+	const fl energy_range = 3.0;
+	const fl grid_granularity = 0.08;
+	const directory_iterator end_dir_iter; // A default constructed directory_iterator acts as the end iterator.
+
+	// Initialize the default values of optional arguments.
+	const fl default_mwt_lb = 400;
+	const fl default_mwt_ub = 500;
+	const fl default_logp_lb = -1;
+	const fl default_logp_ub = 6;
+	const fl default_hbd_lb = 1;
+	const fl default_hbd_ub = 6;
+	const fl default_hba_lb = 1;
+	const fl default_hba_ub = 10;
+	const fl default_nrb_lb = 2;
+	const fl default_nrb_ub = 9;
+	const fl default_tpsa_lb = 20;
+	const fl default_tpsa_ub = 80;
+	const fl default_ad_lb = -50;
+	const fl default_ad_ub = 50;
+	const fl default_pd_lb = -150;
+	const fl default_pd_ub = 0;
+	const path default_output_folder_path = "output";
+	const size_t max_conformations = 100;
+	const size_t max_results = 20; // Maximum number of results obtained from a single Monte Carlo task.
+
+	// Initialize a Mersenne Twister random number generator.
+	cout << "Using random seed " << seed << '\n';
+	mt19937eng eng(seed);
+
+	// Initialize a thread pool and create worker threads for later use.
+	cout << "Creating a thread pool of " << num_threads << " worker threads\n";
+	thread_pool tp(num_threads);
+
+	// Precalculate the scoring function in parallel.
+	cout << "Precalculating scoring function in parallel ";
+	scoring_function sf;
 	{
-		auto p = cursor->next();
-		cout << p["name"] << '\n';
+		// Precalculate reciprocal square root values.
+		vector<fl> rs(scoring_function::Num_Samples, 0);
+		for (size_t i = 0; i < scoring_function::Num_Samples; ++i)
+		{
+			rs[i] = sqrt(i * scoring_function::Factor_Inverse);
+		}
+		BOOST_ASSERT(rs.front() == 0);
+		BOOST_ASSERT(rs.back() == scoring_function::Cutoff);
+
+		// Populate the scoring function task container.
+		const size_t num_sf_tasks = ((XS_TYPE_SIZE + 1) * XS_TYPE_SIZE) >> 1;
+		ptr_vector<packaged_task<void>> sf_tasks(num_sf_tasks);
+		for (size_t t1 =  0; t1 < XS_TYPE_SIZE; ++t1)
+		for (size_t t2 = t1; t2 < XS_TYPE_SIZE; ++t2)
+		{
+			sf_tasks.push_back(new packaged_task<void>(boost::bind<void>(&scoring_function::precalculate, boost::ref(sf), t1, t2, boost::cref(rs))));
+		}
+		BOOST_ASSERT(sf_tasks.size() == num_sf_tasks);
+
+		// Run the scoring function tasks in parallel asynchronously and display the progress bar with hashes.
+		tp.run(sf_tasks);
+
+		// Wait until all the scoring function tasks are completed.
+		tp.sync();
 	}
+	cout << '\n';
+
+	// Precalculate alpha values for determining step size in BFGS.
+	using boost::array;
+	array<fl, num_alphas> alphas;
+	alphas[0] = 1;
+	for (size_t i = 1; i < num_alphas; ++i)
+	{
+		alphas[i] = alphas[i - 1] * 0.1;
+	}
+
+	using idock::ifstream;
+	using idock::ofstream;
+
+	// Initialize a vector of empty grid maps. Each grid map corresponds to an XScore atom type.
+	vector<array3d<fl>> grid_maps(XS_TYPE_SIZE);
+
+// Fetch and execute jobs always
+while (true)
+{
+	// Fetch a pending job. Start a transaction, fetch a job where machine == null or Date.now() > time + delta, and update machine and time.
+	// Always fetch the same job if not all the slices are done. Use the old _id for query. No need to 1) define box, 2) parse receptor, 3) create grid maps.
+	using namespace bson;
+	auto cursor = c.query("istar.jobs", QUERY("progress" << 0), 1);
+	if (!cursor->more())
+	{
+		// Sleep for an hour.
+		boost::this_thread::sleep(boost::posix_time::hours(1));
+		continue;
+	}
+
+	auto p = cursor->next();
+	const auto _id = p["_id"].String();
+	const auto slice = p["slice"].String();
+	cout << "Executing job " << _id << '\n';
+	c.update("istar.jobs", BSON("_id" << _id << "$atomic" << 1), BSON("$inc" << BSON("progress" << 1)));
 
 	const auto e = c.getLastError();
 	if (!e.empty())
@@ -103,15 +183,32 @@ int main(int argc, char* argv[])
 		cerr << e << '\n';
 	}
 
-	// Perform screening, filter ligands, and write zero conformation. Refresh progress every 1%.	
-	//const string _id = "4433";
-	//db.update("istar.jobs", BSON("_id" << _id << "$atomic" << 1), BSON("$inc" << BSON("progress" << 1)));
-	
-	// Send email with link to /.
-
-	// Initialize a Mersenne Twister random number generator.
-	cout << "Using random seed " << seed << '\n';
-	mt19937eng eng(seed);
+	using boost::filesystem::path;
+	const path job_path = jobs_path / _id;
+	const path receptor_path = job_path / "receptor.pdbqt";
+	const path slice_path = slices_path / slice;
+	const fl center_x = p["center_x"].Double();
+	const fl center_y = p["center_y"].Double();
+	const fl center_z = p["center_z"].Double();
+	const fl size_x = p["size_x"].Double();
+	const fl size_y = p["size_y"].Double();
+	const fl size_z = p["size_z"].Double();
+	const fl mwt_lb = p["mwt_lb"].ok() ? p["mwt_lb"].Double() : default_mwt_lb;
+	const fl mwt_ub = p["mwt_ub"].ok() ? p["mwt_ub"].Double() : default_mwt_ub;
+	const fl logp_lb = p["logp_lb"].ok() ? p["logp_lb"].Double() : default_logp_lb;
+	const fl logp_ub = p["logp_ub"].ok() ? p["logp_ub"].Double() : default_logp_ub;
+	const fl hbd_lb = p["hbd_lb"].ok() ? p["hbd_lb"].Double() : default_hbd_lb;
+	const fl hbd_ub = p["hbd_ub"].ok() ? p["hbd_ub"].Double() : default_hbd_ub;
+	const fl hba_lb = p["hba_lb"].ok() ? p["hba_lb"].Double() : default_hba_lb;
+	const fl hba_ub = p["hba_ub"].ok() ? p["hba_ub"].Double() : default_hba_ub;
+	const fl nrb_lb = p["nrb_lb"].ok() ? p["nrb_lb"].Double() : default_nrb_lb;
+	const fl nrb_ub = p["nrb_ub"].ok() ? p["nrb_ub"].Double() : default_nrb_ub;
+	const fl tpsa_lb = p["tpsa_lb"].ok() ? p["tpsa_lb"].Double() : default_tpsa_lb;
+	const fl tpsa_ub = p["tpsa_ub"].ok() ? p["tpsa_ub"].Double() : default_tpsa_ub;
+	const fl ad_lb = p["ad_lb"].ok() ? p["ad_lb"].Double() : default_ad_lb;
+	const fl ad_ub = p["ad_ub"].ok() ? p["ad_ub"].Double() : default_ad_ub;
+	const fl pd_lb = p["pd_lb"].ok() ? p["pd_lb"].Double() : default_pd_lb;
+	const fl pd_ub = p["pd_ub"].ok() ? p["pd_ub"].Double() : default_pd_ub;
 
 	// Initialize the search space of cuboid shape.
 	const box b(vec3(center_x, center_y, center_z), vec3(size_x, size_y, size_z), grid_granularity);
@@ -121,7 +218,6 @@ int main(int argc, char* argv[])
 	const receptor rec(receptor_path);
 
 	// Divide the box into coarse-grained partitions for subsequent grid map creation.
-	using boost::array;
 	array3d<vector<size_t>> partitions(b.num_partitions);
 	{
 		// Find all the heavy receptor atoms that are within 8A of the box.
@@ -165,7 +261,7 @@ int main(int argc, char* argv[])
 	ptr_vector<packaged_task<void>> mc_tasks(num_mc_tasks);
 
 	// Reserve storage for result containers. ptr_vector<T> is used for fast sorting.
-	const size_t max_results = 20; // Maximum number of results obtained from a single Monte Carlo task.
+
 	ptr_vector<ptr_vector<result>> result_containers;
 	result_containers.resize(num_mc_tasks);
 	for (size_t i = 0; i < num_mc_tasks; ++i)
@@ -175,74 +271,44 @@ int main(int argc, char* argv[])
 	ptr_vector<result> results;
 	results.reserve(max_results * num_mc_tasks);
 
-	// Precalculate alpha values for determining step size in BFGS.
-	array<fl, num_alphas> alphas;
-	alphas[0] = 1;
-	for (size_t i = 1; i < num_alphas; ++i)
-	{
-		alphas[i] = alphas[i - 1] * 0.1;
-	}
-
-	// Initialize a vector of empty grid maps. Each grid map corresponds to an XScore atom type.
-	vector<array3d<fl>> grid_maps(XS_TYPE_SIZE);
 	vector<size_t> atom_types_to_populate;
 	atom_types_to_populate.reserve(XS_TYPE_SIZE);
 
-	// Initialize a thread pool and create worker threads for later use.
-	cout << "Creating a thread pool of " << num_threads << " worker thread" << ((num_threads == 1) ? "" : "s") << '\n';
-	thread_pool tp(num_threads);
+	cout << "Running " << num_mc_tasks << " Monte Carlo tasks per ligand\n";
 
-	// Precalculate the scoring function in parallel.
-	cout << "Precalculating scoring function in parallel ";
-	scoring_function sf;
-	{
-		// Precalculate reciprocal square root values.
-		vector<fl> rs(scoring_function::Num_Samples, 0);
-		for (size_t i = 0; i < scoring_function::Num_Samples; ++i)
-		{
-			rs[i] = sqrt(i * scoring_function::Factor_Inverse);
-		}
-		BOOST_ASSERT(rs.front() == 0);
-		BOOST_ASSERT(rs.back() == scoring_function::Cutoff);
-
-		// Populate the scoring function task container.
-		const size_t num_sf_tasks = ((XS_TYPE_SIZE + 1) * XS_TYPE_SIZE) >> 1;
-		ptr_vector<packaged_task<void>> sf_tasks(num_sf_tasks);
-		for (size_t t1 =  0; t1 < XS_TYPE_SIZE; ++t1)
-		for (size_t t2 = t1; t2 < XS_TYPE_SIZE; ++t2)
-		{
-			sf_tasks.push_back(new packaged_task<void>(boost::bind<void>(&scoring_function::precalculate, boost::ref(sf), t1, t2, boost::cref(rs))));
-		}
-		BOOST_ASSERT(sf_tasks.size() == num_sf_tasks);
-
-		// Run the scoring function tasks in parallel asynchronously and display the progress bar with hashes.
-		tp.run(sf_tasks);
-
-		// Wait until all the scoring function tasks are completed.
-		tp.sync();
-	}
-	cout << '\n';
-
-	cout << "Running " << num_mc_tasks << " Monte Carlo task" << ((num_mc_tasks == 1) ? "" : "s") << " per ligand\n";
-
+	// Perform phase 1 screening, filter ligands, and write zero conformation. Refresh progress every 1%.
 	// Perform docking for each file in the ligand folder.
-	cout << "  Index |       Ligand |   Progress | Conf | Top 4 conf free energy in kcal/mol\n" << std::setprecision(3);
-	size_t num_ligands = 0; // Ligand counter.
 	size_t num_conformations; // Number of conformation to output.
-	using boost::filesystem::directory_iterator;
-	const directory_iterator end_dir_iter; // A default constructed directory_iterator acts as the end iterator.
-	for (directory_iterator dir_iter(ligand_folder_path); dir_iter != end_dir_iter; ++dir_iter)
+
+	size_t num_ligands = 0; // Ligand counter.
+	directory_iterator dir_iter(slice_path);
+
+	// Skip ligands that have been screened.
+	if (exists(csv_path))
+	{
+		// Obtain last line
+		ifstream csv(csv_path);
+		for (; dir_iter != end_dir_iter; ++dir_iter)
+		{
+			// Increment the ligand counter.
+			++num_ligands;
+		}
+	}
+
+	ofstream csv(csv_path);
+	csv.setf(std::ios::fixed, std::ios::floatfield);
+	csv << '\n' << std::setprecision(3);
+	for (; dir_iter != end_dir_iter; ++dir_iter)
 	{
 		// Increment the ligand counter.
 		++num_ligands;
 
 		// Obtain a ligand.
 		const path input_ligand_path = dir_iter->path();
-				
-		// Skip the current ligand if it has been docked.
-		const path output_ligand_path = output_folder_path / input_ligand_path.filename();
-		if (exists(output_ligand_path)) continue;
-				
+		const auto input_ligand_stem = input_ligand_path.stem().string();
+
+		// Filter the ligand.
+
 		// Parse the ligand.
 		ligand lig(input_ligand_path);
 
@@ -285,14 +351,7 @@ int main(int argc, char* argv[])
 			tp.sync();
 			gm_tasks.clear();
 			atom_types_to_populate.clear();
-
-			// Clear the current line and reset the cursor to the beginning.
-			cout << '\r' << std::setw(36) << '\r';
 		}
-
-		// Dump the ligand filename.				
-		cout << std::setw(7) << num_ligands << " | " << std::setw(12) << output_ligand_path.stem().string() << " | ";
-		cout << std::flush;
 
 		// Populate the Monte Carlo task container.
 		BOOST_ASSERT(mc_tasks.empty());
@@ -302,7 +361,7 @@ int main(int argc, char* argv[])
 			mc_tasks.push_back(new packaged_task<void>(boost::bind<void>(monte_carlo_task, boost::ref(result_containers[i]), boost::cref(lig), eng(), boost::cref(alphas), boost::cref(sf), boost::cref(b), boost::cref(grid_maps))));
 		}
 
-		// Run the Monte Carlo tasks in parallel asynchronously and display the progress bar with hashes.
+		// Run the Monte Carlo tasks in parallel asynchronously.
 		tp.run(mc_tasks);
 
 		// Merge results from all the tasks into one single result container.
@@ -324,49 +383,26 @@ int main(int argc, char* argv[])
 		tp.sync();
 		mc_tasks.clear();
 
-		// Proceed to number of conformations.
-		cout << " | ";
-
 		// If no conformation can be found, skip the current ligand and proceed with the next one.
 		const size_t num_results = std::min<size_t>(results.size(), max_conformations);
 		if (!num_results) // Possible if and only if results.size() == 0 because max_conformations >= 1 is enforced when parsing command line arguments.
 		{
-			cout << std::setw(4) << 0 << '\n';
 			continue;
 		}
 
-		// Adjust free energy relative to the best conformation and flexibility.
-		const result& best_result = results.front();
-		const fl best_result_intra_e = best_result.e - best_result.f;
-		for (size_t i = 0; i < num_results; ++i)
-		{
-			results[i].e_nd = (results[i].e - best_result_intra_e) * lig.flexibility_penalty_factor;
-		}
-
-		// Determine the number of conformations to output according to user-supplied max_conformations and energy_range.
-		const fl energy_upper_bound = best_result.e_nd + energy_range;
-		for (num_conformations = 1; (num_conformations < num_results) && (results[num_conformations].e_nd <= energy_upper_bound); ++num_conformations);
-
-		// Flush the number of conformations to output.
-		cout << std::setw(4) << num_conformations << " |";
-
-		// Write the conformations to the output folder.				
-		if (num_conformations)
-		{
-			lig.write_models(output_ligand_path, results, num_conformations, b, grid_maps);
-		}
-
-		// Display the free energies of the top 4 conformations.
-		const size_t num_energies = std::min<size_t>(num_conformations, 4);
-		for (size_t i = 0; i < num_energies; ++i)
-		{
-			cout << std::setw(8) << results[i].e_nd;
-		}
-		cout << '\n';
+		// Adjust free energy relative to flexibility.
+		result& best_result = results.front();
+		best_result.e_nd = best_result.f * lig.flexibility_penalty_factor;
 
 		// Clear the results of the current ligand.
 		results.clear();
+
+		// Dump ligand summaries to the csv file.
+		csv << input_ligand_stem << ',' << best_result.e_nd << '\n';
 	}
+
+	// If all the slices are done, perform phase 2 screening.
+	if (!c.query("istar.jobs", QUERY("_id" << _id << "progress" << 100), 1)->more()) continue;
 
 	// Initialize necessary variables for storing ligand summaries.
 	ptr_vector<summary> summaries(num_ligands);
@@ -374,21 +410,14 @@ int main(int argc, char* argv[])
 	energies.reserve(max_conformations);
 	string line;
 	line.reserve(79);
-		
-	using idock::ifstream;
-	using idock::ofstream;
 
-	// Scan the output folder to retrieve ligand summaries.
-	for (directory_iterator dir_iter(output_folder_path); dir_iter != end_dir_iter; ++dir_iter)
+	// Combine multiple csv and sort.
+	for (directory_iterator dir_iter(job_path); dir_iter != end_dir_iter; ++dir_iter)
 	{
 		const path p = dir_iter->path();
 		ifstream in(p); // Parsing starts. Open the file stream as late as possible.
 		while (getline(in, line))
 		{
-			if (starts_with(line, "REMARK       NORMALIZED FREE ENERGY PREDICTED BY IDOCK:"))
-			{
-				energies.push_back(right_cast<fl>(line, 56, 63));
-			}
 		}
 		in.close(); // Parsing finishes. Close the file stream as soon as possible.
 		summaries.push_back(new summary(p.stem().string(), energies));
@@ -398,31 +427,11 @@ int main(int argc, char* argv[])
 	// Sort the summaries.
 	summaries.sort();
 
-	// Dump ligand summaries to the csv file.
-	cout << "Writing " << csv_path << '\n';
-	ofstream csv(csv_path);
-	csv << "Ligand,Conf";
-	for (size_t i = 1; i <= max_conformations; ++i)
-	{
-		csv << ",FE" << i;
-	}
-	csv.setf(std::ios::fixed, std::ios::floatfield);
-	csv << '\n' << std::setprecision(3);
-	const size_t num_summaries = summaries.size();
-	for (size_t i = 0; i < num_summaries; ++i)
-	{
-		const summary& s = summaries[i];
-		const size_t num_conformations = s.energies.size();
-		csv << s.filestem << ',' << num_conformations;
-		for (size_t j = 0; j < num_conformations; ++j)
-		{
-			csv << ',' << s.energies[j];
-		}
-		for (size_t j = num_conformations; j < max_conformations; ++j)
-		{
-			csv << ',';
-		}
-		csv << '\n';
-	}
-	csv.close();
+	// Save summaries.
+
+	const path output_folder_path = job_path / "output";
+
+	// Send email with link to /.
+	const auto email = p["email"].String();
+}
 }
