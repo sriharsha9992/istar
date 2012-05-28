@@ -6,8 +6,6 @@ $(function() {
       jobs.rows.forEach(function(r) {
         $('#jobs').append(r.name);
       });
-    }).error(function(r) {
-      $('#jobs').text(r.statusText);
     });
   }
   query();
