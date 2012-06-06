@@ -60,7 +60,8 @@ RESTful API
 
 ### Post a new job
 
-    curl -d $'receptor=ATOM      1  N   ASN A  21      63.845  98.298   0.035  1.00113.44    -0.066 N\nATOM      2  HN1 ASN A  21      64.058  99.036  -0.636  1.00  0.00     0.275 HD&center_x=1.234&center_y=5.678&center_z=9.012&size_x=20&size_y=18&size_z=22&description=Screen drug-like ligands for HIV RT&email=Jacky@cuhk.edu.hk' http://istar.cse.cuhk.edu.hk/jobs
+    curl -d $'receptor=ATOM      1  N   ASN A  21      63.845  98.298   0.035  1.00113.44    -0.066 N\nATOM      2  HN1 ASN A  21      64.058  99.036  -0.636  1.00  0.00     0.275 HD&center_x=1.234&center_y=5.678&center_z=9.012&size_x=20&size_y=18&size_z=22&description=Screen drug-like ligands for HIV RT&email=Jacky@cuhk.edu.hk'
+    http://istar.cse.cuhk.edu.hk/jobs
 
 
 Send email to submit job
