@@ -42,6 +42,24 @@ app.post('/jobs', function(req, res) {
   });
 });
 
+app.get('/ligands', function(req, res) {
+  var mongodb = require("mongodb");
+  new mongodb.Db('istar', new mongodb.Server('localhost', 27017)).open(function(err, db) {
+    if (err) throw err;
+    db.authenticate('guest', '2qR8dVM9d', function(err, result) {
+      if (err) throw err;
+      db.collection('ligands', function(err, coll) {
+        if (err) throw err;
+        coll.find({ MWT: {$gte: 300, $lte: 400}, LogP: {$gte: -1, $lte: 6}, NRB: {$gte: 2, $lte: 9}, HBD: {$gte: 1, $lte: 6}, HBA: {$gte: 1, $lte: 10}, Charge: {$gte: -1, $lte: 1}, Desolv_apolar: {$gte: -50, $lte: 50}, Desolv_polar: {$gte: -150, $lte: 0}, tPSA: {$gte: 20, $lte: 80}}).count(function(err, count) {
+          if (err) throw err;
+          db.close();
+		  res.json(count);
+        });
+      });
+    });
+  });
+});
+
 // Fork child processes with cluster
 var cluster = require('cluster');
 if (cluster.isMaster) {
