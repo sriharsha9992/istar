@@ -164,16 +164,16 @@
             </div>
             <div class="row">
               <div class="span6">
-                <p>Number of ligands satisfying your filtering conditions: <span id="ligands"></span></p>
+                <p>Number of ligands satisfying your filtering conditions: <span id="ligands">188820</span></p>
               </div>
             </div>
             <div class="row">
               <div class="span6">
                 <div class="control-group">
-                  <label class="control-label" for="mwt_slider">Molecular weight (g/mol): [<span id="mwt_lb"></span>, <span id="mwt_ub"></span>]</label>
+                  <label class="control-label" for="mwt">Molecular weight (g/mol): [<span id="mwt_lb">400</span>, <span id="mwt_ub">500</span>]</label>
                   <div class="controls">
                     <div class="input-prepend">
-                      <div id="mwt_slider"></div>
+                      <div class="slider" id="mwt"></div>
                     </div>
                   </div>
                 </div>
@@ -182,10 +182,10 @@
             <div class="row">
               <div class="span6">
                 <div class="control-group">
-                  <label class="control-label" for="logp_slider">Partition coefficient xlogP: [<span id="logp_lb"></span>, <span id="logp_ub"></span>]</label>
+                  <label class="control-label" for="logp">Partition coefficient xlogP: [<span id="logp_lb">0</span>, <span id="logp_ub">5</span>]</label>
                   <div class="controls">
                     <div class="input-prepend">
-                      <div id="logp_slider"></div>
+                      <div class="slider" id="logp"></div>
                     </div>
                   </div>
                 </div>
@@ -194,10 +194,10 @@
             <div class="row">
               <div class="span6">
                 <div class="control-group">
-                  <label class="control-label" for="hbd_slider">Hydrogen bond donors: [<span id="hbd_lb"></span>, <span id="hbd_ub"></span>]</label>
+                  <label class="control-label" for="nrb">Rotatable bonds: [<span id="nrb_lb">2</span>, <span id="nrb_ub">8</span>]</label>
                   <div class="controls">
                     <div class="input-prepend">
-                      <div id="hbd_slider"></div>
+                      <div class="slider" id="nrb"></div>
                     </div>
                   </div>
                 </div>
@@ -206,10 +206,10 @@
             <div class="row">
               <div class="span6">
                 <div class="control-group">
-                  <label class="control-label" for="hba_slider">Hydrogen bond acceptors: [<span id="hba_lb"></span>, <span id="hba_ub"></span>]</label>
+                  <label class="control-label" for="hbd">Hydrogen bond donors: [<span id="hbd_lb">2</span>, <span id="hbd_ub">5</span>]</label>
                   <div class="controls">
                     <div class="input-prepend">
-                      <div id="hba_slider"></div>
+                      <div class="slider" id="hbd"></div>
                     </div>
                   </div>
                 </div>
@@ -218,10 +218,10 @@
             <div class="row">
               <div class="span6">
                 <div class="control-group">
-                  <label class="control-label" for="nrb_slider">Rotatable bonds: [<span id="nrb_lb"></span>, <span id="nrb_ub"></span>]</label>
+                  <label class="control-label" for="hba">Hydrogen bond acceptors: [<span id="hba_lb">2</span>, <span id="hba_ub">10</span>]</label>
                   <div class="controls">
                     <div class="input-prepend">
-                      <div id="nrb_slider"></div>
+                      <div class="slider" id="hba"></div>
                     </div>
                   </div>
                 </div>
@@ -230,10 +230,10 @@
             <div class="row">
               <div class="span6">
                 <div class="control-group">
-                  <label class="control-label" for="tpsa_slider">Polar surface area tPSA (&#8491;&#178;): [<span id="tpsa_lb"></span>, <span id="tpsa_ub"></span>]</label>
+                  <label class="control-label" for="charge">Net charge: [<span id="charge_lb">0</span>, <span id="charge_ub">0</span>]</label>
                   <div class="controls">
                     <div class="input-prepend">
-                      <div id="tpsa_slider"></div>
+                      <div class="slider" id="charge"></div>
                     </div>
                   </div>
                 </div>
@@ -242,10 +242,10 @@
             <div class="row">
               <div class="span6">
                 <div class="control-group">
-                  <label class="control-label" for="ad_slider">Apolar desolvation (kcal/mol): [<span id="ad_lb"></span>, <span id="ad_ub"></span>]</label>
+                  <label class="control-label" for="ad">Apolar desolvation (kcal/mol): [<span id="ad_lb">0</span>, <span id="ad_ub">12</span>]</label>
                   <div class="controls">
                     <div class="input-prepend">
-                      <div id="ad_slider"></div>
+                      <div class="slider" id="ad"></div>
                     </div>
                   </div>
                 </div>
@@ -254,10 +254,22 @@
             <div class="row">
               <div class="span6">
                 <div class="control-group">
-                  <label class="control-label" for="pd_slider">Polar desolvation (kcal/mol): [<span id="pd_lb"></span>, <span id="pd_ub"></span>]</label>
+                  <label class="control-label" for="pd">Polar desolvation (kcal/mol): [<span id="pd_lb">-50</span>, <span id="pd_ub">0</span>]</label>
                   <div class="controls">
                     <div class="input-prepend">
-                      <div id="pd_slider"></div>
+                      <div class="slider" id="pd"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="row">
+              <div class="span6">
+                <div class="control-group">
+                  <label class="control-label" for="tpsa">Polar surface area tPSA (&#8491;&#178;): [<span id="tpsa_lb">20</span>, <span id="tpsa_ub">100</span>]</label>
+                  <div class="controls">
+                    <div class="input-prepend">
+                      <div class="slider" id="tpsa"></div>
                     </div>
                   </div>
                 </div>
