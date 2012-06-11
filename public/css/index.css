@@ -1,8 +1,10 @@
-.ribbon {
+#ribbon {
   position: absolute;
   top: 0;
   right: 0;
-  z-index: 2000;
+  width: 149px;
+  height: 149px;
+  background: url(https://s3.amazonaws.com/github/ribbons/forkme_right_green_007200.png);
   opacity: .7;
   -webkit-transition: opacity .5s linear;
      -moz-transition: opacity .5s linear;
@@ -11,7 +13,7 @@
           transition: opacity .5s linear;
 }
 
-.ribbon:hover {
+#ribbon:hover {
   opacity: 1;
 }
 
