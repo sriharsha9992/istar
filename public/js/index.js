@@ -1,7 +1,11 @@
 $(function() {
 
+  // Fetch email from cookie
+  var email = $.cookie('email');
+  $('#email').val(email);
+
   // Fetch jobs
-  $.get('/jobs', function(jobs) {
+  $.get('/jobs', { email: email }, function(jobs) {
     jobs.forEach(function(job) {
       $('#jobs').append(job.name);
     });
@@ -9,9 +13,6 @@ $(function() {
 
   // Initialize tooltips
   $('.control-label a[rel=tooltip]').tooltip();
-
-  // Fetch email from cookie
-  $('#email').val($.cookie('email'));
 
   // Initialize sliders
   $('#mwt').slider({
@@ -72,15 +73,39 @@ $(function() {
     slide: function(event, ui) {
       $('#' + this.id + '_lb').text(ui.values[0]);
       $('#' + this.id + '_ub').text(ui.values[1]);
+    },
+    change: function(event, ui) {
+      $('#' + this.id + '_lb').text(ui.values[0]);
+      $('#' + this.id + '_ub').text(ui.values[1]);
+      $.get('/ligands', {
+        mwt_lb: $('#mwt_lb').text(),
+        mwt_ub: $('#mwt_ub').text(),
+        logp_lb: $('#logp_lb').text(),
+        logp_ub: $('#logp_ub').text(),
+        nrb_lb: $('#nrb_lb').text(),
+        nrb_ub: $('#nrb_ub').text(),
+        hbd_lb: $('#hbd_lb').text(),
+        hbd_ub: $('#hbd_ub').text(),
+        hba_lb: $('#hba_lb').text(),
+        hba_ub: $('#hba_ub').text(),
+        charge_lb: $('#charge_lb').text(),
+        charge_ub: $('#charge_ub').text(),
+        ad_lb: $('#ad_lb').text(),
+        ad_ub: $('#ad_ub').text(),
+        pd_lb: $('#pd_lb').text(),
+        pd_ub: $('#pd_ub').text(),
+        tpsa_lb: $('#tpsa_lb').text(),
+        tpsa_ub: $('#tpsa_ub').text()
+      }, function (res) {
+        $('#ligands').text(res);
+      });
     }
   });
 
   // Process submission
-  $('#submitbtn').click(function(){
-
+  $('#submit').click(function() {
     // Hide tooltips
     $('.control-label a[rel=tooltip]').tooltip('hide');
-
     // Post a new job without client side validation
     $.post('/jobs', {
       receptor: $('#receptor').val(),
@@ -92,22 +117,16 @@ $(function() {
       size_z: $('#size_z').val(),
       description: $('#description').val(),
       email: $('#email').val()
-    }, function(result) {
-
-      // If server side validation failed, show the tooltips
-      if (result._id == null) {
-        result.forEach(function(err) {
+    }, function(res) {
+      // If server side validation fails, show the tooltips
+      if (res !== undefined) {
+        res.forEach(function(err) {
           $('#' + err.substring(0, err.indexOf(' ')) + '_label').tooltip('show');
         });
         return;
       }
-
       // Save email into cookie
       $.cookie('email', $('#email').val(), { expires: 7 });
-
-      // Refresh jobs
-      query();
-
     }, 'json');
   });
 });
