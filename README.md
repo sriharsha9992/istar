@@ -22,13 +22,17 @@ Features
 
 ### Web server
 
-* [node.js] v0.6.18
+* [node.js] v0.6.19
+* [carrier] v0.1.7
 * [express] v2.5.9
+* [express-validator] v0.2.1
+* [mongodb] v1.0.2
 
 ### Mail crawler
 
-* [node.js] v0.6.18
+* [node.js] v0.6.19
 * [contextio] v0.3.0
+* [validator] v0.4.6
 
 ### Database
 
@@ -39,16 +43,16 @@ Features
 * Intel Core i5-2400 CPU @ 3.10GHz
 * 4GB DDR3 SDRAM
 * Mac OS X Lion 10.7.4 Build 11E53
-* Customized [idock] v1.4
+* Customized [idock] v1.5
 
 
 Supported browsers
 ------------------
 
-* Google Chrome 19
-* Mozilla Firefox 12
-* Microsoft Internet Explorer 9
-* Apple Safari 5
+* Google Chrome 19+
+* Mozilla Firefox 12+
+* Microsoft Internet Explorer 9+
+* Apple Safari 5+
 
 
 RESTful API
@@ -56,7 +60,7 @@ RESTful API
 
 ### Get jobs
 
-    curl http://istar.cse.cuhk.edu.hk:28017/istar/jobs/
+    curl http://istar.cse.cuhk.edu.hk/jobs
 
 ### Post a new job
 
@@ -66,14 +70,25 @@ RESTful API
     center_x=1.234&center_y=5.678&center_z=9.012&
     size_x=20&size_y=18&size_z=22&
     description=Screen drug-like ligands for HIV RT&
-    email=Jacky@cuhk.edu.hk'
+    email=Jacky@cuhk.edu.hk&
+    mwt_lb=400&mwt_ub=500&logp_lb=0&logp_ub=5&nrb_lb=2&nrb_ub=8&
+    hbd_lb=2&hbd_ub=5&hba_lb=2&hba_ub=10&charge_lb=0&charge_ub=0&
+    ad_lb=0&ad_ub=12&pd_lb=-50&pd_ub=0&tpsa_lb=20&tpsa_ub=100'
     http://istar.cse.cuhk.edu.hk/jobs
+
+### Get the number of ligands satisfying filtering conditions
+
+    curl -Gd
+    mwt_lb=400&mwt_ub=500&logp_lb=0&logp_ub=5&nrb_lb=2&nrb_ub=8&
+    hbd_lb=2&hbd_ub=5&hba_lb=2&hba_ub=10&charge_lb=0&charge_ub=0&
+    ad_lb=0&ad_ub=12&pd_lb=-50&pd_ub=0&tpsa_lb=20&tpsa_ub=100
+    http://istar.cse.cuhk.edu.hk/ligands
 
 
 Send email to submit job
 ------------------------
 
-You can submit a new job simply by sending an email to [istar.cuhk@gmail.com], without opening your browser or programming against the restful api.
+You can submit a new job simply by sending an email to [istar.cuhk@gmail.com].
 
 ### Subject
 
@@ -91,10 +106,28 @@ The email body must be your job configuration in JSON format, e.g.
       "center_z": 9.012,
       "size_x": 20,
       "size_y": 18,
-      "size_z": 22
+      "size_z": 22,
+      "mwt_lb": 400,
+      "mwt_ub": 500,
+      "logp_lb": 0,
+      "logp_ub": 5,
+      "nrb_lb": 2,
+      "nrb_ub": 8,
+      "hbd_lb": 2,
+      "hbd_ub": 5,
+      "hba_lb": 2,
+      "hba_ub": 10,
+      "charge_lb": 0,
+      "charge_ub": 0,
+      "ad_lb": 0,
+      "ad_ub": 12,
+      "pd_lb": -50,
+      "pd_ub": 0,
+      "tpsa_lb": 20,
+      "tpsa_ub": 100
     }
 
-Note the double quotes around parameters. Make sure there is no signature.
+Note the necessary double quotes around parameters. The first 6 arguments ``center_x``, ``center_y``, ``center_z``, ``size_x``, ``size_y`` and ``size_z`` are compulsory while the rest are optional. Make sure there is no signature.
 
 ### Attachment
 
@@ -104,7 +137,7 @@ The email attachment must contain your receptor in PDBQT format.
 
 ![istar mail example](https://github.com/HongjianLi/istar/raw/master/mail.png)
 
-Our email crawler retrieves new emails every hour. If your job is successfully created, you can see it at [istar] web site in an hour.
+Our email crawler retrieves new emails every hour. If your job is successfully created, you should see it at [istar] web site in an hour.
 
 
 Licenses
@@ -136,7 +169,11 @@ The logo image is collected from [Open Clip Art].
 [jQuery]: https://github.com/jquery/jquery
 [node.js]: https://github.com/joyent/node
 [express]: https://github.com/visionmedia/express
+[carrier]: https://github.com/pgte/carrier
+[express-validator]: https://github.com/ctavan/express-validator
+[mongodb]: https://github.com/mongodb/node-mongodb-native
 [contextio]: https://github.com/ContextIO/ContextIO-node
+[validator]: https://github.com/chriso/node-validator
 [MongoDB]: https://github.com/mongodb/mongo
 [istar.cuhk@gmail.com]: mailto:istar.cuhk@gmail.com
 [istar]: http://istar.cse.cuhk.edu.hk
