@@ -17,28 +17,29 @@ if (cluster.isMaster) {
   // Parse ligand properties
   var prop = '16_prop.tsv';
   console.log('Parsing %s', prop);
-  var i = 0;
+  var it = 0;
   var carrier = require('carrier').carry(require('fs').createReadStream(prop));
   carrier.on('line', function(line) {
-    var t1 = line.indexOf('\t', 2);
-    var t2 = line.indexOf('\t', t1 + 2);
+    var t1 = line.indexOf('\t', 3);
+    var t2 = line.indexOf('\t', t1 + 5);
     var t3 = line.indexOf('\t', t2 + 2);
     var t4 = line.indexOf('\t', t3 + 2);
     var t5 = line.indexOf('\t', t4 + 2);
     var t6 = line.indexOf('\t', t5 + 2);
     var t7 = line.indexOf('\t', t6 + 2);
     var t8 = line.indexOf('\t', t7 + 2);
-    mwt[i] = parseFloat(line.substr(0, t1));
-    logp[i] = parseFloat(line.substr(t1 + 1, t2 - t1 - 1));
-    ad[i] = parseFloat(line.substr(t2 + 1, t3 - t2 - 1));
-    pd[i] = parseFloat(line.substr(t3 + 1, t4 - t3 - 1));
-    hbd[i] = parseInt(line.substr(t4 + 1, t5 - t4 - 1));
-    hba[i] = parseInt(line.substr(t5 + 1, t6 - t5 - 1));
-    tpsa[i] = parseFloat(line.substr(t6 + 1, t7 - t6 - 1));
-    charge[i] = parseInt(line.substr(t7 + 1, t8 - t7 - 1));
-    nrb[i++] = parseInt(line.substr(t8 + 1));
+    mwt[it] = parseFloat(line.substr(0, t1));
+    logp[it] = parseFloat(line.substr(t1 + 1, t2 - t1 - 1));
+    ad[it] = parseFloat(line.substr(t2 + 1, t3 - t2 - 1));
+    pd[it] = parseFloat(line.substr(t3 + 1, t4 - t3 - 1));
+    hbd[it] = parseInt(line.substr(t4 + 1, t5 - t4 - 1));
+    hba[it] = parseInt(line.substr(t5 + 1, t6 - t5 - 1));
+    tpsa[it] = parseFloat(line.substr(t6 + 1, t7 - t6 - 1));
+    charge[it] = parseInt(line.substr(t7 + 1, t8 - t7 - 1));
+    nrb[it++] = parseInt(line.substr(t8 + 1));
   });
   carrier.on('end', function() {
+    console.log("Parsed %d ligands", it);
     // Fork worker processes with cluster
     var numCPUs = require('os').cpus().length;
     console.log('Forking %d worker processes', numCPUs);
