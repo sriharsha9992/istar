@@ -33,6 +33,7 @@ Features
 * [node.js] v0.6.19
 * [contextio] v0.3.0
 * [validator] v0.4.6
+* [mongodb] v1.0.2
 
 ### Database
 
