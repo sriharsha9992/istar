@@ -18,8 +18,7 @@ if (cluster.isMaster) {
   var prop = '16_prop.tsv';
   console.log('Parsing %s', prop);
   var it = 0;
-  var carrier = require('carrier').carry(require('fs').createReadStream(prop));
-  carrier.on('line', function(line) {
+  require('carrier').carry(require('fs').createReadStream(prop)).on('line', function(line) {
     var t1 = line.indexOf('\t', 3);
     var t2 = line.indexOf('\t', t1 + 5);
     var t3 = line.indexOf('\t', t2 + 2);
@@ -37,8 +36,7 @@ if (cluster.isMaster) {
     tpsa[it] = parseFloat(line.substr(t6 + 1, t7 - t6 - 1));
     charge[it] = parseInt(line.substr(t7 + 1, t8 - t7 - 1));
     nrb[it++] = parseInt(line.substr(t8 + 1));
-  });
-  carrier.on('end', function() {
+  }).on('end', function() {
     console.log("Parsed %d ligands", it);
     // Fork worker processes with cluster
     var numCPUs = require('os').cpus().length;
