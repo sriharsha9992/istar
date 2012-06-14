@@ -1,12 +1,11 @@
 var fs = require('fs');
-var mongodb = require("mongodb");
+var mongodb = require('mongodb');
 
 // Create a new job
 exports.create = function(config, receptor) {
-  // Add additional fields to job
-  var job = config;
-  job.time = Date.now();
-  job.progress = 0;
+  // Add additional fields
+  config.time = Date.now();
+  config.progress = 0;
   // Insert the new job into MongoDB
   new mongodb.Db('istar', new mongodb.Server('137.189.90.124', 27017)).open(function(err, db) {
     if (err) throw err;
@@ -14,7 +13,7 @@ exports.create = function(config, receptor) {
       if (err) throw err;
       db.collection('jobs', function(err, coll) {
         if (err) throw err;
-        coll.insert(job, { safe: true }, function(err, docs) {
+        coll.insert(config, { safe: true }, function(err, docs) {
           if (err) throw err;
           db.close();
           // Create job folder and save receptor
