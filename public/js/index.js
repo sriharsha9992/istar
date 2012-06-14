@@ -116,7 +116,25 @@ $(function() {
       size_y: $('#size_y').val(),
       size_z: $('#size_z').val(),
       description: $('#description').val(),
-      email: $('#email').val()
+      email: $('#email').val(),
+      mwt_lb: $('#mwt_lb').text(),
+      mwt_ub: $('#mwt_ub').text(),
+      logp_lb: $('#logp_lb').text(),
+      logp_ub: $('#logp_ub').text(),
+      nrb_lb: $('#nrb_lb').text(),
+      nrb_ub: $('#nrb_ub').text(),
+      hbd_lb: $('#hbd_lb').text(),
+      hbd_ub: $('#hbd_ub').text(),
+      hba_lb: $('#hba_lb').text(),
+      hba_ub: $('#hba_ub').text(),
+      charge_lb: $('#charge_lb').text(),
+      charge_ub: $('#charge_ub').text(),
+      ad_lb: $('#ad_lb').text(),
+      ad_ub: $('#ad_ub').text(),
+      pd_lb: $('#pd_lb').text(),
+      pd_ub: $('#pd_ub').text(),
+      tpsa_lb: $('#tpsa_lb').text(),
+      tpsa_ub: $('#tpsa_ub').text()
     }, function(res) {
       // If server side validation fails, show the tooltips
       if (res !== undefined) {
