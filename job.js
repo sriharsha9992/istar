@@ -5,34 +5,34 @@ var mongodb = require('mongodb');
 
 // Create a new job
 exports.create = function(job) {
-  v.init(job);
-  v.chk('receptor', 'must be provided', true).len(1, 10485760); // 10MB
-  v.chk('center_x', 'must be a decimal within [-1000, 1000]', true).isDecimal().min(-1000).max(1000);
-  v.chk('center_y', 'must be a decimal within [-1000, 1000]', true).isDecimal().min(-1000).max(1000);
-  v.chk('center_z', 'must be a decimal within [-1000, 1000]', true).isDecimal().min(-1000).max(1000);
-  v.chk('size_x', 'must be an integer within [1, 30]', true).isInt().min(1).max(30);
-  v.chk('size_y', 'must be an integer within [1, 30]', true).isInt().min(1).max(30);
-  v.chk('size_z', 'must be an integer within [1, 30]', true).isInt().min(1).max(30);
-  v.chk('description', 'must be provided', true).len(1, 1000);
-  v.chk('email', 'must be valid', true).isEmail();
-  v.chk('mwt_lb', 'must be a decimal within [55, 566]', false).isDecimal().min(55).max(566);
-  v.chk('mwt_ub', 'must be a decimal within [55, 566]', false).isDecimal().min(55).max(566);
-  v.chk('logp_lb', 'must be a decimal within [-6, 12]', false).isDecimal().min(-6).max(12);
-  v.chk('logp_ub', 'must be a decimal within [-6, 12]', false).isDecimal().min(-6).max(12);
-  v.chk('nrb_lb', 'must be an integer within [0, 34]', false).isInt().min(0).max(34);
-  v.chk('nrb_ub', 'must be an integer within [0, 34]', false).isInt().min(0).max(34);
-  v.chk('hbd_lb', 'must be an integer within [0, 20]', false).isInt().min(0).max(20);
-  v.chk('hbd_ub', 'must be an integer within [0, 20]', false).isInt().min(0).max(20);
-  v.chk('hba_lb', 'must be an integer within [0, 18]', false).isInt().min(0).max(18);
-  v.chk('hba_ub', 'must be an integer within [0, 18]', false).isInt().min(0).max(18);
-  v.chk('charge_lb', 'must be an integer within [-5, 5]', false).isInt().min(-5).max(5);
-  v.chk('charge_ub', 'must be an integer within [-5, 5]', false).isInt().min(-5).max(5);
-  v.chk('ad_lb', 'must be a decimal within [-25, 29]', false).isDecimal().min(-25).max(29);
-  v.chk('ad_ub', 'must be a decimal within [-25, 29]', false).isDecimal().min(-25).max(29);
-  v.chk('pd_lb', 'must be a decimal within [-504, 1]', false).isDecimal().min(-504).max(1);
-  v.chk('pd_ub', 'must be a decimal within [-504, 1]', false).isDecimal().min(-504).max(1);
-  v.chk('tpsa_lb', 'must be a decimal within [0, 317]', false).isDecimal().min(0).max(317);
-  v.chk('tpsa_ub', 'must be a decimal within [0, 317]', false).isDecimal().min(0).max(317);
+  v.init(job)
+   .chk('receptor', 'must be provided', true).len(1, 10485760) // 10MB
+   .chk('center_x', 'must be a decimal within [-1000, 1000]', true).isDecimal().min(-1000).max(1000)
+   .chk('center_y', 'must be a decimal within [-1000, 1000]', true).isDecimal().min(-1000).max(1000)
+   .chk('center_z', 'must be a decimal within [-1000, 1000]', true).isDecimal().min(-1000).max(1000)
+   .chk('size_x', 'must be an integer within [1, 30]', true).isInt().min(1).max(30)
+   .chk('size_y', 'must be an integer within [1, 30]', true).isInt().min(1).max(30)
+   .chk('size_z', 'must be an integer within [1, 30]', true).isInt().min(1).max(30)
+   .chk('description', 'must be provided', true).len(1, 1000)
+   .chk('email', 'must be valid', true).isEmail()
+   .chk('mwt_lb', 'must be a decimal within [55, 566]', false).isDecimal().min(55).max(566)
+   .chk('mwt_ub', 'must be a decimal within [55, 566]', false).isDecimal().min(55).max(566)
+   .chk('logp_lb', 'must be a decimal within [-6, 12]', false).isDecimal().min(-6).max(12)
+   .chk('logp_ub', 'must be a decimal within [-6, 12]', false).isDecimal().min(-6).max(12)
+   .chk('nrb_lb', 'must be an integer within [0, 34]', false).isInt().min(0).max(34)
+   .chk('nrb_ub', 'must be an integer within [0, 34]', false).isInt().min(0).max(34)
+   .chk('hbd_lb', 'must be an integer within [0, 20]', false).isInt().min(0).max(20)
+   .chk('hbd_ub', 'must be an integer within [0, 20]', false).isInt().min(0).max(20)
+   .chk('hba_lb', 'must be an integer within [0, 18]', false).isInt().min(0).max(18)
+   .chk('hba_ub', 'must be an integer within [0, 18]', false).isInt().min(0).max(18)
+   .chk('charge_lb', 'must be an integer within [-5, 5]', false).isInt().min(-5).max(5)
+   .chk('charge_ub', 'must be an integer within [-5, 5]', false).isInt().min(-5).max(5)
+   .chk('ad_lb', 'must be a decimal within [-25, 29]', false).isDecimal().min(-25).max(29)
+   .chk('ad_ub', 'must be a decimal within [-25, 29]', false).isDecimal().min(-25).max(29)
+   .chk('pd_lb', 'must be a decimal within [-504, 1]', false).isDecimal().min(-504).max(1)
+   .chk('pd_ub', 'must be a decimal within [-504, 1]', false).isDecimal().min(-504).max(1)
+   .chk('tpsa_lb', 'must be a decimal within [0, 317]', false).isDecimal().min(0).max(317)
+   .chk('tpsa_ub', 'must be a decimal within [0, 317]', false).isDecimal().min(0).max(317);
   if (Object.keys(v.err).length) {
     return v.err;
   }

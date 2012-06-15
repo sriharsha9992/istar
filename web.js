@@ -80,6 +80,8 @@ if (cluster.isMaster) {
   });
   // Define helper variables and functions
   var validator = require('./validator');
+  var v = new validator.Validator();
+  var f = new validator.Filter();
   var job = require('./job');
   var ligands;
   function sync(cb) {
@@ -96,9 +98,7 @@ if (cluster.isMaster) {
   // Get jobs by email
   app.get('/jobs', function(req, res) {
     // Validate user input
-	var v = new validator.Validator();
-	v.init(req.query);
-    v.chk('email', 'must be valid', true).isEmail();
+	v.init(req.query).chk('email', 'must be valid', true).isEmail();
     if (Object.keys(v.err).length) {
       res.json(v.err);
       return;
@@ -113,7 +113,6 @@ if (cluster.isMaster) {
   // Get the number of ligands satisfying filtering conditions
   app.get('/ligands', function(req, res) {
     // Validate and sanitize user input
-	var v = new validator.Validator();
 	v.init(req.query)
      .chk('mwt_lb', 'must be a decimal within [55, 566]', true).isDecimal().min(55).max(566)
      .chk('mwt_ub', 'must be a decimal within [55, 566]', true).isDecimal().min(55).max(566)
@@ -137,7 +136,6 @@ if (cluster.isMaster) {
 	  res.json(v.err);
       return
     }
-    var f = new validator.Filter();
     f.init(req.query);
     f.snt('mwt_lb', 400).toFloat();
     f.snt('mwt_ub', 500).toFloat();
