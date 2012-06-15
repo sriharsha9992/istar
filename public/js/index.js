@@ -138,8 +138,8 @@ $(function() {
     }, function(res) {
       // If server side validation fails, show the tooltips
       if (res !== undefined) {
-        res.forEach(function(err) {
-          $('#' + err.substring(0, err.indexOf(' ')) + '_label').tooltip('show');
+        Object.keys(res).forEach(function(param) {
+          $('#' + param + '_label').tooltip('show');
         });
         return;
       }
