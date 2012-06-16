@@ -13,6 +13,9 @@ validator.Validator.prototype.chk = function(param, fail_msg, compulsory) {
   }
   return this.check(this.obj[param], fail_msg);
 }
+validator.Validator.prototype.failed = function() {
+  return Object.keys(this.err).length;
+}
 validator.Validator.prototype.rng = function(lb, ub) {
   if (!(this.obj[lb] <= this.obj[ub])) {
     this.err[lb] = lb + ' must be less than or equal to ' + ub;
@@ -30,3 +33,7 @@ validator.Filter.prototype.snt = function(param, def) {
   }
   return this.sanitize(this.obj.hasOwnProperty(param) ? this.obj[param]: def);
 }
+validator.Filter.prototype.wrap = function(value) {
+  return this;
+}
+

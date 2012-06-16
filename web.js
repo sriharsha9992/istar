@@ -111,7 +111,7 @@ if (cluster.isMaster) {
   // Get the number of ligands satisfying filtering conditions
   app.get('/ligands', function(req, res) {
     // Validate and sanitize user input
-    v.init(req.query)
+    if (v.init(req.query)
      .chk('mwt_lb', 'must be a decimal within [55, 566]', true).isDecimal().min(55).max(566)
      .chk('mwt_ub', 'must be a decimal within [55, 566]', true).isDecimal().min(55).max(566)
      .chk('logp_lb', 'must be a decimal within [-6, 12]', true).isDecimal().min(-6).max(12)
@@ -129,38 +129,38 @@ if (cluster.isMaster) {
      .chk('pd_lb', 'must be a decimal within [-504, 1]', true).isDecimal().min(-504).max(1)
      .chk('pd_ub', 'must be a decimal within [-504, 1]', true).isDecimal().min(-504).max(1)
      .chk('tpsa_lb', 'must be a decimal within [0, 317]', true).isDecimal().min(0).max(317)
-     .chk('tpsa_ub', 'must be a decimal within [0, 317]', true).isDecimal().min(0).max(317);
-    if (Object.keys(v.err).length) {
+     .chk('tpsa_ub', 'must be a decimal within [0, 317]', true).isDecimal().min(0).max(317)
+     .failed()) {
       res.json(v.err);
       return
     }
-    f.init(req.query);
-    f.snt('mwt_lb', 400).toFloat();
-    f.snt('mwt_ub', 500).toFloat();
-    f.snt('logp_lb', 0).toFloat();
-    f.snt('logp_ub', 5).toFloat();
-    f.snt('nrb_lb', 2).toInt();
-    f.snt('nrb_ub', 8).toInt();
-    f.snt('hbd_lb', 2).toInt();
-    f.snt('hbd_ub', 5).toInt();
-    f.snt('hba_lb', 2).toInt();
-    f.snt('hba_ub', 10).toInt();
-    f.snt('charge_lb', 0).toInt();
-    f.snt('charge_ub', 0).toInt();
-    f.snt('ad_lb', 0).toFloat();
-    f.snt('ad_ub', 12).toFloat();
-    f.snt('pd_lb', -50).toFloat();
-    f.snt('pd_ub', 0).toFloat();
-    f.snt('tpsa_lb', 20).toFloat();
-    f.snt('tpsa_ub', 100).toFloat();
-    v.init(f.res).rng('mwt_lb', 'mwt_ub').rng('logp_lb', 'logp_ub').rng('nrb_lb', 'nrb_ub').rng('hbd_lb', 'hbd_ub').rng('hba_lb', 'hba_ub').rng('charge_lb', 'charge_ub').rng('ad_lb', 'ad_ub').rng('pd_lb', 'pd_ub').rng('tpsa_lb', 'tpsa_ub');
-    if (Object.keys(v.err).length) {
-	  res.json(v.err);
+    if (v.init(f.init(req.query)
+     .snt('mwt_lb').toFloat()
+     .snt('mwt_ub').toFloat()
+     .snt('logp_lb').toFloat()
+     .snt('logp_ub').toFloat()
+     .snt('nrb_lb').toInt()
+     .snt('nrb_ub').toInt()
+     .snt('hbd_lb').toInt()
+     .snt('hbd_ub').toInt()
+     .snt('hba_lb').toInt()
+     .snt('hba_ub').toInt()
+     .snt('charge_lb').toInt()
+     .snt('charge_ub').toInt()
+     .snt('ad_lb').toFloat()
+     .snt('ad_ub').toFloat()
+     .snt('pd_lb').toFloat()
+     .snt('pd_ub').toFloat()
+     .snt('tpsa_lb').toFloat()
+     .snt('tpsa_ub').toFloat()
+     .res).rng('mwt_lb', 'mwt_ub').rng('logp_lb', 'logp_ub').rng('nrb_lb', 'nrb_ub').rng('hbd_lb', 'hbd_ub').rng('hba_lb', 'hba_ub').rng('charge_lb', 'charge_ub').rng('ad_lb', 'ad_ub').rng('pd_lb', 'pd_ub').rng('tpsa_lb', 'tpsa_ub')
+     .failed()) {
+      res.json(v.err);
       return
     }
     // Send query to master process
     ligands = -1;
-	f.res.query = 'ligands';
+    f.res.query = 'ligands';
     process.send(f.res);
     sync(function () {
       res.json(ligands);

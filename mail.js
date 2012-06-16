@@ -24,7 +24,7 @@ fs.readFile('mail.conf', function(err, data) {
         res.body.forEach(function(msg) {
           // Parse and validate JSON body
           var j = JSON.parse(msg.body[0].content);
-		  j.email = msg.addresses.from.email;
+          j.email = msg.addresses.from.email;
           // There should be only one attachment and its size must not exceed 10MB
           if (msg.files.length !== 1) return;
           var file = msg.files[0];
@@ -32,7 +32,7 @@ fs.readFile('mail.conf', function(err, data) {
           // Retrieve file content as receptor
           ctxioClient.accounts(conf.account_id).files(file.file_id).content().get(function(err, res) {
             if (err) throw err;
-			j.receptor = res.body;
+	    j.receptor = res.body;
             job.create(j);
           });
         });
