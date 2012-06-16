@@ -7,7 +7,7 @@ $(function() {
   // Fetch jobs
   $.get('/jobs', { email: email }, function(jobs) {
     jobs.forEach(function(job) {
-      $('#jobs').append(job.name);
+      $('#jobs').append(job.description);
     });
   });
 

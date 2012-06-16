@@ -3,5 +3,3 @@ node_modules
 *.sh
 *.log
 idock/obj
-mongodb
-public/jobs

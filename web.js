@@ -97,14 +97,12 @@ if (cluster.isMaster) {
   });
   // Get jobs by email
   app.get('/jobs', function(req, res) {
-    // Validate user input
-	v.init(req.query).chk('email', 'must be valid', true).isEmail();
-    if (Object.keys(v.err).length) {
-      res.json(v.err);
-      return;
+    var err = job.get(req.query, function (docs) {
+      res.json(docs);
+    });
+    if (err !== undefined) {
+      res.json(err);
     }
-    var email = req.query('email');
-    // Get jobs from MongoDB by email
   });
   // Post a new job
   app.post('/jobs', function(req, res) {
@@ -113,7 +111,7 @@ if (cluster.isMaster) {
   // Get the number of ligands satisfying filtering conditions
   app.get('/ligands', function(req, res) {
     // Validate and sanitize user input
-	v.init(req.query)
+    v.init(req.query)
      .chk('mwt_lb', 'must be a decimal within [55, 566]', true).isDecimal().min(55).max(566)
      .chk('mwt_ub', 'must be a decimal within [55, 566]', true).isDecimal().min(55).max(566)
      .chk('logp_lb', 'must be a decimal within [-6, 12]', true).isDecimal().min(-6).max(12)
@@ -133,7 +131,7 @@ if (cluster.isMaster) {
      .chk('tpsa_lb', 'must be a decimal within [0, 317]', true).isDecimal().min(0).max(317)
      .chk('tpsa_ub', 'must be a decimal within [0, 317]', true).isDecimal().min(0).max(317);
     if (Object.keys(v.err).length) {
-	  res.json(v.err);
+      res.json(v.err);
       return
     }
     f.init(req.query);

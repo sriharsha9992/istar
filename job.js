@@ -2,6 +2,33 @@ var validator = require('./validator');
 var v = new validator.Validator();
 var f = new validator.Filter();
 var mongodb = require('mongodb');
+var db = new mongodb.Db('istar', new mongodb.Server('137.189.90.124', 27017));
+var username = 'daemon';
+var password = '2qR8dVM9d';
+
+// Get jobs by email
+exports.get = function(query, cb) {
+  v.init(query).chk('email', 'must be valid', true).isEmail();
+  if (Object.keys(v.err).length) {
+    return v.err;
+  }
+  db.open(function(err, db) {
+    if (err) throw err;
+    db.authenticate(username, password, function(err, res) {
+      if (err) throw err;
+      db.collection('jobs', function(err, coll) {
+        if (err) throw err;
+        coll.find({'email': query['email']}, function(err, cursor) {
+          if (err) throw err;
+          cursor.toArray(function (err, docs) {
+            db.close();
+            cb(docs);
+          });
+        });
+      });
+    });
+  });
+}
 
 // Create a new job
 exports.create = function(job) {
@@ -70,9 +97,9 @@ exports.create = function(job) {
   }
   //job.time = Date.now();
   //job.progress = 0;
-  new mongodb.Db('istar', new mongodb.Server('137.189.90.124', 27017)).open(function(err, db) {
+  db.open(function(err, db) {
     if (err) throw err;
-    db.authenticate('daemon', '2qR8dVM9d', function(err, res) {
+    db.authenticate(username, password, function(err, res) {
       if (err) throw err;
       db.collection('jobs', function(err, coll) {
         if (err) throw err;
