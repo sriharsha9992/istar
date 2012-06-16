@@ -25,7 +25,7 @@ Features
 * [node.js] v0.6.19
 * [carrier] v0.1.7
 * [express] v2.5.9
-* [express-validator] v0.2.1
+* [validator] v0.4.6
 * [mongodb] v1.0.2
 
 ### Mail crawler
@@ -61,7 +61,7 @@ RESTful API
 
 ### Get jobs
 
-    curl http://istar.cse.cuhk.edu.hk/jobs
+    curl -Gd 'email=Jacky@cuhk.edu.hk' http://istar.cse.cuhk.edu.hk/jobs
 
 ### Post a new job
 

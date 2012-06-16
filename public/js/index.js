@@ -137,7 +137,7 @@ $(function() {
       tpsa_ub: $('#tpsa_ub').text()
     }, function(res) {
       // If server side validation fails, show the tooltips
-      if (res !== undefined) {
+      if (res != undefined) {
         Object.keys(res).forEach(function(param) {
           $('#' + param + '_label').tooltip('show');
         });
