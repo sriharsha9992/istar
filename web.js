@@ -7,13 +7,13 @@ if (cluster.isMaster) {
   console.log('Allocating %d ligands', num_ligands);
   var mwt = new Array(num_ligands);
   var logp = new Array(num_ligands);
-  var nrb = new Array(num_ligands);
-  var hbd = new Array(num_ligands);
-  var hba = new Array(num_ligands);
-  var charge = new Array(num_ligands);
   var ad = new Array(num_ligands);
   var pd = new Array(num_ligands);
+  var hbd = new Array(num_ligands);
+  var hba = new Array(num_ligands);
   var tpsa = new Array(num_ligands);
+  var charge = new Array(num_ligands);
+  var nrb = new Array(num_ligands);
   // Parse ligand properties
   var prop = '16_prop.tsv';
   console.log('Parsing %s', prop);
@@ -46,7 +46,7 @@ if (cluster.isMaster) {
         var ligands = 0;
         for (var i = 0; i < num_ligands; ++i)
         {
-          if ((m.mwt_lb <= mwt[i]) && (mwt[i] <= m.mwt_ub) && (m.logp_lb <= logp[i]) && (logp[i] <= m.logp_ub) && (m.nrb_lb <= nrb[i]) && (nrb[i] <= m.nrb_ub) && (m.hbd_lb <= hbd[i]) && (hbd[i] <= m.hbd_ub) && (m.hba_lb <= hba[i]) && (hba[i] <= m.hba_ub) && (m.charge_lb <= charge[i]) && (charge[i] <= m.charge_ub) && (m.ad_lb <= ad[i]) && (ad[i] <= m.ad_ub) && (m.pd_lb <= pd[i]) && (pd[i] <= m.pd_ub) && (m.tpsa_lb <= tpsa[i]) && (tpsa[i] <= m.tpsa_ub)) ++ligands;
+          if ((m.mwt_lb <= mwt[i]) && (mwt[i] <= m.mwt_ub) && (m.logp_lb <= logp[i]) && (logp[i] <= m.logp_ub) && (m.ad_lb <= ad[i]) && (ad[i] <= m.ad_ub) && (m.pd_lb <= pd[i]) && (pd[i] <= m.pd_ub) && (m.hbd_lb <= hbd[i]) && (hbd[i] <= m.hbd_ub) && (m.hba_lb <= hba[i]) && (hba[i] <= m.hba_ub) && (m.tpsa_lb <= tpsa[i]) && (tpsa[i] <= m.tpsa_ub) && (m.charge_lb <= charge[i]) && (charge[i] <= m.charge_ub) && (m.nrb_lb <= nrb[i]) && (nrb[i] <= m.nrb_ub)) ++ligands;
         }
         this.send({ligands: ligands});
       }
@@ -116,20 +116,20 @@ if (cluster.isMaster) {
      .chk('mwt_ub', 'must be a decimal within [55, 566]', true).isDecimal().min(55).max(566)
      .chk('logp_lb', 'must be a decimal within [-6, 12]', true).isDecimal().min(-6).max(12)
      .chk('logp_ub', 'must be a decimal within [-6, 12]', true).isDecimal().min(-6).max(12)
-     .chk('nrb_lb', 'must be an integer within [0, 34]', true).isInt().min(0).max(34)
-     .chk('nrb_ub', 'must be an integer within [0, 34]', true).isInt().min(0).max(34)
-     .chk('hbd_lb', 'must be an integer within [0, 20]', true).isInt().min(0).max(20)
-     .chk('hbd_ub', 'must be an integer within [0, 20]', true).isInt().min(0).max(20)
-     .chk('hba_lb', 'must be an integer within [0, 18]', true).isInt().min(0).max(18)
-     .chk('hba_ub', 'must be an integer within [0, 18]', true).isInt().min(0).max(18)
-     .chk('charge_lb', 'must be an integer within [-5, 5]', true).isInt().min(-5).max(5)
-     .chk('charge_ub', 'must be an integer within [-5, 5]', true).isInt().min(-5).max(5)
      .chk('ad_lb', 'must be a decimal within [-25, 29]', true).isDecimal().min(-25).max(29)
      .chk('ad_ub', 'must be a decimal within [-25, 29]', true).isDecimal().min(-25).max(29)
      .chk('pd_lb', 'must be a decimal within [-504, 1]', true).isDecimal().min(-504).max(1)
      .chk('pd_ub', 'must be a decimal within [-504, 1]', true).isDecimal().min(-504).max(1)
+     .chk('hbd_lb', 'must be an integer within [0, 20]', true).isInt().min(0).max(20)
+     .chk('hbd_ub', 'must be an integer within [0, 20]', true).isInt().min(0).max(20)
+     .chk('hba_lb', 'must be an integer within [0, 18]', true).isInt().min(0).max(18)
+     .chk('hba_ub', 'must be an integer within [0, 18]', true).isInt().min(0).max(18)
      .chk('tpsa_lb', 'must be an integer within [0, 317]', true).isInt().min(0).max(317)
      .chk('tpsa_ub', 'must be an integer within [0, 317]', true).isInt().min(0).max(317)
+     .chk('charge_lb', 'must be an integer within [-5, 5]', true).isInt().min(-5).max(5)
+     .chk('charge_ub', 'must be an integer within [-5, 5]', true).isInt().min(-5).max(5)
+     .chk('nrb_lb', 'must be an integer within [0, 34]', true).isInt().min(0).max(34)
+     .chk('nrb_ub', 'must be an integer within [0, 34]', true).isInt().min(0).max(34)
      .failed()) {
       res.json(v.err);
       return
@@ -139,21 +139,21 @@ if (cluster.isMaster) {
      .snt('mwt_ub').toFloat()
      .snt('logp_lb').toFloat()
      .snt('logp_ub').toFloat()
-     .snt('nrb_lb').toInt()
-     .snt('nrb_ub').toInt()
-     .snt('hbd_lb').toInt()
-     .snt('hbd_ub').toInt()
-     .snt('hba_lb').toInt()
-     .snt('hba_ub').toInt()
-     .snt('charge_lb').toInt()
-     .snt('charge_ub').toInt()
      .snt('ad_lb').toFloat()
      .snt('ad_ub').toFloat()
      .snt('pd_lb').toFloat()
      .snt('pd_ub').toFloat()
+     .snt('hbd_lb').toInt()
+     .snt('hbd_ub').toInt()
+     .snt('hba_lb').toInt()
+     .snt('hba_ub').toInt()
      .snt('tpsa_lb').toInt()
      .snt('tpsa_ub').toInt()
-     .res).rng('mwt_lb', 'mwt_ub').rng('logp_lb', 'logp_ub').rng('nrb_lb', 'nrb_ub').rng('hbd_lb', 'hbd_ub').rng('hba_lb', 'hba_ub').rng('charge_lb', 'charge_ub').rng('ad_lb', 'ad_ub').rng('pd_lb', 'pd_ub').rng('tpsa_lb', 'tpsa_ub')
+     .snt('charge_lb').toInt()
+     .snt('charge_ub').toInt()
+     .snt('nrb_lb').toInt()
+     .snt('nrb_ub').toInt()
+     .res).rng('mwt_lb', 'mwt_ub').rng('logp_lb', 'logp_ub').rng('ad_lb', 'ad_ub').rng('pd_lb', 'pd_ub').rng('hbd_lb', 'hbd_ub').rng('hba_lb', 'hba_ub').rng('tpsa_lb', 'tpsa_ub').rng('charge_lb', 'charge_ub').rng('nrb_lb', 'nrb_ub')
      .failed()) {
       res.json(v.err);
       return
