@@ -33,7 +33,7 @@ if (cluster.isMaster) {
     pd[it] = parseFloat(line.substr(t3 + 1, t4 - t3 - 1));
     hbd[it] = parseInt(line.substr(t4 + 1, t5 - t4 - 1));
     hba[it] = parseInt(line.substr(t5 + 1, t6 - t5 - 1));
-    tpsa[it] = parseFloat(line.substr(t6 + 1, t7 - t6 - 1));
+    tpsa[it] = parseInt(line.substr(t6 + 1, t7 - t6 - 1));
     charge[it] = parseInt(line.substr(t7 + 1, t8 - t7 - 1));
     nrb[it++] = parseInt(line.substr(t8 + 1));
   }).on('end', function() {*/
@@ -128,8 +128,8 @@ if (cluster.isMaster) {
      .chk('ad_ub', 'must be a decimal within [-25, 29]', true).isDecimal().min(-25).max(29)
      .chk('pd_lb', 'must be a decimal within [-504, 1]', true).isDecimal().min(-504).max(1)
      .chk('pd_ub', 'must be a decimal within [-504, 1]', true).isDecimal().min(-504).max(1)
-     .chk('tpsa_lb', 'must be a decimal within [0, 317]', true).isDecimal().min(0).max(317)
-     .chk('tpsa_ub', 'must be a decimal within [0, 317]', true).isDecimal().min(0).max(317)
+     .chk('tpsa_lb', 'must be an integer within [0, 317]', true).isInt().min(0).max(317)
+     .chk('tpsa_ub', 'must be an integer within [0, 317]', true).isInt().min(0).max(317)
      .failed()) {
       res.json(v.err);
       return
@@ -151,8 +151,8 @@ if (cluster.isMaster) {
      .snt('ad_ub').toFloat()
      .snt('pd_lb').toFloat()
      .snt('pd_ub').toFloat()
-     .snt('tpsa_lb').toFloat()
-     .snt('tpsa_ub').toFloat()
+     .snt('tpsa_lb').toInt()
+     .snt('tpsa_ub').toInt()
      .res).rng('mwt_lb', 'mwt_ub').rng('logp_lb', 'logp_ub').rng('nrb_lb', 'nrb_ub').rng('hbd_lb', 'hbd_ub').rng('hba_lb', 'hba_ub').rng('charge_lb', 'charge_ub').rng('ad_lb', 'ad_ub').rng('pd_lb', 'pd_ub').rng('tpsa_lb', 'tpsa_ub')
      .failed()) {
       res.json(v.err);

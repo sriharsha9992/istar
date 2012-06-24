@@ -58,8 +58,8 @@ exports.create = function(job) {
    .chk('ad_ub', 'must be a decimal within [-25, 29]', false).isDecimal().min(-25).max(29)
    .chk('pd_lb', 'must be a decimal within [-504, 1]', false).isDecimal().min(-504).max(1)
    .chk('pd_ub', 'must be a decimal within [-504, 1]', false).isDecimal().min(-504).max(1)
-   .chk('tpsa_lb', 'must be a decimal within [0, 317]', false).isDecimal().min(0).max(317)
-   .chk('tpsa_ub', 'must be a decimal within [0, 317]', false).isDecimal().min(0).max(317)
+   .chk('tpsa_lb', 'must be an integer within [0, 317]', false).isInt().min(0).max(317)
+   .chk('tpsa_ub', 'must be an integer within [0, 317]', false).isInt().min(0).max(317)
    .failed()) {
     return v.err;
   }
@@ -88,8 +88,8 @@ exports.create = function(job) {
    .snt('ad_ub', 12).toFloat()
    .snt('pd_lb', -50).toFloat()
    .snt('pd_ub', 0).toFloat()
-   .snt('tpsa_lb', 20).toFloat()
-   .snt('tpsa_ub', 100).toFloat()
+   .snt('tpsa_lb', 20).toInt()
+   .snt('tpsa_ub', 100).toInt()
    .res).rng('mwt_lb', 'mwt_ub').rng('logp_lb', 'logp_ub').rng('nrb_lb', 'nrb_ub').rng('hbd_lb', 'hbd_ub').rng('hba_lb', 'hba_ub').rng('charge_lb', 'charge_ub').rng('ad_lb', 'ad_ub').rng('pd_lb', 'pd_ub').rng('tpsa_lb', 'tpsa_ub')
    .failed()) {
     return v.err;
