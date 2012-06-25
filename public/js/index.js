@@ -75,8 +75,6 @@ $(function() {
       $('#' + this.id + '_ub').text(ui.values[1]);
     },
     change: function(event, ui) {
-      $('#' + this.id + '_lb').text(ui.values[0]);
-      $('#' + this.id + '_ub').text(ui.values[1]);
       $.get('/ligands', {
         mwt_lb: $('#mwt_lb').text(),
         mwt_ub: $('#mwt_ub').text(),
