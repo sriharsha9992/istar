@@ -3,3 +3,6 @@ node_modules
 *.sh
 *.log
 idock/obj
+idock/bin
+test
+16_prop.tsv
