@@ -20,9 +20,9 @@
 #include <iomanip>
 #include <boost/thread/thread.hpp>
 #include <boost/program_options.hpp>
+#include <boost/filesystem/fstream.hpp>
 #include <boost/filesystem/operations.hpp>
 #include <mongo/client/dbclient.h>
-#include "fstream.hpp"
 #include "seed.hpp"
 #include "receptor.hpp"
 #include "ligand.hpp"
@@ -31,20 +31,26 @@
 #include "monte_carlo_task.hpp"
 #include "summary.hpp"
 
-using std::string;
-using std::cout;
-
 int main(int argc, char* argv[])
 {
-	// Create program options.
+	using std::string;
+	using std::cout;
+	using boost::array;
+	using boost::filesystem::ifstream;
+	using boost::filesystem::ofstream;
 	using namespace boost::program_options;
+	using namespace mongo;
+	using namespace bson;
+	using namespace idock;
+
+	// Create program options.
 	string host, db, user, pwd;
 	options_description options("input (required)");
 	options.add_options()
 		("host", value<string>(&host)->required(), "server to connect to")
 		("db"  , value<string>(&db  )->required(), "database to login to")
 		("user", value<string>(&user)->required(), "username for authentication")
-		("pwd" , value<string>(&pwd )->required(), "password for authentication")	
+		("pwd" , value<string>(&pwd )->required(), "password for authentication")
 		;
 
 	// If no command line argument is supplied, simply print the usage and exit.
@@ -60,7 +66,6 @@ int main(int argc, char* argv[])
 	vm.notify();
 
 	// Connect to host.
-	using namespace mongo;
 	DBClientConnection c;
 	cout << "Connecting to " << host << '\n';
 	c.connect(host);
@@ -71,9 +76,10 @@ int main(int argc, char* argv[])
 	c.auth(db, user, pwd, errmsg);
 
 	// Initialize the default values of immutable arguments.
-	using namespace idock;
+	const size_t num_ligands = 12171187;
 	const path jobs_path = "jobs";
-	const path slices_path = "slices";
+	const path ligands_path = "16.pdbqt";
+	const path headers_path = "16_hdr.bin";
 	const path csv_path = "log.csv";
 	const size_t num_threads = boost::thread::hardware_concurrency();
 	const size_t seed = random_seed();
@@ -87,18 +93,20 @@ int main(int argc, char* argv[])
 	const fl default_mwt_ub = 500;
 	const fl default_logp_lb = -1;
 	const fl default_logp_ub = 6;
-	const fl default_hbd_lb = 1;
-	const fl default_hbd_ub = 6;
-	const fl default_hba_lb = 1;
-	const fl default_hba_ub = 10;
-	const fl default_nrb_lb = 2;
-	const fl default_nrb_ub = 9;
-	const fl default_tpsa_lb = 20;
-	const fl default_tpsa_ub = 80;
 	const fl default_ad_lb = -50;
 	const fl default_ad_ub = 50;
 	const fl default_pd_lb = -150;
 	const fl default_pd_ub = 0;
+	const size_t default_hbd_lb = 1;
+	const size_t default_hbd_ub = 6;
+	const size_t default_hba_lb = 1;
+	const size_t default_hba_ub = 10;
+	const size_t default_tpsa_lb = 20;
+	const size_t default_tpsa_ub = 80;
+	const int64_t default_charge_lb = 0;
+	const int64_t default_charge_ub = 0;
+	const size_t default_nrb_lb = 2;
+	const size_t default_nrb_ub = 9;
 	const path default_output_folder_path = "output";
 	const size_t max_conformations = 100;
 	const size_t max_results = 20; // Maximum number of results obtained from a single Monte Carlo task.
@@ -143,16 +151,12 @@ int main(int argc, char* argv[])
 	cout << '\n';
 
 	// Precalculate alpha values for determining step size in BFGS.
-	using boost::array;
 	array<fl, num_alphas> alphas;
 	alphas[0] = 1;
 	for (size_t i = 1; i < num_alphas; ++i)
 	{
 		alphas[i] = alphas[i - 1] * 0.1;
 	}
-
-	using idock::ifstream;
-	using idock::ofstream;
 
 	// Initialize a vector of empty grid maps. Each grid map corresponds to an XScore atom type.
 	vector<array3d<fl>> grid_maps(XS_TYPE_SIZE);
@@ -162,7 +166,6 @@ while (true)
 {
 	// Fetch a pending job. Start a transaction, fetch a job where machine == null or Date.now() > time + delta, and update machine and time.
 	// Always fetch the same job if not all the slices are done. Use the old _id for query. No need to 1) define box, 2) parse receptor, 3) create grid maps.
-	using namespace bson;
 	auto cursor = c.query("istar.jobs", QUERY("progress" << 0), 1);
 	if (!cursor->more())
 	{
@@ -179,43 +182,49 @@ while (true)
 
 	const auto e = c.getLastError();
 	if (!e.empty())
-	{ 
+	{
 		cerr << e << '\n';
 	}
 
 	using boost::filesystem::path;
 	const path job_path = jobs_path / _id;
-	const path receptor_path = job_path / "receptor.pdbqt";
-	const path slice_path = slices_path / slice;
-	const fl center_x = p["center_x"].Double();
-	const fl center_y = p["center_y"].Double();
-	const fl center_z = p["center_z"].Double();
-	const fl size_x = p["size_x"].Double();
-	const fl size_y = p["size_y"].Double();
-	const fl size_z = p["size_z"].Double();
-	const fl mwt_lb = p["mwt_lb"].ok() ? p["mwt_lb"].Double() : default_mwt_lb;
-	const fl mwt_ub = p["mwt_ub"].ok() ? p["mwt_ub"].Double() : default_mwt_ub;
-	const fl logp_lb = p["logp_lb"].ok() ? p["logp_lb"].Double() : default_logp_lb;
-	const fl logp_ub = p["logp_ub"].ok() ? p["logp_ub"].Double() : default_logp_ub;
-	const fl hbd_lb = p["hbd_lb"].ok() ? p["hbd_lb"].Double() : default_hbd_lb;
-	const fl hbd_ub = p["hbd_ub"].ok() ? p["hbd_ub"].Double() : default_hbd_ub;
-	const fl hba_lb = p["hba_lb"].ok() ? p["hba_lb"].Double() : default_hba_lb;
-	const fl hba_ub = p["hba_ub"].ok() ? p["hba_ub"].Double() : default_hba_ub;
-	const fl nrb_lb = p["nrb_lb"].ok() ? p["nrb_lb"].Double() : default_nrb_lb;
-	const fl nrb_ub = p["nrb_ub"].ok() ? p["nrb_ub"].Double() : default_nrb_ub;
-	const fl tpsa_lb = p["tpsa_lb"].ok() ? p["tpsa_lb"].Double() : default_tpsa_lb;
-	const fl tpsa_ub = p["tpsa_ub"].ok() ? p["tpsa_ub"].Double() : default_tpsa_ub;
-	const fl ad_lb = p["ad_lb"].ok() ? p["ad_lb"].Double() : default_ad_lb;
-	const fl ad_ub = p["ad_ub"].ok() ? p["ad_ub"].Double() : default_ad_ub;
-	const fl pd_lb = p["pd_lb"].ok() ? p["pd_lb"].Double() : default_pd_lb;
-	const fl pd_ub = p["pd_ub"].ok() ? p["pd_ub"].Double() : default_pd_ub;
+	const auto center_x = p["center_x"].Double();
+	const auto center_y = p["center_y"].Double();
+	const auto center_z = p["center_z"].Double();
+	const auto size_x = p["size_x"].Double();
+	const auto size_y = p["size_y"].Double();
+	const auto size_z = p["size_z"].Double();
+	const auto mwt_lb = p["mwt_lb"].ok() ? p["mwt_lb"].Double() : default_mwt_lb;
+	const auto mwt_ub = p["mwt_ub"].ok() ? p["mwt_ub"].Double() : default_mwt_ub;
+	const auto logp_lb = p["logp_lb"].ok() ? p["logp_lb"].Double() : default_logp_lb;
+	const auto logp_ub = p["logp_ub"].ok() ? p["logp_ub"].Double() : default_logp_ub;
+	const auto ad_lb = p["ad_lb"].ok() ? p["ad_lb"].Double() : default_ad_lb;
+	const auto ad_ub = p["ad_ub"].ok() ? p["ad_ub"].Double() : default_ad_ub;
+	const auto pd_lb = p["pd_lb"].ok() ? p["pd_lb"].Double() : default_pd_lb;
+	const auto pd_ub = p["pd_ub"].ok() ? p["pd_ub"].Double() : default_pd_ub;
+	const auto hbd_lb = p["hbd_lb"].ok() ? p["hbd_lb"].Double() : default_hbd_lb;
+	const auto hbd_ub = p["hbd_ub"].ok() ? p["hbd_ub"].Double() : default_hbd_ub;
+	const auto hba_lb = p["hba_lb"].ok() ? p["hba_lb"].Double() : default_hba_lb;
+	const auto hba_ub = p["hba_ub"].ok() ? p["hba_ub"].Double() : default_hba_ub;
+	const auto tpsa_lb = p["tpsa_lb"].ok() ? p["tpsa_lb"].Double() : default_tpsa_lb;
+	const auto tpsa_ub = p["tpsa_ub"].ok() ? p["tpsa_ub"].Double() : default_tpsa_ub;
+	const auto charge_lb = p["charge_lb"].ok() ? p["charge_lb"].Double() : default_nrb_lb;
+	const auto charge_ub = p["charge_ub"].ok() ? p["charge_ub"].Double() : default_nrb_ub;
+	const auto nrb_lb = p["nrb_lb"].ok() ? p["nrb_lb"].Double() : default_nrb_lb;
+	const auto nrb_ub = p["nrb_ub"].ok() ? p["nrb_ub"].Double() : default_nrb_ub;
+
+	// Fetch a pending slice.
+	const size_t slices[101] = { 0, 121712, 243424, 365136, 486848, 608560, 730272, 851984, 973696, 1095408, 1217120, 1338832, 1460544, 1582256, 1703968, 1825680, 1947392, 2069104, 2190816, 2312528, 2434240, 2555952, 2677664, 2799376, 2921088, 3042800, 3164512, 3286224, 3407936, 3529648, 3651360, 3773072, 3894784, 4016496, 4138208, 4259920, 4381632, 4503344, 4625056, 4746768, 4868480, 4990192, 5111904, 5233616, 5355328, 5477040, 5598752, 5720464, 5842176, 5963888, 6085600, 6207312, 6329024, 6450736, 6572448, 6694160, 6815872, 6937584, 7059296, 7181008, 7302720, 7424432, 7546144, 7667856, 7789568, 7911280, 8032992, 8154704, 8276416, 8398128, 8519840, 8641552, 8763264, 8884976, 9006688, 9128400, 9250112, 9371824, 9493536, 9615248, 9736960, 9858672, 9980384, 10102096, 10223808, 10345520, 10467232, 10588944, 10710655, 10832366, 10954077, 11075788, 11197499, 11319210, 11440921, 11562632, 11684343, 11806054, 11927765, 12049476, 12171187 };
+	const size_t s = lexical_cast<size_t>(slice);
+	const size_t start_lig = slices[s];
+	const size_t end_lig = slices[s + 1];
 
 	// Initialize the search space of cuboid shape.
 	const box b(vec3(center_x, center_y, center_z), vec3(size_x, size_y, size_z), grid_granularity);
 
 	// Parse the receptor.
-	cout << "Parsing receptor " << receptor_path << '\n';
-	const receptor rec(receptor_path);
+	cout << "Parsing receptor\n";
+	const receptor rec(p["receptor"].String());
 
 	// Divide the box into coarse-grained partitions for subsequent grid map creation.
 	array3d<vector<size_t>> partitions(b.num_partitions);
@@ -261,7 +270,6 @@ while (true)
 	ptr_vector<packaged_task<void>> mc_tasks(num_mc_tasks);
 
 	// Reserve storage for result containers. ptr_vector<T> is used for fast sorting.
-
 	ptr_vector<ptr_vector<result>> result_containers;
 	result_containers.resize(num_mc_tasks);
 	for (size_t i = 0; i < num_mc_tasks; ++i)
@@ -277,40 +285,47 @@ while (true)
 	cout << "Running " << num_mc_tasks << " Monte Carlo tasks per ligand\n";
 
 	// Perform phase 1 screening, filter ligands, and write zero conformation. Refresh progress every 1%.
-	// Perform docking for each file in the ligand folder.
-	size_t num_conformations; // Number of conformation to output.
-
-	size_t num_ligands = 0; // Ligand counter.
-	directory_iterator dir_iter(slice_path);
 
 	// Skip ligands that have been screened.
 	if (exists(csv_path))
 	{
 		// Obtain last line
 		ifstream csv(csv_path);
-		for (; dir_iter != end_dir_iter; ++dir_iter)
-		{
-			// Increment the ligand counter.
-			++num_ligands;
-		}
 	}
 
+	string line;
+	line.reserve(80);
+	ifstream headers(headers_path);
+	headers.seekg(sizeof(size_t) * start_lig);
+	ifstream ligands(ligands_path);
 	ofstream csv(csv_path);
 	csv.setf(std::ios::fixed, std::ios::floatfield);
 	csv << '\n' << std::setprecision(3);
-	for (; dir_iter != end_dir_iter; ++dir_iter)
+	for (size_t i = start_lig; i < end_lig; ++i)
 	{
-		// Increment the ligand counter.
-		++num_ligands;
+		// Locate a ligand.
+		size_t header;
+		headers.read((char*)&header, sizeof(size_t));
+		ligands.seekg(header);
 
-		// Obtain a ligand.
-		const path input_ligand_path = dir_iter->path();
-		const auto input_ligand_stem = input_ligand_path.stem().string();
+		// Check if the ligand satisfies the filtering conditions.
+		getline(ligands, line);
+		const auto mwt = right_cast<fl>(line, 21, 28);
+		const auto logp = right_cast<fl>(line, 30, 37);
+		const auto ad = right_cast<fl>(line, 39, 46);
+		const auto pd = right_cast<fl>(line, 48, 55);
+		const auto hbd = right_cast<size_t>(line, 57, 59);
+		const auto hba = right_cast<size_t>(line, 61, 63);
+		const auto tpsa = right_cast<size_t>(line, 65, 67);
+		const auto charge = right_cast<int64_t>(line, 69, 71);
+		const auto nrb = right_cast<size_t>(line, 73, 75);
+		if (!((mwt_lb <= mwt) && (mwt <= mwt_ub) && (logp_lb <= logp) && (logp <= logp_ub) && (ad_lb <= ad) && (ad <= ad_ub) && (pd_lb <= pd) && (pd <= pd_ub) && (hbd_lb <= hbd) && (hbd <= hbd_ub) && (hba_lb <= hba) && (hba <= hba_ub) && (tpsa_lb <= tpsa) && (tpsa <= tpsa_ub) && (charge_lb <= charge) && (charge <= charge_ub) && (nrb_lb <= nrb) && (nrb <= nrb_ub))) continue;
 
-		// Filter the ligand.
+		// Obtain ZINC ID.
+		const auto zinc_id = line.substr(10, 8);
 
 		// Parse the ligand.
-		ligand lig(input_ligand_path);
+		ligand lig("");
 
 		// Create grid maps on the fly if necessary.
 		BOOST_ASSERT(atom_types_to_populate.empty());
@@ -398,8 +413,10 @@ while (true)
 		results.clear();
 
 		// Dump ligand summaries to the csv file.
-		csv << input_ligand_stem << ',' << best_result.e_nd << '\n';
+		csv << zinc_id << ',' << best_result.e_nd << '\n';
 	}
+	csv.close();
+	ligands.close();
 
 	// If all the slices are done, perform phase 2 screening.
 	if (!c.query("istar.jobs", QUERY("_id" << _id << "progress" << 100), 1)->more()) continue;
@@ -408,8 +425,6 @@ while (true)
 	ptr_vector<summary> summaries(num_ligands);
 	vector<fl> energies;
 	energies.reserve(max_conformations);
-	string line;
-	line.reserve(79);
 
 	// Combine multiple csv and sort.
 	for (directory_iterator dir_iter(job_path); dir_iter != end_dir_iter; ++dir_iter)
@@ -430,6 +445,7 @@ while (true)
 	// Save summaries.
 
 	const path output_folder_path = job_path / "output";
+	size_t num_conformations; // Number of conformation to output.
 
 	// Send email with link to /.
 	const auto email = p["email"].String();
