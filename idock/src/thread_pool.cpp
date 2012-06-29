@@ -23,33 +23,7 @@
 
 namespace idock
 {
-	const fl progress_bar::num_bars_inverse = static_cast<fl>(1) / num_bars;
-
-	progress_bar::progress_bar(const size_t num_tasks) : num_tasks(num_tasks)
-	{
-		const fl delta = num_tasks * num_bars_inverse;
-		(*this)[0] = delta - epsilon;
-		for (size_t i = 1; i < num_bars; ++i)
-		{
-			(*this)[i] = (*this)[i - 1] + delta;
-		}
-	}
-
-	/// For extracting the number of tasks out of a progress bar.
-	class progress_bar_num_tasks_extractor
-	{
-	public:
-		const size_t& operator()(const progress_bar& prog_bar) const
-		{
-			return prog_bar.num_tasks;
-		}
-	};
-
-	/// Define flyweight type for progress_bar.
-	using namespace boost::flyweights;
-	typedef	flyweight<key_value<size_t, progress_bar, progress_bar_num_tasks_extractor>, no_tracking> progress_bar_flyweight;
-
-	thread_pool::thread_pool(const size_t num_threads) : num_threads(num_threads), num_tasks(0), num_started_tasks(0), num_completed_tasks(0), next_bar_index(0), exiting(false)
+	thread_pool::thread_pool(const size_t num_threads) : num_threads(num_threads), num_tasks(0), num_started_tasks(0), num_completed_tasks(0), exiting(false)
 	{
 		// Create threads to call (*this)().
 		for (size_t i = 0; i < num_threads; ++i)
@@ -65,10 +39,6 @@ namespace idock
 		num_tasks = tasks.size();
 		num_started_tasks = 0;
 		num_completed_tasks = 0;
-
-		// Initialize hash variables for displaying progress bar.
-		prog_bar_ptr = &progress_bar_flyweight(num_tasks).get();
-		next_bar_index = 0;
 
 		// Notify the threads to run tasks.
 		task_incoming.notify_all();
@@ -107,13 +77,6 @@ namespace idock
 				{
 					mutex::scoped_lock self_lk(self);
 					++num_completed_tasks;
-
-					// Flush hashes if necessary.
-					while ((next_bar_index < num_bars) && (num_completed_tasks >= (*prog_bar_ptr)[next_bar_index]))
-					{
-						std::cout << '#' << std::flush;
-						++next_bar_index;
-					}
 				}
 
 				// One task is completed. Notify the main thread.

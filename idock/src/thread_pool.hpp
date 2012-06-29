@@ -39,19 +39,6 @@ namespace idock
 	using boost::packaged_task;
 	using boost::unique_future;
 
-	const size_t num_bars = 10; ///< Number of bars of a progress.
-
-	class progress_bar : public array<fl, num_bars>
-	{
-	public:
-		static const fl num_bars_inverse; ///< 1 / num_bars.
-
-		const size_t num_tasks; ///< Number of tasks.
-
-		/// Constructs a progress bar with bar values determined from the number of tasks.
-		explicit progress_bar(const size_t num_tasks);
-	};
-
 	/// Represents a thread pool and incorporates a progress bar. It inherits from boost::thread_group for the usage of create_thread and join_all.
 	class thread_pool : public thread_group
 	{
@@ -74,11 +61,9 @@ namespace idock
 	protected:
 		const size_t num_threads; ///< Number of threads to run tasks.
 		ptr_vector<packaged_task<void>>* tasks_ptr; ///< Pointer to the tasks to run.
-		const progress_bar* prog_bar_ptr; ///< Pointer to the progress bar.
 		size_t num_tasks; ///< Number of tasks.
 		size_t num_started_tasks; ///< Number of tasks that have started running.
 		size_t num_completed_tasks; ///< Number of tasks that have completed running.
-		size_t next_bar_index; ///< Index to the next bar value.
 		condition task_completion;	///< Completion event of a running task.
 		condition task_incoming; ///< Incoming event of new tasks.
 		bool exiting; ///< If true, notify threads to return.
