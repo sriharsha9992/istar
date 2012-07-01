@@ -54,8 +54,8 @@ if (cluster.isMaster) {
     for (var i = 0; i < numCPUs; i++) {
       cluster.fork().on('message', msg);
     }
-    cluster.on('death', function(worker) {
-      console.log('Worker process %d died. Restarting...', worker.pid);
+    cluster.on('exit', function(worker) {
+      console.log('Worker process %d died. Restarting...', worker.process.pid);
       cluster.fork().on('message', msg);
     });
 //  });
