@@ -18,12 +18,12 @@
 
 #include <iostream>
 #include <iomanip>
+#include <ctime>
 #include <boost/thread/thread.hpp>
 #include <boost/program_options.hpp>
 #include <boost/filesystem/fstream.hpp>
 #include <boost/filesystem/operations.hpp>
 #include <mongo/client/dbclient.h>
-#include "seed.hpp"
 #include "receptor.hpp"
 #include "ligand.hpp"
 #include "thread_pool.hpp"
@@ -33,8 +33,8 @@
 
 int main(int argc, char* argv[])
 {
-	using std::string;
 	using std::cout;
+	using std::string;
 	using boost::array;
 	using boost::filesystem::ifstream;
 	using boost::filesystem::ofstream;
@@ -78,11 +78,11 @@ int main(int argc, char* argv[])
 	// Initialize the default values of immutable arguments.
 	const size_t num_ligands = 12171187;
 	const path jobs_path = "jobs";
-	const path ligands_path = "16.pdbqt";
+	const path ligands_path = "16_lig.pdbqt";
 	const path headers_path = "16_hdr.bin";
 	const path csv_path = "log.csv";
 	const size_t num_threads = boost::thread::hardware_concurrency();
-	const size_t seed = random_seed();
+	const size_t seed = time(0);
 	const size_t num_mc_tasks = 32;
 	const fl energy_range = 3.0;
 	const fl grid_granularity = 0.08;
