@@ -15,30 +15,25 @@ if (cluster.isMaster) {
   var charge = new Array(num_ligands);
   var nrb = new Array(num_ligands);
   // Parse ligand properties
-  var prop = '16_prop.tsv';
+  var prop = '16_prop.bin';
   console.log('Parsing %s', prop);
   var start = Date.now();
-  var it = 0;
-  require('carrier').carry(require('fs').createReadStream(prop)).on('line', function(line) {
-    var t1 = line.indexOf('\t', 3);
-    var t2 = line.indexOf('\t', t1 + 5);
-    var t3 = line.indexOf('\t', t2 + 2);
-    var t4 = line.indexOf('\t', t3 + 2);
-    var t5 = line.indexOf('\t', t4 + 2);
-    var t6 = line.indexOf('\t', t5 + 2);
-    var t7 = line.indexOf('\t', t6 + 2);
-    var t8 = line.indexOf('\t', t7 + 2);
-    mwt[it] = parseFloat(line.substr(0, t1));
-    logp[it] = parseFloat(line.substr(t1 + 1, t2 - t1 - 1));
-    ad[it] = parseFloat(line.substr(t2 + 1, t3 - t2 - 1));
-    pd[it] = parseFloat(line.substr(t3 + 1, t4 - t3 - 1));
-    hbd[it] = parseInt(line.substr(t4 + 1, t5 - t4 - 1));
-    hba[it] = parseInt(line.substr(t5 + 1, t6 - t5 - 1));
-    tpsa[it] = parseInt(line.substr(t6 + 1, t7 - t6 - 1));
-    charge[it] = parseInt(line.substr(t7 + 1, t8 - t7 - 1));
-    nrb[it++] = parseInt(line.substr(t8 + 1));
-  }).on('end', function() {
-    console.log('Parsed %d ligands within %d seconds', it, Date.now() - start);
+  var buf = new require('buffer').Buffer(26);
+  var fs = require('fs');
+  fs.open(prop, 'r', function (err, fd) {
+    for (i = 0; i < num_ligands; ++i) {
+      fs.readSync(fd, buf, 0, 26);
+      mwt[i] = buf.readFloatLE(0);
+      logp[i] = buf.readFloatLE(4);
+      ad[i] = buf.readFloatLE(8);
+      pd[i] = buf.readFloatLE(12);
+      hbd[i] = buf.readUInt16LE(16);
+      hba[i] = buf.readUInt16LE(18);
+      tpsa[i] = buf.readUInt16LE(20);
+      charge[i] =buf.readInt16LE(22);
+      nrb[i] = buf.readUInt16LE(24);
+    }
+    console.log("Parsed %d ligands within %d seconds", num_ligands, Date.now() - start);
     // Fork worker processes with cluster
     var numCPUs = require('os').cpus().length;
     console.log('Forking %d worker processes', numCPUs);
@@ -55,8 +50,8 @@ if (cluster.isMaster) {
     for (var i = 0; i < numCPUs; i++) {
       cluster.fork().on('message', msg);
     }
-    cluster.on('exit', function(worker) {
-      console.log('Worker process %d died. Restarting...', worker.process.pid);
+    cluster.on('death', function(worker) {
+      console.log('Worker process %d died. Restarting...', worker.pid);
       cluster.fork().on('message', msg);
     });
   });
