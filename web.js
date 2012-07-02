@@ -17,7 +17,8 @@ if (cluster.isMaster) {
   // Parse ligand properties
   var prop = '16_prop.tsv';
   console.log('Parsing %s', prop);
-  var it = 0;/*
+  var start = Date.now();
+  var it = 0;
   require('carrier').carry(require('fs').createReadStream(prop)).on('line', function(line) {
     var t1 = line.indexOf('\t', 3);
     var t2 = line.indexOf('\t', t1 + 5);
@@ -36,8 +37,8 @@ if (cluster.isMaster) {
     tpsa[it] = parseInt(line.substr(t6 + 1, t7 - t6 - 1));
     charge[it] = parseInt(line.substr(t7 + 1, t8 - t7 - 1));
     nrb[it++] = parseInt(line.substr(t8 + 1));
-  }).on('end', function() {*/
-    console.log('Parsed %d ligands', it);
+  }).on('end', function() {
+    console.log('Parsed %d ligands within %d seconds', it, Date.now() - start);
     // Fork worker processes with cluster
     var numCPUs = require('os').cpus().length;
     console.log('Forking %d worker processes', numCPUs);
@@ -58,7 +59,7 @@ if (cluster.isMaster) {
       console.log('Worker process %d died. Restarting...', worker.process.pid);
       cluster.fork().on('message', msg);
     });
-//  });
+  });
 } else {
   // Configure express server
   var express = require('express'),
