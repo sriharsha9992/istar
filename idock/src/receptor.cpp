@@ -16,12 +16,14 @@
 
 */
 
-#include "fstream.hpp"
+#include <boost/filesystem/fstream.hpp>
 #include "parsing_error.hpp"
 #include "receptor.hpp"
 
 namespace idock
 {
+	using boost::filesystem::ifstream;
+
 	receptor::receptor(const path& p)
 	{
 		// Initialize necessary variables for constructing a receptor.

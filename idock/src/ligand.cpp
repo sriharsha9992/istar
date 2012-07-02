@@ -16,12 +16,15 @@
 
 */
 
-#include "fstream.hpp"
+#include <boost/filesystem/fstream.hpp>
 #include "parsing_error.hpp"
 #include "ligand.hpp"
 
 namespace idock
 {
+	using boost::filesystem::ifstream;
+	using boost::filesystem::ofstream;
+
 	ligand::ligand(const path& p) : num_active_torsions(0)
 	{
 		// Initialize necessary variables for constructing a ligand.
