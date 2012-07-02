@@ -26,10 +26,10 @@ require('carrier').carry(fs.createReadStream('16_prop.tsv'), function(line) {
   buf.writeFloatLE(logp, 4);
   buf.writeFloatLE(ad, 8);
   buf.writeFloatLE(pd, 12);
-  buf.writeUInt16LE(hbd, 16);
-  buf.writeUInt16LE(hba, 18);
-  buf.writeUInt16LE(tpsa, 20);
+  buf.writeInt16LE(hbd, 16);
+  buf.writeInt16LE(hba, 18);
+  buf.writeInt16LE(tpsa, 20);
   buf.writeInt16LE(charge, 22);
-  buf.writeUInt16LE(nrb, 24);
+  buf.writeInt16LE(nrb, 24);
   fs.writeSync(fd, buf, 0, 26);
 });
