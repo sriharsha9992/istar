@@ -4,5 +4,4 @@ node_modules
 *.log
 idock/obj
 idock/bin
-test
-16_prop.tsv
+16_prop.*
