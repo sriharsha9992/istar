@@ -36,59 +36,75 @@ int main(int argc, char* argv[])
 	using std::cout;
 	using std::string;
 	using boost::array;
+	using boost::filesystem::path;
 	using boost::filesystem::ifstream;
 	using boost::filesystem::ofstream;
-	using namespace boost::program_options;
+	using boost::thread;
+	using boost::bind;
+	using namespace boost::this_thread;
+	using namespace boost::posix_time;
 	using namespace mongo;
 	using namespace bson;
 	using namespace idock;
 
-	// Create program options.
-	string host, db, user, pwd;
-	options_description options("input (required)");
-	options.add_options()
-		("host", value<string>(&host)->required(), "server to connect to")
-		("db"  , value<string>(&db  )->required(), "database to login to")
-		("user", value<string>(&user)->required(), "username for authentication")
-		("pwd" , value<string>(&pwd )->required(), "password for authentication")
-		;
+	cout << "idock 1.5\n";
 
-	// If no command line argument is supplied, simply print the usage and exit.
-	if (argc == 1)
+	string host, db, user, pwd;
 	{
-		cout << options;
-		return 0;
+		// Create program options.
+		using namespace boost::program_options;
+		options_description options("input (required)");
+		options.add_options()
+			("host", value<string>(&host)->required(), "server to connect to")
+			("db"  , value<string>(&db  )->required(), "database to login to")
+			("user", value<string>(&user)->required(), "username for authentication")
+			("pwd" , value<string>(&pwd )->required(), "password for authentication")
+			;
+
+		// If no command line argument is supplied, simply print the usage and exit.
+		if (argc == 1)
+		{
+			cout << options;
+			return 0;
+		}
+
+		// Parse command line arguments.
+		variables_map vm;
+		store(parse_command_line(argc, argv, options), vm);
+		vm.notify();
 	}
 
-	// Parse command line arguments.
-	variables_map vm;
-	store(parse_command_line(argc, argv, options), vm);
-	vm.notify();
+	DBClientConnection conn;
+	{
+		// Connect to host and authenticate user.
+		cout << "Connecting to " << host << " and authenticating user " << user << '\n';
+		string errmsg;
+		if ((!conn.connect(host, errmsg)) || (!conn.auth(db, user, pwd, errmsg)))
+		{
+			cout << errmsg << '\n';
+			return 1;
+		}
+	}
 
-	// Connect to host.
-	DBClientConnection c;
-	cout << "Connecting to " << host << '\n';
-	c.connect(host);
+	// TODO: Separate arguments for phases 1 and 2.
 
-	// Authenticate user.
-	cout << "Authenticating user " << user << '\n';
-	string errmsg;
-	c.auth(db, user, pwd, errmsg);
-
-	// Initialize the default values of immutable arguments.
-	const size_t num_ligands = 12171187;
-	const path jobs_path = "jobs";
+	// Initialize default values of constant arguments.
+	const directory_iterator end_dir_iter;
 	const path ligands_path = "16_lig.pdbqt";
 	const path headers_path = "16_hdr.bin";
-	const path csv_path = "log.csv";
-	const size_t num_threads = boost::thread::hardware_concurrency();
+	const path jobs_path = "jobs";
+	const path log1_path = "log1.csv"; // Phase 1 log
+	const path log2_path = "log2.csv"; // Phase 2 log
+	const string jobs_coll = db + ".jobs";
+	const size_t num_ligands = 12171187;
+	const size_t num_threads = thread::hardware_concurrency();
 	const size_t seed = time(0);
 	const size_t num_mc_tasks = 32;
+	const size_t sleep_hours = 1;
 	const fl energy_range = 3.0;
 	const fl grid_granularity = 0.08;
-	const directory_iterator end_dir_iter; // A default constructed directory_iterator acts as the end iterator.
 
-	// Initialize the default values of optional arguments.
+	// Initialize default values of optional arguments.
 	const fl default_mwt_lb = 400;
 	const fl default_mwt_ub = 500;
 	const fl default_logp_lb = -1;
@@ -138,11 +154,11 @@ int main(int argc, char* argv[])
 		for (size_t t1 =  0; t1 < XS_TYPE_SIZE; ++t1)
 		for (size_t t2 = t1; t2 < XS_TYPE_SIZE; ++t2)
 		{
-			sf_tasks.push_back(new packaged_task<void>(boost::bind<void>(&scoring_function::precalculate, boost::ref(sf), t1, t2, boost::cref(rs))));
+			sf_tasks.push_back(new packaged_task<void>(bind<void>(&scoring_function::precalculate, boost::ref(sf), t1, t2, boost::cref(rs))));
 		}
 		BOOST_ASSERT(sf_tasks.size() == num_sf_tasks);
 
-		// Run the scoring function tasks in parallel asynchronously and display the progress bar with hashes.
+		// Run the scoring function tasks in parallel asynchronously.
 		tp.run(sf_tasks);
 
 		// Wait until all the scoring function tasks are completed.
@@ -165,27 +181,29 @@ int main(int argc, char* argv[])
 	{
 		// Fetch a pending job. Start a transaction, fetch a job where machine == null or Date.now() > time + delta, and update machine and time.
 		// Always fetch the same job if not all the slices are done. Use the old _id for query. No need to 1) define box, 2) parse receptor, 3) create grid maps.
-		auto cursor = c.query("istar.jobs", QUERY("progress" << 0), 1);
+		cout << "Fetching a job slice from " << jobs_coll << '\n';
+//		auto cursor = conn.query("istar.jobs", QUERY("progress" << 0), 1); // nToReturn = 1
+		auto cursor = conn.query(jobs_coll);
 		if (!cursor->more())
 		{
 			// Sleep for an hour.
-			boost::this_thread::sleep(boost::posix_time::hours(1));
+			cout << "Sleeping the current thread for " << sleep_hours << " hours\n";
+			sleep(hours(1));
 			continue;
 		}
 
-		auto p = cursor->next();
-		const auto _id = p["_id"].String();
+		auto p = cursor->next(); // BSONObj
+		const auto _id = p["_id"].String(); // BSONElement
 		const auto slice = p["slice"].String();
 		cout << "Executing job " << _id << '\n';
-		c.update("istar.jobs", BSON("_id" << _id << "$atomic" << 1), BSON("$inc" << BSON("progress" << 1)));
+		conn.update("istar.jobs", BSON("_id" << _id << "$atomic" << 1), BSON("$inc" << BSON("progress" << 1)));
 
-		const auto e = c.getLastError();
+		const auto e = conn.getLastError();
 		if (!e.empty())
 		{
 			cerr << e << '\n';
 		}
-
-		using boost::filesystem::path;
+/*
 		const path job_path = jobs_path / _id;
 		const auto center_x = p["center_x"].Double();
 		const auto center_y = p["center_y"].Double();
@@ -286,10 +304,10 @@ int main(int argc, char* argv[])
 		// Perform phase 1 screening, filter ligands, and write zero conformation. Refresh progress every 1%.
 
 		// Skip ligands that have been screened.
-		if (exists(csv_path))
+		if (exists(log1_path))
 		{
 			// Obtain last line
-			ifstream csv(csv_path);
+			ifstream csv(log1_path);
 		}
 
 		string line;
@@ -297,7 +315,7 @@ int main(int argc, char* argv[])
 		ifstream headers(headers_path);
 		headers.seekg(sizeof(size_t) * start_lig);
 		ifstream ligands(ligands_path);
-		ofstream csv(csv_path);
+		ofstream csv(log1_path);
 		csv.setf(std::ios::fixed, std::ios::floatfield);
 		csv << '\n' << std::setprecision(3);
 		for (size_t i = start_lig; i < end_lig; ++i)
@@ -418,7 +436,7 @@ int main(int argc, char* argv[])
 		ligands.close();
 
 		// If all the slices are done, perform phase 2 screening.
-		if (!c.query("istar.jobs", QUERY("_id" << _id << "progress" << 100), 1)->more()) continue;
+		if (!conn.query("istar.jobs", QUERY("_id" << _id << "progress" << 100), 1)->more()) continue;
 
 		// Initialize necessary variables for storing ligand summaries.
 		ptr_vector<summary> summaries(num_ligands);
@@ -448,5 +466,6 @@ int main(int argc, char* argv[])
 
 		// Send email with link to /.
 		const auto email = p["email"].String();
+*/
 	}
 }
