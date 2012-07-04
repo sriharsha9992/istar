@@ -24,9 +24,9 @@
 #include <boost/filesystem/fstream.hpp>
 #include <boost/filesystem/operations.hpp>
 #include <mongo/client/dbclient.h>
-#include "Poco/Net/MailMessage.h"
-#include "Poco/Net/MailRecipient.h"
-#include "Poco/Net/SMTPClientSession.h"
+#include <Poco/Net/MailMessage.h>
+#include <Poco/Net/MailRecipient.h>
+#include <Poco/Net/SMTPClientSession.h>
 #include "receptor.hpp"
 #include "ligand.hpp"
 #include "thread_pool.hpp"
