@@ -21,7 +21,6 @@
 #define IDOCK_SUMMARY_HPP
 
 #include "common.hpp"
-#include <boost/filesystem/path.hpp>
 
 namespace idock
 {
@@ -29,15 +28,15 @@ namespace idock
 	class summary
 	{
 	public:
-		const string filestem;
-		const vector<fl> energies;
-		explicit summary(const string& filestem, const vector<fl>& energies) : filestem(filestem), energies(energies) {}
+		const string lig_id;
+		const fl energy;
+		explicit summary(const string& lig_id, const fl energy) : lig_id(lig_id), energy(energy) {}
 	};
 
 	/// For sorting ptr_vector<summary>.
 	inline bool operator<(const summary& a, const summary& b)
 	{
-		return a.energies.front() < b.energies.front();
+		return a.energy < b.energy;
 	}
 }
 

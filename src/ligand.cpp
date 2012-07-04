@@ -196,6 +196,7 @@ namespace idock
 			{
 				// This line will be dumped to the output ligand file.
 				lines.push_back(line);
+				if (starts_with(line, "TORSDOF")) break;
 			}
 		}
 		BOOST_ASSERT(lines.size() <= num_lines); // Some lines like "REMARK", "WARNING", "TER" will not be dumped to the output ligand file.

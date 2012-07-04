@@ -49,9 +49,9 @@ namespace idock
 
 		/// Constructs a search space of cubic shape.
 		/// @param center Box center.
-		/// @param span_ Intended 3D sizes of box. It will be expanded to the nearest multiple of grid_granularity.
+		/// @param size Intended 3D sizes of box. It will be expanded to the nearest multiple of grid_granularity.
 		/// @param grid_granularity 1D size of grids.
-		box(const vec3& center, const vec3& span_, const fl grid_granularity);
+		box(const vec3& center, const vec3& size, const fl grid_granularity);
 
 		/// Returns true if a coordinate is within current half-open-half-close box, i.e. [corner1, corner2).
 		bool within(const vec3& coordinate) const;

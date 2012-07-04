@@ -24,13 +24,13 @@ namespace idock
 	const fl box::Default_Partition_Granularity = static_cast<fl>(3);
 	const fl box::Default_Partition_Granularity_Inverse = 1 / Default_Partition_Granularity;
 
-	box::box(const vec3& center, const vec3& span_, const fl grid_granularity) : center(center), grid_granularity(grid_granularity), grid_granularity_inverse(1 / grid_granularity), grid_size(vec3(grid_granularity, grid_granularity, grid_granularity)), grid_size_inverse(vec3(grid_granularity_inverse, grid_granularity_inverse, grid_granularity_inverse))
+	box::box(const vec3& center, const vec3& size, const fl grid_granularity) : center(center), grid_granularity(grid_granularity), grid_granularity_inverse(1 / grid_granularity), grid_size(vec3(grid_granularity, grid_granularity, grid_granularity)), grid_size_inverse(vec3(grid_granularity_inverse, grid_granularity_inverse, grid_granularity_inverse))
 	{
 		// The loop may be unrolled by enabling compiler optimization.
 		for (size_t i = 0; i < 3; ++i)
 		{
 			// Slightly expand the user-input span to the nearest multiple of granularity.
-			num_grids[i] = static_cast<size_t>(ceil(span_[i] * grid_size_inverse[i]));
+			num_grids[i] = static_cast<size_t>(ceil(size[i] * grid_size_inverse[i]));
 			BOOST_ASSERT(num_grids[i] > 0);
 			span[i] = grid_size[i] * num_grids[i];
 			num_probes[i] = num_grids[i] + 1;

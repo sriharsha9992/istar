@@ -24,6 +24,9 @@
 #include <boost/filesystem/fstream.hpp>
 #include <boost/filesystem/operations.hpp>
 #include <mongo/client/dbclient.h>
+#include "Poco/Net/MailMessage.h"
+#include "Poco/Net/MailRecipient.h"
+#include "Poco/Net/SMTPClientSession.h"
 #include "receptor.hpp"
 #include "ligand.hpp"
 #include "thread_pool.hpp"
@@ -90,7 +93,7 @@ int main(int argc, char* argv[])
 	const directory_iterator end_dir_iter;
 	const path ligands_path = "16_lig.pdbqt";
 	const path headers_path = "16_hdr.bin";
-	const path jobs_path = "jobs";
+	const path jobs_path = "public/jobs";
 	const path log1_path = "log1.csv"; // Phase 1 log
 	const path log2_path = "log2.csv"; // Phase 2 log
 	const path output_folder_path = "output";
@@ -160,9 +163,9 @@ int main(int argc, char* argv[])
 	ptr_vector<packaged_task<void>> mc_tasks(num_mc_tasks);
 	ptr_vector<ptr_vector<result>> result_containers;
 	result_containers.resize(num_mc_tasks);
-	for (size_t i = 0; i < num_mc_tasks; ++i)
+	for (auto& rc : result_containers)
 	{
-		result_containers[i].reserve(max_results);
+		rc.reserve(max_results);
 	}
 	ptr_vector<result> results;
 	results.reserve(max_results * num_mc_tasks);
@@ -181,11 +184,14 @@ int main(int argc, char* argv[])
 		auto cursor = conn.query(jobs_coll);
 		if (!cursor->more())
 		{
+			// Close ligands and headers.
 			// Sleep for an hour.
 			cout << "Sleeping the current thread for " << sleep_hours << " hours\n";
 			sleep(hours(1));
 			continue;
 		}
+
+		// Reopen ligands and headers.
 
 		auto j = cursor->next(); // BSONObj
 		const auto job_id = j["_id"].OID(); // BSONElement
@@ -278,10 +284,9 @@ int main(int argc, char* argv[])
 
 		// Resize storage for task containers.
 		const size_t num_gm_tasks = b.num_probes[0];
-		gm_tasks.resize(num_gm_tasks);
+		gm_tasks.reserve(num_gm_tasks);
 
 		// Perform phase 1 screening. 
-		cout << "Performing phase 1\n";
 		cout << "Running " << num_mc_tasks << " Monte Carlo tasks per ligand\n";
 
 		// Skip ligands that have been screened. Or fetch the new start_lig = progress from MongoDB.
@@ -292,6 +297,7 @@ int main(int argc, char* argv[])
 			// Update start_lig.
 		}
 
+		// Initialize slice csv.
 		ofstream csv(slice_path);
 		csv.setf(std::ios::fixed, std::ios::floatfield);
 		csv << '\n' << std::setprecision(3);
@@ -321,16 +327,14 @@ int main(int argc, char* argv[])
 			const auto lig_id = line.substr(10, 8);
 
 			// Parse the ligand.
+			cout << "Parsing ligand " << lig_id << '\n';
 			ligand lig(ligands);
-			cout << lig.heavy_atoms.size() << '\n';
 
 			// Create grid maps on the fly if necessary.
 			BOOST_ASSERT(atom_types_to_populate.empty());
 			const vector<size_t> ligand_atom_types = lig.get_atom_types();
-			const size_t num_ligand_atom_types = ligand_atom_types.size();
-			for (size_t i = 0; i < num_ligand_atom_types; ++i)
+			for (const auto t : ligand_atom_types)
 			{
-				const size_t t = ligand_atom_types[i];
 				BOOST_ASSERT(t < XS_TYPE_SIZE);
 				array3d<fl>& grid_map = grid_maps[t];
 				if (grid_map.initialized()) continue; // The grid map of XScore atom type t has already been populated.
@@ -340,40 +344,30 @@ int main(int argc, char* argv[])
 			const size_t num_atom_types_to_populate = atom_types_to_populate.size();
 			if (num_atom_types_to_populate)
 			{
-				// Creating grid maps is an intermediate step, and thus should not be dumped to the log file.
-				cout << "Creating " << std::setw(2) << num_atom_types_to_populate << " grid map" << ((num_atom_types_to_populate == 1) ? ' ' : 's') << "    " << std::flush;
-
-				// Populate the grid map task container.
+				cout << "Creating " << std::setw(2) << num_atom_types_to_populate << " grid maps\n";
 				BOOST_ASSERT(gm_tasks.empty());
 				for (size_t x = 0; x < num_gm_tasks; ++x)
 				{
-					gm_tasks.push_back(new packaged_task<void>(boost::bind<void>(grid_map_task, boost::ref(grid_maps), boost::cref(atom_types_to_populate), x, boost::cref(sf), boost::cref(b), boost::cref(rec), boost::cref(partitions))));
+					gm_tasks.push_back(new packaged_task<void>(bind<void>(grid_map_task, boost::ref(grid_maps), boost::cref(atom_types_to_populate), x, boost::cref(sf), boost::cref(b), boost::cref(rec), boost::cref(partitions))));
 				}
-
-				// Run the grid map tasks in parallel asynchronously and display the progress bar with hashes.
 				tp.run(gm_tasks);
-
-				// Propagate possible exceptions thrown by grid_map_task().
-				for (size_t i = 0; i < num_gm_tasks; ++i)
+				for (auto& t : gm_tasks)
 				{
-					gm_tasks[i].get_future().get();
+					t.get_future().get();
 				}
-
-				// Block until all the grid map tasks are completed.
 				tp.sync();
 				gm_tasks.clear();
 				atom_types_to_populate.clear();
 			}
 
-			// Populate the Monte Carlo task container.
+			// Run Monte Carlo tasks.
+			cout << "Running " << num_mc_tasks << " Monte Carlo tasks\n";
 			BOOST_ASSERT(mc_tasks.empty());
 			for (size_t i = 0; i < num_mc_tasks; ++i)
 			{
 				BOOST_ASSERT(result_containers[i].empty());
 				mc_tasks.push_back(new packaged_task<void>(bind<void>(monte_carlo_task, boost::ref(result_containers[i]), boost::cref(lig), eng(), boost::cref(alphas), boost::cref(sf), boost::cref(b), boost::cref(grid_maps))));
 			}
-
-			// Run the Monte Carlo tasks in parallel asynchronously.
 			tp.run(mc_tasks);
 
 			// Merge results from all the tasks into one single result container.
@@ -410,43 +404,58 @@ int main(int argc, char* argv[])
 			results.clear();
 
 			// Dump ligand summaries to the csv file.
-			csv << lig_id << ',' << best_result.e_nd << '\n';
+			cout << lig_id << ',' << best_result.e_nd << '\n';
 
-			// Refresh progress every 1%.
+			// Refresh progress every 1024 ligands.
+			if (!((i - start_lig) & 1024))
+			{
+				cout << "Current progress " << i << '\n';
+			}
 		}
 		csv.close();
-		ligands.close();
 
 		// If all the slices are done, perform phase 2 screening.
-		if (!conn.query("istar.jobs", QUERY("_id" << job_id << "progress" << 100), 1)->more()) continue;
+		if (!conn.query(jobs_coll, QUERY("_id" << job_id << "progress" << 100), 1)->more()) continue;
 
 		// Initialize necessary variables for storing ligand summaries.
 		ptr_vector<summary> summaries(num_ligands);
-		vector<fl> energies;
-		energies.reserve(max_conformations);
 
 		// Combine multiple csv and sort.
-		for (directory_iterator dir_iter(job_path); dir_iter != end_dir_iter; ++dir_iter)
+		for (size_t s = 0; s < 100; ++s)
 		{
-			const path p = dir_iter->path();
-			ifstream in(p); // Parsing starts. Open the file stream as late as possible.
+			ifstream in(job_path / (lexical_cast<string>(s) + ".csv"));
 			while (getline(in, line))
 			{
+				summaries.push_back(new summary(line.substr(0, 8), lexical_cast<fl>(line.substr(9))));
 			}
-			in.close(); // Parsing finishes. Close the file stream as soon as possible.
-			summaries.push_back(new summary(p.stem().string(), energies));
-			energies.clear();
 		}
 
 		// Sort the summaries.
 		summaries.sort();
 
 		// Save summaries.
-
-		const path output_folder_path = job_path / "output";
-		size_t num_conformations; // Number of conformation to output.
+		{
+			ofstream log1(log1_path);
+			for (const auto& s : summaries)
+			{
+				log1 << s.lig_id << ',' << s.energy << '\n';
+			}
+		}
 
 		// Send email with link to /.
-		const auto email = j["email"].String();
+		using Poco::Net::MailMessage;
+		using Poco::Net::MailRecipient;
+		using Poco::Net::SMTPClientSession;
+		MailMessage message;
+		message.setSender("istar.cuhk@gmail.com");
+		message.addRecipient(MailRecipient(MailRecipient::PRIMARY_RECIPIENT, j["email"].String()));
+		message.setSubject("Your istar job completed");
+		message.setContentType("text/plain; charset=\"utf-8\"");
+		message.setContent("View result at http://istar.cse.cuhk.edu.hk", MailMessage::ENCODING_8BIT);
+		// socks.cse.cuhk.edu.hk:1080
+		SMTPClientSession session("smtp.gmail.com", 587);
+		session.login(SMTPClientSession::AUTH_LOGIN, "istar.cuhk", "2qR8dVM9d");
+		session.sendMessage(message);
+		session.close();
 	}
 }
