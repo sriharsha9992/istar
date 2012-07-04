@@ -6,3 +6,8 @@ node_modules
 16_*
 idock
 contextio.js
+.dep.inc
+Makefile_nb
+nbproject
+build
+dist
