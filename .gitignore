@@ -2,7 +2,7 @@ node_modules
 *.conf
 *.sh
 *.log
-idock/obj
-idock/bin
-16_prop.*
+16_*
+obj
+bin
 contextio.js
