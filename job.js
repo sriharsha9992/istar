@@ -102,7 +102,7 @@ exports.create = function(job) {
       if (err) throw err;
       db.collection(collection, function(err, coll) {
         if (err) throw err;
-        coll.insert(job, function(err, docs) {
+        coll.insert(f.res, function(err, docs) {
           if (err) throw err;
           db.close();
         });
