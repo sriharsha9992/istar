@@ -37,7 +37,7 @@ namespace idock
 	{
 	public:
 		/// Constructs a parsing error.
-		parsing_error(const path& file, const size_t line, const string& reason) : domain_error("Error parsing \"" + file.filename().string() + "\" on line " + lexical_cast<string>(line) + ": " + reason) {}
+		parsing_error(const size_t line, const string& reason) : domain_error("Error parsing on line " + lexical_cast<string>(line) + ": " + reason) {}
 	};
 }
 

@@ -16,16 +16,12 @@
 
 */
 
-#include <boost/filesystem/fstream.hpp>
 #include "parsing_error.hpp"
 #include "ligand.hpp"
 
 namespace idock
 {
-	using boost::filesystem::ifstream;
-	using boost::filesystem::ofstream;
-
-	ligand::ligand(const path& p) : num_active_torsions(0)
+	ligand::ligand(ifstream& in) : num_active_torsions(0)
 	{
 		// Initialize necessary variables for constructing a ligand.
 		lines.reserve(200); // A ligand typically consists of <= 200 lines.
@@ -47,7 +43,6 @@ namespace idock
 		line.reserve(79); // According to PDBQT specification, the last item AutoDock atom type locates at 1-based [78, 79].
 
 		// Parse ROOT, ATOM/HETATM, ENDROOT, BRANCH, ENDBRANCH, TORSDOF.
-		ifstream in(p); // Parsing starts. Open the file stream as late as possible.
 		while (getline(in, line))
 		{
 			++num_lines;
@@ -63,7 +58,7 @@ namespace idock
 				// Parse and validate AutoDock4 atom type.
 				const string ad_type_string = line.substr(77, isspace(line[78]) ? 1 : 2);
 				const size_t ad = parse_ad_type_string(ad_type_string);
-				if (ad == AD_TYPE_SIZE) throw parsing_error(p, num_lines, "Atom type " + ad_type_string + " is not supported by idock.");
+				if (ad == AD_TYPE_SIZE) throw parsing_error(num_lines, "Atom type " + ad_type_string + " is not supported by idock.");
 
 				// Parse the Cartesian coordinate.
 				atom a(vec3(right_cast<fl>(line, 31, 38), right_cast<fl>(line, 39, 46), right_cast<fl>(line, 47, 54)), ad);
@@ -163,7 +158,7 @@ namespace idock
 
 				// A frame may be empty, e.g. "BRANCH   4   9" is immediately followed by "ENDBRANCH   4   9".
 				// This emptiness is likely to be caused by invalid input structure, especially when all the atoms are located in the same plane.
-				if (f->habegin == heavy_atoms.size()) throw parsing_error(p, num_lines, "An empty BRANCH has been detected, indicating the input ligand structure is probably invalid.");
+				if (f->habegin == heavy_atoms.size()) throw parsing_error(num_lines, "An empty BRANCH has been detected, indicating the input ligand structure is probably invalid.");
 
 				// If the current frame consists of rotor Y and a few hydrogens only, e.g. -OH and -NH2,
 				// the torsion of this frame will have no effect on scoring and is thus redundant.
@@ -203,7 +198,6 @@ namespace idock
 				lines.push_back(line);
 			}
 		}
-		in.close(); // Parsing finishes. Close the file stream as soon as possible.
 		BOOST_ASSERT(lines.size() <= num_lines); // Some lines like "REMARK", "WARNING", "TER" will not be dumped to the output ligand file.
 		BOOST_ASSERT(current == 0); // current should remain its original value if "BRANCH" and "ENDBRANCH" properly match each other.
 		BOOST_ASSERT(f == &frames.front()); // The frame pointer should remain its original value if "BRANCH" and "ENDBRANCH" properly match each other.

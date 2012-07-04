@@ -86,8 +86,6 @@ int main(int argc, char* argv[])
 		}
 	}
 
-	// TODO: Separate arguments for phases 1 and 2.
-
 	// Initialize default values of constant arguments.
 	const directory_iterator end_dir_iter;
 	const path ligands_path = "16_lig.pdbqt";
@@ -95,37 +93,18 @@ int main(int argc, char* argv[])
 	const path jobs_path = "jobs";
 	const path log1_path = "log1.csv"; // Phase 1 log
 	const path log2_path = "log2.csv"; // Phase 2 log
+	const path output_folder_path = "output";
 	const string jobs_coll = db + ".jobs";
 	const size_t num_ligands = 12171187;
 	const size_t num_threads = thread::hardware_concurrency();
 	const size_t seed = time(0);
 	const size_t num_mc_tasks = 32;
 	const size_t sleep_hours = 1;
-	const fl energy_range = 3.0;
-	const fl grid_granularity = 0.08;
-
-	// Initialize default values of optional arguments.
-	const fl default_mwt_lb = 400;
-	const fl default_mwt_ub = 500;
-	const fl default_logp_lb = -1;
-	const fl default_logp_ub = 6;
-	const fl default_ad_lb = -50;
-	const fl default_ad_ub = 50;
-	const fl default_pd_lb = -150;
-	const fl default_pd_ub = 0;
-	const size_t default_hbd_lb = 1;
-	const size_t default_hbd_ub = 6;
-	const size_t default_hba_lb = 1;
-	const size_t default_hba_ub = 10;
-	const size_t default_tpsa_lb = 20;
-	const size_t default_tpsa_ub = 80;
-	const int64_t default_charge_lb = 0;
-	const int64_t default_charge_ub = 0;
-	const size_t default_nrb_lb = 2;
-	const size_t default_nrb_ub = 9;
-	const path default_output_folder_path = "output";
 	const size_t max_conformations = 100;
 	const size_t max_results = 20; // Maximum number of results obtained from a single Monte Carlo task.
+	const size_t slices[101] = { 0, 121712, 243424, 365136, 486848, 608560, 730272, 851984, 973696, 1095408, 1217120, 1338832, 1460544, 1582256, 1703968, 1825680, 1947392, 2069104, 2190816, 2312528, 2434240, 2555952, 2677664, 2799376, 2921088, 3042800, 3164512, 3286224, 3407936, 3529648, 3651360, 3773072, 3894784, 4016496, 4138208, 4259920, 4381632, 4503344, 4625056, 4746768, 4868480, 4990192, 5111904, 5233616, 5355328, 5477040, 5598752, 5720464, 5842176, 5963888, 6085600, 6207312, 6329024, 6450736, 6572448, 6694160, 6815872, 6937584, 7059296, 7181008, 7302720, 7424432, 7546144, 7667856, 7789568, 7911280, 8032992, 8154704, 8276416, 8398128, 8519840, 8641552, 8763264, 8884976, 9006688, 9128400, 9250112, 9371824, 9493536, 9615248, 9736960, 9858672, 9980384, 10102096, 10223808, 10345520, 10467232, 10588944, 10710655, 10832366, 10954077, 11075788, 11197499, 11319210, 11440921, 11562632, 11684343, 11806054, 11927765, 12049476, 12171187 };
+	const fl energy_range = 3.0;
+	const fl grid_granularity = 0.08;
 
 	// Initialize a Mersenne Twister random number generator.
 	cout << "Using random seed " << seed << '\n';
@@ -173,14 +152,30 @@ int main(int argc, char* argv[])
 		alphas[i] = alphas[i - 1] * 0.1;
 	}
 
-	// Initialize a vector of empty grid maps. Each grid map corresponds to an XScore atom type.
+	// Reserve space for containers.
+	string line;
+	line.reserve(80);
 	vector<array3d<fl>> grid_maps(XS_TYPE_SIZE);
+	ptr_vector<packaged_task<void>> gm_tasks;
+	ptr_vector<packaged_task<void>> mc_tasks(num_mc_tasks);
+	ptr_vector<ptr_vector<result>> result_containers;
+	result_containers.resize(num_mc_tasks);
+	for (size_t i = 0; i < num_mc_tasks; ++i)
+	{
+		result_containers[i].reserve(max_results);
+	}
+	ptr_vector<result> results;
+	results.reserve(max_results * num_mc_tasks);
+	vector<size_t> atom_types_to_populate;
+	atom_types_to_populate.reserve(XS_TYPE_SIZE);
 
-	// Fetch and execute jobs always
+	// Open files for reading.
+	ifstream headers(headers_path);
+	ifstream ligands(ligands_path);
+
 	while (true)
 	{
-		// Fetch a pending job. Start a transaction, fetch a job where machine == null or Date.now() > time + delta, and update machine and time.
-		// Always fetch the same job if not all the slices are done. Use the old _id for query. No need to 1) define box, 2) parse receptor, 3) create grid maps.
+		// Fetch a pending job. Start a transaction, fetch a job where machine == null or Date.now() > time + delta, and update machine and time. Always fetch the same job if not all the slices are done. Use the old _id for query. No need to 1) define box, 2) parse receptor, 3) create grid maps.
 		cout << "Fetching a job slice from " << jobs_coll << '\n';
 //		auto cursor = conn.query("istar.jobs", QUERY("progress" << 0), 1); // nToReturn = 1
 		auto cursor = conn.query(jobs_coll);
@@ -192,56 +187,56 @@ int main(int argc, char* argv[])
 			continue;
 		}
 
-		auto p = cursor->next(); // BSONObj
-		const auto _id = p["_id"].String(); // BSONElement
-		const auto slice = p["slice"].String();
-		cout << "Executing job " << _id << '\n';
-		conn.update("istar.jobs", BSON("_id" << _id << "$atomic" << 1), BSON("$inc" << BSON("progress" << 1)));
+		auto j = cursor->next(); // BSONObj
+		const auto job_id = j["_id"].OID(); // BSONElement
+		const size_t slice = 3;
 
+/*
+		// Execute the job slice.
+		cout << "Executing job " << _id << ", slice " << slice << '\n';
+		conn.update("istar.jobs", BSON("_id" << _id << "$atomic" << 1), BSON("$inc" << BSON("progress" << 1)));
 		const auto e = conn.getLastError();
 		if (!e.empty())
 		{
 			cerr << e << '\n';
 		}
-/*
-		const path job_path = jobs_path / _id;
-		const auto center_x = p["center_x"].Double();
-		const auto center_y = p["center_y"].Double();
-		const auto center_z = p["center_z"].Double();
-		const auto size_x = p["size_x"].Double();
-		const auto size_y = p["size_y"].Double();
-		const auto size_z = p["size_z"].Double();
-		const auto mwt_lb = p["mwt_lb"].ok() ? p["mwt_lb"].Double() : default_mwt_lb;
-		const auto mwt_ub = p["mwt_ub"].ok() ? p["mwt_ub"].Double() : default_mwt_ub;
-		const auto logp_lb = p["logp_lb"].ok() ? p["logp_lb"].Double() : default_logp_lb;
-		const auto logp_ub = p["logp_ub"].ok() ? p["logp_ub"].Double() : default_logp_ub;
-		const auto ad_lb = p["ad_lb"].ok() ? p["ad_lb"].Double() : default_ad_lb;
-		const auto ad_ub = p["ad_ub"].ok() ? p["ad_ub"].Double() : default_ad_ub;
-		const auto pd_lb = p["pd_lb"].ok() ? p["pd_lb"].Double() : default_pd_lb;
-		const auto pd_ub = p["pd_ub"].ok() ? p["pd_ub"].Double() : default_pd_ub;
-		const auto hbd_lb = p["hbd_lb"].ok() ? p["hbd_lb"].Double() : default_hbd_lb;
-		const auto hbd_ub = p["hbd_ub"].ok() ? p["hbd_ub"].Double() : default_hbd_ub;
-		const auto hba_lb = p["hba_lb"].ok() ? p["hba_lb"].Double() : default_hba_lb;
-		const auto hba_ub = p["hba_ub"].ok() ? p["hba_ub"].Double() : default_hba_ub;
-		const auto tpsa_lb = p["tpsa_lb"].ok() ? p["tpsa_lb"].Double() : default_tpsa_lb;
-		const auto tpsa_ub = p["tpsa_ub"].ok() ? p["tpsa_ub"].Double() : default_tpsa_ub;
-		const auto charge_lb = p["charge_lb"].ok() ? p["charge_lb"].Double() : default_nrb_lb;
-		const auto charge_ub = p["charge_ub"].ok() ? p["charge_ub"].Double() : default_nrb_ub;
-		const auto nrb_lb = p["nrb_lb"].ok() ? p["nrb_lb"].Double() : default_nrb_lb;
-		const auto nrb_ub = p["nrb_ub"].ok() ? p["nrb_ub"].Double() : default_nrb_ub;
+*/
 
-		// Fetch a pending slice.
-		const size_t slices[101] = { 0, 121712, 243424, 365136, 486848, 608560, 730272, 851984, 973696, 1095408, 1217120, 1338832, 1460544, 1582256, 1703968, 1825680, 1947392, 2069104, 2190816, 2312528, 2434240, 2555952, 2677664, 2799376, 2921088, 3042800, 3164512, 3286224, 3407936, 3529648, 3651360, 3773072, 3894784, 4016496, 4138208, 4259920, 4381632, 4503344, 4625056, 4746768, 4868480, 4990192, 5111904, 5233616, 5355328, 5477040, 5598752, 5720464, 5842176, 5963888, 6085600, 6207312, 6329024, 6450736, 6572448, 6694160, 6815872, 6937584, 7059296, 7181008, 7302720, 7424432, 7546144, 7667856, 7789568, 7911280, 8032992, 8154704, 8276416, 8398128, 8519840, 8641552, 8763264, 8884976, 9006688, 9128400, 9250112, 9371824, 9493536, 9615248, 9736960, 9858672, 9980384, 10102096, 10223808, 10345520, 10467232, 10588944, 10710655, 10832366, 10954077, 11075788, 11197499, 11319210, 11440921, 11562632, 11684343, 11806054, 11927765, 12049476, 12171187 };
-		const size_t s = lexical_cast<size_t>(slice);
-		const size_t start_lig = slices[s];
-		const size_t end_lig = slices[s + 1];
+		const path job_path = jobs_path / job_id.str();
+		const path slice_path = job_path / (lexical_cast<string>(slice) + ".csv");
+		const auto start_lig = slices[slice];
+		const auto end_lig = slices[slice + 1];
+		const auto center_x = j["center_x"].Number();
+		const auto center_y = j["center_y"].Number();
+		const auto center_z = j["center_z"].Number();
+		const auto size_x = j["size_x"].Int();
+		const auto size_y = j["size_y"].Int();
+		const auto size_z = j["size_z"].Int();
+		const auto mwt_lb = j["mwt_lb"].Number();
+		const auto mwt_ub = j["mwt_ub"].Number();
+		const auto logp_lb = j["logp_lb"].Number();
+		const auto logp_ub = j["logp_ub"].Number();
+		const auto ad_lb = j["ad_lb"].Number();
+		const auto ad_ub = j["ad_ub"].Number();
+		const auto pd_lb = j["pd_lb"].Number();
+		const auto pd_ub = j["pd_ub"].Number();
+		const auto hbd_lb = j["hbd_lb"].Int();
+		const auto hbd_ub = j["hbd_ub"].Int();
+		const auto hba_lb = j["hba_lb"].Int();
+		const auto hba_ub = j["hba_ub"].Int();
+		const auto tpsa_lb = j["tpsa_lb"].Int();
+		const auto tpsa_ub = j["tpsa_ub"].Int();
+		const auto charge_lb = j["charge_lb"].Int();
+		const auto charge_ub = j["charge_ub"].Int();
+		const auto nrb_lb = j["nrb_lb"].Int();
+		const auto nrb_ub = j["nrb_ub"].Int();
 
 		// Initialize the search space of cuboid shape.
 		const box b(vec3(center_x, center_y, center_z), vec3(size_x, size_y, size_z), grid_granularity);
 
 		// Parse the receptor.
 		cout << "Parsing receptor\n";
-		const receptor rec(p["receptor"].String());
+		const receptor rec(j["receptor"].String());
 
 		// Divide the box into coarse-grained partitions for subsequent grid map creation.
 		array3d<vector<size_t>> partitions(b.num_partitions);
@@ -281,43 +276,27 @@ int main(int argc, char* argv[])
 			}
 		}
 
-		// Reserve storage for task containers.
+		// Resize storage for task containers.
 		const size_t num_gm_tasks = b.num_probes[0];
-		ptr_vector<packaged_task<void>> gm_tasks(num_gm_tasks);
-		ptr_vector<packaged_task<void>> mc_tasks(num_mc_tasks);
+		gm_tasks.resize(num_gm_tasks);
 
-		// Reserve storage for result containers. ptr_vector<T> is used for fast sorting.
-		ptr_vector<ptr_vector<result>> result_containers;
-		result_containers.resize(num_mc_tasks);
-		for (size_t i = 0; i < num_mc_tasks; ++i)
-		{
-			result_containers[i].reserve(max_results);
-		}
-		ptr_vector<result> results;
-		results.reserve(max_results * num_mc_tasks);
-
-		vector<size_t> atom_types_to_populate;
-		atom_types_to_populate.reserve(XS_TYPE_SIZE);
-
+		// Perform phase 1 screening. 
+		cout << "Performing phase 1\n";
 		cout << "Running " << num_mc_tasks << " Monte Carlo tasks per ligand\n";
 
-		// Perform phase 1 screening, filter ligands, and write zero conformation. Refresh progress every 1%.
-
-		// Skip ligands that have been screened.
-		if (exists(log1_path))
+		// Skip ligands that have been screened. Or fetch the new start_lig = progress from MongoDB.
+		if (exists(slice_path))
 		{
-			// Obtain last line
-			ifstream csv(log1_path);
+			// Obtain last line.
+			ifstream log(slice_path);
+			// Update start_lig.
 		}
 
-		string line;
-		line.reserve(80);
-		ifstream headers(headers_path);
-		headers.seekg(sizeof(size_t) * start_lig);
-		ifstream ligands(ligands_path);
-		ofstream csv(log1_path);
+		ofstream csv(slice_path);
 		csv.setf(std::ios::fixed, std::ios::floatfield);
 		csv << '\n' << std::setprecision(3);
+
+		headers.seekg(sizeof(size_t) * start_lig);
 		for (size_t i = start_lig; i < end_lig; ++i)
 		{
 			// Locate a ligand.
@@ -331,18 +310,19 @@ int main(int argc, char* argv[])
 			const auto logp = right_cast<fl>(line, 30, 37);
 			const auto ad = right_cast<fl>(line, 39, 46);
 			const auto pd = right_cast<fl>(line, 48, 55);
-			const auto hbd = right_cast<size_t>(line, 57, 59);
-			const auto hba = right_cast<size_t>(line, 61, 63);
-			const auto tpsa = right_cast<size_t>(line, 65, 67);
-			const auto charge = right_cast<int64_t>(line, 69, 71);
-			const auto nrb = right_cast<size_t>(line, 73, 75);
+			const auto hbd = right_cast<int>(line, 57, 59);
+			const auto hba = right_cast<int>(line, 61, 63);
+			const auto tpsa = right_cast<int>(line, 65, 67);
+			const auto charge = right_cast<int>(line, 69, 71);
+			const auto nrb = right_cast<int>(line, 73, 75);
 			if (!((mwt_lb <= mwt) && (mwt <= mwt_ub) && (logp_lb <= logp) && (logp <= logp_ub) && (ad_lb <= ad) && (ad <= ad_ub) && (pd_lb <= pd) && (pd <= pd_ub) && (hbd_lb <= hbd) && (hbd <= hbd_ub) && (hba_lb <= hba) && (hba <= hba_ub) && (tpsa_lb <= tpsa) && (tpsa <= tpsa_ub) && (charge_lb <= charge) && (charge <= charge_ub) && (nrb_lb <= nrb) && (nrb <= nrb_ub))) continue;
 
-			// Obtain ZINC ID.
-			const auto zinc_id = line.substr(10, 8);
+			// Obtain ligand ID. ZINC IDs are 8-character long.
+			const auto lig_id = line.substr(10, 8);
 
 			// Parse the ligand.
-			ligand lig("");
+			ligand lig(ligands);
+			cout << lig.heavy_atoms.size() << '\n';
 
 			// Create grid maps on the fly if necessary.
 			BOOST_ASSERT(atom_types_to_populate.empty());
@@ -390,7 +370,7 @@ int main(int argc, char* argv[])
 			for (size_t i = 0; i < num_mc_tasks; ++i)
 			{
 				BOOST_ASSERT(result_containers[i].empty());
-				mc_tasks.push_back(new packaged_task<void>(boost::bind<void>(monte_carlo_task, boost::ref(result_containers[i]), boost::cref(lig), eng(), boost::cref(alphas), boost::cref(sf), boost::cref(b), boost::cref(grid_maps))));
+				mc_tasks.push_back(new packaged_task<void>(bind<void>(monte_carlo_task, boost::ref(result_containers[i]), boost::cref(lig), eng(), boost::cref(alphas), boost::cref(sf), boost::cref(b), boost::cref(grid_maps))));
 			}
 
 			// Run the Monte Carlo tasks in parallel asynchronously.
@@ -430,13 +410,15 @@ int main(int argc, char* argv[])
 			results.clear();
 
 			// Dump ligand summaries to the csv file.
-			csv << zinc_id << ',' << best_result.e_nd << '\n';
+			csv << lig_id << ',' << best_result.e_nd << '\n';
+
+			// Refresh progress every 1%.
 		}
 		csv.close();
 		ligands.close();
 
 		// If all the slices are done, perform phase 2 screening.
-		if (!conn.query("istar.jobs", QUERY("_id" << _id << "progress" << 100), 1)->more()) continue;
+		if (!conn.query("istar.jobs", QUERY("_id" << job_id << "progress" << 100), 1)->more()) continue;
 
 		// Initialize necessary variables for storing ligand summaries.
 		ptr_vector<summary> summaries(num_ligands);
@@ -465,7 +447,6 @@ int main(int argc, char* argv[])
 		size_t num_conformations; // Number of conformation to output.
 
 		// Send email with link to /.
-		const auto email = p["email"].String();
-*/
+		const auto email = j["email"].String();
 	}
 }

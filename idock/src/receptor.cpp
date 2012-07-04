@@ -16,15 +16,15 @@
 
 */
 
-#include <boost/filesystem/fstream.hpp>
+#include <sstream>
 #include "parsing_error.hpp"
 #include "receptor.hpp"
 
 namespace idock
 {
-	using boost::filesystem::ifstream;
+	using std::istringstream;
 
-	receptor::receptor(const path& p)
+	receptor::receptor(string&& content)
 	{
 		// Initialize necessary variables for constructing a receptor.
 		atoms.reserve(5000); // A receptor typically consists of <= 5,000 atoms.
@@ -38,7 +38,7 @@ namespace idock
 		line.reserve(79); // According to PDBQT specification, the last item AutoDock atom type locates at 1-based [78, 79].
 
 		// Parse ATOM/HETATM.
-		ifstream in(p); // Parsing starts. Open the p stream as late as possible.
+		istringstream in(content); // Parsing starts. Open the p stream as late as possible.
 		while (getline(in, line))
 		{
 			++num_lines;
@@ -47,7 +47,7 @@ namespace idock
 				// Parse and validate AutoDock4 atom type.
 				const string ad_type_string = line.substr(77, isspace(line[78]) ? 1 : 2);
 				const size_t ad = parse_ad_type_string(ad_type_string);
-				if (ad == AD_TYPE_SIZE) throw parsing_error(p, num_lines, "Atom type " + ad_type_string + " is not supported by idock.");
+				if (ad == AD_TYPE_SIZE) throw parsing_error(num_lines, "Atom type " + ad_type_string + " is not supported by idock.");
 
 				// Skip non-polar hydrogens.
 				if (ad == AD_TYPE_H) continue;
@@ -85,7 +85,6 @@ namespace idock
 				}
 			}
 		}
-		in.close(); // Parsing finishes. Close the p stream as soon as possible.
 
 		// Dehydrophobicize carbons if necessary.
 		const size_t num_residues = residues.size();

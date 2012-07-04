@@ -20,7 +20,7 @@
 #ifndef IDOCK_LIGAND_HPP
 #define IDOCK_LIGAND_HPP
 
-#include <boost/optional.hpp>
+#include <boost/filesystem/fstream.hpp>
 #include "atom.hpp"
 #include "matrix.hpp"
 #include "scoring_function.hpp"
@@ -30,6 +30,9 @@
 
 namespace idock
 {
+	using boost::filesystem::ifstream;
+	using boost::filesystem::ofstream;
+
 	/// Represents a ROOT or a BRANCH in PDBQT structure.
 	class frame
 	{
@@ -77,9 +80,9 @@ namespace idock
 		size_t num_active_torsions; ///< Number of active torsions.
 		fl flexibility_penalty_factor; ///< A value in (0, 1] to penalize ligand flexibility.
 
-		/// Constructs a ligand by parsing a ligand file in pdbqt format.
+		/// Constructs a ligand by parsing a ligand file stream in pdbqt format.
 		/// @exception parsing_error Thrown when an atom type is not recognized or an empty branch is detected.
-		ligand(const path& p);
+		ligand(ifstream& in);
 
 		/// Returns the XScore atom types presented in current ligand.
 		vector<size_t> get_atom_types() const;
