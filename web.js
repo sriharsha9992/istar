@@ -33,7 +33,7 @@ if (cluster.isMaster) {
         charge[i] = buf.readInt16LE(o + 22);
            nrb[i] = buf.readInt16LE(o + 24);
       }
-      console.log("Parsed %d ligands within %d seconds", num_ligands, Date.now() - start);
+      console.log('Parsed %d ligands within %d seconds', num_ligands, Date.now() - start);
       // Fork worker processes with cluster
       var numCPUs = require('os').cpus().length;
       console.log('Forking %d worker processes', numCPUs);
