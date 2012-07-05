@@ -4,7 +4,6 @@ var cluster = require('cluster');
 if (cluster.isMaster) {
   // Allocate arrays to hold ligand properties
   var num_ligands = 12171187;
-  console.log('Allocating %d ligands', num_ligands);
   var mwt = new Array(num_ligands);
   var logp = new Array(num_ligands);
   var ad = new Array(num_ligands);
@@ -15,7 +14,7 @@ if (cluster.isMaster) {
   var charge = new Array(num_ligands);
   var nrb = new Array(num_ligands);
   // Parse ligand properties
-  var prop = '16_prop.bin.gz';
+  var prop = 'idock/16_prop.bin.gz';
   console.log('Parsing %s', prop);
   var start = Date.now();
   require('fs').readFile(prop, function (err, data) {
