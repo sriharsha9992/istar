@@ -1,5 +1,5 @@
 /*
-   Copyright (c) 2011, The Chinese University of Hong Kong
+   Copyright (c) 2011-2012, The Chinese University of Hong Kong
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -19,13 +19,13 @@
 */
 
 /**
- * @file CUDAagrep_kernel.cu
+ * @file kernel.cu
  *
  * @brief Here are the CUDA kernels of agrep.
  *
- * @author Hongjian Li (The Chinese University of Hong Kong)
+ * @author Hongjian Li
  *
- * Copyright (C) 2011 Hongjian Li and The Chinese University of Hong Kong.
+ * Copyright (C) 2011-2012 The Chinese University of Hong Kong.
  */
 
 // About nucleotide.
