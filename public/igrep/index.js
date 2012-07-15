@@ -1,4 +1,9 @@
 $(function () {
+
+  // Initialize tooltips
+  $('.control-label a[rel=tooltip]').tooltip();
+
+  // Process submission
   $('#submit').click(function () {
     // Post a new job without client side validation
     $.post('jobs', {
