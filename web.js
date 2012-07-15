@@ -79,6 +79,7 @@ if (cluster.isMaster) {
   var v = new validator.Validator();
   var f = new validator.Filter();
   var idock = require('./idock');
+  var igrep = require('./igrep');
   var ligands;
   function sync(cb) {
     if (ligands == -1) process.nextTick(function () {
@@ -91,7 +92,7 @@ if (cluster.isMaster) {
       ligands = m.ligands;
     }
   });
-  // Get jobs by email
+  // Get idock jobs by email
   app.get('/idock/jobs', function(req, res) {
     var err = idock.get(req.query, function (docs) {
       res.json(docs);
@@ -170,6 +171,19 @@ if (cluster.isMaster) {
     sync(function () {
       res.json(ligands);
     });
+  });
+  // Get igrep jobs by email
+  app.get('/igrep/jobs', function(req, res) {
+    var err = igrep.get(req.query, function (docs) {
+      res.json(docs);
+    });
+    if (err !== undefined) {
+      res.json(err);
+    }
+  });
+  // Post a new igrep job
+  app.post('/igrep/jobs', function(req, res) {
+    res.json(igrep.create(req.body));
   });
   // Start listening
   var port = 80;
