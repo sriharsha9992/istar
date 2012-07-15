@@ -78,7 +78,7 @@ if (cluster.isMaster) {
   var validator = require('./validator');
   var v = new validator.Validator();
   var f = new validator.Filter();
-  var job = require('./job');
+  var idock = require('./idock');
   var ligands;
   function sync(cb) {
     if (ligands == -1) process.nextTick(function () {
@@ -93,16 +93,16 @@ if (cluster.isMaster) {
   });
   // Get jobs by email
   app.get('/idock/jobs', function(req, res) {
-    var err = job.get(req.query, function (docs) {
+    var err = idock.get(req.query, function (docs) {
       res.json(docs);
     });
     if (err !== undefined) {
       res.json(err);
     }
   });
-  // Post a new job
+  // Post a new idock job
   app.post('/idock/jobs', function(req, res) {
-    res.json(job.create(req.body));
+    res.json(idock.create(req.body));
   });
   // Get the number of ligands satisfying filtering conditions
   app.get('/idock/ligands', function(req, res) {
@@ -149,7 +149,16 @@ if (cluster.isMaster) {
      .snt('charge_ub').toInt()
      .snt('nrb_lb').toInt()
      .snt('nrb_ub').toInt()
-     .res).rng('mwt_lb', 'mwt_ub').rng('logp_lb', 'logp_ub').rng('ad_lb', 'ad_ub').rng('pd_lb', 'pd_ub').rng('hbd_lb', 'hbd_ub').rng('hba_lb', 'hba_ub').rng('tpsa_lb', 'tpsa_ub').rng('charge_lb', 'charge_ub').rng('nrb_lb', 'nrb_ub')
+     .res)
+	 .rng('mwt_lb', 'mwt_ub')
+	 .rng('logp_lb', 'logp_ub')
+	 .rng('ad_lb', 'ad_ub')
+	 .rng('pd_lb', 'pd_ub')
+	 .rng('hbd_lb', 'hbd_ub')
+	 .rng('hba_lb', 'hba_ub')
+	 .rng('tpsa_lb', 'tpsa_ub')
+	 .rng('charge_lb', 'charge_ub')
+	 .rng('nrb_lb', 'nrb_ub')
      .failed()) {
       res.json(v.err);
       return
@@ -163,7 +172,7 @@ if (cluster.isMaster) {
     });
   });
   // Start listening
-  var port = 3000;
+  var port = 80;
   app.listen(port);
   console.log('Worker process %d listening on port %d in %s mode', process.pid, port, app.settings.env);
 }

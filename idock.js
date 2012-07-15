@@ -2,10 +2,10 @@ var validator = require('./validator');
 var v = new validator.Validator();
 var f = new validator.Filter();
 var mongodb = require('mongodb');
-var db = new mongodb.Db('idock', new mongodb.Server('137.189.90.124', 27017));
+var db = new mongodb.Db('istar', new mongodb.Server('137.189.90.124', 27017));
 var username = 'daemon';
 var password = '2qR8dVM9d';
-var collection = 'jobs';
+var collection = 'idock';
 
 // Get jobs by email
 exports.get = function(query, cb) {
@@ -16,7 +16,7 @@ exports.get = function(query, cb) {
     if (err) throw err;
     db.authenticate(username, password, function(err, res) {
       if (err) throw err;
-      db.collection('jobs', function(err, coll) {
+      db.collection(collection, function(err, coll) {
         if (err) throw err;
         coll.find({'email': query['email']}, function(err, cursor) {
           if (err) throw err;
@@ -90,7 +90,16 @@ exports.create = function(job) {
    .snt('charge_ub', 0).toInt()
    .snt('nrb_lb', 2).toInt()
    .snt('nrb_ub', 8).toInt()
-   .res).rng('mwt_lb', 'mwt_ub').rng('logp_lb', 'logp_ub').rng('ad_lb', 'ad_ub').rng('pd_lb', 'pd_ub').rng('hbd_lb', 'hbd_ub').rng('hba_lb', 'hba_ub').rng('tpsa_lb', 'tpsa_ub').rng('charge_lb', 'charge_ub').rng('nrb_lb', 'nrb_ub')
+   .res)
+   .rng('mwt_lb', 'mwt_ub')
+   .rng('logp_lb', 'logp_ub')
+   .rng('ad_lb', 'ad_ub')
+   .rng('pd_lb', 'pd_ub')
+   .rng('hbd_lb', 'hbd_ub')
+   .rng('hba_lb', 'hba_ub')
+   .rng('tpsa_lb', 'tpsa_ub')
+   .rng('charge_lb', 'charge_ub')
+   .rng('nrb_lb', 'nrb_ub')
    .failed()) {
     return v.err;
   }
