@@ -2,7 +2,7 @@
 
 // Define helper variables
 var fs = require('fs');
-var job = require('./job');
+var idock = require('./idock');
 // Parse server configuration file
 fs.readFile('mail.conf', function(err, data) {
   if (err) throw err;
@@ -32,8 +32,8 @@ fs.readFile('mail.conf', function(err, data) {
           // Retrieve file content as receptor
           ctxioClient.accounts(conf.account_id).files(file.file_id).content().get(function(err, res) {
             if (err) throw err;
-	    j.receptor = res.body;
-            job.create(j);
+	        j.receptor = res.body;
+            idock.create(j);
           });
         });
         // Aggregate the number of messages actually returned
