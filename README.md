@@ -1,7 +1,7 @@
 istar
 =====
 
-istar is a [SaaS] (Software as a Service) platform for [idock].
+istar is a [SaaS] (Software as a Service) platform for [idock] and igrep.
 
 
 Architecture
@@ -22,7 +22,7 @@ Features
 
 ### Web server
 
-* [node.js] v0.6.19
+* [node.js] v0.8.2
 * [carrier] v0.1.7
 * [express] v2.5.9
 * [validator] v0.4.6
@@ -30,14 +30,14 @@ Features
 
 ### Mail crawler
 
-* [node.js] v0.6.19
+* [node.js] v0.8.2
 * [contextio] v0.3.0
 * [validator] v0.4.6
 * [mongodb] v1.0.2
 
 ### Database
 
-* [MongoDB] v2.0.5
+* [MongoDB] v2.0.6
 
 ### Workstations
 
@@ -61,7 +61,7 @@ RESTful API
 
 ### Get jobs
 
-    curl -Gd 'email=Jacky@cuhk.edu.hk' http://istar.cse.cuhk.edu.hk/jobs
+    curl -Gd 'email=Jacky@cuhk.edu.hk' http://istar.cse.cuhk.edu.hk/idock/jobs
 
 ### Post a new job
 
@@ -75,7 +75,7 @@ RESTful API
     mwt_lb=400&mwt_ub=500&logp_lb=0&logp_ub=5&nrb_lb=2&nrb_ub=8&
     hbd_lb=2&hbd_ub=5&hba_lb=2&hba_ub=10&charge_lb=0&charge_ub=0&
     ad_lb=0&ad_ub=12&pd_lb=-50&pd_ub=0&tpsa_lb=20&tpsa_ub=100'
-    http://istar.cse.cuhk.edu.hk/jobs
+    http://istar.cse.cuhk.edu.hk/idock/jobs
 
 ### Get the number of ligands satisfying filtering conditions
 
@@ -83,7 +83,7 @@ RESTful API
     mwt_lb=400&mwt_ub=500&logp_lb=0&logp_ub=5&nrb_lb=2&nrb_ub=8&
     hbd_lb=2&hbd_ub=5&hba_lb=2&hba_ub=10&charge_lb=0&charge_ub=0&
     ad_lb=0&ad_ub=12&pd_lb=-50&pd_ub=0&tpsa_lb=20&tpsa_ub=100
-    http://istar.cse.cuhk.edu.hk/ligands
+    http://istar.cse.cuhk.edu.hk/idock/ligands
 
 
 Send email to submit job
