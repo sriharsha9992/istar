@@ -186,7 +186,7 @@ if (cluster.isMaster) {
     res.json(igrep.create(req.body));
   });
   // Start listening
-  var port = 80;
+  var port = 3000;
   app.listen(port);
   console.log('Worker process %d listening on port %d in %s mode', process.pid, port, app.settings.env);
 }
