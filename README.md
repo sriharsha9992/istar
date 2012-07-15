@@ -1,7 +1,7 @@
 istar
 =====
 
-istar is a [SaaS] (Software as a Service) platform for [idock] and igrep.
+istar is a [SaaS] (Software as a Service) platform for [idock] and [igrep].
 
 
 Architecture
@@ -136,7 +136,7 @@ The email attachment must contain your receptor in PDBQT format.
 
 ### Example
 
-![istar mail example](https://github.com/HongjianLi/istar/raw/master/public/idock/mail.png)
+![istar mail example](https://github.com/HongjianLi/istar/raw/master/public/idock/mailsnd.png)
 
 Our email crawler retrieves new emails every hour. If your job is successfully created, you should see it at [istar] web site in an hour.
 
@@ -164,6 +164,7 @@ The logo image is collected from [Open Clip Art].
 
 [SaaS]: http://en.wikipedia.org/wiki/Software_as_a_service
 [idock]: https://github.com/HongjianLi/idock
+[idock]: http://istar.cse.cuhk.edu.hk/igrep
 [Twitter Bootstrap]: https://github.com/twitter/bootstrap
 [HTML5 Boilerplate]: https://github.com/h5bp/html5-boilerplate
 [Modernizr]: https://github.com/Modernizr/Modernizr
