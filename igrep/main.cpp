@@ -122,6 +122,7 @@ class Genome
 public:
 
 	// About genome
+	unsigned int taxon_id;	/**< Taxon ID. */
 	char *name;	/**< Genome name. */
 	const char *genome_directory;	/**< The directory to a genome. */
 	char **corpus_file;	/**< Corpus files. */
@@ -445,24 +446,22 @@ int main(int argc, char** argv)
 	for (int i = 0; i < GENOME_COUNT; i++)
 	{
 		Genome *genome = Genomes[i];
-		FileSysEventHandler::Genome_Name_Dictionary.Add(gcnew String(genome->name), i);
 		printf_s("Loading %s genome ... ", genome->name);
 		genome->parseCorpusContainerFile();	// Parse the corpus container file. By default it is Corpus.txt.
 		genome->buildSpecialCodonArray();	// Build the special codon array. Corpus files are enumerated. Statistics of the corpus are calculated.
 		genome->buildBlockToSequenceMapping();	// Calculate thread block to sequence index mapping, i.e. fill block_to_sequence[].
-		printf_s("done. (%.2f ms)\n", cutGetTimerValue(timer));
 	}
-	printf_s("Loading %d genomes is done.\n\n", GENOME_COUNT);
+	
+	var collection = db + ".igrep";
 
 	while (true)
 	{
-		// Fetch a pending job. Start a transaction, fetch a job where machine == null or Date.now() > time + delta, and update machine and time. Always fetch the same job if not all the slices are done. Use the old _id for query. No need to 1) define box, 2) parse receptor, 3) create grid maps.
-		cout << "Fetching a job slice from " << jobs_coll << '\n';
+		// Fetch a pending job. Start a transaction, fetch a job where machine == null or Date.now() > time + delta, and update machine and time.
+		cout << "Fetching a job from " << collection << '\n';
 //		auto cursor = conn.query("istar.jobs", QUERY("progress" << 0), 1); // nToReturn = 1
-		auto cursor = conn.query(jobs_coll);
+		auto cursor = conn.query(collection);
 		if (!cursor->more())
 		{
-			// Close ligands and headers.
 			// Sleep for an hour.
 			cout << "Sleeping the current thread for " << sleep_hours << " hours\n";
 			sleep(hours(1));
@@ -471,10 +470,10 @@ int main(int argc, char** argv)
 
 		auto j = cursor->next(); // BSONObj
 		const auto job_id = j["_id"].OID(); // BSONElement
-		const size_t slice = 3;
 
-		// Execute the job slice.
-		cout << "Executing job " << _id << ", slice " << slice << '\n';
+		// Execute the job.
+		cout << "Executing job " << _id << '\n';
+
 		// About query.
 		const char *guid;	// yyyy-MM-dd-hh-mm-ss
 		FILE *query_file_handle;	// The handle to query file.
@@ -483,7 +482,6 @@ int main(int argc, char** argv)
 		char pattern[MAX_QUERY_COUNT][MAX_PATTERN_LENGTH + 1];	// Patterns. 64b pattern + 1b \0.
 		unsigned int edit_distance[MAX_QUERY_COUNT];	// Number of primitive operations necessary to convert one string into an exact copy of the other. Primitive operations include insertion, deletion, and substitution of one character.
 		unsigned int query_count;	// Actual number of queries.
-		float query_time;	// The querying time of one single query.
 		const char *current_pattern;	// The pattern of current query.
 		unsigned int m;	// Pattern length.
 		unsigned int k;	// Edit distance.
@@ -555,7 +553,7 @@ int main(int argc, char** argv)
 		}
 		fprintf_s(result_file_handle, "\n");
 		fopen_s(&log_file_handle, log_file, "w");
-		fprintf_s(log_file_handle, "Query Index,Pattern,Edit Distance,Number of Matches,Querying Time (ms)\n");
+		fprintf_s(log_file_handle, "Query Index,Pattern,Edit Distance,Number of Matches\n");
 
 		// Use query_index to enumerate pattern[] and edit_distance[].
 		for (unsigned int query_index = 0; query_index < query_count; query_index++)
@@ -564,8 +562,6 @@ int main(int argc, char** argv)
 			m = strlen(current_pattern);	// Pattern length.
 			k = edit_distance[query_index];	// Edit distance.
 			printf_s("Query %u: searching for %s with edit distance %u ... ", query_index, current_pattern, k);
-			cutilCheckError(cutResetTimer(timer));	// Reset timer.
-			cutilCheckError(cutStartTimer(timer));	// Start timing.
 			if (m <= 32)
 			{
 				// Derive mask_array and test_bit.
@@ -643,12 +639,10 @@ int main(int argc, char** argv)
 				match_character[filtered_match_count] = match_character_value;
 				filtered_match_count++;
 			}
-			cutilCheckError(cutStopTimer(timer));	// Stop timing.
-			query_time = cutGetTimerValue(timer);	// Obtain the querying time of current query.
-			printf_s("done. %u matches found. (%.2f ms)\n", filtered_match_count, query_time);
-			fprintf_s(log_file_handle, "%u,%s,%u,%u,%.2f\n", query_index, current_pattern, k, match_count, query_time);
-			fprintf_s(result_file_handle, "Query Index,Pattern,Edit Distance,Number of Matches,Querying Time (ms)\n");
-			fprintf_s(result_file_handle, "%u,%s,%u,%u,%.2f\n", query_index, current_pattern, k, match_count, query_time);
+			printf_s("done. %u matches found.\n", filtered_match_count);
+			fprintf_s(log_file_handle, "%u,%s,%u,%u\n", query_index, current_pattern, k, match_count);
+			fprintf_s(result_file_handle, "Query Index,Pattern,Edit Distance,Number of Matches\n");
+			fprintf_s(result_file_handle, "%u,%s,%u,%u\n", query_index, current_pattern, k, match_count);
 			if (filtered_match_count >  0) fprintf_s(result_file_handle, "Query Index,Match Index,Sequence Index,Ending Position\n");
 			// Output each filtered match.
 			for (unsigned int i = 0; i < filtered_match_count; i++)
