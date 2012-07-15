@@ -2,12 +2,10 @@ node_modules
 *.conf
 *.sh
 *.log
-*.o
 16_*
-idock/bin/idock
 contextio.js
 .dep.inc
-Makefile_nb
+Makefile
 nbproject
 build
 dist
