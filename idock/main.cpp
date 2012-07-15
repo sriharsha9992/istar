@@ -93,11 +93,11 @@ int main(int argc, char* argv[])
 	const directory_iterator end_dir_iter;
 	const path ligands_path = "16_lig.pdbqt";
 	const path headers_path = "16_hdr.bin";
-	const path jobs_path = "public/jobs";
+	const path jobs_path = "../public/idock/jobs";
 	const path log1_path = "log1.csv"; // Phase 1 log
 	const path log2_path = "log2.csv"; // Phase 2 log
 	const path output_folder_path = "output";
-	const string jobs_coll = db + ".jobs";
+	const string collection = db + ".idock";
 	const size_t num_ligands = 12171187;
 	const size_t num_threads = thread::hardware_concurrency();
 	const size_t seed = time(0);
@@ -179,9 +179,9 @@ int main(int argc, char* argv[])
 	while (true)
 	{
 		// Fetch a pending job. Start a transaction, fetch a job where machine == null or Date.now() > time + delta, and update machine and time. Always fetch the same job if not all the slices are done. Use the old _id for query. No need to 1) define box, 2) parse receptor, 3) create grid maps.
-		cout << "Fetching a job slice from " << jobs_coll << '\n';
+		cout << "Fetching a job slice from " << collection << '\n';
 //		auto cursor = conn.query("istar.jobs", QUERY("progress" << 0), 1); // nToReturn = 1
-		auto cursor = conn.query(jobs_coll);
+		auto cursor = conn.query(collection);
 		if (!cursor->more())
 		{
 			// Close ligands and headers.
@@ -415,7 +415,7 @@ int main(int argc, char* argv[])
 		csv.close();
 
 		// If all the slices are done, perform phase 2 screening.
-		if (!conn.query(jobs_coll, QUERY("_id" << job_id << "progress" << 100), 1)->more()) continue;
+		if (!conn.query(collection, QUERY("_id" << job_id << "progress" << 100), 1)->more()) continue;
 
 		// Initialize necessary variables for storing ligand summaries.
 		ptr_vector<summary> summaries(num_ligands);
