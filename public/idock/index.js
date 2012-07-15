@@ -5,7 +5,7 @@ $(function() {
   $('#email').val(email);
 
   // Fetch jobs
-  $.get('/jobs', { email: email }, function(jobs) {
+  $.get('jobs', { email: email }, function(jobs) {
     jobs.forEach(function(job) {
       $('#jobs').append(' ' + job.description);
     });
@@ -75,7 +75,7 @@ $(function() {
       $('#' + this.id + '_ub').text(ui.values[1]);
     },
     change: function(event, ui) {
-      $.get('/ligands', {
+      $.get('ligands', {
         mwt_lb: $('#mwt_lb').text(),
         mwt_ub: $('#mwt_ub').text(),
         logp_lb: $('#logp_lb').text(),
@@ -105,7 +105,7 @@ $(function() {
     // Hide tooltips
     $('.control-label a[rel=tooltip]').tooltip('hide');
     // Post a new job without client side validation
-    $.post('/jobs', {
+    $.post('jobs', {
       receptor: $('#receptor').val(),
       center_x: $('#center_x').val(),
       center_y: $('#center_y').val(),

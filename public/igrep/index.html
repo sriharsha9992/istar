@@ -13,7 +13,6 @@
 
     <link href="/bootstrap.min.css" rel="stylesheet">
     <link href="/bootstrap-responsive.min.css" rel="stylesheet">
-    <link href="/ui-lightness/jquery-ui-1.8.20.custom.css" rel="stylesheet">
     <link href="/index.css" rel="stylesheet">
 
     <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
@@ -75,54 +74,39 @@
         </div>
         <div class="row">
           <div class="span12">
-<p>
-This website serves as an online version of CUDAagrep, which is a fast CUDA implementation of the k-difference agrep algorithm for large scale approximate nucleotide sequence matching.
-A total of <%: Html.ActionLink("17 assembled genomes of different species", "Genome") %> have been collected from <a href="ftp://ftp.ncbi.nih.gov/genomes/">NCBI's official ftp site</a> and pre-loaded. Their genome sizes vary from 0.19 Gbp to 3.50 Gbp.
-A query consists of a pattern of alphabet A, C, G, T, N and an edit distance. N is a wildcard and must match either A, C, G, or T in the genome. Substitution, insertion and deletion have a uniform cost of one edit distance. The pattern length must be between 1 and 64, and the edit distance must be between 0 and 9. For each query, a maximum of 10,000 ending positions of matches will be returned.
-</p>
-<b>Select a genome to search.</b><br />
-<div class="control">
-    <select id="GenomeSelector">
-    <option>Monodelphis domestica (Gray short-tailed opossum)</option>
-    <option>Pan troglodytes (Chimpanzee)</option>
-    <option selected="selected">Homo sapiens (Human)</option>
-    <option>Macaca mulatta (Rhesus monkey)</option>
-    <option>Rattus norvegicus (Rat)</option>
-    <option>Mus musculus (Mouse)</option>
-    <option>Bos taurus (Cow)</option>
-    <option>Canis familiaris (Dog)</option>
-    <option>Equus caballus (Domestic horse)</option>
-    <option>Danio rerio (Zebrafish)</option>
-    <option>Gallus gallus (Chicken)</option>
-    <option>Taeniopygia guttata (Zebra finch)</option>
-    <option>Sus scrofa (Pig)</option>
-    <option>Ornithorhynchus anatinus (Platypus)</option>
-    <option>Vitis vinifera (Grape)</option>
-    <option>Apis mellifera (Honey bee)</option>
-    <option>Tribolium castaneum (Red flour beetle)</option>
-    </select>
-</div>
-<b>Define queries, each of which is made up of a pattern to search for followed by an edit distance.</b><br />
-<div class="control">
-    <textarea id="QueryText" cols="2" rows="2" style="width: 530px; margin: 0">CTGCATGGTGGGGAAAAGGCATAGCCTGGG3
+            <p>Assembled genomes of 17 species have been collected from <a href="ftp://ftp.ncbi.nih.gov/genomes/">NCBI's official ftp site</a> and pre-loaded into memory. Their genome sizes vary from 0.19Gbp to 3.50Gbp. An igrep query consists of a pattern of alphabet A, C, G, T, N and an edit distance. N is a wildcard and must match either A, C, G, or T in the genome. Substitution, insertion and deletion have a uniform cost of one edit distance. The pattern length must be between 1 and 64, and the edit distance must be between 0 and 9, and must not exceed the pattern length. For each query, a maximum of 10,000 ending positions of matches will be returned. For each job, up to 100 queries will be processed.</p>
+            <div class="control-group">
+              <label class="control-label" for="genome"><span class="add-on"><i class="icon-asterisk"></i></span> <a href="#genome" rel="tooltip" title="compulsory" id="genome_label">Select a genome to search</a></label>
+              <div class="controls">
+                <select id="genome">
+                  <option>Monodelphis domestica (Gray short-tailed opossum)</option>
+                  <option>Pan troglodytes (Chimpanzee)</option>
+                  <option selected="selected">Homo sapiens (Human)</option>
+                  <option>Macaca mulatta (Rhesus monkey)</option>
+                  <option>Rattus norvegicus (Rat)</option>
+                  <option>Mus musculus (Mouse)</option>
+                  <option>Bos taurus (Cow)</option>
+                  <option>Canis familiaris (Dog)</option>
+                  <option>Equus caballus (Domestic horse)</option>
+                  <option>Danio rerio (Zebrafish)</option>
+                  <option>Gallus gallus (Chicken)</option>
+                  <option>Taeniopygia guttata (Zebra finch)</option>
+                  <option>Sus scrofa (Pig)</option>
+                  <option>Ornithorhynchus anatinus (Platypus)</option>
+                  <option>Vitis vinifera (Grape)</option>
+                  <option>Apis mellifera (Honey bee)</option>
+                  <option>Tribolium castaneum (Red flour beetle)</option>
+                </select>
+              </div>
+            </div>
+            <div class="control-group">
+              <label class="control-label" for="genome"><span class="add-on"><i class="icon-asterisk"></i></span> <a href="#genome" rel="tooltip" title="compulsory" id="genome_label">Define queries, each of which is made up of a pattern to search for followed by an edit distance</a></label>
+              <div class="controls">
+                <textarea id="query" cols="2" rows="2">CTGCATGGTGGGGAAAAGGCATAGCCTGGG3
 AAAAGTGTTATGGGTTGTTTAATCAACCACTGAACTGCGGGGGTGACTAGTTATAACTTA6</textarea>
-</div>
-<button id="SearchButton">Search</button>
-<div id="Error" title="User Input Error">
-	<div class="ui-state-error ui-corner-all" style="padding: 0px .7em; margin-top: 10px;"> 
-		<p><span class="ui-icon ui-icon-alert" style="float: left; margin-right: .3em;"></span> 
-			The query text does not conform to the standard format. Please make sure:<br />
-            1) Each line represents one query, which consists of a pattern of alphabet A, C, G, T, N and an edit distance from 0 to 9.<br />
-            2) For each query, the edit distance must not exceed the pattern length.<br />
-            3) For each job, up to 100 queries will be processed.
-        </p>
-	</div>
-</div>
-<div id="Status" style="padding: 10px 0 10px 0; display: none">Searching <a id="JobGenomeName"></a> genome on <span id="JobDate"></span> ... <span id="JobStatus"></span></div>
-<div id="Result" style="display: none">
-<table id="QuerySummaryJQGrid"></table><br />
-<img src="/Content/images/Excel.png" width="16" height="16" alt="" title="Open CSV by Excel" />&nbsp; <a id="logFileLink">Log.csv</a> - query summary. &nbsp; &nbsp; &nbsp; <img src="/Content/images/Excel.png" width="16" height="16" alt="" title="Open CSV by Excel" />&nbsp; <a id="resultFileLink">Result.csv</a> - matching positions.
-</div>
+              </div>
+            </div>
+            <button class="btn btn-primary" id="submit">Submit</button>
           </div>
         </div>
       </section>
@@ -138,10 +122,9 @@ AAAAGTGTTATGGGTTGTTTAATCAACCACTGAACTGCGGGGGTGACTAGTTATAACTTA6</textarea>
     <script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
     <script>window.jQuery || document.write('<script src="/jquery-1.7.2.min.js"><\/script>')</script>
 
-    <script src="/jquery-ui-1.8.20.custom.min.js"></script>
-    <script src="/bootstrap-tooltip.js"></script>
     <script src="/jquery.cookie.js"></script>
-    <script src="/index.js"></script>
+    <script src="/bootstrap-tooltip.js"></script>
+    <script src="index.js"></script>
 
     <!-- Asynchronous Google Analytics snippet -->
     <script>
@@ -152,100 +135,3 @@ AAAAGTGTTATGGGTTGTTTAATCAACCACTGAACTGCGGGGGTGACTAGTTATAACTTA6</textarea>
     </script>
   </body>
 </html>
-
-<script type='text/javascript'>
-    $(function () {
-        $("#Error").dialog({
-            autoOpen: false,
-            modal: true,
-            resizable: false,
-            width: 600,
-            show: "bounce",
-            buttons: {
-                "OK": function () {
-                    $(this).dialog("close");
-                }
-            }
-        });
-        $("#QueryText").resizable();
-        $("#SearchButton").button({
-            icons: {
-                primary: "ui-icon-search"
-            }
-        }).click(function () {
-            $(this).attr("disabled", "true");   // Prevent multiple submission.
-            var genomeName = $("#GenomeSelector").val(),
-                queryText = $("#QueryText").val().toUpperCase(),
-                now = new Date();
-            $.post("/Search", { genomeName: genomeName, queryText: queryText }, function (searchResult) {
-                if (!searchResult) {  // ModelState.IsValid == false
-                    $("#JobStatus").text("error");
-                    $("#Error").dialog("open");
-                    $("#SearchButton").removeAttr("disabled");  // Enable for a new submission.
-                    return;
-                }
-                $("#JobStatus").text("done");
-                var guid = searchResult.Guid,
-                    grid = $("#QuerySummaryJQGrid", result),
-                    result = $("#Result");
-                if (result.attr("style")) {
-                    result.slideDown("slow");
-                    grid.jqGrid({
-                        datatype: 'jsonstring',
-                        datastr: searchResult.jqGridTable,
-                        colNames: ["Query", "Pattern", "Edit Distance", "Number of Matches", "Querying Time (ms)"],
-                        colModel: [
-                    { "width": 60, "align": "right", "sortable": false, "resizable": false },
-                    { "width": 300, "align": "left", "sortable": false, "resizable": true },
-                    { "width": 120, "align": "right", "sortable": false, "resizable": false },
-                    { "width": 160, "align": "right", "sortable": false, "resizable": false },
-                    { "width": 160, "align": "right", "sortable": false, "resizable": false }
-                ],
-                        rowNum: 100,
-                        height: 200,
-                        loadComplete: function () {
-                            $("#SearchButton").removeAttr("disabled");  // Enable for a new submission.
-                        }
-                    });
-                } else {
-                    grid.setGridParam({
-                        datatype: 'jsonstring',
-                        datastr: searchResult.jqGridTable
-                    });
-                    grid.trigger("reloadGrid");
-                }
-                $("#logFileLink", result).attr("href", "/Genomes/" + genomeName + "/Log_" + guid + ".csv");
-                $("#resultFileLink", result).attr("href", "/Genomes/" + genomeName + "/Result_" + guid + ".csv");
-                // Update cookie
-                var cookieName = "CUDAagrep.Mvc",
-                    cookieNameLength = cookieName.length,
-                    cookieValue;
-                if (document.cookie) {
-                    var cookies = document.cookie.split('; ');
-                    for (var i = 0; i < cookies.length; i++) {
-                        var cookie = cookies[i];
-                        if (cookie.substring(0, cookieNameLength + 1) == (cookieName + '=')) {
-                            cookieValue = cookie.substring(cookieNameLength + 1);
-                            break;
-                        }
-                    }
-                }
-                var record = genomeName + "," + guid + "," + now.getTime();
-                if (cookieValue) {
-                    document.cookie = cookieName + "=" + record + "&" + cookieValue;
-                }
-                else {
-                    var expireDate = new Date();
-                    expireDate.setTime(expireDate.getTime() + (7 * 24 * 60 * 60 * 1000));
-                    document.cookie = cookieName + "=" + record + ";expires=" + expireDate.toUTCString();
-                }
-            }, "json");
-            $("#Status").slideDown("slow");
-            $("#JobStatus").html('&nbsp; <img src="/Content/images/Searching.gif" height="16"/>');
-            $("#JobGenomeName").fadeOut("normal").text(genomeName).attr("href", "/Genome/" + genomeName).fadeIn("slow");
-            $("#JobDate").fadeOut("normal").text(now.toLocaleString()).fadeIn("slow");
-            return false;   // Prevent default postback.
-        });
-    });
-</script>
-

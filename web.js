@@ -37,7 +37,7 @@ if (cluster.isMaster) {
       var numCPUs = require('os').cpus().length;
       console.log('Forking %d worker processes', numCPUs);
       var msg = function(m) {
-        if (m.query == 'ligands') {
+        if (m.query == '/idock/ligands') {
           var ligands = 0;
           for (var i = 0; i < num_ligands; ++i)
           {
@@ -92,7 +92,7 @@ if (cluster.isMaster) {
     }
   });
   // Get jobs by email
-  app.get('/jobs', function(req, res) {
+  app.get('/idock/jobs', function(req, res) {
     var err = job.get(req.query, function (docs) {
       res.json(docs);
     });
@@ -101,11 +101,11 @@ if (cluster.isMaster) {
     }
   });
   // Post a new job
-  app.post('/jobs', function(req, res) {
+  app.post('/idock/jobs', function(req, res) {
     res.json(job.create(req.body));
   });
   // Get the number of ligands satisfying filtering conditions
-  app.get('/ligands', function(req, res) {
+  app.get('/idock/ligands', function(req, res) {
     // Validate and sanitize user input
     if (v.init(req.query)
      .chk('mwt_lb', 'must be a decimal within [55, 566]', true).isDecimal().min(55).max(566)
@@ -156,7 +156,7 @@ if (cluster.isMaster) {
     }
     // Send query to master process
     ligands = -1;
-    f.res.query = 'ligands';
+    f.res.query = '/idock/ligands';
     process.send(f.res);
     sync(function () {
       res.json(ligands);
