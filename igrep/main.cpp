@@ -97,7 +97,7 @@ extern "C" void getMatchCount(unsigned int *match_count_arg);
  */
 inline unsigned int encode(char character)
 {
-	return (character >> 1) & 3;
+	return (toupper(character) >> 1) & 3;
 }
 
 class genome
@@ -360,7 +360,7 @@ int main(int argc, char** argv)
 					for (unsigned int i = 0; i < m; ++i)
 					{
 						unsigned int j = (unsigned int)1 << i;
-						if (line[i] == 'N')
+						if ((line[i] == 'N') || (line[i] == 'n'))
 						{
 							mask_array_32[0] |= j;
 							mask_array_32[1] |= j;
@@ -385,7 +385,7 @@ int main(int argc, char** argv)
 					for (unsigned int i = 0; i < m; ++i)	// Derive the mask array of current pattern.
 					{
 						unsigned long long j = (unsigned long long)1 << i;
-						if (line[i] == 'N')
+						if ((line[i] == 'N') || (line[i] == 'n'))
 						{
 							mask_array_64[0] |= j;
 							mask_array_64[1] |= j;
