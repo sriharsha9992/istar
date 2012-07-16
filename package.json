@@ -10,6 +10,7 @@
   "dependencies": {
     "carrier": ">= 0.1.7",
     "express": ">= 2.5.5",
+    "spdy": ">= 1.2.1",
     "validator": ">= 0.4.6",
     "mongodb": ">= 1.0.2",
     "contextio": ">= 0.3.0"

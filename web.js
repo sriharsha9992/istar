@@ -1,23 +1,24 @@
 #!/usr/bin/env node
 
-var cluster = require('cluster');
+var fs = require('fs'),
+    cluster = require('cluster');
 if (cluster.isMaster) {
   // Allocate arrays to hold ligand properties
-  var num_ligands = 12171187;
-  var mwt = new Array(num_ligands);
-  var logp = new Array(num_ligands);
-  var ad = new Array(num_ligands);
-  var pd = new Array(num_ligands);
-  var hbd = new Array(num_ligands);
-  var hba = new Array(num_ligands);
-  var tpsa = new Array(num_ligands);
-  var charge = new Array(num_ligands);
-  var nrb = new Array(num_ligands);
+  var num_ligands = 12171187,
+      mwt = new Array(num_ligands),
+      logp = new Array(num_ligands),
+      ad = new Array(num_ligands),
+      pd = new Array(num_ligands),
+      hbd = new Array(num_ligands),
+      hba = new Array(num_ligands),
+      tpsa = new Array(num_ligands),
+      charge = new Array(num_ligands),
+      nrb = new Array(num_ligands);
   // Parse ligand properties
   var prop = 'idock/16_prop.bin.gz';
   console.log('Parsing %s', prop);
   var start = Date.now();
-  require('fs').readFile(prop, function (err, data) {
+  fs.readFile(prop, function (err, data) {
     if (err) throw err;
     require('zlib').gunzip(data, function (err, buf) {
       if (err) throw err;
@@ -58,7 +59,7 @@ if (cluster.isMaster) {
 } else {
   // Configure express server
   var express = require('express'),
-      app = express.createServer();
+      app = express();
   app.configure(function(){
     app.use(express.bodyParser());
     app.use(app.router);
@@ -186,7 +187,16 @@ if (cluster.isMaster) {
     res.json(igrep.create(req.body));
   });
   // Start listening
-  var port = 3000;
-  app.listen(port);
-  console.log('Worker process %d listening on port %d in %s mode', process.pid, port, app.settings.env);
+  var http_port = 3000,
+      spdy_port = 3443,
+      spdy = require('spdy'),
+      https = require('https'),
+      options = {
+        key: fs.readFileSync(__dirname + '/keys/spdy-key.pem'),
+        cert: fs.readFileSync(__dirname + '/keys/spdy-cert.pem'),
+        ca: fs.readFileSync(__dirname + '/keys/spdy-csr.pem')
+      };
+  app.listen(http_port);
+  spdy.createServer(https.Server, options, app).listen(spdy_port);
+  console.log('Worker %d listening on HTTP port %d and SPDY port %d in %s mode', process.pid, http_port, spdy_port, app.settings.env);
 }
