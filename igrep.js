@@ -34,7 +34,7 @@ exports.get = function(query, cb) {
 exports.create = function(job) {
   if (v.init(job)
    .chk('genome', 'must be one of the 17 genomes', true).isIn(["13616", "9598", "9606", "9544", "10116", "10090", "9913", "9615", "9796", "7955", "9031", "59729", "9823", "9258", "29760", "7460", "7070"])
-   .chk('query', 'must conform to the specifications', true).len(2, 65000)
+   .chk('query', 'must conform to the specifications', true).len(2, 65000).regex(/^([ACGTN]{1,64}\d\n){1,1000}$/g)
    .failed()) {
     return v.err;
   }
