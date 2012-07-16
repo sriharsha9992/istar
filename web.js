@@ -192,9 +192,9 @@ if (cluster.isMaster) {
       spdy = require('spdy'),
       https = require('https'),
       options = {
-        key: fs.readFileSync(__dirname + '/keys/spdy-key.pem'),
-        cert: fs.readFileSync(__dirname + '/keys/spdy-cert.pem'),
-        ca: fs.readFileSync(__dirname + '/keys/spdy-csr.pem')
+        key: fs.readFileSync(__dirname + '/key.pem'),
+        cert: fs.readFileSync(__dirname + '/cert.pem'),
+        ca: fs.readFileSync(__dirname + '/csr.pem')
       };
   app.listen(http_port);
   spdy.createServer(https.Server, options, app).listen(spdy_port);
