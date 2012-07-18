@@ -24,7 +24,7 @@ Features
 
 * [node.js] v0.8.2
 * [carrier] v0.1.7
-* [express] v2.5.9
+* [express] v3.0.0beta6
 * [validator] v0.4.6
 * [mongodb] v1.0.2
 
@@ -59,6 +59,8 @@ Supported browsers
 RESTful API
 -----------
 
+## idock
+
 ### Get jobs
 
     curl -Gd 'email=Jacky@cuhk.edu.hk' http://istar.cse.cuhk.edu.hk/idock/jobs
@@ -84,6 +86,18 @@ RESTful API
     hbd_lb=2&hbd_ub=5&hba_lb=2&hba_ub=10&charge_lb=0&charge_ub=0&
     ad_lb=0&ad_ub=12&pd_lb=-50&pd_ub=0&tpsa_lb=20&tpsa_ub=100
     http://istar.cse.cuhk.edu.hk/idock/ligands
+
+## igrep
+
+### Get jobs
+
+    curl -Gd 'email=Jacky@cuhk.edu.hk' http://istar.cse.cuhk.edu.hk/igrep/jobs
+
+### Post a new job
+
+    curl -d $'genome=9606&query=CTGCATGGTGGGGAAAAGGCATAGCCTGGG3
+    AAAAGTGTTATGGGTTGTTTAATCAACCACTGAACTGCGGGGGTGACTAGTTATAACTTA6'
+    http://istar.cse.cuhk.edu.hk/igrep/jobs
 
 
 Send email to submit job
