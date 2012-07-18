@@ -114,7 +114,7 @@ public:
 	unsigned int block_count;	/**< Actual number of thread blocks. */
 	vector<unsigned int> scodon;	/**< The entire genomic nucleotides are stored into this array, one element of which, i.e. one 32-bit unsigned int, can store up to 16 nucleotides because one nucleotide can be uniquely represented by two bits since it must be either A, C, G, or T. One unsigned int is called a special codon, or scodon for short, because it is similar to codon, in which three consecutive characters of mRNA determine one amino acid of resulting protein. */
 	vector<unsigned int> block_to_sequence;	/**< Mapping of thread blocks to sequences. */
-	
+
 	explicit genome(const unsigned int taxon_id, const string& name, const unsigned int sequence_count, const unsigned int character_count) :
 		taxon_id(taxon_id),
 		name(name),
@@ -210,7 +210,7 @@ public:
 			character += (1 << (L + B + 4)); // One thread block processes 1 << (L + B) special codons, and each special codon encodes 1 << 4 characters.
 		}
 	}
-	
+
 	genome(const genome&) = default;	// Default copy constructor.
 	genome(genome&&) = default;			// Default move constructor.
 	genome& operator=(const genome&) = default;	// Default copy assignment.
@@ -404,7 +404,7 @@ int main(int argc, char** argv)
 					test_bit_64 = (unsigned long long)1 << (m - 1);
 					transferMaskArray64(mask_array_64, test_bit_64);
 				}
-				
+
 				// Invoke kernel.
 				invokeAgrepKernel(m, k, g.block_count);
 				cutilCheckMsg("igrep kernel execution failed.");
@@ -433,7 +433,7 @@ int main(int argc, char** argv)
 					match_sequences.push_back(sequence);
 					match_positions.push_back(position);
 				}
-				
+
 				// Output filtered matches.
 				const auto filtered_match_count = match_sequences.size();
 				log << qi << ',' << line.substr(0, m) << ',' << k << ',' << filtered_match_count << '\n';
@@ -443,7 +443,7 @@ int main(int argc, char** argv)
 //					if ((match_sequences[i] > 0) && (match_positions[i] + 1 < m_plus_k)); // This match may possibly be across two consecutive sequences.
 				}
 			}
-			
+
 			// Release resources.
 			pos.close();
 			log.close();
@@ -466,7 +466,7 @@ int main(int argc, char** argv)
 			session.close();
 			// Clear message recipient.
 		}
-		
+
 		// Sleep for a minute.
 		cout << "Sleeping the current thread for one minute\n";
 		sleep(minutes(1));

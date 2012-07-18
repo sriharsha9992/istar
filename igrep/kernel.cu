@@ -162,7 +162,7 @@ __global__ void agrepKernel32K0()
 			matching_character_index = ((outputting_scodon_base_index + scodon_index) << 4) + character_index;
 			if (matching_character_index <= character_count)
 				match[atomicAdd((unsigned int *)&match_count, 1)] = matching_character_index;
-		}		
+		}
 	}
 	scodon_header[scodon_index][threadIdx.x] = scodon_buffer;
 	__syncthreads();	// Make sure all the threads of current thread block have saved their first overlapping_scodon_count special codons to the shared memory for later use by the previous thread.
@@ -622,7 +622,7 @@ __global__ void agrepKernel32K1()
 			matching_character_index = ((outputting_scodon_base_index + scodon_index) << 4) + character_index;
 			if (matching_character_index <= character_count)
 				match[atomicAdd((unsigned int *)&match_count, 1)] = matching_character_index;
-		}		
+		}
 	}
 	scodon_header[scodon_index][threadIdx.x] = scodon_buffer;
 	__syncthreads();	// Make sure all the threads of current thread block have saved their first overlapping_scodon_count special codons to the shared memory for later use by the previous thread.
@@ -1082,7 +1082,7 @@ __global__ void agrepKernel32K2()
 			matching_character_index = ((outputting_scodon_base_index + scodon_index) << 4) + character_index;
 			if (matching_character_index <= character_count)
 				match[atomicAdd((unsigned int *)&match_count, 1)] = matching_character_index;
-		}		
+		}
 	}
 	scodon_header[scodon_index][threadIdx.x] = scodon_buffer;
 	__syncthreads();	// Make sure all the threads of current thread block have saved their first overlapping_scodon_count special codons to the shared memory for later use by the previous thread.
@@ -1542,7 +1542,7 @@ __global__ void agrepKernel32K3()
 			matching_character_index = ((outputting_scodon_base_index + scodon_index) << 4) + character_index;
 			if (matching_character_index <= character_count)
 				match[atomicAdd((unsigned int *)&match_count, 1)] = matching_character_index;
-		}		
+		}
 	}
 	scodon_header[scodon_index][threadIdx.x] = scodon_buffer;
 	__syncthreads();	// Make sure all the threads of current thread block have saved their first overlapping_scodon_count special codons to the shared memory for later use by the previous thread.
@@ -2002,7 +2002,7 @@ __global__ void agrepKernel32K4()
 			matching_character_index = ((outputting_scodon_base_index + scodon_index) << 4) + character_index;
 			if (matching_character_index <= character_count)
 				match[atomicAdd((unsigned int *)&match_count, 1)] = matching_character_index;
-		}		
+		}
 	}
 	scodon_header[scodon_index][threadIdx.x] = scodon_buffer;
 	__syncthreads();	// Make sure all the threads of current thread block have saved their first overlapping_scodon_count special codons to the shared memory for later use by the previous thread.
@@ -2462,7 +2462,7 @@ __global__ void agrepKernel32K5()
 			matching_character_index = ((outputting_scodon_base_index + scodon_index) << 4) + character_index;
 			if (matching_character_index <= character_count)
 				match[atomicAdd((unsigned int *)&match_count, 1)] = matching_character_index;
-		}		
+		}
 	}
 	scodon_header[scodon_index][threadIdx.x] = scodon_buffer;
 	__syncthreads();	// Make sure all the threads of current thread block have saved their first overlapping_scodon_count special codons to the shared memory for later use by the previous thread.
@@ -2922,7 +2922,7 @@ __global__ void agrepKernel32K6()
 			matching_character_index = ((outputting_scodon_base_index + scodon_index) << 4) + character_index;
 			if (matching_character_index <= character_count)
 				match[atomicAdd((unsigned int *)&match_count, 1)] = matching_character_index;
-		}		
+		}
 	}
 	scodon_header[scodon_index][threadIdx.x] = scodon_buffer;
 	__syncthreads();	// Make sure all the threads of current thread block have saved their first overlapping_scodon_count special codons to the shared memory for later use by the previous thread.
@@ -3382,7 +3382,7 @@ __global__ void agrepKernel32K7()
 			matching_character_index = ((outputting_scodon_base_index + scodon_index) << 4) + character_index;
 			if (matching_character_index <= character_count)
 				match[atomicAdd((unsigned int *)&match_count, 1)] = matching_character_index;
-		}		
+		}
 	}
 	scodon_header[scodon_index][threadIdx.x] = scodon_buffer;
 	__syncthreads();	// Make sure all the threads of current thread block have saved their first overlapping_scodon_count special codons to the shared memory for later use by the previous thread.
@@ -3842,7 +3842,7 @@ __global__ void agrepKernel32K8()
 			matching_character_index = ((outputting_scodon_base_index + scodon_index) << 4) + character_index;
 			if (matching_character_index <= character_count)
 				match[atomicAdd((unsigned int *)&match_count, 1)] = matching_character_index;
-		}		
+		}
 	}
 	scodon_header[scodon_index][threadIdx.x] = scodon_buffer;
 	__syncthreads();	// Make sure all the threads of current thread block have saved their first overlapping_scodon_count special codons to the shared memory for later use by the previous thread.
@@ -4302,7 +4302,7 @@ __global__ void agrepKernel32K9()
 			matching_character_index = ((outputting_scodon_base_index + scodon_index) << 4) + character_index;
 			if (matching_character_index <= character_count)
 				match[atomicAdd((unsigned int *)&match_count, 1)] = matching_character_index;
-		}		
+		}
 	}
 	scodon_header[scodon_index][threadIdx.x] = scodon_buffer;
 	__syncthreads();	// Make sure all the threads of current thread block have saved their first overlapping_scodon_count special codons to the shared memory for later use by the previous thread.
@@ -4762,7 +4762,7 @@ __global__ void agrepKernel64K0()
 			matching_character_index = ((outputting_scodon_base_index + scodon_index) << 4) + character_index;
 			if (matching_character_index <= character_count)
 				match[atomicAdd((unsigned int *)&match_count, 1)] = matching_character_index;
-		}		
+		}
 	}
 	scodon_header[scodon_index][threadIdx.x] = scodon_buffer;
 	__syncthreads();	// Make sure all the threads of current thread block have saved their first overlapping_scodon_count special codons to the shared memory for later use by the previous thread.
@@ -5222,7 +5222,7 @@ __global__ void agrepKernel64K1()
 			matching_character_index = ((outputting_scodon_base_index + scodon_index) << 4) + character_index;
 			if (matching_character_index <= character_count)
 				match[atomicAdd((unsigned int *)&match_count, 1)] = matching_character_index;
-		}		
+		}
 	}
 	scodon_header[scodon_index][threadIdx.x] = scodon_buffer;
 	__syncthreads();	// Make sure all the threads of current thread block have saved their first overlapping_scodon_count special codons to the shared memory for later use by the previous thread.
@@ -5682,7 +5682,7 @@ __global__ void agrepKernel64K2()
 			matching_character_index = ((outputting_scodon_base_index + scodon_index) << 4) + character_index;
 			if (matching_character_index <= character_count)
 				match[atomicAdd((unsigned int *)&match_count, 1)] = matching_character_index;
-		}		
+		}
 	}
 	scodon_header[scodon_index][threadIdx.x] = scodon_buffer;
 	__syncthreads();	// Make sure all the threads of current thread block have saved their first overlapping_scodon_count special codons to the shared memory for later use by the previous thread.
@@ -6142,7 +6142,7 @@ __global__ void agrepKernel64K3()
 			matching_character_index = ((outputting_scodon_base_index + scodon_index) << 4) + character_index;
 			if (matching_character_index <= character_count)
 				match[atomicAdd((unsigned int *)&match_count, 1)] = matching_character_index;
-		}		
+		}
 	}
 	scodon_header[scodon_index][threadIdx.x] = scodon_buffer;
 	__syncthreads();	// Make sure all the threads of current thread block have saved their first overlapping_scodon_count special codons to the shared memory for later use by the previous thread.
@@ -6602,7 +6602,7 @@ __global__ void agrepKernel64K4()
 			matching_character_index = ((outputting_scodon_base_index + scodon_index) << 4) + character_index;
 			if (matching_character_index <= character_count)
 				match[atomicAdd((unsigned int *)&match_count, 1)] = matching_character_index;
-		}		
+		}
 	}
 	scodon_header[scodon_index][threadIdx.x] = scodon_buffer;
 	__syncthreads();	// Make sure all the threads of current thread block have saved their first overlapping_scodon_count special codons to the shared memory for later use by the previous thread.
@@ -7062,7 +7062,7 @@ __global__ void agrepKernel64K5()
 			matching_character_index = ((outputting_scodon_base_index + scodon_index) << 4) + character_index;
 			if (matching_character_index <= character_count)
 				match[atomicAdd((unsigned int *)&match_count, 1)] = matching_character_index;
-		}		
+		}
 	}
 	scodon_header[scodon_index][threadIdx.x] = scodon_buffer;
 	__syncthreads();	// Make sure all the threads of current thread block have saved their first overlapping_scodon_count special codons to the shared memory for later use by the previous thread.
@@ -7522,7 +7522,7 @@ __global__ void agrepKernel64K6()
 			matching_character_index = ((outputting_scodon_base_index + scodon_index) << 4) + character_index;
 			if (matching_character_index <= character_count)
 				match[atomicAdd((unsigned int *)&match_count, 1)] = matching_character_index;
-		}		
+		}
 	}
 	scodon_header[scodon_index][threadIdx.x] = scodon_buffer;
 	__syncthreads();	// Make sure all the threads of current thread block have saved their first overlapping_scodon_count special codons to the shared memory for later use by the previous thread.
@@ -7982,7 +7982,7 @@ __global__ void agrepKernel64K7()
 			matching_character_index = ((outputting_scodon_base_index + scodon_index) << 4) + character_index;
 			if (matching_character_index <= character_count)
 				match[atomicAdd((unsigned int *)&match_count, 1)] = matching_character_index;
-		}		
+		}
 	}
 	scodon_header[scodon_index][threadIdx.x] = scodon_buffer;
 	__syncthreads();	// Make sure all the threads of current thread block have saved their first overlapping_scodon_count special codons to the shared memory for later use by the previous thread.
@@ -8442,7 +8442,7 @@ __global__ void agrepKernel64K8()
 			matching_character_index = ((outputting_scodon_base_index + scodon_index) << 4) + character_index;
 			if (matching_character_index <= character_count)
 				match[atomicAdd((unsigned int *)&match_count, 1)] = matching_character_index;
-		}		
+		}
 	}
 	scodon_header[scodon_index][threadIdx.x] = scodon_buffer;
 	__syncthreads();	// Make sure all the threads of current thread block have saved their first overlapping_scodon_count special codons to the shared memory for later use by the previous thread.
@@ -8902,7 +8902,7 @@ __global__ void agrepKernel64K9()
 			matching_character_index = ((outputting_scodon_base_index + scodon_index) << 4) + character_index;
 			if (matching_character_index <= character_count)
 				match[atomicAdd((unsigned int *)&match_count, 1)] = matching_character_index;
-		}		
+		}
 	}
 	scodon_header[scodon_index][threadIdx.x] = scodon_buffer;
 	__syncthreads();	// Make sure all the threads of current thread block have saved their first overlapping_scodon_count special codons to the shared memory for later use by the previous thread.
