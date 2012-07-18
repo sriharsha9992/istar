@@ -56,10 +56,8 @@ Supported browsers
 * Apple Safari 5+
 
 
-RESTful API
------------
-
-## idock
+RESTful API for idock
+---------------------
 
 ### Get jobs
 
@@ -87,7 +85,9 @@ RESTful API
     ad_lb=0&ad_ub=12&pd_lb=-50&pd_ub=0&tpsa_lb=20&tpsa_ub=100
     http://istar.cse.cuhk.edu.hk/idock/ligands
 
-## igrep
+
+RESTful API for igrep
+---------------------
 
 ### Get jobs
 
@@ -100,10 +100,10 @@ RESTful API
     http://istar.cse.cuhk.edu.hk/igrep/jobs
 
 
-Send email to submit job
-------------------------
+Send email to submit an idock job
+---------------------------------
 
-You can submit a new job simply by sending an email to [istar.cuhk@gmail.com].
+You can submit a new idock job simply by sending an email to [istar.idock@gmail.com].
 
 ### Subject
 
@@ -150,15 +150,31 @@ The email attachment must contain your receptor in PDBQT format.
 
 ### Example
 
-![istar mail example](https://github.com/HongjianLi/istar/raw/master/public/idock/mailsnd.png)
+![idock mail example](https://github.com/HongjianLi/istar/raw/master/public/idock/mailsnd.png)
 
 Our email crawler retrieves new emails every hour. If your job is successfully created, you should see it at [istar] web site in an hour.
+
+
+Send email to submit an igrep job
+---------------------------------
+
+### Subject
+
+The email subject must be the Taxonomy ID of your target genome.
+
+### Body
+
+The email body must be the queries.
+
+### Example
+
+![igrep mail example](https://github.com/HongjianLi/istar/raw/master/public/igrep/mailsnd.png)
 
 
 Licenses
 --------
 
-* Code licensed under the [Apache License 2.0].
+* Code licensed under [Apache License 2.0].
 * Documentation licensed under [CC BY 3.0].
 
 
@@ -178,7 +194,7 @@ The logo image is collected from [Open Clip Art].
 
 [SaaS]: http://en.wikipedia.org/wiki/Software_as_a_service
 [idock]: https://github.com/HongjianLi/idock
-[idock]: http://istar.cse.cuhk.edu.hk/igrep
+[igrep]: http://istar.cse.cuhk.edu.hk/igrep
 [Twitter Bootstrap]: https://github.com/twitter/bootstrap
 [HTML5 Boilerplate]: https://github.com/h5bp/html5-boilerplate
 [Modernizr]: https://github.com/Modernizr/Modernizr
