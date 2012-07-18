@@ -207,7 +207,6 @@ The logo image is collected from [Open Clip Art].
 [contextio]: https://github.com/ContextIO/ContextIO-node
 [validator]: https://github.com/chriso/node-validator
 [MongoDB]: https://github.com/mongodb/mongo
-[istar.cuhk@gmail.com]: mailto:istar.cuhk@gmail.com
 [istar]: http://istar.cse.cuhk.edu.hk
 [Apache License 2.0]: http://www.apache.org/licenses/LICENSE-2.0
 [CC BY 3.0]: http://creativecommons.org/licenses/by/3.0
