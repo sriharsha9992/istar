@@ -18,7 +18,7 @@
 
 #include <iostream>
 #include <sstream>
-#include <iomanip>
+#include <string>
 #include <vector>
 #include <boost/thread/thread.hpp>
 #include <boost/program_options.hpp>
@@ -29,6 +29,21 @@
 #include <Poco/Net/MailMessage.h>
 #include <Poco/Net/MailRecipient.h>
 #include <Poco/Net/SMTPClientSession.h>
+
+using std::cout;
+using std::istringstream;
+using std::string;
+using std::vector;
+using boost::filesystem::path;
+using boost::thread;
+using boost::bind;
+using Poco::Net::MailMessage;
+using Poco::Net::MailRecipient;
+using Poco::Net::SMTPClientSession;
+using namespace boost::this_thread;
+using namespace boost::posix_time;
+using namespace mongo;
+using namespace bson;
 
 #define CHARACTER_CARDINALITY 4	/**< One nucleotide is either A, C, G, or T. */
 #define MAX_UNSIGNED_INT	0xffffffffUL	/**< The maximum value of an unsigned int. */
@@ -140,6 +155,7 @@ public:
 		const directory_iterator dir_iter;
 		for (directory_iterator di(name); di != dir_iter; ++di)
 		{
+			using boost::filesystem::ifstream;
 			ifstream in(di->path());
 			while (getline(in, line))
 			{
@@ -219,23 +235,6 @@ public:
 
 int main(int argc, char** argv)
 {
-	using std::cout;
-	using std::istringstream;
-	using std::string;
-	using std::vector;
-	using boost::array;
-	using boost::filesystem::path;
-	using boost::filesystem::ofstream;
-	using boost::thread;
-	using boost::bind;
-	using Poco::Net::MailMessage;
-	using Poco::Net::MailRecipient;
-	using Poco::Net::SMTPClientSession;
-	using namespace boost::this_thread;
-	using namespace boost::posix_time;
-	using namespace mongo;
-	using namespace bson;
-
 	cout << "igrep 1.0\n";
 
 	string host, db, user, pwd;
@@ -337,11 +336,12 @@ int main(int argc, char** argv)
 
 			// Set up CUDA kernel.
 			cutilSafeCall(cudaMalloc((void**)&scodon_device, sizeof(unsigned int) * (g.block_count << (L + B))));
-			cutilSafeCall(cudaMemcpy(scodon_device, g.scodon, sizeof(unsigned int) * (g.block_count << (L + B)), cudaMemcpyHostToDevice));
+			cutilSafeCall(cudaMemcpy(scodon_device, &g.scodon.front(), sizeof(unsigned int) * (g.block_count << (L + B)), cudaMemcpyHostToDevice));
 			cutilSafeCall(cudaMalloc((void**)&match_device, sizeof(unsigned int) * max_match_count));
 			initAgrepKernel(scodon_device, g.character_count, match_device, max_match_count);
 
 			// Open log file and pos file and write headers.
+			using boost::filesystem::ofstream;
 			ofstream log("log.csv");
 			ofstream pos("pos.csv");
 			log << "Query Index,Pattern,Edit Distance,Number of Matches\n";
@@ -349,6 +349,7 @@ int main(int argc, char** argv)
 
 			// Parse and execute queries.
 			istringstream in(job["query"].String());
+			string line;
 			for (unsigned int qi = 0; getline(in, line); ++qi)
 			{
 				BOOST_ASSERT(line.size() <= 65);
