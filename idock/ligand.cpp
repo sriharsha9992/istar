@@ -21,6 +21,9 @@
 
 namespace idock
 {
+	using boost::filesystem::ifstream;
+	using boost::filesystem::ofstream;
+
 	ligand::ligand(ifstream& in) : num_active_torsions(0)
 	{
 		// Initialize necessary variables for constructing a ligand.
