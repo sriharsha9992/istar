@@ -145,7 +145,7 @@ public:
 	{
 		sequence_cumulative_length[0] = 0;
 
-		cout << "Loading " << name << " genome\n";
+		cout << "Loading the genome of " << name << '\n';
 		unsigned int scodon_buffer = 0;	// 16 consecutive characters will be accommodated into one 32-bit unsigned int.
 		unsigned int scodon_index;	// scodon[scodon_index] = scodon_buffer; In CUDA implementation, special codons need to be properly shuffled in order to satisfy coalesced global memory access.
 		int sequence_index = -1;
