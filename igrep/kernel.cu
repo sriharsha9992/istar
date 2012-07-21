@@ -96,7 +96,6 @@ __global__ void agrepKernel32K0()
 	inputting_scodon_base_index  = block_base_index + threadIdx.x;	// Coalesced global memory access is ensured.
 	outputting_scodon_base_index = block_base_index + (threadIdx.x << L);	// Original order of corpus.
 	r[0] = MAX_UNSIGNED_INT;
-#pragma unroll
 	for (k = 1; k <= K0; k++)
 		r[k] = r[k - 1] << 1;	// Initialize K+1 matching tables according to agrep algorithm.
 	for (scodon_index = 0; scodon_index < overlapping_scodon_count - 1; scodon_index++)
@@ -108,7 +107,6 @@ __global__ void agrepKernel32K0()
 			r2 = r[0];
 			r3 = (r2 << 1) | mask_word;
 			r[0] = r3;
-#pragma unroll
 			for (k = 1; k <= K0; k++)
 			{
 				r0 = r2;
@@ -127,7 +125,6 @@ __global__ void agrepKernel32K0()
 		r2 = r[0];
 		r3 = (r2 << 1) | mask_word;
 		r[0] = r3;
-#pragma unroll
 		for (k = 1; k <= K0; k++)
 		{
 			r0 = r2;
@@ -143,7 +140,6 @@ __global__ void agrepKernel32K0()
 		r2 = r[0];
 		r3 = (r2 << 1) | mask_word;
 		r[0] = r3;
-#pragma unroll
 		for (k = 1; k <= K0; k++)
 		{
 			r0 = r2;
@@ -173,7 +169,6 @@ __global__ void agrepKernel32K0()
 		r2 = r[0];
 		r3 = (r2 << 1) | mask_word;
 		r[0] = r3;
-#pragma unroll
 		for (k = 1; k <= K0; k++)
 		{
 			r0 = r2;
@@ -192,7 +187,6 @@ __global__ void agrepKernel32K0()
 		r2 = r[0];
 		r3 = (r2 << 1) | mask_word;
 		r[0] = r3;
-#pragma unroll
 		for (k = 1; k <= K0; k++)
 		{
 			r0 = r2;
@@ -211,7 +205,6 @@ __global__ void agrepKernel32K0()
 		r2 = r[0];
 		r3 = (r2 << 1) | mask_word;
 		r[0] = r3;
-#pragma unroll
 		for (k = 1; k <= K0; k++)
 		{
 			r0 = r2;
@@ -230,7 +223,6 @@ __global__ void agrepKernel32K0()
 		r2 = r[0];
 		r3 = (r2 << 1) | mask_word;
 		r[0] = r3;
-#pragma unroll
 		for (k = 1; k <= K0; k++)
 		{
 			r0 = r2;
@@ -249,7 +241,6 @@ __global__ void agrepKernel32K0()
 		r2 = r[0];
 		r3 = (r2 << 1) | mask_word;
 		r[0] = r3;
-#pragma unroll
 		for (k = 1; k <= K0; k++)
 		{
 			r0 = r2;
@@ -268,7 +259,6 @@ __global__ void agrepKernel32K0()
 		r2 = r[0];
 		r3 = (r2 << 1) | mask_word;
 		r[0] = r3;
-#pragma unroll
 		for (k = 1; k <= K0; k++)
 		{
 			r0 = r2;
@@ -287,7 +277,6 @@ __global__ void agrepKernel32K0()
 		r2 = r[0];
 		r3 = (r2 << 1) | mask_word;
 		r[0] = r3;
-#pragma unroll
 		for (k = 1; k <= K0; k++)
 		{
 			r0 = r2;
@@ -306,7 +295,6 @@ __global__ void agrepKernel32K0()
 		r2 = r[0];
 		r3 = (r2 << 1) | mask_word;
 		r[0] = r3;
-#pragma unroll
 		for (k = 1; k <= K0; k++)
 		{
 			r0 = r2;
@@ -325,7 +313,6 @@ __global__ void agrepKernel32K0()
 		r2 = r[0];
 		r3 = (r2 << 1) | mask_word;
 		r[0] = r3;
-#pragma unroll
 		for (k = 1; k <= K0; k++)
 		{
 			r0 = r2;
@@ -344,7 +331,6 @@ __global__ void agrepKernel32K0()
 		r2 = r[0];
 		r3 = (r2 << 1) | mask_word;
 		r[0] = r3;
-#pragma unroll
 		for (k = 1; k <= K0; k++)
 		{
 			r0 = r2;
@@ -363,7 +349,6 @@ __global__ void agrepKernel32K0()
 		r2 = r[0];
 		r3 = (r2 << 1) | mask_word;
 		r[0] = r3;
-#pragma unroll
 		for (k = 1; k <= K0; k++)
 		{
 			r0 = r2;
@@ -382,7 +367,6 @@ __global__ void agrepKernel32K0()
 		r2 = r[0];
 		r3 = (r2 << 1) | mask_word;
 		r[0] = r3;
-#pragma unroll
 		for (k = 1; k <= K0; k++)
 		{
 			r0 = r2;
@@ -401,7 +385,6 @@ __global__ void agrepKernel32K0()
 		r2 = r[0];
 		r3 = (r2 << 1) | mask_word;
 		r[0] = r3;
-#pragma unroll
 		for (k = 1; k <= K0; k++)
 		{
 			r0 = r2;
@@ -420,7 +403,6 @@ __global__ void agrepKernel32K0()
 		r2 = r[0];
 		r3 = (r2 << 1) | mask_word;
 		r[0] = r3;
-#pragma unroll
 		for (k = 1; k <= K0; k++)
 		{
 			r0 = r2;
@@ -439,7 +421,6 @@ __global__ void agrepKernel32K0()
 		r2 = r[0];
 		r3 = (r2 << 1) | mask_word;
 		r[0] = r3;
-#pragma unroll
 		for (k = 1; k <= K0; k++)
 		{
 			r0 = r2;
@@ -458,7 +439,6 @@ __global__ void agrepKernel32K0()
 		r2 = r[0];
 		r3 = (r2 << 1) | mask_word;
 		r[0] = r3;
-#pragma unroll
 		for (k = 1; k <= K0; k++)
 		{
 			r0 = r2;
@@ -483,7 +463,6 @@ __global__ void agrepKernel32K0()
 			r2 = r[0];
 			r3 = (r2 << 1) | mask_word;
 			r[0] = r3;
-#pragma unroll
 			for (k = 1; k <= K0; k++)
 			{
 				r0 = r2;
@@ -507,7 +486,6 @@ __global__ void agrepKernel32K0()
 		r2 = r[0];
 		r3 = (r2 << 1) | mask_word;
 		r[0] = r3;
-#pragma unroll
 		for (k = 1; k <= K0; k++)
 		{
 			r0 = r2;
@@ -4696,7 +4674,6 @@ __global__ void agrepKernel64K0()
 	inputting_scodon_base_index  = block_base_index + threadIdx.x;	// Coalesced global memory access is ensured.
 	outputting_scodon_base_index = block_base_index + (threadIdx.x << L);	// Original order of corpus.
 	r[0] = MAX_UNSIGNED_LONG_LONG;
-#pragma unroll
 	for (k = 1; k <= K0; k++)
 		r[k] = r[k - 1] << 1;	// Initialize K+1 matching tables according to agrep algorithm.
 	for (scodon_index = 0; scodon_index < overlapping_scodon_count - 1; scodon_index++)
@@ -4708,7 +4685,6 @@ __global__ void agrepKernel64K0()
 			r2 = r[0];
 			r3 = (r2 << 1) | mask_word;
 			r[0] = r3;
-#pragma unroll
 			for (k = 1; k <= K0; k++)
 			{
 				r0 = r2;
@@ -4727,7 +4703,6 @@ __global__ void agrepKernel64K0()
 		r2 = r[0];
 		r3 = (r2 << 1) | mask_word;
 		r[0] = r3;
-#pragma unroll
 		for (k = 1; k <= K0; k++)
 		{
 			r0 = r2;
@@ -4743,7 +4718,6 @@ __global__ void agrepKernel64K0()
 		r2 = r[0];
 		r3 = (r2 << 1) | mask_word;
 		r[0] = r3;
-#pragma unroll
 		for (k = 1; k <= K0; k++)
 		{
 			r0 = r2;
@@ -4773,7 +4747,6 @@ __global__ void agrepKernel64K0()
 		r2 = r[0];
 		r3 = (r2 << 1) | mask_word;
 		r[0] = r3;
-#pragma unroll
 		for (k = 1; k <= K0; k++)
 		{
 			r0 = r2;
@@ -4792,7 +4765,6 @@ __global__ void agrepKernel64K0()
 		r2 = r[0];
 		r3 = (r2 << 1) | mask_word;
 		r[0] = r3;
-#pragma unroll
 		for (k = 1; k <= K0; k++)
 		{
 			r0 = r2;
@@ -4811,7 +4783,6 @@ __global__ void agrepKernel64K0()
 		r2 = r[0];
 		r3 = (r2 << 1) | mask_word;
 		r[0] = r3;
-#pragma unroll
 		for (k = 1; k <= K0; k++)
 		{
 			r0 = r2;
@@ -4830,7 +4801,6 @@ __global__ void agrepKernel64K0()
 		r2 = r[0];
 		r3 = (r2 << 1) | mask_word;
 		r[0] = r3;
-#pragma unroll
 		for (k = 1; k <= K0; k++)
 		{
 			r0 = r2;
@@ -4849,7 +4819,6 @@ __global__ void agrepKernel64K0()
 		r2 = r[0];
 		r3 = (r2 << 1) | mask_word;
 		r[0] = r3;
-#pragma unroll
 		for (k = 1; k <= K0; k++)
 		{
 			r0 = r2;
@@ -4868,7 +4837,6 @@ __global__ void agrepKernel64K0()
 		r2 = r[0];
 		r3 = (r2 << 1) | mask_word;
 		r[0] = r3;
-#pragma unroll
 		for (k = 1; k <= K0; k++)
 		{
 			r0 = r2;
@@ -4887,7 +4855,6 @@ __global__ void agrepKernel64K0()
 		r2 = r[0];
 		r3 = (r2 << 1) | mask_word;
 		r[0] = r3;
-#pragma unroll
 		for (k = 1; k <= K0; k++)
 		{
 			r0 = r2;
@@ -4906,7 +4873,6 @@ __global__ void agrepKernel64K0()
 		r2 = r[0];
 		r3 = (r2 << 1) | mask_word;
 		r[0] = r3;
-#pragma unroll
 		for (k = 1; k <= K0; k++)
 		{
 			r0 = r2;
@@ -4925,7 +4891,6 @@ __global__ void agrepKernel64K0()
 		r2 = r[0];
 		r3 = (r2 << 1) | mask_word;
 		r[0] = r3;
-#pragma unroll
 		for (k = 1; k <= K0; k++)
 		{
 			r0 = r2;
@@ -4944,7 +4909,6 @@ __global__ void agrepKernel64K0()
 		r2 = r[0];
 		r3 = (r2 << 1) | mask_word;
 		r[0] = r3;
-#pragma unroll
 		for (k = 1; k <= K0; k++)
 		{
 			r0 = r2;
@@ -4963,7 +4927,6 @@ __global__ void agrepKernel64K0()
 		r2 = r[0];
 		r3 = (r2 << 1) | mask_word;
 		r[0] = r3;
-#pragma unroll
 		for (k = 1; k <= K0; k++)
 		{
 			r0 = r2;
@@ -4982,7 +4945,6 @@ __global__ void agrepKernel64K0()
 		r2 = r[0];
 		r3 = (r2 << 1) | mask_word;
 		r[0] = r3;
-#pragma unroll
 		for (k = 1; k <= K0; k++)
 		{
 			r0 = r2;
@@ -5001,7 +4963,6 @@ __global__ void agrepKernel64K0()
 		r2 = r[0];
 		r3 = (r2 << 1) | mask_word;
 		r[0] = r3;
-#pragma unroll
 		for (k = 1; k <= K0; k++)
 		{
 			r0 = r2;
@@ -5020,7 +4981,6 @@ __global__ void agrepKernel64K0()
 		r2 = r[0];
 		r3 = (r2 << 1) | mask_word;
 		r[0] = r3;
-#pragma unroll
 		for (k = 1; k <= K0; k++)
 		{
 			r0 = r2;
@@ -5039,7 +4999,6 @@ __global__ void agrepKernel64K0()
 		r2 = r[0];
 		r3 = (r2 << 1) | mask_word;
 		r[0] = r3;
-#pragma unroll
 		for (k = 1; k <= K0; k++)
 		{
 			r0 = r2;
@@ -5058,7 +5017,6 @@ __global__ void agrepKernel64K0()
 		r2 = r[0];
 		r3 = (r2 << 1) | mask_word;
 		r[0] = r3;
-#pragma unroll
 		for (k = 1; k <= K0; k++)
 		{
 			r0 = r2;
@@ -5083,7 +5041,6 @@ __global__ void agrepKernel64K0()
 			r2 = r[0];
 			r3 = (r2 << 1) | mask_word;
 			r[0] = r3;
-#pragma unroll
 			for (k = 1; k <= K0; k++)
 			{
 				r0 = r2;
@@ -5107,7 +5064,6 @@ __global__ void agrepKernel64K0()
 		r2 = r[0];
 		r3 = (r2 << 1) | mask_word;
 		r[0] = r3;
-#pragma unroll
 		for (k = 1; k <= K0; k++)
 		{
 			r0 = r2;
