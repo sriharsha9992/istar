@@ -278,6 +278,7 @@ int main(int argc, char** argv)
 	// Initialize genomes.
 	vector<genome> genomes;
 	genomes.reserve(17);
+/*
 	genomes.push_back(genome(13616, "Monodelphis domestica (Gray short-tailed opossum)", 9, 3502373038));
 	genomes.push_back(genome(9598, "Pan troglodytes (Chimpanzee)", 25, 3175582169));
 	genomes.push_back(genome(9606, "Homo sapiens (Human)", 24, 3095677412));
@@ -294,6 +295,7 @@ int main(int argc, char** argv)
 	genomes.push_back(genome(9258, "Ornithorhynchus anatinus (Platypus)", 19, 437080024));
 	genomes.push_back(genome(29760, "Vitis vinifera (Grape)", 19, 303085820));
 	genomes.push_back(genome(7460, "Apis mellifera (Honey bee)", 16, 217194876));
+*/
 	genomes.push_back(genome(7070, "Tribolium castaneum (Red flour beetle)", 10, 187494969));
 
 	// Declare kernel variables.
@@ -306,15 +308,6 @@ int main(int argc, char** argv)
 	unsigned int match_count;	// Actual number of matches in the match array. match_count <= potential_match_count should always holds.
 	unsigned int *scodon_device;	// CUDA global memory pointer pointing to the special codon array.
 	unsigned int *match_device;		// CUDA global memory pointer pointing to the match array.
-
-	// Initialize mail message.
-	MailMessage message;
-	message.setSender("istar.igrep@gmail.com");
-	message.setSubject("Your igrep job completed");
-	message.setContentType("text/plain; charset=\"utf-8\"");
-	message.setContent("View result at http://istar.cse.cuhk.edu.hk/igrep", MailMessage::ENCODING_8BIT);
-	SMTPClientSession session("smtp.gmail.com", 587);
-	// Use socks5 proxy at socks.cse.cuhk.edu.hk:1080
 
 	while (true)
 	{
@@ -460,12 +453,17 @@ int main(int argc, char** argv)
 				cerr << e << '\n';
 			}
 
-			// Send email.
+			// Send completion notification email.
+			MailMessage message;
+			message.setSender("igrep <istar.igrep@gmail.com>");
+			message.setSubject("Your igrep job completed");
+			message.setContentType("text/plain; charset=\"utf-8\"");
+			message.setContent("View result at http://istar.cse.cuhk.edu.hk/igrep", MailMessage::ENCODING_8BIT);
 			message.addRecipient(MailRecipient(MailRecipient::PRIMARY_RECIPIENT, job["email"].String()));
-			session.login(SMTPClientSession::AUTH_LOGIN, "istar.igrep", "2qR8dVM9d");
+			SMTPClientSession session("smtp.gmail.com", 587);
+			session.login(SMTPClientSession::AUTH_LOGIN, "istar.cuhk", "2qR8dVM9d");
 			session.sendMessage(message);
 			session.close();
-			// Clear message recipient.
 		}
 
 		// Sleep for a minute.
