@@ -2,6 +2,7 @@ node_modules
 *.conf
 *.sh
 *.log
+*.fa
 16_*
 contextio.js
 .dep.inc
