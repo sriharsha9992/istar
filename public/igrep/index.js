@@ -1,5 +1,16 @@
 $(function () {
 
+  // Fetch email from cookie
+  var email = $.cookie('email');
+  $('#email').val(email);
+
+  // Fetch jobs
+  $.get('jobs', { email: email }, function(jobs) {
+    jobs.forEach(function(job) {
+      $('#jobs').append(' ' + job.description);
+    });
+  });
+
   // Initialize tooltips
   $('.control-label a[rel=tooltip]').tooltip();
 
@@ -9,9 +20,10 @@ $(function () {
     $('.control-label a[rel=tooltip]').tooltip('hide');
     // Post a new job without client side validation
     $.post('jobs', {
-	  genome: $('#genome').val(),
-	  query: $('#query').val()
-	}, function (res) {
+      genome: $('#genome').val(),
+      query: $('#query').val(),
+      email: $('#email').val()
+    }, function (res) {
       // If server side validation fails, show the tooltips
       if (res != undefined) {
         Object.keys(res).forEach(function(param) {
