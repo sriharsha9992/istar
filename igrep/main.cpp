@@ -315,7 +315,7 @@ int main(int argc, char** argv)
 		auto cursor = conn.query(collection, BSON("done" << BSON("$exists" << false)), 100); // Each batch processes 100 jobs.
 		while (cursor->more())
 		{
-			auto job = cursor->next(); // BSONObj
+			const auto job = cursor->next(); // BSONObj
 
 			// Obtain the target genome via taxon_id.
 			const auto taxon_id = job["genome"].Int();
