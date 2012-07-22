@@ -80,7 +80,7 @@ extern "C" void transferMaskArray32(const unsigned int *mask_array_arg, const un
 extern "C" void transferMaskArray64(const unsigned long long *mask_array_arg, const unsigned long long test_bit_arg);
 
 /**
- * Invoke the cuda implementation of agrep kernel.
+ * Invoke the CUDA implementation of agrep kernel.
  * @param[in] m Pattern length.
  * @param[in] k Edit distance.
  * @param[in] block_count Number of thread blocks.
@@ -312,7 +312,7 @@ int main(int argc, char** argv)
 	while (true)
 	{
 		// Fetch jobs.
-		auto cursor = conn.query(collection, QUERY("progress" << 0)/*, 100*/); // Each batch processes 100 jobs.
+		auto cursor = conn.query(collection, BSON("done" << BSON("$exists" << false)), 100); // Each batch processes 100 jobs.
 		while (cursor->more())
 		{
 			auto job = cursor->next(); // BSONObj
@@ -324,6 +324,8 @@ int main(int argc, char** argv)
 			{
 				if (taxon_id == genomes[i].taxon_id) break;
 			}
+//			BOOST_ASSERT(i < genomes.size());
+			i = 0; // Force i = 0 for debugging purpose.
 			const auto& g = genomes[i];
 			cout << "Searching " << g.name << " genome\n";
 
@@ -446,7 +448,7 @@ int main(int argc, char** argv)
 			cutilSafeCall(cudaThreadExit());
 
 			// Update progress.
-			conn.update(collection, BSON("_id" << job["_id"].OID()), BSON("progress" << 100));
+			conn.update(collection, BSON("_id" << job["_id"].OID()), BSON("$set" << BSON("done" << DATENOW)));
 			const auto e = conn.getLastError();
 			if (!e.empty())
 			{
