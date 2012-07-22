@@ -72,6 +72,7 @@ exports.create = function(job) {
    .snt('size_y').toInt()
    .snt('size_z').toInt()
    .snt('description').xss()
+   .snt('email').xss()
    .snt('mwt_lb', 400).toFloat()
    .snt('mwt_ub', 500).toFloat()
    .snt('logp_lb', 0).toFloat()
@@ -103,8 +104,7 @@ exports.create = function(job) {
    .failed()) {
     return v.err;
   }
-  //job.time = Date.now();
-  //job.progress = 0;
+  f.res.submitted = new Date();
   db.open(function(err, db) {
     if (err) throw err;
     db.authenticate(username, password, function(err, res) {
