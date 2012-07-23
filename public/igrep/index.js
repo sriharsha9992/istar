@@ -6,9 +6,11 @@ $(function () {
 
   // Fetch jobs
   $.get('jobs', { email: email }, function(jobs) {
+    var jobs;
     jobs.forEach(function(job) {
-//      $('#jobs').append(' ' + job._id);
+      jobs.append('<tr><td></td><td></td><td></td><td></td></tr>');
     });
+    $('#jobs').html(jobs);
   });
 
   // Initialize tooltips
