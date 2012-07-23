@@ -8,7 +8,7 @@ $(function () {
   $.get('jobs', { email: email }, function(jobs) {
     var jobs;
     jobs.forEach(function(job) {
-      jobs.append('<tr><td></td><td></td><td></td><td></td></tr>');
+      jobs += '<tr><td>' + job.genome + '</td><td>' + $.format.date(new Date(job.submitted), 'yyyy/MM/dd HH:mm:ss') + '</td><td>' + (job.done == undefined ? 'Queued for execution' : $.format.date(new Date(job.done), 'yyyy/MM/dd HH:mm:ss')) + '</td><td><a href="jobs/' + job._id + '/log.csv"><img src="/excel.png" class="csv" alt="log.csv"/></a></td><td><a href="jobs/' + job._id + '/pos.csv"><img src="/excel.png" class="csv" alt="pos.csv"/></a></td></tr>';
     });
     $('#jobs').html(jobs);
   });
