@@ -7,7 +7,7 @@ $(function () {
   // Fetch jobs
   $.get('jobs', { email: email }, function(jobs) {
     jobs.forEach(function(job) {
-      $('#jobs').append(' ' + job.description);
+//      $('#jobs').append(' ' + job._id);
     });
   });
 
@@ -21,7 +21,7 @@ $(function () {
     // Post a new job without client side validation
     $.post('jobs', {
       genome: $('#genome').val(),
-      query: $('#query').val(),
+      queries: $('#queries').val(),
       email: $('#email').val()
     }, function (res) {
       // If server side validation fails, show the tooltips
