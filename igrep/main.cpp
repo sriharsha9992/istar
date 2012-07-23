@@ -25,7 +25,7 @@
 #include <boost/filesystem/operations.hpp>
 #include <boost/filesystem/fstream.hpp>
 #include <mongo/client/dbclient.h>
-#include <cutil_inline.h>	/** Used for timing and error handling by auxiliary macros such as cutilSafeCall. */
+#include <cutil_inline.h>
 #include <Poco/Net/MailMessage.h>
 #include <Poco/Net/MailRecipient.h>
 #include <Poco/Net/SMTPClientSession.h>
@@ -35,8 +35,6 @@ using std::istringstream;
 using std::string;
 using std::vector;
 using boost::filesystem::path;
-using boost::thread;
-using boost::bind;
 using Poco::Net::MailMessage;
 using Poco::Net::MailRecipient;
 using Poco::Net::SMTPClientSession;
@@ -115,22 +113,30 @@ inline unsigned int encode(char character)
 	return (toupper(character) >> 1) & 3;
 }
 
+/// Represents a genome in FASTA format.
 class genome
 {
 public:
-	unsigned int taxon_id;	/**< Taxon ID. */
+	const unsigned int taxon_id;	/**< Taxon ID. */
 	string name;	/**< Genome name. */
-	unsigned int sequence_count;	/**< Actual number of sequences. */
-	unsigned int character_count;	/**< Actual number of characters. */
+	const unsigned int sequence_count;	/**< Actual number of sequences. */
+	const unsigned int character_count;	/**< Actual number of characters. */
 	vector<string> sequence_header;	/**< Headers of sequences. */
 	vector<unsigned int> sequence_length;	/**< Lengthes of sequences. */
 	vector<unsigned int> sequence_cumulative_length;	/**< Cumulative lengths of sequences, i.e. 1) sequence_cumulative_length[0] = 0; 2) sequence_cumulative_length[sequence_index + 1] = sequence_cumulative_length[sequence_index] + sequence_length[sequence_index]; */
-	unsigned int scodon_count;	/**< Actual number of special codons. */
-	unsigned int block_count;	/**< Actual number of thread blocks. */
+	const unsigned int scodon_count;	/**< Actual number of special codons. */
+	const unsigned int block_count;	/**< Actual number of thread blocks. */
 	vector<unsigned int> scodon;	/**< The entire genomic nucleotides are stored into this array, one element of which, i.e. one 32-bit unsigned int, can store up to 16 nucleotides because one nucleotide can be uniquely represented by two bits since it must be either A, C, G, or T. One unsigned int is called a special codon, or scodon for short, because it is similar to codon, in which three consecutive characters of mRNA determine one amino acid of resulting protein. */
 	vector<unsigned int> block_to_sequence;	/**< Mapping of thread blocks to sequences. */
 
-	explicit genome(const unsigned int taxon_id, const string& name, const unsigned int sequence_count, const unsigned int character_count) :
+	/**
+	 * Construct a genome by loading its FASTA files.
+	 * @param[in] taxon_id Taxonomy ID, e.g. 9606 for human.
+	 * @param[in] name Scientific name followed by common name in brackets, e.g. Homo sapiens (Human).
+	 * @param[in] sequence_count Number of sequences. For assembled genomes, it equals the number of FASTA files.
+	 * @param[in] character_count Number of characters.
+	 */
+	explicit genome(const unsigned int taxon_id, const string name, const unsigned int sequence_count, const unsigned int character_count) :
 		taxon_id(taxon_id),
 		name(name),
 		sequence_count(sequence_count),
@@ -148,7 +154,7 @@ public:
 		cout << "Loading the genome of " << name << '\n';
 		unsigned int scodon_buffer = 0;	// 16 consecutive characters will be accommodated into one 32-bit unsigned int.
 		unsigned int scodon_index;	// scodon[scodon_index] = scodon_buffer; In CUDA implementation, special codons need to be properly shuffled in order to satisfy coalesced global memory access.
-		int sequence_index = -1;
+		int sequence_index = -1;	// Index of the current sequence.
 		unsigned int character_index = 0;	// Index of the current character across all the sequences of the entire genome.
 		string line;
 		line.reserve(1000);
@@ -198,7 +204,7 @@ public:
 							scodon[scodon_index] = scodon_buffer;
 							scodon_buffer = 0;
 						}
-						character_index++;
+						++character_index;
 					}
 				}
 			}
@@ -227,10 +233,14 @@ public:
 		}
 	}
 
-	genome(const genome&) = default;	// Default copy constructor.
-	genome(genome&&) = default;			// Default move constructor.
-	genome& operator=(const genome&) = default;	// Default copy assignment.
-	genome& operator=(genome&&) = default;		// Default move assignment.
+	/// Default copy constructor.
+	genome(const genome&) = default;
+	/// Default move constructor.
+	genome(genome&&) = default;
+	/// Default copy assignment operator.
+	genome& operator=(const genome&) = default;
+	/// Default move assignment operator.
+	genome& operator=(genome&&) = default;
 };
 
 int main(int argc, char** argv)
@@ -238,6 +248,7 @@ int main(int argc, char** argv)
 	cout << "igrep 1.0\n";
 
 	string host, db, user, pwd;
+	path jobs_path;
 	{
 		// Create program options.
 		using namespace boost::program_options;
@@ -247,6 +258,7 @@ int main(int argc, char** argv)
 			("db"  , value<string>(&db  )->required(), "database to login to")
 			("user", value<string>(&user)->required(), "username for authentication")
 			("pwd" , value<string>(&pwd )->required(), "password for authentication")
+			("jobs", value<path>(&jobs_path)->required(), "path to jobs directory")
 			;
 
 		// If no command line argument is supplied, simply print the usage and exit.
@@ -278,7 +290,6 @@ int main(int argc, char** argv)
 	// Initialize genomes.
 	vector<genome> genomes;
 	genomes.reserve(17);
-/*
 	genomes.push_back(genome(13616, "Monodelphis domestica (Gray short-tailed opossum)", 9, 3502373038));
 	genomes.push_back(genome(9598, "Pan troglodytes (Chimpanzee)", 25, 3175582169));
 	genomes.push_back(genome(9606, "Homo sapiens (Human)", 24, 3095677412));
@@ -295,7 +306,6 @@ int main(int argc, char** argv)
 	genomes.push_back(genome(9258, "Ornithorhynchus anatinus (Platypus)", 19, 437080024));
 	genomes.push_back(genome(29760, "Vitis vinifera (Grape)", 19, 303085820));
 	genomes.push_back(genome(7460, "Apis mellifera (Honey bee)", 16, 217194876));
-*/
 	genomes.push_back(genome(7070, "Tribolium castaneum (Red flour beetle)", 10, 187494969));
 
 	// Declare kernel variables.
@@ -303,11 +313,11 @@ int main(int argc, char** argv)
 	unsigned long long mask_array_64[CHARACTER_CARDINALITY];	// The 64-bit mask array of pattern.
 	unsigned int       test_bit_32;	// The test bit for determining matches of patterns of length 32.
 	unsigned long long test_bit_64;	// The test bit for determining matches of patterns of length 64.
-	const unsigned int max_match_count = 1000;	/**< Maximum number of matches of one single query. */
+	const unsigned int max_match_count = 1000;	// Maximum number of matches of one single query.
 	unsigned int match[max_match_count];	// The matches returned by the CUDA agrep kernel.
 	unsigned int match_count;	// Actual number of matches in the match array. match_count <= potential_match_count should always holds.
 	unsigned int *scodon_device;	// CUDA global memory pointer pointing to the special codon array.
-	unsigned int *match_device;		// CUDA global memory pointer pointing to the match array.
+	unsigned int *match_device;	// CUDA global memory pointer pointing to the match array.
 
 	while (true)
 	{
@@ -315,7 +325,9 @@ int main(int argc, char** argv)
 		auto cursor = conn.query(collection, BSON("done" << BSON("$exists" << false)), 100); // Each batch processes 100 jobs.
 		while (cursor->more())
 		{
-			const auto job = cursor->next(); // BSONObj
+			const auto& job = cursor->next();
+			const auto job_id = job["_id"].OID();
+			cout << "Executing job " << job_id << '\n';
 
 			// Obtain the target genome via taxon_id.
 			const auto taxon_id = job["genome"].Int();
@@ -324,26 +336,27 @@ int main(int argc, char** argv)
 			{
 				if (taxon_id == genomes[i].taxon_id) break;
 			}
-//			BOOST_ASSERT(i < genomes.size());
-			i = 0; // Force i = 0 for debugging purpose.
+			BOOST_ASSERT(i < genomes.size());
 			const auto& g = genomes[i];
-			cout << "Searching " << g.name << " genome\n";
+			cout << "Searching the genome of " << g.name << '\n';
 
 			// Set up CUDA kernel.
-			cutilSafeCall(cudaMalloc((void**)&scodon_device, sizeof(unsigned int) * (g.block_count << (L + B))));
-			cutilSafeCall(cudaMemcpy(scodon_device, &g.scodon.front(), sizeof(unsigned int) * (g.block_count << (L + B)), cudaMemcpyHostToDevice));
+			cutilSafeCall(cudaMalloc((void**)&scodon_device, sizeof(unsigned int) * g.scodon.size()));
+			cutilSafeCall(cudaMemcpy(scodon_device, &g.scodon.front(), sizeof(unsigned int) * g.scodon.size(), cudaMemcpyHostToDevice));
 			cutilSafeCall(cudaMalloc((void**)&match_device, sizeof(unsigned int) * max_match_count));
 			initAgrepKernel(scodon_device, g.character_count, match_device, max_match_count);
 
-			// Open log file and pos file and write headers.
+			// Create a job directory, open log and pos files, and write headers.
+			const path job_path = jobs_path / job_id.str();
+			create_directory(job_path);
 			using boost::filesystem::ofstream;
-			ofstream log("log.csv");
-			ofstream pos("pos.csv");
+			ofstream log(job_path / "log.csv");
+			ofstream pos(job_path / "pos.csv");
 			log << "Query Index,Pattern,Edit Distance,Number of Matches\n";
 			pos << "Query Index,Match Index,Sequence Index,Ending Position\n";
 
 			// Parse and execute queries.
-			istringstream in(job["query"].String());
+			istringstream in(job["queries"].String());
 			string line;
 			for (unsigned int qi = 0; getline(in, line); ++qi)
 			{
@@ -403,7 +416,7 @@ int main(int argc, char** argv)
 
 				// Invoke kernel.
 				invokeAgrepKernel(m, k, g.block_count);
-				cutilCheckMsg("igrep kernel execution failed.");
+				cutilCheckMsg("igrep kernel execution failed");
 				// Don't waste the CPU time before waiting for the CUDA agrep kernel to exit.
 				const unsigned int m_minus_k = m - k;	// Used to determine whether a match is across two consecutive sequences.
 				const unsigned int m_plus_k = m + k;	// Used to determine whether a match is across two consecutive sequences.
@@ -448,20 +461,22 @@ int main(int argc, char** argv)
 			cutilSafeCall(cudaThreadExit());
 
 			// Update progress.
-			conn.update(collection, BSON("_id" << job["_id"].OID()), BSON("$set" << BSON("done" << DATENOW)));
-			const auto e = conn.getLastError();
-			if (!e.empty())
+			conn.update(collection, BSON("_id" << job_id), BSON("$set" << BSON("done" << DATENOW)));
+			const auto err = conn.getLastError();
+			if (!err.empty())
 			{
-				cerr << e << '\n';
+				cerr << err << '\n';
 			}
 
 			// Send completion notification email.
+			const auto email = job["email"].String();
+			cout << "Sending a completion notification email to " << email << '\n';
 			MailMessage message;
 			message.setSender("igrep <istar.igrep@gmail.com>");
 			message.setSubject("Your igrep job completed");
 			message.setContentType("text/plain; charset=\"utf-8\"");
 			message.setContent("View result at http://istar.cse.cuhk.edu.hk/igrep", MailMessage::ENCODING_8BIT);
-			message.addRecipient(MailRecipient(MailRecipient::PRIMARY_RECIPIENT, job["email"].String()));
+			message.addRecipient(MailRecipient(MailRecipient::PRIMARY_RECIPIENT, email));
 			SMTPClientSession session("smtp.gmail.com", 587);
 			session.login(SMTPClientSession::AUTH_LOGIN, "istar.cuhk", "2qR8dVM9d");
 			session.sendMessage(message);
