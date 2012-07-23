@@ -434,8 +434,7 @@ int main(int argc, char** argv)
 				for (unsigned int i = 0; i < match_count; i++)
 				{
 					unsigned int position = match[i];	// The absolute ending position of current match.
-					unsigned int block = position >> (L + B + 4);	// Derive the thread block that finds the current match.
-					unsigned int sequence = g.block_to_sequence[block];	// Use block-to-sequence mapping to get the nearest sequence index.
+					unsigned int sequence = g.block_to_sequence[position >> (L + B + 4)];	// Use block-to-sequence mapping to get the nearest sequence index.
 					while (position >= g.sequence_cumulative_length[sequence + 1]) sequence++; // Now sequence is the sequence index of match[i].
 					position -= g.sequence_cumulative_length[sequence];	// Now position is the character index within sequence.
 					if (position + 1 < m_minus_k) continue; // The current match must be across two consecutive sequences. It is thus an invalid matching.
@@ -472,13 +471,12 @@ int main(int argc, char** argv)
 			const auto email = job["email"].String();
 			cout << "Sending a completion notification email to " << email << '\n';
 			MailMessage message;
-			message.setSender("igrep <istar.igrep@gmail.com>");
+			message.setSender("istar.igrep <noreply@cse.cuhk.edu.hk>");
 			message.setSubject("Your igrep job completed");
-			message.setContentType("text/plain; charset=\"utf-8\"");
-			message.setContent("View result at http://istar.cse.cuhk.edu.hk/igrep", MailMessage::ENCODING_8BIT);
+			message.setContent("View result at http://istar.cse.cuhk.edu.hk/igrep");
 			message.addRecipient(MailRecipient(MailRecipient::PRIMARY_RECIPIENT, email));
-			SMTPClientSession session("smtp.gmail.com", 587);
-			session.login(SMTPClientSession::AUTH_LOGIN, "istar.cuhk", "2qR8dVM9d");
+			SMTPClientSession session("137.189.91.190");
+			session.login();
 			session.sendMessage(message);
 			session.close();
 		}
