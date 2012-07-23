@@ -1,0 +1,2 @@
+forever stopall
+forever list
