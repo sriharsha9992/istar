@@ -34,14 +34,14 @@ exports.get = function(query, cb) {
 exports.create = function(job) {
   if (v.init(job)
    .chk('genome', 'must be one of the 17 genomes', true).isIn(["13616", "9598", "9606", "9544", "10116", "10090", "9913", "9615", "9796", "7955", "9031", "59729", "9823", "9258", "29760", "7460", "7070"])
-   .chk('query', 'must conform to the specifications', true).len(2, 66000).regex(/^([ACGTN]{1,64}\d\n){0,9999}[ACGTN]{1,64}\d\n?$/ig)
+   .chk('queries', 'must conform to the specifications', true).len(2, 66000).regex(/^([ACGTN]{1,64}\d\n){0,9999}[ACGTN]{1,64}\d\n?$/ig)
    .chk('email', 'must be valid', true).isEmail()
    .failed()) {
     return v.err;
   }
   f.init(job)
    .snt('genome').toInt()
-   .snt('query').xss()
+   .snt('queries').xss()
    .snt('email').xss()
    .res.submitted = new Date();
   db.open(function(err, db) {
