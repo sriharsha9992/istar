@@ -284,7 +284,6 @@ int main(int argc, char** argv)
 
 	// Initialize genomes.
 	vector<genome> genomes;
-/*
 	genomes.reserve(17);
 	genomes.push_back(genome(13616, "Monodelphis domestica (Gray short-tailed opossum)", 9, 3502373038));
 	genomes.push_back(genome(9598, "Pan troglodytes (Chimpanzee)", 25, 3175582169));
@@ -302,7 +301,6 @@ int main(int argc, char** argv)
 	genomes.push_back(genome(9258, "Ornithorhynchus anatinus (Platypus)", 19, 437080024));
 	genomes.push_back(genome(29760, "Vitis vinifera (Grape)", 19, 303085820));
 	genomes.push_back(genome(7460, "Apis mellifera (Honey bee)", 16, 217194876));
-*/
 	genomes.push_back(genome(7070, "Tribolium castaneum (Red flour beetle)", 10, 187494969));
 
 	// Declare kernel variables.
@@ -333,7 +331,6 @@ int main(int argc, char** argv)
 			{
 				if (taxon_id == genomes[i].taxon_id) break;
 			}
-			i = 0;
 			BOOST_ASSERT(i < genomes.size());
 			const auto& g = genomes[i];
 			cout << "Searching the genome of " << g.name << '\n';
