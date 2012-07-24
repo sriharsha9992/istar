@@ -63,6 +63,16 @@ if (cluster.isMaster) {
   app.configure(function(){
     app.use(express.bodyParser());
     app.use(app.router);
+    app.use(function(req, res, next) {
+      var host = req.headers.host.split(':', 1)[0].toLowerCase();
+      if (host === 'idock.cse.cuhk.edu.hk') {
+        return res.redirect(req.protocol + '://istar.cse.cuhk.edu.hk/idock' + req.url);
+      }
+      if ((host === 'agrep.cse.cuhk.edu.hk') || (host === 'igrep.cse.cuhk.edu.hk')) {
+        return res.redirect(req.protocol + '://istar.cse.cuhk.edu.hk/igrep' + req.url);
+      }
+      next();
+    });
   });
   app.configure('development', function(){
     app.use(express.static(__dirname + '/public'));
