@@ -25,6 +25,14 @@ $(function () {
     $('#jobs').html(jobs);
   });
 
+  // Initialize pager.
+  $('#prevpage').addClass('disabled').click(function () {
+    alert('prev page clicked');
+  });
+  $('#nextpage').click(function () {
+    alert('next page clicked');
+  });
+
   // Initialize tooltips
   $('.control-label a[rel=tooltip]').tooltip();
 
