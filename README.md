@@ -22,18 +22,19 @@ Features
 
 ### Web server
 
-* [node.js] v0.8.2
+* [node.js] v0.8.3
+* [express] v3.0.0beta7
+* [spdy] v1.3.1
+* [validator] v0.4.10
+* [mongodb] v1.1.1
 * [carrier] v0.1.7
-* [express] v3.0.0beta6
-* [validator] v0.4.6
-* [mongodb] v1.0.2
 
 ### Mail crawler
 
-* [node.js] v0.8.2
+* [node.js] v0.8.3
 * [contextio] v0.3.0
-* [validator] v0.4.6
-* [mongodb] v1.0.2
+* [validator] v0.4.10
+* [mongodb] v1.1.1
 
 ### Database
 
@@ -193,19 +194,19 @@ The logo image is collected from [Open Clip Art].
 
 
 [SaaS]: http://en.wikipedia.org/wiki/Software_as_a_service
-[idock]: https://github.com/HongjianLi/idock
-[igrep]: http://istar.cse.cuhk.edu.hk/igrep
+[idock]: https://idock.cse.cuhk.edu.hk
+[igrep]: http://igrep.cse.cuhk.edu.hk
 [Twitter Bootstrap]: https://github.com/twitter/bootstrap
 [HTML5 Boilerplate]: https://github.com/h5bp/html5-boilerplate
 [Modernizr]: https://github.com/Modernizr/Modernizr
 [jQuery]: https://github.com/jquery/jquery
 [node.js]: https://github.com/joyent/node
 [express]: https://github.com/visionmedia/express
-[carrier]: https://github.com/pgte/carrier
-[express-validator]: https://github.com/ctavan/express-validator
-[mongodb]: https://github.com/mongodb/node-mongodb-native
-[contextio]: https://github.com/ContextIO/ContextIO-node
+[spdy]: https://github.com/indutny/node-spdy
 [validator]: https://github.com/chriso/node-validator
+[mongodb]: https://github.com/mongodb/node-mongodb-native
+[carrier]: https://github.com/pgte/carrier
+[contextio]: https://github.com/ContextIO/ContextIO-node
 [MongoDB]: https://github.com/mongodb/mongo
 [istar]: http://istar.cse.cuhk.edu.hk
 [Apache License 2.0]: http://www.apache.org/licenses/LICENSE-2.0
