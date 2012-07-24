@@ -18,9 +18,9 @@ exports.get = function(query, cb) {
       if (err) throw err;
       db.collection(collection, function(err, coll) {
         if (err) throw err;
-        coll.find({'email': query['email']}, function(err, cursor) {
+        coll.find({'email': query['email']}, {'genome': 1, 'submitted': 1, 'done': 1}, function(err, cursor) {
           if (err) throw err;
-          cursor.toArray(function (err, docs) {
+          cursor.sort({'submitted': -1}).toArray(function (err, docs) {
             db.close();
             cb(docs);
           });

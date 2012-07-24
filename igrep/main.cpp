@@ -35,11 +35,6 @@ using std::istringstream;
 using std::string;
 using std::vector;
 using boost::filesystem::path;
-using Poco::Net::MailMessage;
-using Poco::Net::MailRecipient;
-using Poco::Net::SMTPClientSession;
-using namespace boost::this_thread;
-using namespace boost::posix_time;
 using namespace mongo;
 using namespace bson;
 
@@ -289,6 +284,7 @@ int main(int argc, char** argv)
 
 	// Initialize genomes.
 	vector<genome> genomes;
+/*
 	genomes.reserve(17);
 	genomes.push_back(genome(13616, "Monodelphis domestica (Gray short-tailed opossum)", 9, 3502373038));
 	genomes.push_back(genome(9598, "Pan troglodytes (Chimpanzee)", 25, 3175582169));
@@ -306,6 +302,7 @@ int main(int argc, char** argv)
 	genomes.push_back(genome(9258, "Ornithorhynchus anatinus (Platypus)", 19, 437080024));
 	genomes.push_back(genome(29760, "Vitis vinifera (Grape)", 19, 303085820));
 	genomes.push_back(genome(7460, "Apis mellifera (Honey bee)", 16, 217194876));
+*/
 	genomes.push_back(genome(7070, "Tribolium castaneum (Red flour beetle)", 10, 187494969));
 
 	// Declare kernel variables.
@@ -322,7 +319,7 @@ int main(int argc, char** argv)
 	while (true)
 	{
 		// Fetch jobs.
-		auto cursor = conn.query(collection, BSON("done" << BSON("$exists" << false)), 100); // Each batch processes 100 jobs.
+		auto cursor = conn.query(collection, QUERY("done" << BSON("$exists" << false)).sort("submitted"), 100); // Each batch processes 100 jobs.
 		while (cursor->more())
 		{
 			const auto& job = cursor->next();
@@ -336,6 +333,7 @@ int main(int argc, char** argv)
 			{
 				if (taxon_id == genomes[i].taxon_id) break;
 			}
+			i = 0;
 			BOOST_ASSERT(i < genomes.size());
 			const auto& g = genomes[i];
 			cout << "Searching the genome of " << g.name << '\n';
@@ -460,7 +458,10 @@ int main(int argc, char** argv)
 			cutilSafeCall(cudaThreadExit());
 
 			// Update progress.
-			conn.update(collection, BSON("_id" << job_id), BSON("$set" << BSON("done" << DATENOW)));
+			using boost::chrono::system_clock;
+			using boost::chrono::duration_cast;
+			using boost::chrono::milliseconds;
+			conn.update(collection, BSON("_id" << job_id), BSON("$set" << BSON("done" << Date_t(duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count()))));
 			const auto err = conn.getLastError();
 			if (!err.empty())
 			{
@@ -470,6 +471,9 @@ int main(int argc, char** argv)
 			// Send completion notification email.
 			const auto email = job["email"].String();
 			cout << "Sending a completion notification email to " << email << '\n';
+			using Poco::Net::MailMessage;
+			using Poco::Net::MailRecipient;
+			using Poco::Net::SMTPClientSession;
 			MailMessage message;
 			message.setSender("istar.igrep <noreply@cse.cuhk.edu.hk>");
 			message.setSubject("Your igrep job completed");
@@ -483,6 +487,8 @@ int main(int argc, char** argv)
 
 		// Sleep for a minute.
 		cout << "Sleeping the current thread for one minute\n";
+		using boost::posix_time::minutes;
+		using boost::this_thread::sleep;
 		sleep(minutes(1));
 	}
 	return 0;

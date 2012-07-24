@@ -19,7 +19,8 @@ $(function () {
   $.get('jobs', { email: email }, function(jobs) {
     var jobs;
     jobs.forEach(function(job) {
-      jobs += '<tr><td>' + getGenome(job.genome) + '</td><td>' + $.format.date(new Date(job.submitted), 'yyyy/MM/dd HH:mm:ss') + '</td><td>' + (job.done == undefined ? 'Queued for execution' : $.format.date(new Date(job.done), 'yyyy/MM/dd HH:mm:ss')) + '</td><td><a href="jobs/' + job._id + '/log.csv"><img src="/excel.png" class="csv" alt="log.csv"/></a></td><td><a href="jobs/' + job._id + '/pos.csv"><img src="/excel.png" class="csv" alt="pos.csv"/></a></td></tr>';
+      var done = job.done != undefined;
+      jobs += '<tr><td>' + getGenome(job.genome) + '</td><td>' + $.format.date(new Date(job.submitted), 'yyyy/MM/dd HH:mm:ss') + '</td><td>' + (done ? $.format.date(new Date(job.done), 'yyyy/MM/dd HH:mm:ss') : 'Queued for execution') + '</td><td>' + (done ? '<a href="jobs/' + job._id + '/log.csv"><img src="/excel.png" class="csv" alt="log.csv"/></a>' : '') + '</td><td>' + (done ? '<a href="jobs/' + job._id + '/pos.csv"><img src="/excel.png" class="csv" alt="pos.csv"/></a>' : '') + '</td></tr>';
     });
     $('#jobs').html(jobs);
   });
