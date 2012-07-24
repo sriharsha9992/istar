@@ -17,20 +17,19 @@ $(function () {
 
   // Fetch jobs
   $.get('jobs', { email: email }, function(jobs) {
-    var jobs;
+    var rows;
     jobs.forEach(function(job) {
       var done = job.done != undefined;
-      jobs += '<tr><td>' + getGenome(job.genome) + '</td><td>' + $.format.date(new Date(job.submitted), 'yyyy/MM/dd HH:mm:ss') + '</td><td>' + (done ? $.format.date(new Date(job.done), 'yyyy/MM/dd HH:mm:ss') : 'Queued for execution') + '</td><td>' + (done ? '<a href="jobs/' + job._id + '/log.csv"><img src="/excel.png" class="csv" alt="log.csv"/></a>' : '') + '</td><td>' + (done ? '<a href="jobs/' + job._id + '/pos.csv"><img src="/excel.png" class="csv" alt="pos.csv"/></a>' : '') + '</td></tr>';
+      rows += '<tr><td>' + getGenome(job.genome) + '</td><td>' + $.format.date(new Date(job.submitted), 'yyyy/MM/dd HH:mm:ss') + '</td><td>' + (done ? $.format.date(new Date(job.done), 'yyyy/MM/dd HH:mm:ss') : 'Queued for execution') + '</td><td>' + (done ? '<a href="jobs/' + job._id + '/log.csv"><img src="/excel.png" class="csv" alt="log.csv"/></a>' : '') + '</td><td>' + (done ? '<a href="jobs/' + job._id + '/pos.csv"><img src="/excel.png" class="csv" alt="pos.csv"/></a>' : '') + '</td></tr>';
     });
-    $('#jobs').html(jobs);
-  });
+    $('#jobs').html(rows);
 
-  // Initialize pager.
-  $('#prevpage').addClass('disabled').click(function () {
-    alert('prev page clicked');
-  });
-  $('#nextpage').click(function () {
-    alert('next page clicked');
+    // Initialize pager
+    var num_jobs = jobs.length;
+    $('#prevpage').click(function () {
+    });
+    $('#nextpage').click(function () {
+    });
   });
 
   // Initialize tooltips
