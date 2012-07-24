@@ -16,21 +16,29 @@ $(function () {
   }
 
   // Fetch jobs
-  $.get('jobs', { email: email }, function(jobs) {
-    var rows;
-    jobs.forEach(function(job) {
-      var done = job.done != undefined;
-      rows += '<tr><td>' + getGenome(job.genome) + '</td><td>' + $.format.date(new Date(job.submitted), 'yyyy/MM/dd HH:mm:ss') + '</td><td>' + (done ? $.format.date(new Date(job.done), 'yyyy/MM/dd HH:mm:ss') : 'Queued for execution') + '</td><td>' + (done ? '<a href="jobs/' + job._id + '/log.csv"><img src="/excel.png" class="csv" alt="log.csv"/></a>' : '') + '</td><td>' + (done ? '<a href="jobs/' + job._id + '/pos.csv"><img src="/excel.png" class="csv" alt="pos.csv"/></a>' : '') + '</td></tr>';
-    });
-    $('#jobs').html(rows);
+  function refreshJobs() {
+    $.get('jobs', { email: email }, function(jobs) {
+      // Construct rows in html from jobs
+      var rows;
+      jobs.forEach(function(job) {
+        var done = job.done != undefined;
+        rows += '<tr><td>' + getGenome(job.genome) + '</td><td>' + $.format.date(new Date(job.submitted), 'yyyy/MM/dd HH:mm:ss') + '</td><td>' + (done ? $.format.date(new Date(job.done), 'yyyy/MM/dd HH:mm:ss') : 'Queued for execution') + '</td><td>' + (done ? '<a href="jobs/' + job._id + '/log.csv"><img src="/excel.png" class="csv" alt="log.csv"/></a>' : '') + '</td><td>' + (done ? '<a href="jobs/' + job._id + '/pos.csv"><img src="/excel.png" class="csv" alt="pos.csv"/></a>' : '') + '</td></tr>';
+      });
 
-    // Initialize pager
-    var num_jobs = jobs.length;
-    $('#prevpage').click(function () {
+      // Refresh table rows
+      $('#jobs').fadeOut(function () {
+        $(this).html(rows).fadeIn();
+      });
+
+      // Initialize pager
+      var num_jobs = jobs.length;
+      $('#prevpage').click(function () {
+      });
+      $('#nextpage').click(function () {
+      });
     });
-    $('#nextpage').click(function () {
-    });
-  });
+  }
+  refreshJobs();
 
   // Initialize tooltips
   $('.control-label a[rel=tooltip]').tooltip();
@@ -52,9 +60,9 @@ $(function () {
         });
         return;
       }
+      refreshJobs();
       // Save email into cookie
       $.cookie('email', $('#email').val(), { expires: 7 });
     }, 'json');
-    return false;  // Prevent default postback.
   });
 });
