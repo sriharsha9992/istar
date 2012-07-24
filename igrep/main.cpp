@@ -31,12 +31,10 @@
 #include <Poco/Net/SMTPClientSession.h>
 
 using std::cout;
-using std::istringstream;
 using std::string;
 using std::vector;
 using boost::filesystem::path;
-using namespace mongo;
-using namespace bson;
+using boost::filesystem::directory_iterator;
 
 #define CHARACTER_CARDINALITY 4	/**< One nucleotide is either A, C, G, or T. */
 #define MAX_UNSIGNED_INT	0xffffffffUL	/**< The maximum value of an unsigned int. */
@@ -269,6 +267,7 @@ int main(int argc, char** argv)
 		vm.notify();
 	}
 
+	using namespace mongo;
 	DBClientConnection conn;
 	{
 		// Connect to host and authenticate user.
@@ -317,6 +316,7 @@ int main(int argc, char** argv)
 	while (true)
 	{
 		// Fetch jobs.
+		using namespace bson;
 		auto cursor = conn.query(collection, QUERY("done" << BSON("$exists" << false)).sort("submitted"), 100); // Each batch processes 100 jobs.
 		while (cursor->more())
 		{
@@ -351,6 +351,7 @@ int main(int argc, char** argv)
 			pos << "Query Index,Match Index,Sequence Index,Ending Position\n";
 
 			// Parse and execute queries.
+			using std::istringstream;
 			istringstream in(job["queries"].String());
 			string line;
 			for (unsigned int qi = 0; getline(in, line); ++qi)
@@ -484,9 +485,9 @@ int main(int argc, char** argv)
 
 		// Sleep for a minute.
 		cout << "Sleeping the current thread for one minute\n";
-		using boost::posix_time::minutes;
-		using boost::this_thread::sleep;
-		sleep(minutes(1));
+		using boost::this_thread::sleep_for;
+		using boost::chrono::minutes;
+		sleep_for(minutes(1));
 	}
 	return 0;
 }
