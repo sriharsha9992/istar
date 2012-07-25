@@ -2,7 +2,7 @@ var validator = require('./validator');
 var v = new validator.Validator();
 var f = new validator.Filter();
 var mongodb = require('mongodb');
-var db = new mongodb.Db('istar', new mongodb.Server('localhost', 27017));
+var database = 'istar';
 var username = 'daemon';
 var password = '2qR8dVM9d';
 var collection = 'igrep';
@@ -12,7 +12,7 @@ exports.get = function(query, cb) {
   if (v.init(query).chk('email', 'must be valid', true).isEmail().failed()) {
     return v.err;
   }
-  db.open(function(err, db) {
+  new mongodb.Db(database, new mongodb.Server('localhost', 27017)).open(function(err, db) {
     if (err) throw err;
     db.authenticate(username, password, function(err, res) {
       if (err) throw err;
@@ -44,7 +44,7 @@ exports.create = function(job) {
    .snt('queries').xss()
    .snt('email').xss()
    .res.submitted = new Date();
-  db.open(function(err, db) {
+  mongodb.Db(database, new mongodb.Server('localhost', 27017)).open(function(err, db) {
     if (err) throw err;
     db.authenticate(username, password, function(err, res) {
       if (err) throw err;
