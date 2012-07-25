@@ -16,7 +16,7 @@
 
 */
 
-#include <iostream>
+#include <syslog.h>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -25,12 +25,11 @@
 #include <boost/filesystem/operations.hpp>
 #include <boost/filesystem/fstream.hpp>
 #include <mongo/client/dbclient.h>
-#include <cutil_inline.h>
+#include <cuda_runtime_api.h>
 #include <Poco/Net/MailMessage.h>
 #include <Poco/Net/MailRecipient.h>
 #include <Poco/Net/SMTPClientSession.h>
 
-using std::cout;
 using std::string;
 using std::vector;
 using boost::filesystem::path;
@@ -83,6 +82,19 @@ extern "C" void invokeAgrepKernel(const unsigned int m, const unsigned int k, co
  * @param[out] match_count_arg Number of matches.
  */
 extern "C" void getMatchCount(unsigned int *match_count_arg);
+
+/**
+ * Syslog and exit if a CUDA runtime API error occurs.
+ * @param[in] err CUDA runtime API error returned by CUDA functions.
+ */
+inline void cudaSyslog(const cudaError err)
+{
+	if (cudaSuccess != err)
+	{
+		syslog(LOG_ERR, "cudaSyslog() Runtime API error %d: %s.", err, cudaGetErrorString(err));
+		exit(-1);
+	}
+}
 
 /**
  * Encode a character to its 2-bit binary representation.
@@ -144,7 +156,7 @@ public:
 	{
 		sequence_cumulative_length[0] = 0;
 
-		cout << "Loading the genome of " << name << '\n';
+		syslog(LOG_INFO, "Loading the genome of %s", name.c_str());
 		unsigned int scodon_buffer = 0;	// 16 consecutive characters will be accommodated into one 32-bit unsigned int.
 		unsigned int scodon_index;	// scodon[scodon_index] = scodon_buffer; In CUDA implementation, special codons need to be properly shuffled in order to satisfy coalesced global memory access.
 		int sequence_index = -1;	// Index of the current sequence.
@@ -238,7 +250,9 @@ public:
 
 int main(int argc, char** argv)
 {
-	cout << "igrep 1.0\n";
+	// Daemonize itself, retaining the current working directory and redirecting cin, cout and cerr to /dev/null.
+	daemon(1, 0);
+	syslog(LOG_INFO, "igrep 1.0");
 
 	string host, db, user, pwd;
 	path jobs_path;
@@ -254,12 +268,8 @@ int main(int argc, char** argv)
 			("jobs", value<path>(&jobs_path)->required(), "path to jobs directory")
 			;
 
-		// If no command line argument is supplied, simply print the usage and exit.
-		if (argc == 1)
-		{
-			cout << options;
-			return 0;
-		}
+		// If no command line argument is supplied, simply exit.
+		if (argc == 1) return 0;
 
 		// Parse command line arguments.
 		variables_map vm;
@@ -271,11 +281,11 @@ int main(int argc, char** argv)
 	DBClientConnection conn;
 	{
 		// Connect to host and authenticate user.
-		cout << "Connecting to " << host << " and authenticating user " << user << '\n';
+		syslog(LOG_INFO, "Connecting to %s and authenticating %s", host.c_str(), user.c_str());
 		string errmsg;
 		if ((!conn.connect(host, errmsg)) || (!conn.auth(db, user, pwd, errmsg)))
 		{
-			cout << errmsg << '\n';
+			syslog(LOG_ERR, errmsg.c_str());
 			return 1;
 		}
 	}
@@ -322,7 +332,7 @@ int main(int argc, char** argv)
 		{
 			const auto& job = cursor->next();
 			const auto job_id = job["_id"].OID();
-			cout << "Executing job " << job_id << '\n';
+			syslog(LOG_INFO, "Executing job %s", job_id.str().c_str());
 
 			// Obtain the target genome via taxon_id.
 			const auto taxon_id = job["genome"].Int();
@@ -333,12 +343,12 @@ int main(int argc, char** argv)
 			}
 			BOOST_ASSERT(i < genomes.size());
 			const auto& g = genomes[i];
-			cout << "Searching the genome of " << g.name << '\n';
+			syslog(LOG_INFO, "Searching the genome of %s", g.name.c_str());
 
 			// Set up CUDA kernel.
-			cutilSafeCall(cudaMalloc((void**)&scodon_device, sizeof(unsigned int) * g.scodon.size()));
-			cutilSafeCall(cudaMemcpy(scodon_device, &g.scodon.front(), sizeof(unsigned int) * g.scodon.size(), cudaMemcpyHostToDevice));
-			cutilSafeCall(cudaMalloc((void**)&match_device, sizeof(unsigned int) * max_match_count));
+			cudaSyslog(cudaMalloc((void**)&scodon_device, sizeof(unsigned int) * g.scodon.size()));
+			cudaSyslog(cudaMemcpy(scodon_device, &g.scodon.front(), sizeof(unsigned int) * g.scodon.size(), cudaMemcpyHostToDevice));
+			cudaSyslog(cudaMalloc((void**)&match_device, sizeof(unsigned int) * max_match_count));
 			initAgrepKernel(scodon_device, g.character_count, match_device, max_match_count);
 
 			// Create a job directory, open log and pos files, and write headers.
@@ -412,16 +422,16 @@ int main(int argc, char** argv)
 
 				// Invoke kernel.
 				invokeAgrepKernel(m, k, g.block_count);
-				cutilCheckMsg("igrep kernel execution failed");
+				cudaSyslog(cudaGetLastError());
 				// Don't waste the CPU time before waiting for the CUDA agrep kernel to exit.
 				const unsigned int m_minus_k = m - k;	// Used to determine whether a match is across two consecutive sequences.
 				const unsigned int m_plus_k = m + k;	// Used to determine whether a match is across two consecutive sequences.
-				cutilSafeCall(cudaThreadSynchronize());	// Block until the CUDA agrep kernel completes.
+				cudaSyslog(cudaDeviceSynchronize());	// Block until the CUDA agrep kernel completes.
 
 				// Retrieve matches from device.
 				getMatchCount(&match_count);
 				if (match_count > max_match_count) match_count = max_match_count;	// If the number of matches exceeds max_match_count, only the first max_match_count matches will be saved into the result file.
-				cutilSafeCall(cudaMemcpy(match, match_device, sizeof(unsigned int) * match_count, cudaMemcpyDeviceToHost));
+				cudaSyslog(cudaMemcpy(match, match_device, sizeof(unsigned int) * match_count, cudaMemcpyDeviceToHost));
 
 				// Decompose absolute matches into sequences and positions within sequence.
 				vector<unsigned int> match_sequences, match_positions;
@@ -451,9 +461,9 @@ int main(int argc, char** argv)
 			// Release resources.
 			pos.close();
 			log.close();
-			cutilSafeCall(cudaFree(match_device));
-			cutilSafeCall(cudaFree(scodon_device));
-			cutilSafeCall(cudaThreadExit());
+			cudaSyslog(cudaFree(match_device));
+			cudaSyslog(cudaFree(scodon_device));
+			cudaSyslog(cudaThreadExit());
 
 			// Update progress.
 			using boost::chrono::system_clock;
@@ -463,12 +473,12 @@ int main(int argc, char** argv)
 			const auto err = conn.getLastError();
 			if (!err.empty())
 			{
-				cerr << err << '\n';
+				syslog(LOG_ERR, err.c_str());
 			}
 
 			// Send completion notification email.
 			const auto email = job["email"].String();
-			cout << "Sending a completion notification email to " << email << '\n';
+			syslog(LOG_INFO, "Sending a completion notification email to %s", email.c_str());
 			using Poco::Net::MailMessage;
 			using Poco::Net::MailRecipient;
 			using Poco::Net::SMTPClientSession;
@@ -484,7 +494,7 @@ int main(int argc, char** argv)
 		}
 
 		// Sleep for a minute.
-		cout << "Sleeping the current thread for one minute\n";
+		syslog(LOG_INFO, "Sleeping the current thread for one minute");
 		using boost::this_thread::sleep_for;
 		using boost::chrono::minutes;
 		sleep_for(minutes(1));
