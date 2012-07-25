@@ -60,7 +60,7 @@ $(function () {
       email: $('#email').val()
     }, function (res) {
       // If server side validation fails, show the tooltips
-      if (res != undefined) {
+      if (res) {
         Object.keys(res).forEach(function(param) {
           $('#' + param + '_label').tooltip('show');
         });

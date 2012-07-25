@@ -7,21 +7,21 @@ var password = '2qR8dVM9d';
 var collection = 'idock';
 
 // Get jobs by email
-exports.get = function(query, cb) {
+exports.get = function (query, callback) {
   if (v.init(query).chk('email', 'must be valid', true).isEmail().failed()) {
-    return v.err;
+    return callback(v.err, null);
   }
-  new mongodb.Db('istar', new mongodb.Server('localhost', 27017)).open(function(err, db) {
+  new mongodb.Db('istar', new mongodb.Server('localhost', 27017)).open(function (err, db) {
     if (err) throw err;
-    db.authenticate(username, password, function(err, res) {
+    db.authenticate(username, password, function (err, res) {
       if (err) throw err;
-      db.collection(collection, function(err, coll) {
+      db.collection(collection, function (err, coll) {
         if (err) throw err;
-        coll.find({'email': query['email']}, function(err, cursor) {
+        coll.find({'email': query['email']}, function (err, cursor) {
           if (err) throw err;
           cursor.toArray(function (err, docs) {
             db.close();
-            cb(docs);
+            callback(null, docs);
           });
         });
       });
@@ -30,7 +30,7 @@ exports.get = function(query, cb) {
 }
 
 // Create a new job
-exports.create = function(job) {
+exports.create = function (job, callback) {
   if (v.init(job)
    .chk('receptor', 'must be provided', true).len(1, 10485760) // 10MB
    .chk('center_x', 'must be a decimal within [-1000, 1000]', true).isDecimal().min(-1000).max(1000)
@@ -60,7 +60,7 @@ exports.create = function(job) {
    .chk('nrb_lb', 'must be an integer within [0, 34]', false).isInt().min(0).max(34)
    .chk('nrb_ub', 'must be an integer within [0, 34]', false).isInt().min(0).max(34)
    .failed()) {
-    return v.err;
+    return callback(v.err, null);
   }
   if (v.init(f.init(job)
    .snt('receptor').xss()
@@ -101,18 +101,19 @@ exports.create = function(job) {
    .rng('charge_lb', 'charge_ub')
    .rng('nrb_lb', 'nrb_ub')
    .failed()) {
-    return v.err;
+    return callback(v.err, null);
   }
   f.res.submitted = new Date();
-  new mongodb.Db('istar', new mongodb.Server('localhost', 27017)).open(function(err, db) {
+  new mongodb.Db('istar', new mongodb.Server('localhost', 27017)).open(function (err, db) {
     if (err) throw err;
-    db.authenticate(username, password, function(err, res) {
+    db.authenticate(username, password, function (err, res) {
       if (err) throw err;
-      db.collection(collection, function(err, coll) {
+      db.collection(collection, function (err, coll) {
         if (err) throw err;
-        coll.insert(f.res, function(err, docs) {
+        coll.insert(f.res, function (err, docs) {
           if (err) throw err;
           db.close();
+          callback(null, docs);
         });
       });
     });

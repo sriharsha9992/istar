@@ -37,7 +37,7 @@ if (cluster.isMaster) {
       // Fork worker processes with cluster
       var numCPUs = require('os').cpus().length;
       console.log('Forking %d worker processes', numCPUs);
-      var msg = function(m) {
+      var msg = function (m) {
         if (m.query == '/idock/ligands') {
           var ligands = 0;
           for (var i = 0; i < num_ligands; ++i)
@@ -50,7 +50,7 @@ if (cluster.isMaster) {
       for (var i = 0; i < numCPUs; i++) {
         cluster.fork().on('message', msg);
       }
-      cluster.on('death', function(worker) {
+      cluster.on('death', function (worker) {
         console.log('Worker process %d died. Restarting...', worker.pid);
         cluster.fork().on('message', msg);
       });
@@ -60,10 +60,10 @@ if (cluster.isMaster) {
   // Configure express server
   var express = require('express'),
       app = express();
-  app.configure(function(){
+  app.configure(function () {
     app.use(express.bodyParser());
     app.use(app.router);
-    app.use(function(req, res, next) {
+    app.use(function (req, res, next) {
       var host = req.headers.host.split(':', 1)[0].toLowerCase();
       if (host === 'idock.cse.cuhk.edu.hk') {
         return res.redirect(req.protocol + '://istar.cse.cuhk.edu.hk/idock' + req.url);
@@ -74,12 +74,12 @@ if (cluster.isMaster) {
       next();
     });
   });
-  app.configure('development', function(){
+  app.configure('development', function () {
     app.use(express.static(__dirname + '/public'));
     app.use(express.favicon(__dirname + '/public'));
     app.use(express.errorHandler({ dumpExceptions: true, showStack: true }));
   });
-  app.configure('production', function(){
+  app.configure('production', function () {
     var oneYear = 31557600000; // 1000 * 60 * 60 * 24 * 365.25
     app.use(express.static(__dirname + '/public', { maxAge: oneYear }));
     app.use(express.favicon(__dirname + '/public', { maxAge: oneYear }));
@@ -98,26 +98,28 @@ if (cluster.isMaster) {
     });
     else cb();
   };
-  process.on('message', function(m) {
+  process.on('message', function (m) {
     if (m.ligands !== undefined) {
       ligands = m.ligands;
     }
   });
   // Get idock jobs by email
-  app.get('/idock/jobs', function(req, res) {
-    var err = idock.get(req.query, function (docs) {
+  app.get('/idock/jobs', function (req, res) {
+    idock.get(req.query, function (err, docs) {
+      if (err) return res.json(err);
       res.json(docs);
     });
-    if (err !== undefined) {
-      res.json(err);
-    }
+
   });
   // Post a new idock job
-  app.post('/idock/jobs', function(req, res) {
-    res.json(idock.create(req.body));
+  app.post('/idock/jobs', function (req, res) {
+    idock.create(req.body, function (err, docs) {
+      if (err) return res.json(err);
+      res.json();
+    });
   });
   // Get the number of ligands satisfying filtering conditions
-  app.get('/idock/ligands', function(req, res) {
+  app.get('/idock/ligands', function (req, res) {
     // Validate and sanitize user input
     if (v.init(req.query)
      .chk('mwt_lb', 'must be a decimal within [55, 566]', true).isDecimal().min(55).max(566)
@@ -139,8 +141,7 @@ if (cluster.isMaster) {
      .chk('nrb_lb', 'must be an integer within [0, 34]', true).isInt().min(0).max(34)
      .chk('nrb_ub', 'must be an integer within [0, 34]', true).isInt().min(0).max(34)
      .failed()) {
-      res.json(v.err);
-      return
+      return res.json(v.err);
     }
     if (v.init(f.init(req.query)
      .snt('mwt_lb').toFloat()
@@ -172,8 +173,7 @@ if (cluster.isMaster) {
 	 .rng('charge_lb', 'charge_ub')
 	 .rng('nrb_lb', 'nrb_ub')
      .failed()) {
-      res.json(v.err);
-      return
+      return res.json(v.err);
     }
     // Send query to master process
     ligands = -1;
@@ -184,17 +184,18 @@ if (cluster.isMaster) {
     });
   });
   // Get igrep jobs by email
-  app.get('/igrep/jobs', function(req, res) {
-    var err = igrep.get(req.query, function (docs) {
+  app.get('/igrep/jobs', function (req, res) {
+    igrep.get(req.query, function (err, docs) {
+      if (err) return res.json(err);
       res.json(docs);
     });
-    if (err !== undefined) {
-      res.json(err);
-    }
   });
   // Post a new igrep job
-  app.post('/igrep/jobs', function(req, res) {
-    res.json(igrep.create(req.body));
+  app.post('/igrep/jobs', function (req, res) {
+    igrep.create(req.body, function (err, docs) {
+      if (err) return res.json(err);
+      res.json();
+    });
   });
   // Start listening
   var http_port = 3000,
