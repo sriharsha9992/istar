@@ -22,7 +22,7 @@ validator.Validator.prototype.rng = function(lb, ub) {
   }
   return this;
 }
-validator.Filter.prototype.init = function (obj) {
+validator.Filter.prototype.init = function(obj) {
   this.obj = obj;
   this.res = {};
   return this;
@@ -36,4 +36,7 @@ validator.Filter.prototype.snt = function(param, def) {
 validator.Filter.prototype.wrap = function(value) {
   return this;
 }
-
+validator.Filter.prototype.copy = function() {
+  this.modify(this.str);
+  return this.wrap(this.str);
+}
