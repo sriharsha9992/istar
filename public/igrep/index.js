@@ -119,6 +119,5 @@ $(function() {
       // Save email into cookie
       $.cookie('email', email, { expires: 7 });
     }, 'json');
-    return false;
   });
 });
