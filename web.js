@@ -127,6 +127,7 @@ if (cluster.isMaster) {
       // Post a new idock job
       app.post('/idock/jobs', function(req, res) {
         if (v.init(req.body)
+         .chk('email', 'must be valid', true).isEmail()
          .chk('receptor', 'must be provided', true).len(1, 10485760) // 10MB
          .chk('center_x', 'must be a decimal within [-1000, 1000]', true).isDecimal().min(-1000).max(1000)
          .chk('center_y', 'must be a decimal within [-1000, 1000]', true).isDecimal().min(-1000).max(1000)
@@ -135,7 +136,6 @@ if (cluster.isMaster) {
          .chk('size_y', 'must be an integer within [1, 30]', true).isInt().min(1).max(30)
          .chk('size_z', 'must be an integer within [1, 30]', true).isInt().min(1).max(30)
          .chk('description', 'must be provided', true).len(1, 1000)
-         .chk('email', 'must be valid', true).isEmail()
          .chk('mwt_lb', 'must be a decimal within [55, 566]', false).isDecimal().min(55).max(566)
          .chk('mwt_ub', 'must be a decimal within [55, 566]', false).isDecimal().min(55).max(566)
          .chk('logp_lb', 'must be a decimal within [-6, 12]', false).isDecimal().min(-6).max(12)
@@ -158,6 +158,7 @@ if (cluster.isMaster) {
           return res.json(v.err);
         }
         if (v.init(f.init(req.body)
+         .snt('email').copy()
          .snt('receptor').xss()
          .snt('center_x').toFloat()
          .snt('center_y').toFloat()
@@ -166,7 +167,6 @@ if (cluster.isMaster) {
          .snt('size_y').toInt()
          .snt('size_z').toInt()
          .snt('description').xss()
-         .snt('email').xss()
          .snt('mwt_lb', 400).toFloat()
          .snt('mwt_ub', 500).toFloat()
          .snt('logp_lb', 0).toFloat()
@@ -273,16 +273,16 @@ if (cluster.isMaster) {
       app.get('/igrep/jobs', function(req, res) {
         if (v.init(req.query)
          .chk('email', 'must be valid', true).isEmail()
-         .chk('since', 'must be a date since epoch', false).isDate()
+         .chk('skip', 'must be a non-negative integer', false).isInt().min(0)
          .failed()) {
           return res.json(v.err);
         }
         f.init(req.query)
          .snt('email').copy()
-         .snt('since', 0).toDate();
-        igrep.find({'email': f.res.email, 'submitted': {'$gte': f.res.since}}, {'genome': 1, 'submitted': 1, 'done': 1}, function(err, cursor) {
+         .snt('skip', 0).toInt();
+        igrep.find({'email': f.res.email}, {'genome': 1, 'submitted': 1, 'done': 1}, function(err, cursor) {
           if (err) throw err;
-          cursor.sort({'submitted': 1}).toArray(function(err, docs) {
+          cursor.sort({'submitted': 1}).skip(f.res.skip).toArray(function(err, docs) {
             if (err) throw err;
             res.json(docs);
           });
