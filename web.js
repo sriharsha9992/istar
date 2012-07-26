@@ -282,7 +282,7 @@ if (cluster.isMaster) {
          .snt('since', 0).toDate();
         igrep.find({'email': f.res.email, 'submitted': {'$gte': f.res.since}}, {'genome': 1, 'submitted': 1, 'done': 1}, function(err, cursor) {
           if (err) throw err;
-          cursor.sort({'submitted': -1}).toArray(function(err, docs) {
+          cursor.sort({'submitted': 1}).toArray(function(err, docs) {
             if (err) throw err;
             res.json(docs);
           });
