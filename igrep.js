@@ -12,13 +12,13 @@ exports.setCollection = function(collection) {
 exports.get = function(query, callback) {
   if (v.init(query)
    .chk('email', 'must be valid', true).isEmail()
-   .chk('page', 'must be an integer within [0, 999]', false).isInt().min(0).max(999)
+   .chk('since', 'must be a date since epoch', false).isDate()
    .failed()) {
     return callback(v.err, null);
   }
   f.init(query)
    .snt('email').copy()
-   .snt('page', 0).toInt();
+   .snt('since', 0).toDate();
   coll.find({'email': f.res.email}, {'genome': 1, 'submitted': 1, 'done': 1}, function(err, cursor) {
     if (err) throw err;
     cursor.sort({'submitted': -1}).toArray(function(err, docs) {
