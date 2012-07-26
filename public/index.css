@@ -34,3 +34,14 @@ footer {
 .csv {
   height: 16px;
 }
+
+.pagination input {
+  float: left;
+  padding: 0 14px;
+  width: 40px;
+  height: 34px;
+  text-align: center;
+  text-decoration: none;
+  border: 1px solid #ddd;
+}
+

@@ -20,7 +20,8 @@ $(function() {
       frstpage = $('#frstpage'),
       lastpage = $('#lastpage'),
       prevpage = $('#prevpage'),
-      nextpage = $('#nextpage');
+      nextpage = $('#nextpage'),
+      whatpage = $('#whatpage');
   frstpage.click(function() {
     if (frstpage.hasClass('disabled')) return;
     page = 0;
@@ -39,6 +40,12 @@ $(function() {
   nextpage.click(function() {
     if (nextpage.hasClass('disabled')) return;
     page += 1;
+    refreshJobs();
+  });
+  whatpage.change(function() {
+    var p = parseInt(whatpage.val());
+    if ((p < 0) || (p > last_page) || (p == page)) return;
+    page = p;
     refreshJobs();
   });
 
@@ -71,6 +78,7 @@ $(function() {
       lastpage.removeClass('disabled');
       nextpage.removeClass('disabled');
     }
+    whatpage.val(page);
   }
 
   // Initialize the table of jobs
