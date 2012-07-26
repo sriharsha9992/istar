@@ -18,9 +18,9 @@ if (cluster.isMaster) {
   var prop = 'idock/16_prop.bin.gz';
   console.log('Parsing %s', prop);
   var start = Date.now();
-  fs.readFile(prop, function (err, data) {
+  fs.readFile(prop, function(err, data) {
     if (err) throw err;
-    require('zlib').gunzip(data, function (err, buf) {
+    require('zlib').gunzip(data, function(err, buf) {
       if (err) throw err;
       for (i = 0, o = 0; i < num_ligands; ++i, o += 26) {
            mwt[i] = buf.readFloatLE(o +  0);
@@ -37,7 +37,7 @@ if (cluster.isMaster) {
       // Fork worker processes with cluster
       var numCPUs = require('os').cpus().length;
       console.log('Forking %d worker processes', numCPUs);
-      var msg = function (m) {
+      var msg = function(m) {
         if (m.query == '/idock/ligands') {
           var ligands = 0;
           for (var i = 0; i < num_ligands; ++i)
@@ -50,164 +50,173 @@ if (cluster.isMaster) {
       for (var i = 0; i < numCPUs; i++) {
         cluster.fork().on('message', msg);
       }
-      cluster.on('death', function (worker) {
+      cluster.on('death', function(worker) {
         console.log('Worker process %d died. Restarting...', worker.pid);
         cluster.fork().on('message', msg);
       });
     });
   });
 } else {
-  // Configure express server
-  var express = require('express'),
-      app = express();
-  app.configure(function () {
-    app.use(express.bodyParser());
-    app.use(app.router);
-    app.use(function (req, res, next) {
-      var host = req.headers.host.split(':', 1)[0].toLowerCase();
-      if (host === 'idock.cse.cuhk.edu.hk') {
-        return res.redirect(req.protocol + '://istar.cse.cuhk.edu.hk/idock' + req.url);
-      }
-      if ((host === 'agrep.cse.cuhk.edu.hk') || (host === 'igrep.cse.cuhk.edu.hk')) {
-        return res.redirect(req.protocol + '://istar.cse.cuhk.edu.hk/igrep' + req.url);
-      }
-      next();
-    });
-  });
-  app.configure('development', function () {
-    app.use(express.static(__dirname + '/public'));
-    app.use(express.favicon(__dirname + '/public'));
-    app.use(express.errorHandler({ dumpExceptions: true, showStack: true }));
-  });
-  app.configure('production', function () {
-    var oneYear = 31557600000; // 1000 * 60 * 60 * 24 * 365.25
-    app.use(express.static(__dirname + '/public', { maxAge: oneYear }));
-    app.use(express.favicon(__dirname + '/public', { maxAge: oneYear }));
-    app.use(express.errorHandler());
-  });
-  // Define helper variables and functions
-  var validator = require('./validator');
-  var v = new validator.Validator();
-  var f = new validator.Filter();
-  var idock = require('./idock');
-  var igrep = require('./igrep');
-  var ligands;
-  function sync(cb) {
-    if (ligands == -1) process.nextTick(function () {
-      sync(cb);
-    });
-    else cb();
-  };
-  process.on('message', function (m) {
-    if (m.ligands !== undefined) {
-      ligands = m.ligands;
-    }
-  });
-  // Get idock jobs by email
-  app.get('/idock/jobs', function (req, res) {
-    idock.get(req.query, function (err, docs) {
-      if (err) return res.json(err);
-      res.json(docs);
-    });
-
-  });
-  // Post a new idock job
-  app.post('/idock/jobs', function (req, res) {
-    idock.create(req.body, function (err, docs) {
-      if (err) return res.json(err);
-      res.json();
-    });
-  });
-  // Get the number of ligands satisfying filtering conditions
-  app.get('/idock/ligands', function (req, res) {
-    // Validate and sanitize user input
-    if (v.init(req.query)
-     .chk('mwt_lb', 'must be a decimal within [55, 566]', true).isDecimal().min(55).max(566)
-     .chk('mwt_ub', 'must be a decimal within [55, 566]', true).isDecimal().min(55).max(566)
-     .chk('logp_lb', 'must be a decimal within [-6, 12]', true).isDecimal().min(-6).max(12)
-     .chk('logp_ub', 'must be a decimal within [-6, 12]', true).isDecimal().min(-6).max(12)
-     .chk('ad_lb', 'must be a decimal within [-25, 29]', true).isDecimal().min(-25).max(29)
-     .chk('ad_ub', 'must be a decimal within [-25, 29]', true).isDecimal().min(-25).max(29)
-     .chk('pd_lb', 'must be a decimal within [-504, 1]', true).isDecimal().min(-504).max(1)
-     .chk('pd_ub', 'must be a decimal within [-504, 1]', true).isDecimal().min(-504).max(1)
-     .chk('hbd_lb', 'must be an integer within [0, 20]', true).isInt().min(0).max(20)
-     .chk('hbd_ub', 'must be an integer within [0, 20]', true).isInt().min(0).max(20)
-     .chk('hba_lb', 'must be an integer within [0, 18]', true).isInt().min(0).max(18)
-     .chk('hba_ub', 'must be an integer within [0, 18]', true).isInt().min(0).max(18)
-     .chk('tpsa_lb', 'must be an integer within [0, 317]', true).isInt().min(0).max(317)
-     .chk('tpsa_ub', 'must be an integer within [0, 317]', true).isInt().min(0).max(317)
-     .chk('charge_lb', 'must be an integer within [-5, 5]', true).isInt().min(-5).max(5)
-     .chk('charge_ub', 'must be an integer within [-5, 5]', true).isInt().min(-5).max(5)
-     .chk('nrb_lb', 'must be an integer within [0, 34]', true).isInt().min(0).max(34)
-     .chk('nrb_ub', 'must be an integer within [0, 34]', true).isInt().min(0).max(34)
-     .failed()) {
-      return res.json(v.err);
-    }
-    if (v.init(f.init(req.query)
-     .snt('mwt_lb').toFloat()
-     .snt('mwt_ub').toFloat()
-     .snt('logp_lb').toFloat()
-     .snt('logp_ub').toFloat()
-     .snt('ad_lb').toFloat()
-     .snt('ad_ub').toFloat()
-     .snt('pd_lb').toFloat()
-     .snt('pd_ub').toFloat()
-     .snt('hbd_lb').toInt()
-     .snt('hbd_ub').toInt()
-     .snt('hba_lb').toInt()
-     .snt('hba_ub').toInt()
-     .snt('tpsa_lb').toInt()
-     .snt('tpsa_ub').toInt()
-     .snt('charge_lb').toInt()
-     .snt('charge_ub').toInt()
-     .snt('nrb_lb').toInt()
-     .snt('nrb_ub').toInt()
-     .res)
+  // Connect to MongoDB
+  var mongodb = require('mongodb');
+  new mongodb.Db('istar', new mongodb.Server('localhost', 27017)).open(function(err, db) {
+    if (err) throw err;
+    db.authenticate('daemon', '2qR8dVM9d', function(err, res) {
+      if (err) throw err;
+      var idock = require('./idock');
+      var igrep = require('./igrep');
+      igrep.setCollection(db.collection('igrep'));
+      // Configure express server
+      var express = require('express');
+      var app = express();
+      app.configure(function() {
+        app.use(express.bodyParser());
+        app.use(app.router);
+        app.use(function(req, res, next) {
+          // Replaced with regular expression
+          var host = req.headers.host.split(':', 1)[0].toLowerCase();
+          if (host === 'idock.cse.cuhk.edu.hk') {
+            return res.redirect(req.protocol + '://istar.cse.cuhk.edu.hk/idock' + req.url);
+          }
+          if ((host === 'agrep.cse.cuhk.edu.hk') || (host === 'igrep.cse.cuhk.edu.hk')) {
+            return res.redirect(req.protocol + '://istar.cse.cuhk.edu.hk/igrep' + req.url);
+          }
+          next();
+        });
+      });
+      app.configure('development', function() {
+        app.use(express.static(__dirname + '/public'));
+        app.use(express.favicon(__dirname + '/public'));
+        app.use(express.errorHandler({ dumpExceptions: true, showStack: true }));
+      });
+      app.configure('production', function() {
+        var oneYear = 31557600000; // 1000 * 60 * 60 * 24 * 365.25
+        app.use(express.static(__dirname + '/public', { maxAge: oneYear }));
+        app.use(express.favicon(__dirname + '/public', { maxAge: oneYear }));
+        app.use(express.errorHandler());
+      });
+      // Define helper variables and functions
+      var validator = require('./validator');
+      var v = new validator.Validator();
+      var f = new validator.Filter();
+      var ligands;
+      function sync(callback) {
+        if (ligands == -1) process.nextTick(function() {
+          sync(callback);
+        });
+        else callback();
+      };
+      process.on('message', function(m) {
+        if (m.ligands !== undefined) {
+          ligands = m.ligands;
+        }
+      });
+      // Get idock jobs by email
+      app.get('/idock/jobs', function(req, res) {
+        idock.get(req.query, function(err, docs) {
+          if (err) return res.json(err);
+          res.json(docs);
+        });
+      });
+      // Post a new idock job
+      app.post('/idock/jobs', function(req, res) {
+        idock.create(req.body, function(err, docs) {
+          if (err) return res.json(err);
+          res.json();
+        });
+      });
+      // Get the number of ligands satisfying filtering conditions
+      app.get('/idock/ligands', function(req, res) {
+        // Validate and sanitize user input
+        if (v.init(req.query)
+         .chk('mwt_lb', 'must be a decimal within [55, 566]', true).isDecimal().min(55).max(566)
+         .chk('mwt_ub', 'must be a decimal within [55, 566]', true).isDecimal().min(55).max(566)
+         .chk('logp_lb', 'must be a decimal within [-6, 12]', true).isDecimal().min(-6).max(12)
+         .chk('logp_ub', 'must be a decimal within [-6, 12]', true).isDecimal().min(-6).max(12)
+         .chk('ad_lb', 'must be a decimal within [-25, 29]', true).isDecimal().min(-25).max(29)
+         .chk('ad_ub', 'must be a decimal within [-25, 29]', true).isDecimal().min(-25).max(29)
+         .chk('pd_lb', 'must be a decimal within [-504, 1]', true).isDecimal().min(-504).max(1)
+         .chk('pd_ub', 'must be a decimal within [-504, 1]', true).isDecimal().min(-504).max(1)
+         .chk('hbd_lb', 'must be an integer within [0, 20]', true).isInt().min(0).max(20)
+         .chk('hbd_ub', 'must be an integer within [0, 20]', true).isInt().min(0).max(20)
+         .chk('hba_lb', 'must be an integer within [0, 18]', true).isInt().min(0).max(18)
+         .chk('hba_ub', 'must be an integer within [0, 18]', true).isInt().min(0).max(18)
+         .chk('tpsa_lb', 'must be an integer within [0, 317]', true).isInt().min(0).max(317)
+         .chk('tpsa_ub', 'must be an integer within [0, 317]', true).isInt().min(0).max(317)
+         .chk('charge_lb', 'must be an integer within [-5, 5]', true).isInt().min(-5).max(5)
+         .chk('charge_ub', 'must be an integer within [-5, 5]', true).isInt().min(-5).max(5)
+         .chk('nrb_lb', 'must be an integer within [0, 34]', true).isInt().min(0).max(34)
+         .chk('nrb_ub', 'must be an integer within [0, 34]', true).isInt().min(0).max(34)
+         .failed()) {
+          return res.json(v.err);
+        }
+        if (v.init(f.init(req.query)
+         .snt('mwt_lb').toFloat()
+         .snt('mwt_ub').toFloat()
+         .snt('logp_lb').toFloat()
+         .snt('logp_ub').toFloat()
+         .snt('ad_lb').toFloat()
+         .snt('ad_ub').toFloat()
+         .snt('pd_lb').toFloat()
+         .snt('pd_ub').toFloat()
+         .snt('hbd_lb').toInt()
+         .snt('hbd_ub').toInt()
+         .snt('hba_lb').toInt()
+         .snt('hba_ub').toInt()
+         .snt('tpsa_lb').toInt()
+         .snt('tpsa_ub').toInt()
+         .snt('charge_lb').toInt()
+         .snt('charge_ub').toInt()
+         .snt('nrb_lb').toInt()
+         .snt('nrb_ub').toInt()
+         .res)
 	 .rng('mwt_lb', 'mwt_ub')
 	 .rng('logp_lb', 'logp_ub')
 	 .rng('ad_lb', 'ad_ub')
 	 .rng('pd_lb', 'pd_ub')
 	 .rng('hbd_lb', 'hbd_ub')
-	 .rng('hba_lb', 'hba_ub')
-	 .rng('tpsa_lb', 'tpsa_ub')
-	 .rng('charge_lb', 'charge_ub')
-	 .rng('nrb_lb', 'nrb_ub')
-     .failed()) {
-      return res.json(v.err);
-    }
-    // Send query to master process
-    ligands = -1;
-    f.res.query = '/idock/ligands';
-    process.send(f.res);
-    sync(function () {
-      res.json(ligands);
+    	 .rng('hba_lb', 'hba_ub')
+    	 .rng('tpsa_lb', 'tpsa_ub')
+    	 .rng('charge_lb', 'charge_ub')
+    	 .rng('nrb_lb', 'nrb_ub')
+         .failed()) {
+          return res.json(v.err);
+        }
+        // Send query to master process
+        ligands = -1;
+        f.res.query = '/idock/ligands';
+        process.send(f.res);
+        sync(function() {
+          res.json(ligands);
+        });
+      });
+      // Get igrep jobs by email
+      app.get('/igrep/jobs', function(req, res) {
+        igrep.get(req.query, function(err, docs) {
+          if (err) return res.json(err);
+          res.json(docs);
+        });
+      });
+      // Post a new igrep job
+      app.post('/igrep/jobs', function(req, res) {
+        igrep.create(req.body, function(err, docs) {
+          if (err) return res.json(err);
+          res.json();
+        });
+      });
+      // Start listening
+      var http_port = 3000,
+          spdy_port = 3443,
+          spdy = require('spdy'),
+          https = require('https'),
+          options = {
+            key: fs.readFileSync(__dirname + '/key.pem'),
+            cert: fs.readFileSync(__dirname + '/cert.pem'),
+            ca: fs.readFileSync(__dirname + '/csr.pem')
+          };
+      app.listen(http_port);
+      spdy.createServer(https.Server, options, app).listen(spdy_port);
+      console.log('Worker %d listening on HTTP port %d and SPDY port %d in %s mode', process.pid, http_port, spdy_port, app.settings.env);
     });
   });
-  // Get igrep jobs by email
-  app.get('/igrep/jobs', function (req, res) {
-    igrep.get(req.query, function (err, docs) {
-      if (err) return res.json(err);
-      res.json(docs);
-    });
-  });
-  // Post a new igrep job
-  app.post('/igrep/jobs', function (req, res) {
-    igrep.create(req.body, function (err, docs) {
-      if (err) return res.json(err);
-      res.json();
-    });
-  });
-  // Start listening
-  var http_port = 3000,
-      spdy_port = 3443,
-      spdy = require('spdy'),
-      https = require('https'),
-      options = {
-        key: fs.readFileSync(__dirname + '/key.pem'),
-        cert: fs.readFileSync(__dirname + '/cert.pem'),
-        ca: fs.readFileSync(__dirname + '/csr.pem')
-      };
-  app.listen(http_port);
-  spdy.createServer(https.Server, options, app).listen(spdy_port);
-  console.log('Worker %d listening on HTTP port %d and SPDY port %d in %s mode', process.pid, http_port, spdy_port, app.settings.env);
 }

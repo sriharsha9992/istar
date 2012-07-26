@@ -1,4 +1,4 @@
-$(function () {
+$(function() {
 
   // Fetch email from cookie
   var email = $.cookie('email');
@@ -34,12 +34,12 @@ $(function () {
   // Initialize pager
   var prevpage = $('#prevpage');
   var nextpage = $('#nextpage');
-  prevpage.addClass('disabled').click(function () {
+  prevpage.addClass('disabled').click(function() {
     if (prevpage.hasClass('disabled')) return;
     if (page) page -= 1;
     refreshJobs();
   });
-  nextpage.click(function () {
+  nextpage.click(function() {
     if (nextpage.hasClass('disabled')) return;
     if (!page) prevpage.removeClass('disabled');
     page += 1;
@@ -50,7 +50,7 @@ $(function () {
   $('.control-label a[rel=tooltip]').tooltip();
 
   // Process submission
-  $('#submit').click(function () {
+  $('#submit').click(function() {
     // Hide tooltips
     $('.control-label a[rel=tooltip]').tooltip('hide');
     // Post a new job without client side validation
@@ -58,7 +58,7 @@ $(function () {
       genome: $('#genome').val(),
       queries: $('#queries').val(),
       email: $('#email').val()
-    }, function (res) {
+    }, function(res) {
       // If server side validation fails, show the tooltips
       if (res) {
         Object.keys(res).forEach(function(param) {
