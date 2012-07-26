@@ -1,11 +1,9 @@
 node_modules
 *.conf
-*.sh
 *.log
 *.csv
 *.fa
 16_*
-contextio.js
 .dep.inc
 Makefile
 nbproject
