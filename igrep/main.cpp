@@ -330,7 +330,7 @@ int main(int argc, char** argv)
 		auto cursor = conn.query(collection, QUERY("done" << BSON("$exists" << false)).sort("submitted"), 100); // Each batch processes 100 jobs.
 		while (cursor->more())
 		{
-			const auto& job = cursor->next();
+			const auto job = cursor->next();
 			const auto job_id = job["_id"].OID();
 			syslog(LOG_INFO, "Executing job %s", job_id.str().c_str());
 
