@@ -250,7 +250,7 @@ public:
 
 int main(int argc, char** argv)
 {
-	// Daemonize itself, retaining the current working directory and redirecting cin, cout and cerr to /dev/null.
+	// Daemonize itself, retaining the current working directory and redirecting stdin, stdout and stderr to /dev/null.
 	daemon(1, 0);
 	syslog(LOG_INFO, "igrep 1.0");
 
@@ -463,7 +463,7 @@ int main(int argc, char** argv)
 			log.close();
 			cudaSyslog(cudaFree(match_device));
 			cudaSyslog(cudaFree(scodon_device));
-			cudaSyslog(cudaThreadExit());
+			cudaSyslog(cudaDeviceReset());
 
 			// Update progress.
 			using boost::chrono::system_clock;
@@ -493,11 +493,9 @@ int main(int argc, char** argv)
 			session.close();
 		}
 
-		// Sleep for a minute.
-		syslog(LOG_INFO, "Sleeping the current thread for one minute");
+		// Sleep for a second.
 		using boost::this_thread::sleep_for;
-		using boost::chrono::minutes;
-		sleep_for(minutes(1));
+		sleep_for(milliseconds(1000));
 	}
 	return 0;
 }
