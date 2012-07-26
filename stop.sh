@@ -1,2 +1,0 @@
-forever stopall
-forever list
