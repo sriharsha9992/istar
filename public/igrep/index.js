@@ -24,7 +24,7 @@ $(function() {
       whatpage = $('#whatpage');
   frstpage.click(function() {
     if (frstpage.hasClass('disabled')) return;
-    page = 0;
+    page = 1;
     refreshJobs();
   });
   lastpage.click(function() {
@@ -44,7 +44,7 @@ $(function() {
   });
   whatpage.change(function() {
     var p = parseInt(whatpage.val());
-    if ((p < 0) || (p > last_page) || (p == page)) return;
+    if ((p < 1) || (p > last_page) || (p === page)) return;
     page = p;
     refreshJobs();
   });
@@ -52,7 +52,7 @@ $(function() {
   // Refresh the table of jobs
   function refreshJobs() {
     var rows;
-    for (var i = 8 * page; i < 8 * (page + 1); ++i) {
+    for (var i = 8 * (page - 1); i < 8 * page; ++i) {
       if (i >= jobs.length) {
         rows += '<tr><td>&nbsp;</td><td></td><td></td><td></td><td></td></tr>';
         continue;
@@ -64,7 +64,7 @@ $(function() {
     $('#jobs').hide().html(rows).fadeIn();
 
     // Refresh pager
-    if (page == 0) {
+    if (page == 1) {
       frstpage.addClass('disabled');
       prevpage.addClass('disabled');
     } else {
@@ -84,7 +84,7 @@ $(function() {
   // Initialize the table of jobs
   $.get('jobs', { email: email }, function(res) {
     jobs = res;
-    last_page = jobs.length ? ((jobs.length - 1) >> 3) : 0;
+    last_page = jobs.length ? ((jobs.length + 7) >> 3) : 1;
     page = last_page;
     refreshJobs();
   });
@@ -112,12 +112,13 @@ $(function() {
       email = $('#email').val();
       $.get('jobs', { email: email, skip: jobs.length }, function(res) {
         jobs = jobs.concat(res);
-        last_page = jobs.length ? ((jobs.length - 1) >> 3) : 0;
+        last_page = jobs.length ? ((jobs.length + 7) >> 3) : 1;
         page = last_page;
         refreshJobs();
       });
       // Save email into cookie
       $.cookie('email', email, { expires: 7 });
     }, 'json');
+    return false;
   });
 });
