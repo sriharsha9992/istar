@@ -122,7 +122,7 @@ inline unsigned int encode(char character)
 class genome
 {
 public:
-	const unsigned int taxon_id;	/**< Taxon ID. */
+	const unsigned int taxon;	/**< Taxonomy ID. */
 	string name;	/**< Genome name. */
 	const unsigned int sequence_count;	/**< Actual number of sequences. */
 	const unsigned int character_count;	/**< Actual number of characters. */
@@ -136,13 +136,13 @@ public:
 
 	/**
 	 * Construct a genome by loading its FASTA files.
-	 * @param[in] taxon_id Taxonomy ID, e.g. 9606 for human.
+	 * @param[in] taxon Taxonomy ID, e.g. 9606 for human.
 	 * @param[in] name Scientific name followed by common name in brackets, e.g. Homo sapiens (Human).
 	 * @param[in] sequence_count Number of sequences. For assembled genomes, it equals the number of FASTA files.
 	 * @param[in] character_count Number of characters.
 	 */
-	explicit genome(const unsigned int taxon_id, const string name, const unsigned int sequence_count, const unsigned int character_count) :
-		taxon_id(taxon_id),
+	explicit genome(const unsigned int taxon, const string name, const unsigned int sequence_count, const unsigned int character_count) :
+		taxon(taxon),
 		name(name),
 		sequence_count(sequence_count),
 		character_count(character_count),
@@ -331,15 +331,15 @@ int main(int argc, char** argv)
 		while (cursor->more())
 		{
 			const auto job = cursor->next();
-			const auto job_id = job["_id"].OID();
-			syslog(LOG_INFO, "Executing job %s", job_id.str().c_str());
+			const auto _id = job["_id"].OID();
+			syslog(LOG_INFO, "Executing job %s", _id.str().c_str());
 
-			// Obtain the target genome via taxon_id.
-			const auto taxon_id = job["genome"].Int();
+			// Obtain the target genome via taxon.
+			const auto taxon = job["genome"].Int();
 			unsigned int i;
 			for (i = 0; i < genomes.size(); ++i)
 			{
-				if (taxon_id == genomes[i].taxon_id) break;
+				if (taxon == genomes[i].taxon) break;
 			}
 			BOOST_ASSERT(i < genomes.size());
 			const auto& g = genomes[i];
@@ -352,7 +352,7 @@ int main(int argc, char** argv)
 			initAgrepKernel(scodon_device, g.character_count, match_device, max_match_count);
 
 			// Create a job directory, open log and pos files, and write headers.
-			const path job_path = jobs_path / job_id.str();
+			const path job_path = jobs_path / _id.str();
 			create_directory(job_path);
 			using boost::filesystem::ofstream;
 			ofstream log(job_path / "log.csv");
@@ -469,7 +469,7 @@ int main(int argc, char** argv)
 			using boost::chrono::system_clock;
 			using boost::chrono::duration_cast;
 			using boost::chrono::milliseconds;
-			conn.update(collection, BSON("_id" << job_id), BSON("$set" << BSON("done" << Date_t(duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count()))));
+			conn.update(collection, BSON("_id" << _id), BSON("$set" << BSON("done" << Date_t(duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count()))));
 			const auto err = conn.getLastError();
 			if (!err.empty())
 			{
