@@ -72,12 +72,10 @@ if (cluster.isMaster) {
         app.use(express.bodyParser());
         app.use(app.router);
         app.use(function(req, res, next) {
-          // Replaced with regular expression
-          var host = req.headers.host.split(':', 1)[0].toLowerCase();
-          if (host === 'idock.cse.cuhk.edu.hk') {
+          if (req.headers.host.match(/^idock.cse.cuhk.edu.hk/ig)) {
             return res.redirect(req.protocol + '://istar.cse.cuhk.edu.hk/idock' + req.url);
           }
-          if ((host === 'agrep.cse.cuhk.edu.hk') || (host === 'igrep.cse.cuhk.edu.hk')) {
+          if (req.headers.host.match(/^[ai]grep.cse.cuhk.edu.hk/ig)) {
             return res.redirect(req.protocol + '://istar.cse.cuhk.edu.hk/igrep' + req.url);
           }
           next();
