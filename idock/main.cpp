@@ -44,15 +44,12 @@ int main(int argc, char* argv[])
 	using boost::filesystem::ofstream;
 	using boost::thread;
 	using boost::bind;
-	using namespace boost::this_thread;
-	using namespace boost::posix_time;
-	using namespace mongo;
-	using namespace bson;
 	using namespace idock;
 
 	cout << "idock 1.5\n";
 
 	string host, db, user, pwd;
+	path jobs_path;
 	{
 		// Create program options.
 		using namespace boost::program_options;
@@ -62,14 +59,11 @@ int main(int argc, char* argv[])
 			("db"  , value<string>(&db  )->required(), "database to login to")
 			("user", value<string>(&user)->required(), "username for authentication")
 			("pwd" , value<string>(&pwd )->required(), "password for authentication")
+			("jobs", value<path>(&jobs_path)->required(), "path to jobs directory")
 			;
 
-		// If no command line argument is supplied, simply print the usage and exit.
-		if (argc == 1)
-		{
-			cout << options;
-			return 0;
-		}
+		// If no command line argument is supplied, simply exit.
+		if (argc == 1) return 0;
 
 		// Parse command line arguments.
 		variables_map vm;
@@ -77,10 +71,11 @@ int main(int argc, char* argv[])
 		vm.notify();
 	}
 
+	using namespace mongo;
 	DBClientConnection conn;
 	{
 		// Connect to host and authenticate user.
-		cout << "Connecting to " << host << " and authenticating user " << user << '\n';
+		cout << "Connecting to " << host << " and authenticating " << user << '\n';
 		string errmsg;
 		if ((!conn.connect(host, errmsg)) || (!conn.auth(db, user, pwd, errmsg)))
 		{
@@ -88,21 +83,18 @@ int main(int argc, char* argv[])
 			return 1;
 		}
 	}
+	const auto collection = db + ".idock";
 
 	// Initialize default values of constant arguments.
-	const directory_iterator end_dir_iter;
 	const path ligands_path = "16_lig.pdbqt";
 	const path headers_path = "16_hdr.bin";
-	const path jobs_path = "../public/idock/jobs";
 	const path log1_path = "log1.csv"; // Phase 1 log
 	const path log2_path = "log2.csv"; // Phase 2 log
 	const path output_folder_path = "output";
-	const string collection = db + ".idock";
 	const size_t num_ligands = 12171187;
 	const size_t num_threads = thread::hardware_concurrency();
 	const size_t seed = time(0);
 	const size_t num_mc_tasks = 32;
-	const size_t sleep_hours = 1;
 	const size_t max_conformations = 100;
 	const size_t max_results = 20; // Maximum number of results obtained from a single Monte Carlo task.
 	const size_t slices[101] = { 0, 121712, 243424, 365136, 486848, 608560, 730272, 851984, 973696, 1095408, 1217120, 1338832, 1460544, 1582256, 1703968, 1825680, 1947392, 2069104, 2190816, 2312528, 2434240, 2555952, 2677664, 2799376, 2921088, 3042800, 3164512, 3286224, 3407936, 3529648, 3651360, 3773072, 3894784, 4016496, 4138208, 4259920, 4381632, 4503344, 4625056, 4746768, 4868480, 4990192, 5111904, 5233616, 5355328, 5477040, 5598752, 5720464, 5842176, 5963888, 6085600, 6207312, 6329024, 6450736, 6572448, 6694160, 6815872, 6937584, 7059296, 7181008, 7302720, 7424432, 7546144, 7667856, 7789568, 7911280, 8032992, 8154704, 8276416, 8398128, 8519840, 8641552, 8763264, 8884976, 9006688, 9128400, 9250112, 9371824, 9493536, 9615248, 9736960, 9858672, 9980384, 10102096, 10223808, 10345520, 10467232, 10588944, 10710655, 10832366, 10954077, 11075788, 11197499, 11319210, 11440921, 11562632, 11684343, 11806054, 11927765, 12049476, 12171187 };
@@ -179,28 +171,26 @@ int main(int argc, char* argv[])
 	while (true)
 	{
 		// Fetch a pending job. Start a transaction, fetch a job where machine == null or Date.now() > time + delta, and update machine and time. Always fetch the same job if not all the slices are done. Use the old _id for query. No need to 1) define box, 2) parse receptor, 3) create grid maps.
-		cout << "Fetching a job slice from " << collection << '\n';
+		using namespace bson;
 //		auto cursor = conn.query("istar.jobs", QUERY("progress" << 0), 1); // nToReturn = 1
 		auto cursor = conn.query(collection);
 		if (!cursor->more())
 		{
-			// Close ligands and headers.
-			// Sleep for an hour.
-			cout << "Sleeping the current thread for " << sleep_hours << " hours\n";
-			sleep(hours(1));
+			// Sleep for a second.
+			using boost::this_thread::sleep_for;
+			using boost::chrono::milliseconds;
+			sleep_for(milliseconds(1000));
 			continue;
 		}
 
-		// Reopen ligands and headers.
-
-		auto j = cursor->next(); // BSONObj
-		const auto job_id = j["_id"].OID(); // BSONElement
+		const auto job = cursor->next();
+		const auto _id = job["_id"].OID();
 		const size_t slice = 3;
 
 /*
 		// Execute the job slice.
 		cout << "Executing job " << _id << ", slice " << slice << '\n';
-		conn.update("istar.jobs", BSON("_id" << _id << "$atomic" << 1), BSON("$inc" << BSON("progress" << 1)));
+		conn.update(collection, BSON("_id" << _id << "$atomic" << 1), BSON("$inc" << BSON("progress" << 1)));
 		const auto e = conn.getLastError();
 		if (!e.empty())
 		{
@@ -208,41 +198,41 @@ int main(int argc, char* argv[])
 		}
 */
 
-		const path job_path = jobs_path / job_id.str();
+		const path job_path = jobs_path / _id.str();
 		const path slice_path = job_path / (lexical_cast<string>(slice) + ".csv");
 		const auto start_lig = slices[slice];
 		const auto end_lig = slices[slice + 1];
-		const auto center_x = j["center_x"].Number();
-		const auto center_y = j["center_y"].Number();
-		const auto center_z = j["center_z"].Number();
-		const auto size_x = j["size_x"].Int();
-		const auto size_y = j["size_y"].Int();
-		const auto size_z = j["size_z"].Int();
-		const auto mwt_lb = j["mwt_lb"].Number();
-		const auto mwt_ub = j["mwt_ub"].Number();
-		const auto logp_lb = j["logp_lb"].Number();
-		const auto logp_ub = j["logp_ub"].Number();
-		const auto ad_lb = j["ad_lb"].Number();
-		const auto ad_ub = j["ad_ub"].Number();
-		const auto pd_lb = j["pd_lb"].Number();
-		const auto pd_ub = j["pd_ub"].Number();
-		const auto hbd_lb = j["hbd_lb"].Int();
-		const auto hbd_ub = j["hbd_ub"].Int();
-		const auto hba_lb = j["hba_lb"].Int();
-		const auto hba_ub = j["hba_ub"].Int();
-		const auto tpsa_lb = j["tpsa_lb"].Int();
-		const auto tpsa_ub = j["tpsa_ub"].Int();
-		const auto charge_lb = j["charge_lb"].Int();
-		const auto charge_ub = j["charge_ub"].Int();
-		const auto nrb_lb = j["nrb_lb"].Int();
-		const auto nrb_ub = j["nrb_ub"].Int();
+		const auto center_x = job["center_x"].Number();
+		const auto center_y = job["center_y"].Number();
+		const auto center_z = job["center_z"].Number();
+		const auto size_x = job["size_x"].Int();
+		const auto size_y = job["size_y"].Int();
+		const auto size_z = job["size_z"].Int();
+		const auto mwt_lb = job["mwt_lb"].Number();
+		const auto mwt_ub = job["mwt_ub"].Number();
+		const auto logp_lb = job["logp_lb"].Number();
+		const auto logp_ub = job["logp_ub"].Number();
+		const auto ad_lb = job["ad_lb"].Number();
+		const auto ad_ub = job["ad_ub"].Number();
+		const auto pd_lb = job["pd_lb"].Number();
+		const auto pd_ub = job["pd_ub"].Number();
+		const auto hbd_lb = job["hbd_lb"].Int();
+		const auto hbd_ub = job["hbd_ub"].Int();
+		const auto hba_lb = job["hba_lb"].Int();
+		const auto hba_ub = job["hba_ub"].Int();
+		const auto tpsa_lb = job["tpsa_lb"].Int();
+		const auto tpsa_ub = job["tpsa_ub"].Int();
+		const auto charge_lb = job["charge_lb"].Int();
+		const auto charge_ub = job["charge_ub"].Int();
+		const auto nrb_lb = job["nrb_lb"].Int();
+		const auto nrb_ub = job["nrb_ub"].Int();
 
 		// Initialize the search space of cuboid shape.
 		const box b(vec3(center_x, center_y, center_z), vec3(size_x, size_y, size_z), grid_granularity);
 
 		// Parse the receptor.
 		cout << "Parsing receptor\n";
-		const receptor rec(j["receptor"].String());
+		const receptor rec(job["receptor"].String());
 
 		// Divide the box into coarse-grained partitions for subsequent grid map creation.
 		array3d<vector<size_t>> partitions(b.num_partitions);
@@ -415,7 +405,7 @@ int main(int argc, char* argv[])
 		csv.close();
 
 		// If all the slices are done, perform phase 2 screening.
-		if (!conn.query(collection, QUERY("_id" << job_id << "progress" << 100), 1)->more()) continue;
+		if (!conn.query(collection, QUERY("_id" << _id << "progress" << 100), 1)->more()) continue;
 
 		// Initialize necessary variables for storing ligand summaries.
 		ptr_vector<summary> summaries(num_ligands);
@@ -442,19 +432,19 @@ int main(int argc, char* argv[])
 			}
 		}
 
-		// Send email with link to /.
+		// Send completion notification email.
+		const auto email = job["email"].String();
+		cout << "Sending a completion notification email to " << email << '\n';
 		using Poco::Net::MailMessage;
 		using Poco::Net::MailRecipient;
 		using Poco::Net::SMTPClientSession;
 		MailMessage message;
-		message.setSender("istar.cuhk@gmail.com");
-		message.addRecipient(MailRecipient(MailRecipient::PRIMARY_RECIPIENT, j["email"].String()));
-		message.setSubject("Your istar job completed");
-		message.setContentType("text/plain; charset=\"utf-8\"");
-		message.setContent("View result at http://istar.cse.cuhk.edu.hk", MailMessage::ENCODING_8BIT);
-		// socks.cse.cuhk.edu.hk:1080
-		SMTPClientSession session("smtp.gmail.com", 587);
-		session.login(SMTPClientSession::AUTH_LOGIN, "istar.cuhk", "2qR8dVM9d");
+		message.setSender("idock <noreply@cse.cuhk.edu.hk>");
+		message.setSubject("Your idock job has completed");
+		message.setContent("View result at http://idock.cse.cuhk.edu.hk");
+		message.addRecipient(MailRecipient(MailRecipient::PRIMARY_RECIPIENT, email));
+		SMTPClientSession session("137.189.91.190");
+		session.login();
 		session.sendMessage(message);
 		session.close();
 	}
