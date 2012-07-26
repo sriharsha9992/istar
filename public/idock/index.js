@@ -94,7 +94,7 @@ $(function() {
         charge_ub: $('#charge_ub').text(),
         nrb_lb: $('#nrb_lb').text(),
         nrb_ub: $('#nrb_ub').text()
-      }, function (res) {
+      }, function(res) {
         $('#ligands').text(res);
       });
     }
