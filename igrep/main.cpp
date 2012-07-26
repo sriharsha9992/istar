@@ -483,9 +483,9 @@ int main(int argc, char** argv)
 			using Poco::Net::MailRecipient;
 			using Poco::Net::SMTPClientSession;
 			MailMessage message;
-			message.setSender("istar.igrep <noreply@cse.cuhk.edu.hk>");
-			message.setSubject("Your igrep job completed");
-			message.setContent("View result at http://istar.cse.cuhk.edu.hk/igrep");
+			message.setSender("igrep <noreply@cse.cuhk.edu.hk>");
+			message.setSubject("Your igrep job has completed");
+			message.setContent("View result at http://igrep.cse.cuhk.edu.hk");
 			message.addRecipient(MailRecipient(MailRecipient::PRIMARY_RECIPIENT, email));
 			SMTPClientSession session("137.189.91.190");
 			session.login();
