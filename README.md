@@ -22,19 +22,12 @@ Features
 
 ### Web server
 
-* [node.js] v0.8.3
-* [express] v3.0.0beta7
-* [spdy] v1.3.1
-* [validator] v0.4.10
-* [mongodb] v1.1.1
+* [node.js] v0.8.4
 * [carrier] v0.1.7
-
-### Mail crawler
-
-* [node.js] v0.8.3
-* [contextio] v0.3.0
-* [validator] v0.4.10
 * [mongodb] v1.1.1
+* [express] v3.0.0rc1
+* [validator] v0.4.10
+* [spdy] v1.3.1
 
 ### Database
 
@@ -201,12 +194,11 @@ The logo image is collected from [Open Clip Art].
 [Modernizr]: https://github.com/Modernizr/Modernizr
 [jQuery]: https://github.com/jquery/jquery
 [node.js]: https://github.com/joyent/node
-[express]: https://github.com/visionmedia/express
-[spdy]: https://github.com/indutny/node-spdy
-[validator]: https://github.com/chriso/node-validator
-[mongodb]: https://github.com/mongodb/node-mongodb-native
 [carrier]: https://github.com/pgte/carrier
-[contextio]: https://github.com/ContextIO/ContextIO-node
+[mongodb]: https://github.com/mongodb/node-mongodb-native
+[express]: https://github.com/visionmedia/express
+[validator]: https://github.com/chriso/node-validator
+[spdy]: https://github.com/indutny/node-spdy
 [MongoDB]: https://github.com/mongodb/mongo
 [istar]: http://istar.cse.cuhk.edu.hk
 [Apache License 2.0]: http://www.apache.org/licenses/LICENSE-2.0
