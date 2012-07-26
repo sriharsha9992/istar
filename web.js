@@ -61,11 +61,10 @@ if (cluster.isMaster) {
   var mongodb = require('mongodb');
   new mongodb.Db('istar', new mongodb.Server('localhost', 27017)).open(function(err, db) {
     if (err) throw err;
-    db.authenticate('daemon', '2qR8dVM9d', function(err, res) {
+    db.authenticate('daemon', '2qR8dVM9d', function(err, authenticated) {
       if (err) throw err;
-      var idock = require('./idock');
-      var igrep = require('./igrep');
-      igrep.setCollection(db.collection('igrep'));
+      var idock = db.collection('idock');
+      var igrep = db.collection('igrep');
       // Configure express server
       var express = require('express');
       var app = express();
@@ -113,16 +112,96 @@ if (cluster.isMaster) {
       });
       // Get idock jobs by email
       app.get('/idock/jobs', function(req, res) {
-        idock.get(req.query, function(err, docs) {
-          if (err) return res.json(err);
-          res.json(docs);
+        if (v.init(req.query)
+         .chk('email', 'must be valid', true).isEmail()
+         .failed()) {
+          return res.json(v.err);
+        }
+        idock.find({'email': query['email']}, function(err, cursor) {
+          if (err) throw err;
+          cursor.toArray(function(err, docs) {
+            res.json(docs);
+          });
         });
       });
       // Post a new idock job
       app.post('/idock/jobs', function(req, res) {
-        idock.create(req.body, function(err, docs) {
-          if (err) return res.json(err);
-          res.json();
+        if (v.init(req.body)
+         .chk('receptor', 'must be provided', true).len(1, 10485760) // 10MB
+         .chk('center_x', 'must be a decimal within [-1000, 1000]', true).isDecimal().min(-1000).max(1000)
+         .chk('center_y', 'must be a decimal within [-1000, 1000]', true).isDecimal().min(-1000).max(1000)
+         .chk('center_z', 'must be a decimal within [-1000, 1000]', true).isDecimal().min(-1000).max(1000)
+         .chk('size_x', 'must be an integer within [1, 30]', true).isInt().min(1).max(30)
+         .chk('size_y', 'must be an integer within [1, 30]', true).isInt().min(1).max(30)
+         .chk('size_z', 'must be an integer within [1, 30]', true).isInt().min(1).max(30)
+         .chk('description', 'must be provided', true).len(1, 1000)
+         .chk('email', 'must be valid', true).isEmail()
+         .chk('mwt_lb', 'must be a decimal within [55, 566]', false).isDecimal().min(55).max(566)
+         .chk('mwt_ub', 'must be a decimal within [55, 566]', false).isDecimal().min(55).max(566)
+         .chk('logp_lb', 'must be a decimal within [-6, 12]', false).isDecimal().min(-6).max(12)
+         .chk('logp_ub', 'must be a decimal within [-6, 12]', false).isDecimal().min(-6).max(12)
+         .chk('ad_lb', 'must be a decimal within [-25, 29]', false).isDecimal().min(-25).max(29)
+         .chk('ad_ub', 'must be a decimal within [-25, 29]', false).isDecimal().min(-25).max(29)
+         .chk('pd_lb', 'must be a decimal within [-504, 1]', false).isDecimal().min(-504).max(1)
+         .chk('pd_ub', 'must be a decimal within [-504, 1]', false).isDecimal().min(-504).max(1)
+         .chk('hbd_lb', 'must be an integer within [0, 20]', false).isInt().min(0).max(20)
+         .chk('hbd_ub', 'must be an integer within [0, 20]', false).isInt().min(0).max(20)
+         .chk('hba_lb', 'must be an integer within [0, 18]', false).isInt().min(0).max(18)
+         .chk('hba_ub', 'must be an integer within [0, 18]', false).isInt().min(0).max(18)
+         .chk('tpsa_lb', 'must be an integer within [0, 317]', false).isInt().min(0).max(317)
+         .chk('tpsa_ub', 'must be an integer within [0, 317]', false).isInt().min(0).max(317)
+         .chk('charge_lb', 'must be an integer within [-5, 5]', false).isInt().min(-5).max(5)
+         .chk('charge_ub', 'must be an integer within [-5, 5]', false).isInt().min(-5).max(5)
+         .chk('nrb_lb', 'must be an integer within [0, 34]', false).isInt().min(0).max(34)
+         .chk('nrb_ub', 'must be an integer within [0, 34]', false).isInt().min(0).max(34)
+         .failed()) {
+          return res.json(v.err);
+        }
+        if (v.init(f.init(req.body)
+         .snt('receptor').xss()
+         .snt('center_x').toFloat()
+         .snt('center_y').toFloat()
+         .snt('center_z').toFloat()
+         .snt('size_x').toInt()
+         .snt('size_y').toInt()
+         .snt('size_z').toInt()
+         .snt('description').xss()
+         .snt('email').xss()
+         .snt('mwt_lb', 400).toFloat()
+         .snt('mwt_ub', 500).toFloat()
+         .snt('logp_lb', 0).toFloat()
+         .snt('logp_ub', 5).toFloat()
+         .snt('ad_lb', 0).toFloat()
+         .snt('ad_ub', 12).toFloat()
+         .snt('pd_lb', -50).toFloat()
+         .snt('pd_ub', 0).toFloat()
+         .snt('hbd_lb', 2).toInt()
+         .snt('hbd_ub', 5).toInt()
+         .snt('hba_lb', 2).toInt()
+         .snt('hba_ub', 10).toInt()
+         .snt('tpsa_lb', 20).toInt()
+         .snt('tpsa_ub', 100).toInt()
+         .snt('charge_lb', 0).toInt()
+         .snt('charge_ub', 0).toInt()
+         .snt('nrb_lb', 2).toInt()
+         .snt('nrb_ub', 8).toInt()
+         .res)
+         .rng('mwt_lb', 'mwt_ub')
+         .rng('logp_lb', 'logp_ub')
+         .rng('ad_lb', 'ad_ub')
+         .rng('pd_lb', 'pd_ub')
+         .rng('hbd_lb', 'hbd_ub')
+         .rng('hba_lb', 'hba_ub')
+         .rng('tpsa_lb', 'tpsa_ub')
+         .rng('charge_lb', 'charge_ub')
+         .rng('nrb_lb', 'nrb_ub')
+         .failed()) {
+          return res.json(v.err);
+        }
+        f.res.submitted = new Date();
+        idock.insert(f.res, function(err, docs) {
+          if (err) throw err;
+          res.json(docs);
         });
       });
       // Get the number of ligands satisfying filtering conditions
@@ -192,15 +271,39 @@ if (cluster.isMaster) {
       });
       // Get igrep jobs by email
       app.get('/igrep/jobs', function(req, res) {
-        igrep.get(req.query, function(err, docs) {
-          if (err) return res.json(err);
-          res.json(docs);
+        if (v.init(req.query)
+         .chk('email', 'must be valid', true).isEmail()
+         .chk('since', 'must be a date since epoch', false).isDate()
+         .failed()) {
+          return res.json(v.err);
+        }
+        f.init(req.query)
+         .snt('email').copy()
+         .snt('since', 0).toDate();
+        igrep.find({'email': f.res.email, 'submitted': {'$gte': f.res.since}}, {'genome': 1, 'submitted': 1, 'done': 1}, function(err, cursor) {
+          if (err) throw err;
+          cursor.sort({'submitted': -1}).toArray(function(err, docs) {
+            if (err) throw err;
+            res.json(docs);
+          });
         });
       });
       // Post a new igrep job
       app.post('/igrep/jobs', function(req, res) {
-        igrep.create(req.body, function(err, docs) {
-          if (err) return res.json(err);
+        if (v.init(req.body)
+         .chk('email', 'must be valid', true).isEmail()
+         .chk('genome', 'must be one of the 17 genomes', true).isIn(["13616", "9598", "9606", "9544", "10116", "10090", "9913", "9615", "9796", "7955", "9031", "59729", "9823", "9258", "29760", "7460", "7070"])
+         .chk('queries', 'must conform to the specifications', true).len(2, 66000).regex(/^([ACGTN]{1,64}\d\n){0,9999}[ACGTN]{1,64}\d\n?$/ig)
+         .failed()) {
+          return res.json(v.err);
+        }
+        f.init(req.body)
+         .snt('email').copy()
+         .snt('genome').toInt()
+         .snt('queries').copy()
+         .res.submitted = new Date();
+        igrep.insert(f.res, function(err, docs) {
+          if (err) throw err;
           res.json();
         });
       });
