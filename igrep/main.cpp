@@ -495,7 +495,8 @@ int main(int argc, char** argv)
 
 		// Sleep for a second.
 		using boost::this_thread::sleep_for;
-		sleep_for(milliseconds(1000));
+		using boost::chrono::seconds;
+		sleep_for(seconds(1));
 	}
 	return 0;
 }
