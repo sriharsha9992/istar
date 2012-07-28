@@ -115,9 +115,12 @@ if (cluster.isMaster) {
          .failed()) {
           return res.json(v.err);
         }
-        idock.find({'email': query['email']}, function(err, cursor) {
+        f.init(req.query)
+         .snt('email').copy();
+        idock.find(f.res, function(err, cursor) {
           if (err) throw err;
           cursor.toArray(function(err, docs) {
+            cursor.close();
             res.json(docs);
           });
         });
@@ -197,7 +200,7 @@ if (cluster.isMaster) {
           return res.json(v.err);
         }
         f.res.submitted = new Date();
-        idock.insert(f.res, function(err, docs) {
+        idock.insert(f.res, {safe: true}, function(err, docs) {
           if (err) throw err;
           res.json(docs);
         });
@@ -271,17 +274,16 @@ if (cluster.isMaster) {
       app.get('/igrep/jobs', function(req, res) {
         if (v.init(req.query)
          .chk('email', 'must be valid', true).isEmail()
-         .chk('skip', 'must be a non-negative integer', false).isInt().min(0)
          .failed()) {
           return res.json(v.err);
         }
         f.init(req.query)
-         .snt('email').copy()
-         .snt('skip', 0).toInt();
-        igrep.find({'email': f.res.email}, {'genome': 1, 'submitted': 1, 'done': 1}, function(err, cursor) {
+         .snt('email').copy();
+        igrep.find(f.res, {'genome': 1, 'submitted': 1, 'done': 1}, function(err, cursor) {
           if (err) throw err;
-          cursor.sort({'submitted': 1}).skip(f.res.skip).toArray(function(err, docs) {
+          cursor.sort({'submitted': 1}).toArray(function(err, docs) {
             if (err) throw err;
+            cursor.close();
             res.json(docs);
           });
         });
@@ -300,9 +302,28 @@ if (cluster.isMaster) {
          .snt('genome').toInt()
          .snt('queries').copy()
          .res.submitted = new Date();
-        igrep.insert(f.res, function(err, docs) {
+        igrep.insert(f.res, {safe: true}, function(err, docs) {
           if (err) throw err;
-          res.json();
+          res.json(docs);
+        });
+      });
+      // Get the _id of the last done job
+      app.get('/igrep/done', function(req, res) {
+        if (v.init(req.query)
+         .chk('email', 'must be valid', true).isEmail()
+         .failed()) {
+          return res.json(v.err);
+        }
+        f.init(req.query)
+         .snt('email').copy();
+        igrep.find({'email': 'JackyLeeHongJian@Gmail.com', 'done': {'$exists': 1}}, {'_id': 1}, function(err, cursor) {
+          if (err) throw err;
+          cursor.sort({'done': 1}).limit(1).nextObject(function(err, doc) {
+            if (err) throw err;
+            cursor.close();
+            if (!doc) return res.json(null);
+            res.json(doc._id);
+          });
         });
       });
       // Start listening
