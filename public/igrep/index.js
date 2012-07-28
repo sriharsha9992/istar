@@ -12,12 +12,11 @@ $(function() {
       var g = $(this);
       if (g.val() == taxon_id) genome = g.text();
     });
-    return genome;
+    return genome;    
   }
 
   // Initialize pager
-  var jobs, dones, last_page, page,
-      jobs_trs = $('#jobs tr'),
+  var last_page, page,
       frstpage = $('#frstpage'),
       lastpage = $('#lastpage'),
       prevpage = $('#prevpage'),
@@ -26,30 +25,31 @@ $(function() {
   frstpage.click(function() {
     if (frstpage.hasClass('disabled')) return;
     page = 1;
-    refreshJobs();
+    refresh();
   });
   lastpage.click(function() {
     if (lastpage.hasClass('disabled')) return;
     page = last_page;
-    refreshJobs();
+    refresh();
   });
   prevpage.click(function() {
     if (prevpage.hasClass('disabled')) return;
     page -= 1;
-    refreshJobs();
+    refresh();
   });
   nextpage.click(function() {
     if (nextpage.hasClass('disabled')) return;
     page += 1;
-    refreshJobs();
+    refresh();
   });
   whatpage.change(function() {
     var p = parseInt(whatpage.val());
     if ((p < 1) || (p > last_page) || (p === page)) return;
     page = p;
-    refreshJobs();
+    refresh();
   });
 
+  // Construct td's of a tr from a job
   function tr(job) {
     var tds = new Array(5);
     if (job === undefined) {
@@ -70,12 +70,12 @@ $(function() {
   }
 
   // Refresh the table of jobs
-  function refreshJobs(fade) {
+  var jobs, jobs_trs = $('#jobs tr');
+  function refresh() {
     var offset = 8 * (page - 1);
     jobs_trs.each(function(i) {
       var row = tr(jobs[offset + i]);
       $('td', $(this)).each(function(j) {
-        if (fade && fade(offset + i, j)) return $(this).hide().html(row[j]).fadeIn('slow');
         $(this).html(row[j]);
       });
     });
@@ -98,23 +98,35 @@ $(function() {
     whatpage.val(page);
   }
 
+  // Fade select cells
+  function fade(select) {
+    var offset = 8 * (page - 1);
+    jobs_trs.each(function(i) {
+      var row = tr(jobs[offset + i]);
+      $('td', $(this)).each(function(j) {
+        if (select(offset + i, j)) $(this).hide().html(row[j]).fadeIn('slow');
+      });
+    });
+  }
+
   // Initialize the table of jobs
+  var dones;
   $.get('jobs', { email: email }, function(res) {
     jobs = res;
     for (dones = jobs.length; dones && !jobs[dones - 1].done; --dones);
     last_page = jobs.length ? ((jobs.length + 7) >> 3) : 1;
     page = last_page;
-    refreshJobs();
+    refresh();
   });
 
   // Refresh result every second
-  setInterval(function() {
+  var d = setInterval(function() {
     $.get('done', { email: email, skip: dones }, function(res) {
       if (!res.length) return;
       res.forEach(function(job, i) {
         jobs[dones + i].done = job.done;
       });
-      refreshJobs(function(i, j) {
+      fade(function(i, j) {
         return (dones <= i) && (i < dones + res.length) && (j >= 2);
       });
       dones += res.length;
@@ -143,8 +155,11 @@ $(function() {
       }
       jobs = jobs.concat(res);
       last_page = jobs.length ? ((jobs.length + 7) >> 3) : 1;
-      page = last_page;
-      refreshJobs(function(i, j) {
+      if (page < last_page) {
+        page = last_page;
+        refresh();
+      }
+      fade(function(i, j) {
         return (i + 1 === jobs.length) && (j <= 2);
       });
       // Save email into cookie
