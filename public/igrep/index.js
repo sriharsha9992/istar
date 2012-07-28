@@ -17,6 +17,7 @@ $(function() {
 
   // Initialize pager
   var jobs, last_page, page,
+      jobsbody = $('#jobsbody'),
       frstpage = $('#frstpage'),
       lastpage = $('#lastpage'),
       prevpage = $('#prevpage'),
@@ -49,19 +50,34 @@ $(function() {
     refreshJobs();
   });
 
+  function tr(job) {
+    var tds = new Array(5);
+    if (job === undefined) {
+      tds[0] = '&nbsp;';
+      tds[1] = '&nbsp;';
+      tds[2] = '&nbsp;';
+      tds[3] = '&nbsp;';
+      tds[4] = '&nbsp;';
+      return tds;
+    }
+    var done = job.done != undefined;
+    tds[0] = getGenome(job.genome);
+    tds[1] = $.format.date(new Date(job.submitted), 'yyyy/MM/dd HH:mm:ss');
+    tds[2] = (done ? $.format.date(new Date(job.done), 'yyyy/MM/dd HH:mm:ss') : 'Queued for execution');
+    tds[3] = (done ? '<a href="jobs/' + job._id + '/log.csv"><img src="/excel.png" class="csv" alt="log.csv"/></a>' : '');
+    tds[4] = (done ? '<a href="jobs/' + job._id + '/pos.csv"><img src="/excel.png" class="csv" alt="pos.csv"/></a>' : '');
+    return tds;
+  }
+
   // Refresh the table of jobs
   function refreshJobs() {
-    var rows;
-    for (var i = 8 * (page - 1); i < 8 * page; ++i) {
-      if (i >= jobs.length) {
-        rows += '<tr><td>&nbsp;</td><td></td><td></td><td></td><td></td></tr>';
-        continue;
-      }
-      var job = jobs[i];
-      var done = job.done != undefined;
-      rows += '<tr><td>' + getGenome(job.genome) + '</td><td>' + $.format.date(new Date(job.submitted), 'yyyy/MM/dd HH:mm:ss') + '</td><td>' + (done ? $.format.date(new Date(job.done), 'yyyy/MM/dd HH:mm:ss') : 'Queued for execution') + '</td><td>' + (done ? '<a href="jobs/' + job._id + '/log.csv"><img src="/excel.png" class="csv" alt="log.csv"/></a>' : '') + '</td><td>' + (done ? '<a href="jobs/' + job._id + '/pos.csv"><img src="/excel.png" class="csv" alt="pos.csv"/></a>' : '') + '</td></tr>';
-    }
-    $('#jobs').hide().html(rows).fadeIn();
+    var offset = 8 * (page - 1);
+    $('tr', jobsbody).each(function (i) {
+      var row = tr(jobs[offset + i]);
+      $('td', $(this)).each(function (j) {
+        $(this).hide().html(row[j]).fadeIn();
+      });
+    });
 
     // Refresh pager
     if (page == 1) {
