@@ -111,8 +111,8 @@ $(function() {
   setInterval(function() {
     $.get('done', { email: email, skip: dones }, function(res) {
       if (!res.length) return;
-      res.forEach(function(done, i) {
-        jobs[dones + i].done = done;
+      res.forEach(function(job, i) {
+        jobs[dones + i].done = job.done;
       });
       refreshJobs(function(i, j) {
         return (dones <= i) && (i < dones + res.length) && (j >= 2);
