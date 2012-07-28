@@ -17,7 +17,7 @@ $(function() {
 
   // Initialize pager
   var jobs, dones, last_page, page,
-      jobsbody = $('#jobsbody'),
+      jobs_trs = $('#jobs tr'),
       frstpage = $('#frstpage'),
       lastpage = $('#lastpage'),
       prevpage = $('#prevpage'),
@@ -72,7 +72,7 @@ $(function() {
   // Refresh the table of jobs
   function refreshJobs(fade) {
     var offset = 8 * (page - 1);
-    $('tr', jobsbody).each(function(i) {
+    jobs_trs.each(function(i) {
       var row = tr(jobs[offset + i]);
       $('td', $(this)).each(function(j) {
         if (fade && fade(offset + i, j)) return $(this).hide().html(row[j]).fadeIn('slow');
