@@ -70,12 +70,12 @@ $(function() {
   }
 
   // Refresh the table of jobs
-  function refreshJobs(newJob) {
+  function refreshJobs(fade) {
     var offset = 8 * (page - 1);
     $('tr', jobsbody).each(function(i) {
       var row = tr(jobs[offset + i]);
       $('td', $(this)).each(function(j) {
-        if (newJob && (offset + i + 1 === jobs.length) && (j <= 2)) return $(this).hide().html(row[j]).fadeIn('slow');
+        if (fade && fade(offset + i, j)) return $(this).hide().html(row[j]).fadeIn('slow');
         $(this).html(row[j]);
       });
     });
@@ -129,7 +129,9 @@ $(function() {
       jobs = jobs.concat(res);
       last_page = jobs.length ? ((jobs.length + 7) >> 3) : 1;
       page = last_page;
-      refreshJobs(true);
+      refreshJobs(function(i, j) {
+        return (i + 1 === jobs.length) && (j <= 2);
+      });
       // Save email into cookie
       email = $('#email').val();
       $.cookie('email', email, { expires: 7 });
