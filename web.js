@@ -307,8 +307,8 @@ if (cluster.isMaster) {
           res.json(docs);
         });
       });
-      // Get the _id of the last done job
-      app.get('/igrep/done', function(req, res) {
+      // Get the _id of the first undone job
+      app.get('/igrep/undone', function(req, res) {
         if (v.init(req.query)
          .chk('email', 'must be valid', true).isEmail()
          .failed()) {
@@ -316,13 +316,12 @@ if (cluster.isMaster) {
         }
         f.init(req.query)
          .snt('email').copy();
-        igrep.find({'email': 'JackyLeeHongJian@Gmail.com', 'done': {'$exists': 1}}, {'_id': 1}, function(err, cursor) {
+        igrep.find({'email': f.res.email, 'done': {'$exists': 0}}, {'_id': 1}, function(err, cursor) {
           if (err) throw err;
-          cursor.sort({'done': 1}).limit(1).nextObject(function(err, doc) {
+          cursor.sort({'submitted': 1}).limit(1).nextObject(function(err, doc) {
             if (err) throw err;
             cursor.close();
-            if (!doc) return res.json(null);
-            res.json(doc._id);
+            res.json(doc);
           });
         });
       });
