@@ -64,30 +64,31 @@ $(function() {
     tds[0] = getGenome(job.genome);
     tds[1] = $.format.date(new Date(job.submitted), 'yyyy/MM/dd HH:mm:ss');
     tds[2] = (done ? $.format.date(new Date(job.done), 'yyyy/MM/dd HH:mm:ss') : 'Queued for execution');
-    tds[3] = (done ? '<a href="jobs/' + job._id + '/log.csv"><img src="/excel.png" class="csv" alt="log.csv"/></a>' : '');
-    tds[4] = (done ? '<a href="jobs/' + job._id + '/pos.csv"><img src="/excel.png" class="csv" alt="pos.csv"/></a>' : '');
+    tds[3] = (done ? '<a href="jobs/' + job._id + '/log.csv"><img src="/excel.png" class="csv" alt="log.csv"/></a>' : null);
+    tds[4] = (done ? '<a href="jobs/' + job._id + '/pos.csv"><img src="/excel.png" class="csv" alt="pos.csv"/></a>' : null);
     return tds;
   }
 
   // Refresh the table of jobs
-  function refreshJobs() {
+  function refreshJobs(newJob) {
     var offset = 8 * (page - 1);
-    $('tr', jobsbody).each(function (i) {
+    $('tr', jobsbody).each(function(i) {
       var row = tr(jobs[offset + i]);
-      $('td', $(this)).each(function (j) {
-        $(this).hide().html(row[j]).fadeIn();
+      $('td', $(this)).each(function(j) {
+        if (newJob && (offset + i + 1 === jobs.length) && (j <= 2)) return $(this).hide().html(row[j]).fadeIn('slow');
+        $(this).html(row[j]);
       });
     });
 
     // Refresh pager
-    if (page == 1) {
+    if (page === 1) {
       frstpage.addClass('disabled');
       prevpage.addClass('disabled');
     } else {
       frstpage.removeClass('disabled');
       prevpage.removeClass('disabled');
     }
-    if (page == last_page) {
+    if (page === last_page) {
       lastpage.addClass('disabled');
       nextpage.addClass('disabled');
     } else {
@@ -119,20 +120,18 @@ $(function() {
       queries: $('#queries').val()
     }, function(res) {
       // If server side validation fails, show tooltips
-      if (res) {
+      if (!Array.isArray(res)) {
         Object.keys(res).forEach(function(param) {
           $('#' + param + '_label').tooltip('show');
         });
         return;
       }
-      email = $('#email').val();
-      $.get('jobs', { email: email, skip: jobs.length }, function(res) {
-        jobs = jobs.concat(res);
-        last_page = jobs.length ? ((jobs.length + 7) >> 3) : 1;
-        page = last_page;
-        refreshJobs();
-      });
+      jobs = jobs.concat(res);
+      last_page = jobs.length ? ((jobs.length + 7) >> 3) : 1;
+      page = last_page;
+      refreshJobs(true);
       // Save email into cookie
+      email = $('#email').val();
       $.cookie('email', email, { expires: 7 });
     }, 'json');
   });
