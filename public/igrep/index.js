@@ -3,17 +3,6 @@ $(function() {
   // Fetch email from cookie
   var email = $.cookie('email');
   $('#email').val(email);
-  
-  // Get a genome via its taxonomy id.
-  var genomes = $('option');
-  function getGenome(taxon_id) {
-    var genome;
-    genomes.each(function() {
-      var g = $(this);
-      if (g.val() == taxon_id) genome = g.text();
-    });
-    return genome;    
-  }
 
   // Initialize pager
   var last_page, page,
@@ -50,6 +39,7 @@ $(function() {
   });
 
   // Construct td's of a tr from a job
+  var genome = $('#genome');
   function tr(job) {
     var tds = new Array(5);
     if (job === undefined) {
@@ -61,7 +51,7 @@ $(function() {
       return tds;
     }
     var done = job.done != undefined;
-    tds[0] = getGenome(job.genome);
+    tds[0] = $('option[value=' + job.genome + ']', genome).text();
     tds[1] = $.format.date(new Date(job.submitted), 'yyyy/MM/dd HH:mm:ss');
     tds[2] = (done ? $.format.date(new Date(job.done), 'yyyy/MM/dd HH:mm:ss') : 'Queued for execution');
     tds[3] = (done ? '<a href="jobs/' + job._id + '/log.csv"><img src="/excel.png" class="csv" alt="log.csv"/></a>' : null);
@@ -69,7 +59,7 @@ $(function() {
     return tds;
   }
 
-  // Refresh the table of jobs
+  // Refresh the table of jobs and its pager
   var jobs, jobs_trs = $('#jobs tr');
   function refresh() {
     var offset = 8 * (page - 1);
@@ -79,8 +69,6 @@ $(function() {
         $(this).html(row[j]);
       });
     });
-
-    // Refresh pager
     if (page === 1) {
       frstpage.addClass('disabled');
       prevpage.addClass('disabled');
@@ -98,7 +86,7 @@ $(function() {
     whatpage.val(page);
   }
 
-  // Fade select cells
+  // Fade selected cells
   function fade(select) {
     var offset = 8 * (page - 1);
     jobs_trs.each(function(i) {
@@ -119,7 +107,7 @@ $(function() {
     refresh();
   });
 
-  // Refresh result every second
+  // Activate the timer to refresh result every second
   var d = setInterval(function() {
     $.get('done', { email: email, skip: dones }, function(res) {
       if (!res.length) return;
@@ -153,6 +141,7 @@ $(function() {
         });
         return;
       }
+      // Concat the new job to the existing jobs array, and refresh the table of jobs
       jobs = jobs.concat(res);
       last_page = jobs.length ? ((jobs.length + 7) >> 3) : 1;
       if (page < last_page) {
@@ -162,6 +151,8 @@ $(function() {
       fade(function(i, j) {
         return (i + 1 === jobs.length) && (j <= 2);
       });
+      // Reactivate the timer if it is stopped
+      
       // Save email into cookie
       email = $('#email').val();
       $.cookie('email', email, { expires: 7 });
