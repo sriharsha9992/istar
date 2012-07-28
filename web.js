@@ -318,7 +318,7 @@ if (cluster.isMaster) {
         f.init(req.query)
          .snt('email').copy()
          .snt('skip', 0).toInt();
-        igrep.find({'email': f.res.email, 'done': {'$exists': 1}}, {'done': 1}, function(err, cursor) {
+        igrep.find({'email': f.res.email, 'done': {'$exists': 1}}, {'_id': 0, 'done': 1}, function(err, cursor) {
           if (err) throw err;
           cursor.sort({'submitted': 1}).skip(f.res.skip).toArray(function(err, docs) {
             if (err) throw err;
