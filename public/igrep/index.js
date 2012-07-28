@@ -16,7 +16,7 @@ $(function() {
   }
 
   // Initialize pager
-  var jobs, first_undone_job, last_page, page,
+  var jobs, dones, last_page, page,
       jobsbody = $('#jobsbody'),
       frstpage = $('#frstpage'),
       lastpage = $('#lastpage'),
@@ -101,7 +101,7 @@ $(function() {
   // Initialize the table of jobs
   $.get('jobs', { email: email }, function(res) {
     jobs = res;
-    for (first_undone_job = jobs.length; first_undone_job && !jobs[first_undone_job - 1].done; --first_undone_job);
+    for (dones = jobs.length; dones && !jobs[dones - 1].done; --dones);
     last_page = jobs.length ? ((jobs.length + 7) >> 3) : 1;
     page = last_page;
     refreshJobs();
@@ -109,14 +109,15 @@ $(function() {
 
   // Refresh result every second
   setInterval(function() {
-    $.get('undone', { email: email }, function(res) {
-      var new_first_undone_job = jobs.length;
-      if (res) while (jobs[--new_first_undone_job]._id !== res._id);
-      if (new_first_undone_job === first_undone_job) return;
-      refreshJobs(function(i, j) {
-        return (first_undone_job <= i) && (i < new_first_undone_job) && (j >= 2);
+    $.get('done', { email: email, skip: dones }, function(res) {
+      if (!res.length) return;
+      res.forEach(function(done, i) {
+        jobs[dones + i].done = done;
       });
-      first_undone_job = new_first_undone_job;
+      refreshJobs(function(i, j) {
+        return (dones <= i) && (i < dones + res.length) && (j >= 2);
+      });
+      dones += res.length;
     });
   }, 1000);
 

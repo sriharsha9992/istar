@@ -307,21 +307,23 @@ if (cluster.isMaster) {
           res.json(docs);
         });
       });
-      // Get the _id of the first undone job
-      app.get('/igrep/undone', function(req, res) {
+      // Get the done date of done jobs
+      app.get('/igrep/done', function(req, res) {
         if (v.init(req.query)
          .chk('email', 'must be valid', true).isEmail()
+         .chk('skip', 'must be a non-negative integer', false).isInt()
          .failed()) {
           return res.json(v.err);
         }
         f.init(req.query)
-         .snt('email').copy();
-        igrep.find({'email': f.res.email, 'done': {'$exists': 0}}, {'_id': 1}, function(err, cursor) {
+         .snt('email').copy()
+         .snt('skip', 0).toInt();
+        igrep.find({'email': f.res.email, 'done': {'$exists': 1}}, {'done': 1}, function(err, cursor) {
           if (err) throw err;
-          cursor.sort({'submitted': 1}).limit(1).nextObject(function(err, doc) {
+          cursor.sort({'submitted': 1}).skip(f.res.skip).toArray(function(err, docs) {
             if (err) throw err;
             cursor.close();
-            res.json(doc);
+            res.json(docs);
           });
         });
       });
