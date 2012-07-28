@@ -16,7 +16,7 @@ $(function() {
   }
 
   // Initialize pager
-  var jobs, last_page, page,
+  var jobs, first_undone_job, last_page, page,
       jobsbody = $('#jobsbody'),
       frstpage = $('#frstpage'),
       lastpage = $('#lastpage'),
@@ -101,10 +101,25 @@ $(function() {
   // Initialize the table of jobs
   $.get('jobs', { email: email }, function(res) {
     jobs = res;
+    for (first_undone_job = 0; jobs[first_undone_job].done; ++first_undone_job);
     last_page = jobs.length ? ((jobs.length + 7) >> 3) : 1;
     page = last_page;
     refreshJobs();
   });
+
+  // Refresh result every second
+  setInterval(function() {
+    $.get('undone', { email: email }, function(res) {
+      var new_first_undone_job;
+      if (res) for (new_first_undone_job = first_undone_job; jobs[new_first_undone_job]._id !== res._id; ++new_first_undone_job);
+      else new_first_undone_job = jobs.length;
+      if (new_first_undone_job === first_undone_job) return;
+      refreshJobs(function(i, j) {
+        return (first_undone_job <= i) && (i < new_first_undone_job) && (j >= 2);
+      });
+      first_undone_job = new_first_undone_job;
+    });
+  }, 1000);
 
   // Initialize tooltips
   $('.control-label a[rel=tooltip]').tooltip();
