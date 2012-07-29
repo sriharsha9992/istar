@@ -23,8 +23,7 @@ Features
 ### Web server
 
 * [node.js] v0.8.4
-* [carrier] v0.1.7
-* [mongodb] v1.1.1
+* [mongodb] v1.1.2
 * [express] v3.0.0rc1
 * [validator] v0.4.10
 * [spdy] v1.3.1
@@ -123,7 +122,6 @@ The logo image is collected from [Open Clip Art].
 [Modernizr]: https://github.com/Modernizr/Modernizr
 [jQuery]: https://github.com/jquery/jquery
 [node.js]: https://github.com/joyent/node
-[carrier]: https://github.com/pgte/carrier
 [mongodb]: https://github.com/mongodb/node-mongodb-native
 [express]: https://github.com/visionmedia/express
 [validator]: https://github.com/chriso/node-validator
