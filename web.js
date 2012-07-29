@@ -59,9 +59,9 @@ if (cluster.isMaster) {
 } else {
   // Connect to MongoDB
   var mongodb = require('mongodb');
-  new mongodb.Db('istar', new mongodb.Server('localhost', 27017)).open(function(err, db) {
+  new mongodb.Db('istar', new mongodb.Server(process.argv[2], 27017)).open(function(err, db) {
     if (err) throw err;
-    db.authenticate('daemon', '2qR8dVM9d', function(err, authenticated) {
+    db.authenticate(process.argv[3], process.argv[4], function(err, authenticated) {
       if (err) throw err;
       var idock = db.collection('idock');
       var igrep = db.collection('igrep');
