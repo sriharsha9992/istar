@@ -328,17 +328,12 @@ if (cluster.isMaster) {
         });
       });
       // Start listening
-      var http_port = 3000,
-          spdy_port = 3443,
-          spdy = require('spdy'),
-          https = require('https'),
-          options = {
-            key: fs.readFileSync(__dirname + '/key.pem'),
-            cert: fs.readFileSync(__dirname + '/cert.pem'),
-            ca: fs.readFileSync(__dirname + '/csr.pem')
-          };
+      var http_port = 3000, spdy_port = 3443;
       app.listen(http_port);
-      spdy.createServer(https.Server, options, app).listen(spdy_port);
+      require('spdy').createServer(require('https').Server, {
+        key: fs.readFileSync(__dirname + '/key.pem'),
+        cert: fs.readFileSync(__dirname + '/cert.pem')
+      }, app).listen(spdy_port);
       console.log('Worker %d listening on HTTP port %d and SPDY port %d in %s mode', process.pid, http_port, spdy_port, app.settings.env);
     });
   });
