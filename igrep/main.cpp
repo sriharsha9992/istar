@@ -161,16 +161,20 @@ public:
 		unsigned int character_index = 0;	// Index of the current character across all the sequences of the entire genome.
 		string line;
 		line.reserve(1000);
+		const path genome_path = name;
 		for (const auto& file : files)
 		{
 			using boost::filesystem::ifstream;
-			ifstream in(path(name) / file);
+			ifstream in(genome_path / file);
 			while (getline(in, line))
 			{
-				if ((line.front() == '>') && (++sequence_index)) // Header line and not the first sequence.
+				if (line.front() == '>') // Header line.
 				{
-					sequence_cumulative_length[sequence_index] = character_index;
-					sequence_length[sequence_index - 1] = character_index - sequence_cumulative_length[sequence_index - 1];
+					if (++sequence_index) // Not the first sequence.
+					{
+						sequence_cumulative_length[sequence_index] = character_index;
+						sequence_length[sequence_index - 1] = character_index - sequence_cumulative_length[sequence_index - 1];
+					}
 				}
 				else
 				{
