@@ -1,4 +1,4 @@
-#ribbon {
+.ribbon {
   position: absolute;
   top: 0;
   right: 0;
@@ -13,11 +13,11 @@
           transition: opacity .5s linear;
 }
 
-#ribbon:hover {
+.ribbon:hover {
   opacity: 1;
 }
 
-#logo {
+.logo {
   height: 60px;
 }
 
