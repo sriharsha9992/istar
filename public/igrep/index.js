@@ -54,8 +54,8 @@ $(function() {
     tds[0] = $('option[value=' + job.genome + ']', genome).text();
     tds[1] = $.format.date(new Date(job.submitted), 'yyyy/MM/dd HH:mm:ss');
     tds[2] = (done ? $.format.date(new Date(job.done), 'yyyy/MM/dd HH:mm:ss') : 'Queued for execution');
-    tds[3] = (done ? '<a href="jobs/' + job._id + '/log.csv"><img src="/excel.png" class="csv" alt="log.csv"/></a>' : null);
-    tds[4] = (done ? '<a href="jobs/' + job._id + '/pos.csv"><img src="/excel.png" class="csv" alt="pos.csv"/></a>' : null);
+    tds[3] = (done ? '<a href="jobs/' + job._id + '/log.csv"><img src="/excel.png" alt="log.csv"/></a>' : null);
+    tds[4] = (done ? '<a href="jobs/' + job._id + '/pos.csv"><img src="/excel.png" alt="pos.csv"/></a>' : null);
     return tds;
   }
 
