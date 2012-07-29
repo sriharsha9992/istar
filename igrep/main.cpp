@@ -33,7 +33,6 @@
 using std::string;
 using std::vector;
 using boost::filesystem::path;
-using boost::filesystem::directory_iterator;
 
 #define CHARACTER_CARDINALITY 4	/**< One nucleotide is either A, C, G, or T. */
 #define MAX_UNSIGNED_INT	0xffffffffUL	/**< The maximum value of an unsigned int. */
@@ -126,7 +125,6 @@ public:
 	string name;	/**< Genome name. */
 	const unsigned int sequence_count;	/**< Actual number of sequences. */
 	const unsigned int character_count;	/**< Actual number of characters. */
-	vector<string> sequence_header;	/**< Headers of sequences. */
 	vector<unsigned int> sequence_length;	/**< Lengthes of sequences. */
 	vector<unsigned int> sequence_cumulative_length;	/**< Cumulative lengths of sequences, i.e. 1) sequence_cumulative_length[0] = 0; 2) sequence_cumulative_length[sequence_index + 1] = sequence_cumulative_length[sequence_index] + sequence_length[sequence_index]; */
 	const unsigned int scodon_count;	/**< Actual number of special codons. */
@@ -140,13 +138,13 @@ public:
 	 * @param[in] name Scientific name followed by common name in brackets, e.g. Homo sapiens (Human).
 	 * @param[in] sequence_count Number of sequences. For assembled genomes, it equals the number of FASTA files.
 	 * @param[in] character_count Number of characters.
+	 * @param[in] files Fasta files;
 	 */
-	explicit genome(const unsigned int taxon, const string name, const unsigned int sequence_count, const unsigned int character_count) :
+	explicit genome(const unsigned int taxon, const string name, const unsigned int character_count, const vector<string>&& files) :
 		taxon(taxon),
 		name(name),
-		sequence_count(sequence_count),
+		sequence_count(files.size()),
 		character_count(character_count),
-		sequence_header(sequence_count),
 		sequence_length(sequence_count),
 		sequence_cumulative_length(sequence_count + 1),
 		scodon_count((character_count + 16 - 1) >> 4),
@@ -163,21 +161,16 @@ public:
 		unsigned int character_index = 0;	// Index of the current character across all the sequences of the entire genome.
 		string line;
 		line.reserve(1000);
-		const directory_iterator dir_iter;
-		for (directory_iterator di(name); di != dir_iter; ++di)
+		for (const auto& file : files)
 		{
 			using boost::filesystem::ifstream;
-			ifstream in(di->path());
+			ifstream in(path(name) / file);
 			while (getline(in, line))
 			{
-				if (line.front() == '>') // Header line
+				if ((line.front() == '>') && (++sequence_index)) // Header line and not the first sequence.
 				{
-					if (++sequence_index > 0) // Not the first sequence.
-					{
-						sequence_cumulative_length[sequence_index] = character_index;
-						sequence_length[sequence_index - 1] = character_index - sequence_cumulative_length[sequence_index - 1];
-					}
-					sequence_header[sequence_index] = line;
+					sequence_cumulative_length[sequence_index] = character_index;
+					sequence_length[sequence_index - 1] = character_index - sequence_cumulative_length[sequence_index - 1];
 				}
 				else
 				{
@@ -254,7 +247,7 @@ int main(int argc, char** argv)
 	daemon(1, 0);
 	syslog(LOG_INFO, "igrep 1.0");
 
-	string host, db, user, pwd;
+	string host, user, pwd;
 	path jobs_path;
 	{
 		// Create program options.
@@ -262,7 +255,6 @@ int main(int argc, char** argv)
 		options_description options("input (required)");
 		options.add_options()
 			("host", value<string>(&host)->required(), "server to connect to")
-			("db"  , value<string>(&db  )->required(), "database to login to")
 			("user", value<string>(&user)->required(), "username for authentication")
 			("pwd" , value<string>(&pwd )->required(), "password for authentication")
 			("jobs", value<path>(&jobs_path)->required(), "path to jobs directory")
@@ -283,34 +275,34 @@ int main(int argc, char** argv)
 		// Connect to host and authenticate user.
 		syslog(LOG_INFO, "Connecting to %s and authenticating %s", host.c_str(), user.c_str());
 		string errmsg;
-		if ((!conn.connect(host, errmsg)) || (!conn.auth(db, user, pwd, errmsg)))
+		if ((!conn.connect(host, errmsg)) || (!conn.auth("istar", user, pwd, errmsg)))
 		{
 			syslog(LOG_ERR, errmsg.c_str());
 			return 1;
 		}
 	}
-	const auto collection = db + ".igrep";
+	const auto collection = "istar.igrep";
 
 	// Initialize genomes.
 	vector<genome> genomes;
 	genomes.reserve(17);
-	genomes.push_back(genome(13616, "Monodelphis domestica (Gray short-tailed opossum)", 9, 3502373038));
-	genomes.push_back(genome(9598, "Pan troglodytes (Chimpanzee)", 25, 3175582169));
-	genomes.push_back(genome(9606, "Homo sapiens (Human)", 24, 3095677412));
-	genomes.push_back(genome(9544, "Macaca mulatta (Rhesus monkey)", 21, 2863665185));
-	genomes.push_back(genome(10116, "Rattus norvegicus (Rat)", 21, 2718881021));
-	genomes.push_back(genome(10090, "Mus musculus (Mouse)", 21, 2654895218));
-	genomes.push_back(genome(9913, "Bos taurus (Cow)", 30, 2634413324));
-	genomes.push_back(genome(9615, "Canis familiaris (Dog)", 39, 2445110183));
-	genomes.push_back(genome(9796, "Equus caballus (Domestic horse)", 32, 2367053447));
-	genomes.push_back(genome(7955, "Danio rerio (Zebrafish)", 25, 1277075233));
-	genomes.push_back(genome(9031, "Gallus gallus (Chicken)", 31, 1031883471));
-	genomes.push_back(genome(59729, "Taeniopygia guttata (Zebra finch)", 34, 1018092713));
-	genomes.push_back(genome(9823, "Sus scrofa (Pig)", 10, 813033904));
-	genomes.push_back(genome(9258, "Ornithorhynchus anatinus (Platypus)", 19, 437080024));
-	genomes.push_back(genome(29760, "Vitis vinifera (Grape)", 19, 303085820));
-	genomes.push_back(genome(7460, "Apis mellifera (Honey bee)", 16, 217194876));
-	genomes.push_back(genome(7070, "Tribolium castaneum (Red flour beetle)", 10, 187494969));
+	genomes.push_back(genome(13616, "Monodelphis domestica (Gray short-tailed opossum)", 3502373038, { "ref_chr1.fa", "ref_chr2.fa", "ref_chr3.fa", "ref_chr4.fa", "ref_chr5.fa", "ref_chr6.fa", "ref_chr7.fa", "ref_chr8.fa", "ref_chrX.fa" }));
+	genomes.push_back(genome(9598, "Pan troglodytes (Chimpanzee)", 3175582169, { "ref_chr1.fa", "ref_chr2A.fa", "ref_chr2B.fa", "ref_chr3.fa", "ref_chr4.fa", "ref_chr5.fa", "ref_chr6.fa", "ref_chr7.fa", "ref_chr8.fa", "ref_chr9.fa", "ref_chr10.fa", "ref_chr11.fa", "ref_chr12.fa", "ref_chr13.fa", "ref_chr14.fa", "ref_chr15.fa", "ref_chr16.fa", "ref_chr17.fa", "ref_chr18.fa", "ref_chr19.fa", "ref_chr20.fa", "ref_chr21.fa", "ref_chr22.fa", "ref_chrX.fa", "ref_chrY.fa" }));
+	genomes.push_back(genome(9606, "Homo sapiens (Human)", 3095677412, { "ref_GRCh37_chr1.fa", "ref_GRCh37_chr2.fa", "ref_GRCh37_chr3.fa", "ref_GRCh37_chr4.fa", "ref_GRCh37_chr5.fa", "ref_GRCh37_chr6.fa", "ref_GRCh37_chr7.fa", "ref_GRCh37_chr8.fa", "ref_GRCh37_chr9.fa", "ref_GRCh37_chr10.fa", "ref_GRCh37_chr11.fa", "ref_GRCh37_chr12.fa", "ref_GRCh37_chr13.fa", "ref_GRCh37_chr14.fa", "ref_GRCh37_chr15.fa", "ref_GRCh37_chr16.fa", "ref_GRCh37_chr17.fa", "ref_GRCh37_chr18.fa", "ref_GRCh37_chr19.fa", "ref_GRCh37_chr20.fa", "ref_GRCh37_chr21.fa", "ref_GRCh37_chr22.fa", "ref_GRCh37_chrX.fa", "ref_GRCh37_chrY.fa" }));
+	genomes.push_back(genome(9544, "Macaca mulatta (Rhesus monkey)", 2863665185, { "ref_chr1.fa", "ref_chr2.fa", "ref_chr3.fa", "ref_chr4.fa", "ref_chr5.fa", "ref_chr6.fa", "ref_chr7.fa", "ref_chr8.fa", "ref_chr9.fa", "ref_chr10.fa", "ref_chr11.fa", "ref_chr12.fa", "ref_chr13.fa", "ref_chr14.fa", "ref_chr15.fa", "ref_chr16.fa", "ref_chr17.fa", "ref_chr18.fa", "ref_chr19.fa", "ref_chr20.fa", "ref_chrX.fa" }));
+	genomes.push_back(genome(10116, "Rattus norvegicus (Rat)", 2718881021, { "ref_chr1.fa", "ref_chr2.fa", "ref_chr3.fa", "ref_chr4.fa", "ref_chr5.fa", "ref_chr6.fa", "ref_chr7.fa", "ref_chr8.fa", "ref_chr9.fa", "ref_chr10.fa", "ref_chr11.fa", "ref_chr12.fa", "ref_chr13.fa", "ref_chr14.fa", "ref_chr15.fa", "ref_chr16.fa", "ref_chr17.fa", "ref_chr18.fa", "ref_chr19.fa", "ref_chr20.fa", "ref_chrX.fa" }));
+	genomes.push_back(genome(10090, "Mus musculus (Mouse)", 2654895218, { "ref_chr1.fa", "ref_chr2.fa", "ref_chr3.fa", "ref_chr4.fa", "ref_chr5.fa", "ref_chr6.fa", "ref_chr7.fa", "ref_chr8.fa", "ref_chr9.fa", "ref_chr10.fa", "ref_chr11.fa", "ref_chr12.fa", "ref_chr13.fa", "ref_chr14.fa", "ref_chr15.fa", "ref_chr16.fa", "ref_chr17.fa", "ref_chr18.fa", "ref_chr19.fa", "ref_chrX.fa", "ref_chrY.fa" }));
+	genomes.push_back(genome(9913, "Bos taurus (Cow)", 2634413324, { "ref_chr1.fa", "ref_chr2.fa", "ref_chr3.fa", "ref_chr4.fa", "ref_chr5.fa", "ref_chr6.fa", "ref_chr7.fa", "ref_chr8.fa", "ref_chr9.fa", "ref_chr10.fa", "ref_chr11.fa", "ref_chr12.fa", "ref_chr13.fa", "ref_chr14.fa", "ref_chr15.fa", "ref_chr16.fa", "ref_chr17.fa", "ref_chr18.fa", "ref_chr19.fa", "ref_chr20.fa", "ref_chr21.fa", "ref_chr22.fa", "ref_chr23.fa", "ref_chr24.fa", "ref_chr25.fa", "ref_chr26.fa", "ref_chr27.fa", "ref_chr28.fa", "ref_chr29.fa", "ref_chrX.fa" }));
+	genomes.push_back(genome(9615, "Canis familiaris (Dog)", 2445110183, { "chr1.fa", "chr2.fa", "chr3.fa", "chr4.fa", "chr5.fa", "chr6.fa", "chr7.fa", "chr8.fa", "chr9.fa", "chr10.fa", "chr11.fa", "chr12.fa", "chr13.fa", "chr14.fa", "chr15.fa", "chr16.fa", "chr17.fa", "chr18.fa", "chr19.fa", "chr20.fa", "chr21.fa", "chr22.fa", "chr23.fa", "chr24.fa", "chr25.fa", "chr26.fa", "chr27.fa", "chr28.fa", "chr29.fa", "chr30.fa", "chr31.fa", "chr32.fa", "chr33.fa", "chr34.fa", "chr35.fa", "chr36.fa", "chr37.fa", "chr38.fa", "chrX.fa" }));
+	genomes.push_back(genome(9796, "Equus caballus (Domestic horse)", 2367053447, { "ref_chr1.fa", "ref_chr2.fa", "ref_chr3.fa", "ref_chr4.fa", "ref_chr5.fa", "ref_chr6.fa", "ref_chr7.fa", "ref_chr8.fa", "ref_chr9.fa", "ref_chr10.fa", "ref_chr11.fa", "ref_chr12.fa", "ref_chr13.fa", "ref_chr14.fa", "ref_chr15.fa", "ref_chr16.fa", "ref_chr17.fa", "ref_chr18.fa", "ref_chr19.fa", "ref_chr20.fa", "ref_chr21.fa", "ref_chr22.fa", "ref_chr23.fa", "ref_chr24.fa", "ref_chr25.fa", "ref_chr26.fa", "ref_chr27.fa", "ref_chr28.fa", "ref_chr29.fa", "ref_chr30.fa", "ref_chr31.fa", "ref_chrX.fa" }));
+	genomes.push_back(genome(7955, "Danio rerio (Zebrafish)", 1277075233, { "ref_chr1.fa", "ref_chr2.fa", "ref_chr3.fa", "ref_chr4.fa", "ref_chr5.fa", "ref_chr6.fa", "ref_chr7.fa", "ref_chr8.fa", "ref_chr9.fa", "ref_chr10.fa", "ref_chr11.fa", "ref_chr12.fa", "ref_chr13.fa", "ref_chr14.fa", "ref_chr15.fa", "ref_chr16.fa", "ref_chr17.fa", "ref_chr18.fa", "ref_chr19.fa", "ref_chr20.fa", "ref_chr21.fa", "ref_chr22.fa", "ref_chr23.fa", "ref_chr24.fa", "ref_chr25.fa" }));
+	genomes.push_back(genome(9031, "Gallus gallus (Chicken)", 1031883471, { "ref_chr1.fa", "ref_chr2.fa", "ref_chr3.fa", "ref_chr4.fa", "ref_chr5.fa", "ref_chr6.fa", "ref_chr7.fa", "ref_chr8.fa", "ref_chr9.fa", "ref_chr10.fa", "ref_chr11.fa", "ref_chr12.fa", "ref_chr13.fa", "ref_chr14.fa", "ref_chr15.fa", "ref_chr16.fa", "ref_chr17.fa", "ref_chr18.fa", "ref_chr19.fa", "ref_chr20.fa", "ref_chr21.fa", "ref_chr22.fa", "ref_chr23.fa", "ref_chr24.fa", "ref_chr25.fa", "ref_chr26.fa", "ref_chr27.fa", "ref_chr28.fa", "ref_chr32.fa", "ref_chrW.fa", "ref_chrZ.fa" }));
+	genomes.push_back(genome(59729, "Taeniopygia guttata (Zebra finch)", 1018092713, { "ref_chr1.fa", "ref_chr1A.fa", "ref_chr1B.fa", "ref_chr2.fa", "ref_chr3.fa", "ref_chr4.fa", "ref_chr4A.fa", "ref_chr5.fa", "ref_chr6.fa", "ref_chr7.fa", "ref_chr8.fa", "ref_chr9.fa", "ref_chr10.fa", "ref_chr11.fa", "ref_chr12.fa", "ref_chr13.fa", "ref_chr14.fa", "ref_chr15.fa", "ref_chr16.fa", "ref_chr17.fa", "ref_chr18.fa", "ref_chr19.fa", "ref_chr20.fa", "ref_chr21.fa", "ref_chr23.fa", "ref_chr24.fa", "ref_chr25.fa", "ref_chr26.fa", "ref_chr27.fa", "ref_chr28.fa", "ref_chrLG2.fa", "ref_chrLG5.fa", "ref_chrLGE22.fa", "ref_chrZ.fa" }));
+	genomes.push_back(genome(9823, "Sus scrofa (Pig)", 813033904, { "ref_chr1.fa", "ref_chr4.fa", "ref_chr5.fa", "ref_chr7.fa", "ref_chr11.fa", "ref_chr13.fa", "ref_chr14.fa", "ref_chr15.fa", "ref_chr17.fa", "ref_chrX.fa" }));
+	genomes.push_back(genome(9258, "Ornithorhynchus anatinus (Platypus)", 437080024, { "ref_chr1.fa", "ref_chr2.fa", "ref_chr3.fa", "ref_chr4.fa", "ref_chr5.fa", "ref_chr6.fa", "ref_chr7.fa", "ref_chr10.fa", "ref_chr11.fa", "ref_chr12.fa", "ref_chr14.fa", "ref_chr15.fa", "ref_chr17.fa", "ref_chr18.fa", "ref_chr20.fa", "ref_chrX1.fa", "ref_chrX2.fa", "ref_chrX3.fa", "ref_chrX5.fa" }));
+	genomes.push_back(genome(29760, "Vitis vinifera (Grape)", 303085820, { "ref_chr1.fa", "ref_chr2.fa", "ref_chr3.fa", "ref_chr4.fa", "ref_chr5.fa", "ref_chr6.fa", "ref_chr7.fa", "ref_chr8.fa", "ref_chr9.fa", "ref_chr10.fa", "ref_chr11.fa", "ref_chr12.fa", "ref_chr13.fa", "ref_chr14.fa", "ref_chr15.fa", "ref_chr16.fa", "ref_chr17.fa", "ref_chr18.fa", "ref_chr19.fa" }));
+	genomes.push_back(genome(7460, "Apis mellifera (Honey bee)", 217194876, { "ref_chrLG1.fa", "ref_chrLG2.fa", "ref_chrLG3.fa", "ref_chrLG4.fa", "ref_chrLG5.fa", "ref_chrLG6.fa", "ref_chrLG7.fa", "ref_chrLG8.fa", "ref_chrLG9.fa", "ref_chrLG10.fa", "ref_chrLG11.fa", "ref_chrLG12.fa", "ref_chrLG13.fa", "ref_chrLG14.fa", "ref_chrLG15.fa", "ref_chrLG16.fa" }));
+	genomes.push_back(genome(7070, "Tribolium castaneum (Red flour beetle)", 187494969, { "ref_chrLG1=X.fa", "ref_chrLG2.fa", "ref_chrLG3.fa", "ref_chrLG4.fa", "ref_chrLG5.fa", "ref_chrLG6.fa", "ref_chrLG7.fa", "ref_chrLG8.fa", "ref_chrLG9.fa", "ref_chrLG10.fa" }));
 
 	// Declare kernel variables.
 	unsigned int       mask_array_32[CHARACTER_CARDINALITY];	// The 32-bit mask array of pattern.
@@ -358,7 +350,7 @@ int main(int argc, char** argv)
 			ofstream log(job_path / "log.csv");
 			ofstream pos(job_path / "pos.csv");
 			log << "Query Index,Pattern,Edit Distance,Number of Matches\n";
-			pos << "Query Index,Match Index,Sequence Index,Ending Position\n";
+			pos << "Query Index,Match Index,File Index,Ending Position\n";
 
 			// Parse and execute queries.
 			using std::istringstream;
@@ -454,7 +446,7 @@ int main(int argc, char** argv)
 				for (auto i = 0; i < filtered_match_count; ++i)
 				{
 					pos << qi << ',' << i << ',' << match_sequences[i] << ',' << match_positions[i] << '\n';
-//					if ((match_sequences[i] > 0) && (match_positions[i] + 1 < m_plus_k)); // This match may possibly be across two consecutive sequences.
+//					if (match_sequences[i] && (match_positions[i] + 1 < m_plus_k)); // This match may possibly be across two consecutive sequences.
 				}
 			}
 
