@@ -109,29 +109,20 @@ $(function() {
   });
 
   // Activate the timer to refresh result every second
-  var timer, timer_on;
-  function activateTimer() {
-    timer = setInterval(function() {
-      $.get('done', { email: email, skip: dones }, function(res) {
-        if (!res.length) {
-          timer_on = false;
-          clearInterval(timer);
-          return;
-        }
-        res.forEach(function(job, i) {
-          jobs[dones + i].done = job.done;
-        });
-        fade(function(i) {
-          return (dones <= i) && (i < dones + res.length);
-        }, function(j) {
-          return j >= 2;
-        });
-        dones += res.length;
+  setInterval(function() {
+    $.get('done', { email: email, skip: dones }, function(res) {
+      if (!res.length) return;
+      res.forEach(function(job, i) {
+        jobs[dones + i].done = job.done;
       });
-    }, 1000);
-    timer_on = true;
-  }
-  activateTimer();
+      fade(function(i) {
+        return (dones <= i) && (i < dones + res.length);
+      }, function(j) {
+        return j >= 2;
+      });
+      dones += res.length;
+    });
+  }, 1000);
 
   // Initialize tooltips
   $('.control-label a[rel=tooltip]').tooltip();
@@ -165,8 +156,6 @@ $(function() {
       }, function(j) {
         return j <= 2;
       });
-      // Reactivate the timer if it is stopped
-      if (!timer_on) activateTimer();
       // Save email into cookie
       email = $('#email').val();
       $.cookie('email', email, { expires: 7 });
