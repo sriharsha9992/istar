@@ -64,9 +64,9 @@ $(function() {
   function refresh() {
     var offset = 8 * (page - 1);
     jobs_trs.each(function(i) {
-      var row = tr(jobs[offset + i]);
+      var tds = tr(jobs[offset + i]);
       $('td', $(this)).each(function(j) {
-        $(this).html(row[j]);
+        $(this).html(tds[j]);
       });
     });
     if (page === 1) {
@@ -87,12 +87,13 @@ $(function() {
   }
 
   // Fade selected cells
-  function fade(select) {
+  function fade(row, col) {
     var offset = 8 * (page - 1);
     jobs_trs.each(function(i) {
-      var row = tr(jobs[offset + i]);
+      if (!row(offset + i)) return;
+      var tds = tr(jobs[offset + i]);
       $('td', $(this)).each(function(j) {
-        if (select(offset + i, j)) $(this).hide().html(row[j]).fadeIn('slow');
+        if (col(j)) $(this).hide().html(tds[j]).fadeIn('slow');
       });
     });
   }
@@ -108,18 +109,29 @@ $(function() {
   });
 
   // Activate the timer to refresh result every second
-  var d = setInterval(function() {
-    $.get('done', { email: email, skip: dones }, function(res) {
-      if (!res.length) return;
-      res.forEach(function(job, i) {
-        jobs[dones + i].done = job.done;
+  var timer, timer_on;
+  function activateTimer() {
+    timer = setInterval(function() {
+      $.get('done', { email: email, skip: dones }, function(res) {
+        if (!res.length) {
+          timer_on = false;
+          clearInterval(timer);
+          return;
+        }
+        res.forEach(function(job, i) {
+          jobs[dones + i].done = job.done;
+        });
+        fade(function(i) {
+          return (dones <= i) && (i < dones + res.length);
+        }, function(j) {
+          return j >= 2;
+        });
+        dones += res.length;
       });
-      fade(function(i, j) {
-        return (dones <= i) && (i < dones + res.length) && (j >= 2);
-      });
-      dones += res.length;
-    });
-  }, 1000);
+    }, 1000);
+    timer_on = true;
+  }
+  activateTimer();
 
   // Initialize tooltips
   $('.control-label a[rel=tooltip]').tooltip();
@@ -148,11 +160,13 @@ $(function() {
         page = last_page;
         refresh();
       }
-      fade(function(i, j) {
-        return (i + 1 === jobs.length) && (j <= 2);
+      fade(function(i) {
+        return i + 1 === jobs.length;
+      }, function(j) {
+        return j <= 2;
       });
       // Reactivate the timer if it is stopped
-      
+      if (!timer_on) activateTimer();
       // Save email into cookie
       email = $('#email').val();
       $.cookie('email', email, { expires: 7 });
