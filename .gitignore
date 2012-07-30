@@ -1,13 +1,10 @@
 node_modules
-*.conf
 *.log
 *.csv
-*.fa
-*.fa.gz
-README_CURRENT_BUILD
-16_*
 .dep.inc
 Makefile
 nbproject
 build
 dist
+16_*
+genomes
