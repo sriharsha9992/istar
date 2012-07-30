@@ -24,6 +24,8 @@
 #include <boost/program_options.hpp>
 #include <boost/filesystem/operations.hpp>
 #include <boost/filesystem/fstream.hpp>
+#include <boost/iostreams/filtering_stream.hpp>
+#include <boost/iostreams/filter/gzip.hpp>
 #include <mongo/client/dbclient.h>
 #include <cuda_runtime_api.h>
 #include <Poco/Net/MailMessage.h>
@@ -165,8 +167,13 @@ public:
 		for (const auto& file : files)
 		{
 			using boost::filesystem::ifstream;
+			using boost::iostreams::filtering_istream;
+			using boost::iostreams::gzip_decompressor;
 			ifstream in(genome_path / file);
-			while (getline(in, line))
+			filtering_istream fis;
+			fis.push(gzip_decompressor());
+			fis.push(in);			
+			while (getline(fis, line))
 			{
 				if (line.front() == '>') // Header line.
 				{
