@@ -2547,9 +2547,10 @@ $(function() {
     }]
   }];
 
+  // Construct select options
   var options = new Array(genomes.length);
   genomes.forEach(function(g, i) {
-    options[i] = '<option value="' + g.taxid + '"' + (g.taxid === 9606 ? ' selected' : '') + '>' + g.name + '</option>';
+    options[i] = '<option value="' + g.taxid + '"' + (g.taxid === 9606 ? ' selected' : '') + '>' + g.name + ' ' + (g.nucleotides / (1000 * 1000 * 1000)).toFixed(2) + 'Gnt</option>';
   });
   $('#taxid').html(options.join(''));
 
@@ -2720,7 +2721,7 @@ $(function() {
     }, 'json');
   });
 
-  // Add a comma every 3 digits, e.g. turn 11386040 into 11,386,040.
+  // Add a comma every 3 digits, e.g. turn 11386040 into 11,386,040
   var d3 = /(\d+)(\d{3})/;
   function addCommas(n)
   {
