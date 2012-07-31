@@ -125,12 +125,12 @@ $(function() {
   }, 1000);
 
   // Initialize tooltips
-  $('.control-label a[rel=tooltip]').tooltip();
+  $('.control-label a').tooltip();
 
   // Process submission
   $('#submit').click(function() {
     // Hide tooltips
-    $('.control-label a[rel=tooltip]').tooltip('hide');
+    $('.control-label a').tooltip('hide');
     // Post a new job without client side validation
     $.post('jobs', {
       email: $('#email').val(),
@@ -2763,4 +2763,10 @@ $(function() {
     active: false,
     autoHeight: false
   });
+
+  var options = new Array(genomes.length);
+  genomes.forEach(function(g, i) {
+    options[i] = '<option value="' + g.taxid + '">' + g.name + '</option>';
+  });
+  $('#genome').html(options.join(''));
 });

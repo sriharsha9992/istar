@@ -292,7 +292,7 @@ if (cluster.isMaster) {
       app.post('/igrep/jobs', function(req, res) {
         if (v.init(req.body)
          .chk('email', 'must be valid', true).isEmail()
-         .chk('genome', 'must be one of the 17 genomes', true).isIn(["13616", "9598", "9606", "9544", "10116", "10090", "9913", "9615", "9796", "7955", "9031", "59729", "9823", "9258", "29760", "7460", "7070"])
+         .chk('genome', 'must be one of the 26 genomes', true).isIn(['13616', '9598', '9606', '9601', '10116', '9544', '9483', '10090', '9913', '9823', '9796', '9615', '9986', '7955', '28377', '9103', '59729', '9031', '3847', '9258', '29760', '15368', '7460', '30195', '7425', '7070'])
          .chk('queries', 'must conform to the specifications', true).len(2, 66000).regex(/^([ACGTN]{1,64}\d\n){0,9999}[ACGTN]{1,64}\d\n?$/ig)
          .failed()) {
           return res.json(v.err);
