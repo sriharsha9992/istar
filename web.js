@@ -279,7 +279,7 @@ if (cluster.isMaster) {
         }
         f.init(req.query)
          .snt('email').copy();
-        igrep.find(f.res, {'genome': 1, 'submitted': 1, 'done': 1}, function(err, cursor) {
+        igrep.find(f.res, {'taxid': 1, 'submitted': 1, 'done': 1}, function(err, cursor) {
           if (err) throw err;
           cursor.sort({'submitted': 1}).toArray(function(err, docs) {
             if (err) throw err;
@@ -292,14 +292,14 @@ if (cluster.isMaster) {
       app.post('/igrep/jobs', function(req, res) {
         if (v.init(req.body)
          .chk('email', 'must be valid', true).isEmail()
-         .chk('genome', 'must be one of the 26 genomes', true).isIn(['13616', '9598', '9606', '9601', '10116', '9544', '9483', '10090', '9913', '9823', '9796', '9615', '9986', '7955', '28377', '9103', '59729', '9031', '3847', '9258', '29760', '15368', '7460', '30195', '7425', '7070'])
+         .chk('taxid', 'must be the taxonomy id of one of the 26 genomes', true).isIn(['13616', '9598', '9606', '9601', '10116', '9544', '9483', '10090', '9913', '9823', '9796', '9615', '9986', '7955', '28377', '9103', '59729', '9031', '3847', '9258', '29760', '15368', '7460', '30195', '7425', '7070'])
          .chk('queries', 'must conform to the specifications', true).len(2, 66000).regex(/^([ACGTN]{1,64}\d\n){0,9999}[ACGTN]{1,64}\d\n?$/ig)
          .failed()) {
           return res.json(v.err);
         }
         f.init(req.body)
          .snt('email').copy()
-         .snt('genome').toInt()
+         .snt('taxid').toInt()
          .snt('queries').copy()
          .res.submitted = new Date();
         igrep.insert(f.res, {safe: true}, function(err, docs) {

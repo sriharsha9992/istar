@@ -1,8 +1,7 @@
 $(function() {
 
   // Define genomes
-  var genomes = new Array(26);
-  genomes[0] = {
+  var genomes = [{
     taxid: 13616,
     name: 'Monodelphis domestica (opossum)',
     ncbiBuild: 2,
@@ -50,8 +49,7 @@ $(function() {
       header: '>gi|52547305|ref|NC_006299.1| Monodelphis domestica mitochondrion, complete genome',
       nucleotides: 17079
     }]
-  };
-  genomes[1] = {
+  }, {
     taxid: 9598,
     name: 'Pan troglodytes (chimpanzee)',
     ncbiBuild: 3,
@@ -163,8 +161,7 @@ $(function() {
       header: '>gi|5835121|ref|NC_001643.1| Pan troglodytes mitochondrion, complete genome',
       nucleotides: 16554
     }]
-  };
-  genomes[2] = {
+  }, {
     taxid: 9606,
     name: 'Homo sapiens (human)',
     ncbiBuild: 37,
@@ -272,8 +269,7 @@ $(function() {
       header: '>gi|251831106|ref|NC_012920.1| Homo sapiens mitochondrion, complete genome',
       nucleotides: 16569
     }]
-  };
-  genomes[3] = {
+  }, {
     taxid: 9601,
     name: 'Pongo abelii (Sumatran orangutan)',
     ncbiBuild: 1,
@@ -381,8 +377,7 @@ $(function() {
       header: '>gi|5835834|ref|NC_002083.1| Pongo abelii mitochondrion, complete genome',
       nucleotides: 16499
     }]
-  };
-  genomes[4] = {
+  }, {
     taxid: 10116,
     name: 'Rattus norvegicus (rat)',
     ncbiBuild: 5,
@@ -478,8 +473,7 @@ $(function() {
       header: '>gi|110189714|ref|NC_001665.2| Rattus norvegicus strain BN/SsNHsdMCW mitochondrion, complete genome',
       nucleotides: 16313
     }]
-  };
-  genomes[5] = {
+  }, {
     taxid: 9544,
     name: 'Macaca mulatta (rhesus monkey)',
     ncbiBuild: 1,
@@ -575,8 +569,7 @@ $(function() {
       header: '>gi|49146236|ref|NC_005943.1| Macaca mulatta mitochondrion, complete genome',
       nucleotides: 16564
     }]
-  };
-  genomes[6] = {
+  }, {
     taxid: 9483,
     name: 'Callithrix jacchus (marmoset)',
     ncbiBuild: 1,
@@ -680,8 +673,7 @@ $(function() {
       header: '>gi|290467385|ref|NC_013919.1| Callithrix jacchus chromosome Y, Callithrix jacchus-3.2, whole genome shotgun sequence',
       nucleotides: 2853901
     }]
-  };
-  genomes[7] = {
+  }, {
     taxid: 10090,
     name: 'Mus musculus (mouse)',
     ncbiBuild: 38,
@@ -777,8 +769,7 @@ $(function() {
       header: '>gi|34538597|ref|NC_005089.1| Mus musculus mitochondrion, complete genome',
       nucleotides: 16299
     }]
-  };
-  genomes[8] = {
+  }, {
     taxid: 9913,
     name: 'Bos taurus (cow)',
     ncbiBuild: 6,
@@ -910,8 +901,7 @@ $(function() {
       header: '>gi|60101824|ref|NC_006853.1| Bos taurus mitochondrion, complete genome',
       nucleotides: 16338
     }]
-  };
-  genomes[9] = {
+  }, {
     taxid: 9823,
     name: 'Sus scrofa (pig)',
     ncbiBuild: 4,
@@ -1003,8 +993,7 @@ $(function() {
       header: '>gi|5835862|ref|NC_000845.1| Sus scrofa mitochondrion, complete genome',
       nucleotides: 16613
     }]
-  };
-  genomes[10] = {
+  }, {
     taxid: 9796,
     name: 'Equus caballus (horse)',
     ncbiBuild: 2,
@@ -1144,8 +1133,7 @@ $(function() {
       header: '>gi|5835107|ref|NC_001640.1| Equus caballus mitochondrion, complete genome',
       nucleotides: 16660
     }]
-  };
-  genomes[11] = {
+  }, {
     taxid: 9615,
     name: 'Canis lupus familiaris (dog)',
     ncbiBuild: 3,
@@ -1313,8 +1301,7 @@ $(function() {
       header: '>gi|17737322|ref|NC_002008.4| Canis lupus familiaris mitochondrion, complete genome',
       nucleotides: 16727
     }]
-  };
-  genomes[12] = {
+  }, {
     taxid: 9986,
     name: 'Oryctolagus cuniculus (rabbit)',
     ncbiBuild: 1,
@@ -1414,8 +1401,7 @@ $(function() {
       header: '>gi|5835526|ref|NC_001913.1| Oryctolagus cuniculus mitochondrion, complete genome',
       nucleotides: 17245
     }]
-  };
-  genomes[13] = {
+  }, {
     taxid: 7955,
     name: 'Danio rerio (zebrafish)',
     ncbiBuild: 5,
@@ -1527,8 +1513,7 @@ $(function() {
       header: '>gi|15079186|ref|NC_002333.2| Danio rerio mitochondrion, complete genome',
       nucleotides: 16596
     }]
-  };
-  genomes[14] = {
+  }, {
     taxid: 28377,
     name: 'Anolis carolinensis (green anole)',
     ncbiBuild: 1,
@@ -1592,8 +1577,7 @@ $(function() {
       header: '>gi|319428597|ref|NC_010972.2| Anolis carolinensis mitochondrion, complete genome',
       nucleotides: 17223
     }]
-  };
-  genomes[15] = {
+  }, {
     taxid: 9103,
     name: 'Meleagris gallopavo (turkey)',
     ncbiBuild: 1,
@@ -1733,8 +1717,7 @@ $(function() {
       header: '>gi|323690831|ref|NC_010195.2| Meleagris gallopavo mitochondrion, complete genome',
       nucleotides: 16719
     }]
-  };
-  genomes[16] = {
+  }, {
     taxid: 59729,
     name: 'Taeniopygia guttata (Zebra finch)',
     ncbiBuild: 1,
@@ -1882,8 +1865,7 @@ $(function() {
       header: '>gi|224381699|ref|NC_011496.1|NC_011496 Taeniopygia guttata linkage group E22, reference assembly (based on Taeniopygia_guttata-3.2.4), whole genome shotgun sequence',
       nucleotides: 883365
     }]
-  };
-  genomes[17] = {
+  }, {
     taxid: 9031,
     name: 'Gallus gallus (chicken)',
     ncbiBuild: 3,
@@ -2027,8 +2009,7 @@ $(function() {
       header: '>gi|5834843|ref|NC_001323.1| Gallus gallus mitochondrion, complete genome',
       nucleotides: 16775
     }]
-  };
-  genomes[18] = {
+  }, {
     taxid: 3847,
     name: 'Glycine max (soybean)',
     ncbiBuild: 1,
@@ -2120,8 +2101,7 @@ $(function() {
       header: '>gi|91214122|ref|NC_007942.1| Glycine max chloroplast, complete genome',
       nucleotides: 152218
     }]
-  };
-  genomes[19] = {
+  }, {
     taxid: 9258,
     name: 'Ornithorhynchus anatinus (platypus)',
     ncbiBuild: 1,
@@ -2209,8 +2189,7 @@ $(function() {
       header: '>gi|5836058|ref|NC_000891.1| Ornithorhynchus anatinus mitochondrion, complete genome',
       nucleotides: 17019
     }]
-  };
-  genomes[20] = {
+  }, {
     taxid: 29760,
     name: 'Vitis vinifera (wine grape)',
     ncbiBuild: 2,
@@ -2302,8 +2281,7 @@ $(function() {
       header: '>gi|91983971|ref|NC_007957.1| Vitis vinifera chloroplast, complete genome',
       nucleotides: 160928
     }]
-  };
-  genomes[21] = {
+  }, {
     taxid: 15368,
     name: 'Brachypodium distachyon',
     ncbiBuild: 1,
@@ -2335,8 +2313,7 @@ $(function() {
       header: '>gi|194033128|ref|NC_011032.1| Brachypodium distachyon chloroplast, complete genome',
       nucleotides: 135199
     }]
-  };
-  genomes[22] = {
+  }, {
     taxid: 7460,
     name: 'Apis mellifera (honey bee)',
     ncbiBuild: 5,
@@ -2412,8 +2389,7 @@ $(function() {
       header: '>gi|5834925|ref|NC_001566.1| Apis mellifera ligustica mitochondrion, complete genome',
       nucleotides: 16343
     }]
-  };
-  genomes[23] = {
+  }, {
     taxid: 30195,
     name: 'Bombus terrestris (buff-tailed bumblebee)',
     ncbiBuild: 1,
@@ -2493,8 +2469,7 @@ $(function() {
       header: '>gi|339751235|ref|NC_015779.1| Bombus terrestris linkage group LG B18, Bter_1.0 chromosome, whole genome shotgun sequence',
       nucleotides: 3466108
     }]
-  };
-  genomes[24] = {
+  }, {
     taxid: 7425,
     name: 'Nasonia vitripennis (jewel wasp)',
     ncbiBuild: 2,
@@ -2522,8 +2497,7 @@ $(function() {
       header: '>gi|341864957|ref|NC_015871.1| Nasonia vitripennis strain AsymCX chromosome 5, Nvit_2.0, whole genome shotgun sequence',
       nucleotides: 30704709
     }]
-  };
-  genomes[25] = {
+  }, {
     taxid: 7070,
     name: 'Tribolium castaneum (red flour beetle)',
     ncbiBuild: 2,
@@ -2571,13 +2545,13 @@ $(function() {
       header: '>gi|189313711|ref|NC_007425.2|NC_007425 Tribolium castaneum linkage group 10, reference assembly (based on Tcas_3.0), whole genome shotgun sequence',
       nucleotides: 11386040
     }]
-  };
+  }];
 
   var options = new Array(genomes.length);
   genomes.forEach(function(g, i) {
-    options[i] = '<option value="' + g.taxid + '">' + g.name + '</option>';
+    options[i] = '<option value="' + g.taxid + '"' + (g.taxid === 9606 ? ' selected' : '') + '>' + g.name + '</option>';
   });
-  $('#genome').html(options.join(''));
+  $('#taxid').html(options.join(''));
 
   // Fetch email from cookie
   var email = $.cookie('email');
@@ -2638,7 +2612,7 @@ $(function() {
       return tds;
     }
     var done = job.done != undefined;
-    tds[0] = getGenome(job.genome).name;
+    tds[0] = getGenome(job.taxid).name;
     tds[1] = $.format.date(new Date(job.submitted), 'yyyy/MM/dd HH:mm:ss');
     tds[2] = (done ? $.format.date(new Date(job.done), 'yyyy/MM/dd HH:mm:ss') : 'Queued for execution');
     tds[3] = (done ? '<a href="jobs/' + job._id + '/log.csv"><img src="/excel.png" alt="log.csv"/></a>' : null);
@@ -2718,7 +2692,7 @@ $(function() {
     // Post a new job without client side validation
     $.post('jobs', {
       email: $('#email').val(),
-      genome: $('#genome').val(),
+      taxid: $('#taxid').val(),
       queries: $('#queries').val()
     }, function(res) {
       // If server side validation fails, show tooltips
