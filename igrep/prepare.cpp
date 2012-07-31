@@ -101,10 +101,13 @@ int main(int argc, char* argv[])
 			size_t nucleotides = 0;
 			while (getline(fis, line))
 			{
-				if ((line.front() == '>') || (line.size() > 70))
+				if (line.front() == '>')
 				{
 					cerr << "Multiple header lines in " << f << '\n';
-					return -1;
+				}
+				if (line.size() > 70)
+				{
+					cerr << "Line longer than 70 characters in " << f << '\n';
 				}
 				nucleotides += line.size();
 			}
@@ -119,11 +122,12 @@ int main(int argc, char* argv[])
 	genomes.sort();
 
 	// Output genome construction code in javascript
-	cout << "  var genomes = new Array(" << genomes.size() << ");\n";
+	cout << "  var genomes = [";
 	for (auto i = 0; i < genomes.size(); ++i)
 	{
 		const auto& g = genomes[i];
-		cout << "  genomes[" << i << "] = {\n"
+		if (i) cout << ", ";
+		cout << "{\n"
 		     << "    taxid: " << g.taxid << ",\n"
 		     << "    name: '" << g.organism << "',\n"
 		     << "    ncbiBuild: " << g.ncbiBuild << ",\n"
@@ -131,10 +135,10 @@ int main(int argc, char* argv[])
 		     << "    releaseDate: '" << g.releaseDate << "',\n"
 		     << "    nucleotides: " << g.nucleotides << ",\n"
 		     << "    files: [";
-		for (auto i = 0; i < g.files.size(); ++i)
+		for (auto j = 0; j < g.files.size(); ++j)
 		{
-			const auto& f = g.files[i];
-			if (i) cout << ", ";
+			const auto& f = g.files[j];
+			if (j) cout << ", ";
 			cout << "{\n"
 			     << "      file: '" << f.file << "',\n"
 			     << "      header: '" << f.header << "',\n"
@@ -142,6 +146,7 @@ int main(int argc, char* argv[])
 			     << "    }";
 		}
 		cout << "]\n"
-		     << "  };\n";
+		     << "  }";
 	}
+	cout << "];\n";
 }
