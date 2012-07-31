@@ -7,12 +7,12 @@ $(function() {
   // Fetch jobs
   $.get('jobs', { email: email }, function(jobs) {
     jobs.forEach(function(job) {
-      $('#jobs').append(' ' + job.description);
     });
+    $('#jobs');
   });
 
   // Initialize tooltips
-  $('.control-label a[rel=tooltip]').tooltip();
+  $('.control-label a').tooltip();
 
   // Initialize sliders
   $('#mwt').slider({
@@ -103,7 +103,7 @@ $(function() {
   // Process submission
   $('#submit').click(function() {
     // Hide tooltips
-    $('.control-label a[rel=tooltip]').tooltip('hide');
+    $('.control-label a').tooltip('hide');
     // Post a new job without client side validation
     $.post('jobs', {
       receptor: $('#receptor').val(),
