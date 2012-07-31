@@ -24,10 +24,10 @@ public:
 class genome
 {
 public:
-	const string organism, ncbiBuild, version, releaseDate;
+	const string taxid, organism, ncbiBuild, version, releaseDate;
 	size_t nucleotides;
 	vector<file_t> files;
-	explicit genome(const string& organism, const string& ncbiBuild, const string& version, const string& releaseDate) : organism(organism), ncbiBuild(ncbiBuild), version(version), releaseDate(releaseDate), nucleotides(0) {}
+	explicit genome(const string& taxid, const string& organism, const string& ncbiBuild, const string& version, const string& releaseDate) : taxid(taxid), organism(organism), ncbiBuild(ncbiBuild), version(version), releaseDate(releaseDate), nucleotides(0) {}
 };
 
 inline bool operator<(const genome& a, const genome& b)
@@ -46,7 +46,6 @@ int main(int argc, char* argv[])
 
 	const directory_iterator dir_iter;
 	ptr_vector<genome> genomes(20);
-	size_t index = 0;
 	string line;
 	for (directory_iterator di0(argv[1]); di0 != dir_iter; ++di0)
 	{
@@ -54,23 +53,33 @@ int main(int argc, char* argv[])
 		if (!is_directory(genome_path)) continue;
 		cout << "Reading " << genome_path.filename() << '\n';
 
+		// Parse README
+		ifstream readme(genome_path / "README");
+		for (auto i = 0; i < 21; ++i) getline(readme, line);
+		size_t idx;
+		while (getline(readme, line) && ((idx = line.find("taxid=", 51)) == string::npos));
+		const auto taxid = line.substr(idx + 6, line.size() - idx - 7);
+		readme.close();
+
 		// Parse README_CURRENT_BUILD
-		ifstream in(genome_path / "README_CURRENT_BUILD");
-		getline(in, line); // ======================================================================
-		getline(in, line); // Organism: Apis mellifera (honey bee) 
+		ifstream build(genome_path / "README_CURRENT_BUILD");
+		getline(build, line); // ======================================================================
+		getline(build, line); // Organism: Apis mellifera (honey bee) 
 		const auto organism = line.substr(10, line.size() - 11);
-		getline(in, line); // NCBI Build Number: 5 
+		getline(build, line); // NCBI Build Number: 5 
 		const auto ncbiBuild = line.substr(19, line.size() - 20);
-		getline(in, line); // Version: 1 
+		getline(build, line); // Version: 1 
 		const auto version = line.substr(9, line.size() - 10);
-		getline(in, line); // Release date: 29 April 2011 
+		getline(build, line); // Release date: 29 April 2011 
 		const auto releaseDate = line.substr(14, line.size() - 15);
-		genomes.push_back(new genome(organism, ncbiBuild, version, releaseDate));
+		build.close();
+
+		// Construct a genome.
+		genomes.push_back(new genome(taxid, organism, ncbiBuild, version, releaseDate));
 		auto& g = genomes.back();
 
 		// Sort *.fa.gz
-		ptr_vector<string> files;
-		files.reserve(20);
+		ptr_vector<string> files(20);
 		for (directory_iterator di(genome_path); di != dir_iter; ++di)
 		{
 			const auto p = di->path();
@@ -115,6 +124,7 @@ int main(int argc, char* argv[])
 	{
 		const auto& g = genomes[i];
 		cout << "  genomes[" << i << "] = {\n"
+		     << "    taxid: " << g.taxid << ",\n"
 		     << "    name: '" << g.organism << "',\n"
 		     << "    ncbiBuild: " << g.ncbiBuild << ",\n"
 		     << "    version: " << g.version << ",\n"
@@ -124,13 +134,14 @@ int main(int argc, char* argv[])
 		for (auto i = 0; i < g.files.size(); ++i)
 		{
 			const auto& f = g.files[i];
+			if (i) cout << ", ";
 			cout << "{\n"
 			     << "      file: '" << f.file << "',\n"
 			     << "      header: '" << f.header << "',\n"
 			     << "      nucleotides: " << f.nucleotides << "\n"
 			     << "    }";
-			if (i < g.files.size() - 1) cout << ", "; else cout << "]\n";
 		}
-		cout << "  };\n";
+		cout << "]\n"
+		     << "  };\n";
 	}
 }
