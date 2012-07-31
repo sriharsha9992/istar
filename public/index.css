@@ -45,3 +45,6 @@ table img {
   border: 1px solid #ddd;
 }
 
+img[alt="HTML5 logo"] {
+  height: 20px
+}
