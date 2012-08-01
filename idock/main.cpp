@@ -270,7 +270,7 @@ int main(int argc, char* argv[])
 		csv.setf(std::ios::fixed, std::ios::floatfield);
 		csv << '\n' << std::setprecision(3);
 
-		size_t num_completed_ligands = 0;
+		unsigned int num_completed_ligands = 0;
 		headers.seekg(sizeof(size_t) * start_lig);
 		for (size_t i = start_lig; i < end_lig; ++i)
 		{
