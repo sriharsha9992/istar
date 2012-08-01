@@ -89,7 +89,7 @@ RESTful API for igrep
 
 ### Post a new job
 
-    curl -d $'email=Jacky@cuhk.edu.hk&genome=9606&queries=CTGCATGGTGGGGAAAAGGCATAGCCTGGG3
+    curl -d $'email=Jacky@cuhk.edu.hk&taxid=9606&queries=CTGCATGGTGGGGAAAAGGCATAGCCTGGG3
     AAAAGTGTTATGGGTTGTTTAATCAACCACTGAACTGCGGGGGTGACTAGTTATAACTTA6'
     http://istar.cse.cuhk.edu.hk/igrep/jobs
 
