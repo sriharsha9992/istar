@@ -20,9 +20,11 @@
 #include <iomanip>
 #include <ctime>
 #include <boost/thread/thread.hpp>
-#include <boost/program_options.hpp>
-#include <boost/filesystem/fstream.hpp>
 #include <boost/filesystem/operations.hpp>
+#include <boost/filesystem/fstream.hpp>
+#include <boost/iostreams/filtering_stream.hpp>
+#include <boost/iostreams/filter/gzip.hpp>
+#include <boost/date_time/posix_time/posix_time_types.hpp>
 #include <mongo/client/dbclient.h>
 #include <Poco/Net/MailMessage.h>
 #include <Poco/Net/MailRecipient.h>
@@ -46,44 +48,29 @@ int main(int argc, char* argv[])
 	using boost::bind;
 	using namespace idock;
 
+	// Daemonize itself, changing the current working directory to / and redirecting stdin, stdout and stderr to /dev/null.
+//	daemon(0, 0);
 	cout << "idock 1.5\n";
 
-	string host, db, user, pwd;
-	path jobs_path;
-	{
-		// Create program options.
-		using namespace boost::program_options;
-		options_description options("input (required)");
-		options.add_options()
-			("host", value<string>(&host)->required(), "server to connect to")
-			("db"  , value<string>(&db  )->required(), "database to login to")
-			("user", value<string>(&user)->required(), "username for authentication")
-			("pwd" , value<string>(&pwd )->required(), "password for authentication")
-			("jobs", value<path>(&jobs_path)->required(), "path to jobs directory")
-			;
-
-		// If no command line argument is supplied, simply exit.
-		if (argc == 1) return 0;
-
-		// Parse command line arguments.
-		variables_map vm;
-		store(parse_command_line(argc, argv, options), vm);
-		vm.notify();
-	}
+	// Fetch command line arguments.
+	const auto host = argv[1];
+	const auto user = argv[2];
+	const auto pwd = argv[3];
+	const auto jobs_path = argv[4];
 
 	using namespace mongo;
 	DBClientConnection conn;
 	{
 		// Connect to host and authenticate user.
-		cout << "Connecting to " << host << " and authenticating " << user << '\n';
+//		syslog(LOG_INFO, "Connecting to %s and authenticating %s", host, user);
 		string errmsg;
-		if ((!conn.connect(host, errmsg)) || (!conn.auth(db, user, pwd, errmsg)))
+		if ((!conn.connect(host, errmsg)) || (!conn.auth("istar", user, pwd, errmsg)))
 		{
-			cout << errmsg << '\n';
+//			syslog(LOG_ERR, errmsg.c_str());
 			return 1;
 		}
 	}
-	const auto collection = db + ".idock";
+	const auto collection = "istar.idock";
 
 	// Initialize default values of constant arguments.
 	const path ligands_path = "16_lig.pdbqt";
@@ -100,6 +87,7 @@ int main(int argc, char* argv[])
 	const size_t slices[101] = { 0, 121712, 243424, 365136, 486848, 608560, 730272, 851984, 973696, 1095408, 1217120, 1338832, 1460544, 1582256, 1703968, 1825680, 1947392, 2069104, 2190816, 2312528, 2434240, 2555952, 2677664, 2799376, 2921088, 3042800, 3164512, 3286224, 3407936, 3529648, 3651360, 3773072, 3894784, 4016496, 4138208, 4259920, 4381632, 4503344, 4625056, 4746768, 4868480, 4990192, 5111904, 5233616, 5355328, 5477040, 5598752, 5720464, 5842176, 5963888, 6085600, 6207312, 6329024, 6450736, 6572448, 6694160, 6815872, 6937584, 7059296, 7181008, 7302720, 7424432, 7546144, 7667856, 7789568, 7911280, 8032992, 8154704, 8276416, 8398128, 8519840, 8641552, 8763264, 8884976, 9006688, 9128400, 9250112, 9371824, 9493536, 9615248, 9736960, 9858672, 9980384, 10102096, 10223808, 10345520, 10467232, 10588944, 10710655, 10832366, 10954077, 11075788, 11197499, 11319210, 11440921, 11562632, 11684343, 11806054, 11927765, 12049476, 12171187 };
 	const fl energy_range = 3.0;
 	const fl grid_granularity = 0.08;
+	const auto epoch = boost::gregorian::date(1970, 1, 1);
 
 	// Initialize a Mersenne Twister random number generator.
 	cout << "Using random seed " << seed << '\n';
@@ -170,33 +158,31 @@ int main(int argc, char* argv[])
 
 	while (true)
 	{
-		// Fetch a pending job. Start a transaction, fetch a job where machine == null or Date.now() > time + delta, and update machine and time. Always fetch the same job if not all the slices are done. Use the old _id for query. No need to 1) define box, 2) parse receptor, 3) create grid maps.
+		// Fetch a job.
 		using namespace bson;
-//		auto cursor = conn.query("istar.jobs", QUERY("progress" << 0), 1); // nToReturn = 1
-		auto cursor = conn.query(collection);
+		auto cursor = conn.query(collection, QUERY("scheduled" << BSON("$lt" << 100)).sort("submitted"), 1); // nToReturn = 1
 		if (!cursor->more())
 		{
 			// Sleep for a second.
 			using boost::this_thread::sleep_for;
-			using boost::chrono::milliseconds;
-			sleep_for(milliseconds(1000));
+			using boost::chrono::seconds;
+			sleep_for(seconds(1));
 			continue;
 		}
 
 		const auto job = cursor->next();
 		const auto _id = job["_id"].OID();
-		const size_t slice = 3;
+		const auto slice = job["scheduled"].Int();
+		const auto slice_str = "slice" + lexical_cast<string>(slice);
 
-/*
 		// Execute the job slice.
 		cout << "Executing job " << _id << ", slice " << slice << '\n';
-		conn.update(collection, BSON("_id" << _id << "$atomic" << 1), BSON("$inc" << BSON("progress" << 1)));
-		const auto e = conn.getLastError();
-		if (!e.empty())
+		conn.update(collection, BSON("_id" << _id << "$atomic" << 1), BSON("$inc" << BSON("scheduled" << 1)));
+		const auto err = conn.getLastError();
+		if (!err.empty())
 		{
-			cerr << e << '\n';
+			cerr << err << '\n';
 		}
-*/
 
 		const path job_path = jobs_path / _id.str();
 		const path slice_path = job_path / (lexical_cast<string>(slice) + ".csv");
@@ -279,19 +265,12 @@ int main(int argc, char* argv[])
 		// Perform phase 1 screening. 
 		cout << "Running " << num_mc_tasks << " Monte Carlo tasks per ligand\n";
 
-		// Skip ligands that have been screened. Or fetch the new start_lig = progress from MongoDB.
-		if (exists(slice_path))
-		{
-			// Obtain last line.
-			ifstream log(slice_path);
-			// Update start_lig.
-		}
-
-		// Initialize slice csv.
+		// Initialize slice csv. TODO: use bin instead of csv, one size_t for ZINC ID and one float for free energy.
 		ofstream csv(slice_path);
 		csv.setf(std::ios::fixed, std::ios::floatfield);
 		csv << '\n' << std::setprecision(3);
 
+		size_t num_completed_ligands = 0;
 		headers.seekg(sizeof(size_t) * start_lig);
 		for (size_t i = start_lig; i < end_lig; ++i)
 		{
@@ -380,11 +359,8 @@ int main(int argc, char* argv[])
 			mc_tasks.clear();
 
 			// If no conformation can be found, skip the current ligand and proceed with the next one.
+			if (results.empty()) continue; // Possible if and only if results.size() == 0 because max_conformations >= 1 is enforced when parsing command line arguments.
 			const size_t num_results = std::min<size_t>(results.size(), max_conformations);
-			if (!num_results) // Possible if and only if results.size() == 0 because max_conformations >= 1 is enforced when parsing command line arguments.
-			{
-				continue;
-			}
 
 			// Adjust free energy relative to flexibility.
 			result& best_result = results.front();
@@ -396,21 +372,26 @@ int main(int argc, char* argv[])
 			// Dump ligand summaries to the csv file.
 			cout << lig_id << ',' << best_result.e_nd << '\n';
 
-			// Refresh progress every 1024 ligands.
-			if (!((i - start_lig) & 1024))
+			// Refresh progress every 32 ligands.
+			if (!(++num_completed_ligands & 32))
 			{
-				cout << "Current progress " << i << '\n';
+				cout << "Current progress " << num_completed_ligands << '\n';
+				conn.update(collection, BSON("_id" << _id << "$atomic" << 1), BSON("$set" << BSON(slice_str << num_completed_ligands)));
 			}
 		}
 		csv.close();
 
+		// Increment the completed indicator.
+		conn.update(collection, BSON("_id" << _id << "$atomic" << 1), BSON("$set" << BSON(slice_str << num_completed_ligands)));
+		conn.update(collection, BSON("_id" << _id << "$atomic" << 1), BSON("$inc" << BSON("completed" << 1)));
+
 		// If all the slices are done, perform phase 2 screening.
-		if (!conn.query(collection, QUERY("_id" << _id << "progress" << 100), 1)->more()) continue;
+		if (!conn.query(collection, QUERY("_id" << _id << "completed" << 100), 1)->more()) continue;
 
 		// Initialize necessary variables for storing ligand summaries.
 		ptr_vector<summary> summaries(num_ligands);
 
-		// Combine multiple csv and sort.
+		// Combine multiple csv's.
 		for (size_t s = 0; s < 100; ++s)
 		{
 			ifstream in(job_path / (lexical_cast<string>(s) + ".csv"));
@@ -432,6 +413,15 @@ int main(int argc, char* argv[])
 			}
 		}
 
+		// Phase 2
+
+		// Update progress
+		using boost::chrono::system_clock;
+		using boost::chrono::duration_cast;
+		using chrono_millis = boost::chrono::milliseconds;
+		const auto millis_since_epoch = duration_cast<chrono_millis>(system_clock::now().time_since_epoch()).count();
+		conn.update(collection, BSON("_id" << _id), BSON("$set" << BSON("done" << Date_t(millis_since_epoch))));
+
 		// Send completion notification email.
 		const auto email = job["email"].String();
 		cout << "Sending a completion notification email to " << email << '\n';
@@ -441,7 +431,10 @@ int main(int argc, char* argv[])
 		MailMessage message;
 		message.setSender("idock <noreply@cse.cuhk.edu.hk>");
 		message.setSubject("Your idock job has completed");
-		message.setContent("View result at http://idock.cse.cuhk.edu.hk");
+		using boost::posix_time::ptime;
+		using posix_millis = boost::posix_time::milliseconds;
+		using boost::posix_time::to_simple_string;
+		message.setContent("Your igrep job submitted on " + to_simple_string(ptime(epoch, posix_millis(job["submitted"].Date().millis))) + " UTC docking " + lexical_cast<string>(job["ligands"].Int()) + " ligands was done on " + to_simple_string(ptime(epoch, posix_millis(millis_since_epoch))) + " UTC. View result at http://idock.cse.cuhk.edu.hk");
 		message.addRecipient(MailRecipient(MailRecipient::PRIMARY_RECIPIENT, email));
 		SMTPClientSession session("137.189.91.190");
 		session.login();
