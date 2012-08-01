@@ -49,19 +49,34 @@
         </div>
         <div class="row">
           <div class="span12">
-            <div id="jobs"></div>
-            <div class="progress progress-success progress-striped active">
-              <div class="bar" style="width: 40%"></div>
-            </div>
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Ligands</th>
+                  <th>Submitted</th>
+                  <th>Progress</th>
+                  <th>Done</th>
+                  <th>Result</th>
+                </tr>
+              </thead>
+              <tbody id="jobs">
+                <tr><td></td><td></td><td></td><td></td><td></td></tr>
+                <tr><td></td><td></td><td></td><td></td><td></td></tr>
+                <tr><td></td><td></td><td></td><td></td><td></td></tr>
+                <tr><td></td><td></td><td></td><td></td><td></td></tr>
+                <tr><td></td><td></td><td></td><td></td><td></td></tr>
+                <tr><td></td><td></td><td></td><td></td><td></td></tr>
+                <tr><td></td><td></td><td></td><td></td><td></td></tr>
+                <tr><td></td><td></td><td></td><td></td><td></td></tr>
+              </tbody>
+            </table>
             <div class="pagination pagination-centered">
               <ul>
-                <li class="disabled"><a href="#">&laquo;</a></li>
-                <li class="active "><a href="#">1</a></li>
-                <li><a href="#">2</a></li>
-                <li><a href="#">3</a></li>
-                <li><a href="#">4</a></li>
-                <li><a href="#">5</a></li>
-                <li><a href="#">&raquo;</a></li>
+                <li id="frstpage"><a>&laquo;&laquo;</a></li>
+                <li id="prevpage"><a>&laquo;</a></li>
+                <li><input id="whatpage" type="text"></li>
+                <li id="nextpage"><a>&raquo;</a></li>
+                <li id="lastpage"><a>&raquo;&raquo;</a></li>
               </ul>
             </div>
           </div>
