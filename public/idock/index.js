@@ -1,7 +1,17 @@
 $(function() {
 
   // Fetch email from cookie
-  var email = $.cookie('email');
+  var email;
+  if (document.cookie) {
+    var cookies = document.cookie.split('; ');
+    for (var i = 0; i < cookies.length; ++i) {
+      var cookie = cookies[i];
+      if (cookie.substring(0, 6) === 'email=') {
+        email = cookie.substring(6);
+        break;
+      }
+    }
+  }
   $('#email').val(email);
 
   // Fetch jobs
@@ -142,7 +152,9 @@ $(function() {
         return;
       }
       // Save email into cookie
-      $.cookie('email', $('#email').val(), { expires: 7 });
+      var expireDate = new Date();
+      expireDate.setTime(expireDate.getTime() + (7 * 24 * 60 * 60 * 1000));
+      document.cookie = 'email=' + $('#email').val() + ';expires=' + expireDate.toUTCString();
     }, 'json');
   });
 });

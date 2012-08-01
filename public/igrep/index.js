@@ -2555,7 +2555,17 @@ $(function() {
   $('#taxid').html(options.join(''));
 
   // Fetch email from cookie
-  var email = $.cookie('email');
+  var email;
+  if (document.cookie) {
+    var cookies = document.cookie.split('; ');
+    for (var i = 0; i < cookies.length; ++i) {
+      var cookie = cookies[i];
+      if (cookie.substring(0, 6) === 'email=') {
+        email = cookie.substring(6);
+        break;
+      }
+    }
+  }
   $('#email').val(email);
 
   // Initialize tooltips
@@ -2703,6 +2713,14 @@ $(function() {
         });
         return;
       }
+      // Save email into cookie
+      var expireDate = new Date();
+      expireDate.setTime(expireDate.getTime() + (7 * 24 * 60 * 60 * 1000));
+      document.cookie = 'email=' + $('#email').val() + ';expires=' + expireDate.toUTCString();
+      // Redirect to the current page if the email is changed
+      if (email !== $('#email').val()) {
+        return window.location.replace('/igrep');
+      }
       // Concat the new job to the existing jobs array, and refresh the table of jobs
       jobs = jobs.concat(res);
       last_page = jobs.length ? ((jobs.length + 7) >> 3) : 1;
@@ -2715,9 +2733,6 @@ $(function() {
       }, function(j) {
         return j <= 2;
       });
-      // Save email into cookie
-      email = $('#email').val();
-      $.cookie('email', email, { expires: 7 });
     }, 'json');
   });
 
