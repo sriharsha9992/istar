@@ -25,6 +25,7 @@
 #include <boost/filesystem/fstream.hpp>
 #include <boost/iostreams/filtering_stream.hpp>
 #include <boost/iostreams/filter/gzip.hpp>
+#include <boost/date_time/posix_time/posix_time_types.hpp>
 #include <mongo/client/dbclient.h>
 #include <cuda_runtime_api.h>
 #include <Poco/Net/MailMessage.h>
@@ -171,7 +172,7 @@ public:
 			ifstream in(genome_path / file);
 			filtering_istream fis;
 			fis.push(gzip_decompressor());
-			fis.push(in);			
+			fis.push(in);
 			while (getline(fis, line))
 			{
 				if (line.front() == '>') // Header line.
@@ -258,16 +259,16 @@ int main(int argc, char** argv)
 	syslog(LOG_INFO, "igrep 1.0");
 
 	// Fetch command line arguments.
-	const string host = argv[1];
-	const string user = argv[2];
-	const string pwd = argv[3];
-	const path jobs_path = argv[4];
+	const auto host = argv[1];
+	const auto user = argv[2];
+	const auto pwd = argv[3];
+	const auto jobs_path = argv[4];
 
 	using namespace mongo;
 	DBClientConnection conn;
 	{
 		// Connect to host and authenticate user.
-		syslog(LOG_INFO, "Connecting to %s and authenticating %s", host.c_str(), user.c_str());
+		syslog(LOG_INFO, "Connecting to %s and authenticating %s", host, user);
 		string errmsg;
 		if ((!conn.connect(host, errmsg)) || (!conn.auth("istar", user, pwd, errmsg)))
 		{
@@ -318,6 +319,10 @@ int main(int argc, char** argv)
 	unsigned int *scodon_device;	// CUDA global memory pointer pointing to the special codon array.
 	unsigned int *match_device;	// CUDA global memory pointer pointing to the match array.
 
+	// Initialize epoch
+	using boost::gregorian::date;
+	const auto epoch = date(1970, 1, 1);
+
 	while (true)
 	{
 		// Fetch jobs.
@@ -359,7 +364,8 @@ int main(int argc, char** argv)
 			using std::istringstream;
 			istringstream in(job["queries"].String());
 			string line;
-			for (unsigned int qi = 0; getline(in, line); ++qi)
+			size_t qi;
+			for (qi = 0; getline(in, line); ++qi)
 			{
 				BOOST_ASSERT(line.size() <= 65);
 				const unsigned int m = line.size() - 1;		// Pattern length.
@@ -463,8 +469,9 @@ int main(int argc, char** argv)
 			// Update progress.
 			using boost::chrono::system_clock;
 			using boost::chrono::duration_cast;
-			using boost::chrono::milliseconds;
-			conn.update(collection, BSON("_id" << _id), BSON("$set" << BSON("done" << Date_t(duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count()))));
+			using chrono_millis = boost::chrono::milliseconds;
+			const auto millis_since_epoch = duration_cast<chrono_millis>(system_clock::now().time_since_epoch()).count();
+			conn.update(collection, BSON("_id" << _id), BSON("$set" << BSON("done" << Date_t(millis_since_epoch))));
 			const auto err = conn.getLastError();
 			if (!err.empty())
 			{
@@ -480,7 +487,10 @@ int main(int argc, char** argv)
 			MailMessage message;
 			message.setSender("igrep <noreply@cse.cuhk.edu.hk>");
 			message.setSubject("Your igrep job has completed");
-			message.setContent("View result at http://igrep.cse.cuhk.edu.hk");
+			using boost::posix_time::ptime;
+			using posix_millis = boost::posix_time::milliseconds;
+			using boost::posix_time::to_simple_string;
+			message.setContent("Your igrep job submitted on " + to_simple_string(ptime(epoch, posix_millis(job["submitted"].Date().millis))) + " UTC searching the genome of " + g.name + " for " + lexical_cast<string>(qi) + " patterns was done on " + to_simple_string(ptime(epoch, posix_millis(millis_since_epoch))) + " UTC. View result at http://igrep.cse.cuhk.edu.hk");
 			message.addRecipient(MailRecipient(MailRecipient::PRIMARY_RECIPIENT, email));
 			SMTPClientSession session("137.189.91.190");
 			session.login();
