@@ -123,7 +123,7 @@ if (cluster.isMaster) {
          .snt('email').copy();
         idock.find(f.res, function(err, cursor) {
           if (err) throw err;
-          cursor.toArray(function(err, docs) {
+          cursor.sort({'submitted': 1}).toArray(function(err, docs) {
             cursor.close();
             res.json(docs);
           });
@@ -164,7 +164,7 @@ if (cluster.isMaster) {
         }
         if (v.init(f.init(req.body)
          .snt('email').copy()
-         .snt('receptor').xss()
+         .snt('receptor').copy()
          .snt('center_x').toFloat()
          .snt('center_y').toFloat()
          .snt('center_z').toFloat()
@@ -203,10 +203,38 @@ if (cluster.isMaster) {
          .failed()) {
           return res.json(v.err);
         }
-        f.res.submitted = new Date();
-        idock.insert(f.res, {safe: true}, function(err, docs) {
-          if (err) throw err;
-          res.json(docs);
+        // Send query to master process
+        ligands = -1;
+        process.send({
+          query: '/idock/ligands',
+          mwt_lb: f.res.mwt_lb,
+          mwt_ub: f.res.mwt_ub,
+          logp_lb: f.res.logp_lb,
+          logp_ub: f.res.logp_ub,
+          ad_lb: f.res.ad_lb,
+          ad_ub: f.res.ad_ub,
+          pd_lb: f.res.pd_lb,
+          pd_ub: f.res.pd_ub,
+          hbd_lb: f.res.hbd_lb,
+          hbd_ub: f.res.hbd_ub,
+          hba_lb: f.res.hba_lb,
+          hba_ub: f.res.hba_ub,
+          tpsa_lb: f.res.tpsa_lb,
+          tpsa_ub: f.res.tpsa_ub,
+          charge_lb: f.res.charge_lb,
+          charge_ub: f.res.charge_ub,
+          nrb_lb: f.res.nrb_lb,
+          nrb_ub: f.res.nrb_ub
+        });
+        sync(function() {
+          f.res.ligands = ligands;
+          f.res.scheduled = 0;
+          f.res.completed = 0;
+          f.res.submitted = new Date();
+          idock.insert(f.res, {safe: true}, function(err, docs) {
+            if (err) throw err;
+            res.json(docs);
+          });
         });
       });
       // Get the number of ligands satisfying filtering conditions
@@ -254,15 +282,15 @@ if (cluster.isMaster) {
          .snt('nrb_lb').toInt()
          .snt('nrb_ub').toInt()
          .res)
-	 .rng('mwt_lb', 'mwt_ub')
-	 .rng('logp_lb', 'logp_ub')
-	 .rng('ad_lb', 'ad_ub')
-	 .rng('pd_lb', 'pd_ub')
-	 .rng('hbd_lb', 'hbd_ub')
-    	 .rng('hba_lb', 'hba_ub')
-    	 .rng('tpsa_lb', 'tpsa_ub')
-    	 .rng('charge_lb', 'charge_ub')
-    	 .rng('nrb_lb', 'nrb_ub')
+         .rng('mwt_lb', 'mwt_ub')
+         .rng('logp_lb', 'logp_ub')
+         .rng('ad_lb', 'ad_ub')
+         .rng('pd_lb', 'pd_ub')
+         .rng('hbd_lb', 'hbd_ub')
+         .rng('hba_lb', 'hba_ub')
+         .rng('tpsa_lb', 'tpsa_ub')
+         .rng('charge_lb', 'charge_ub')
+         .rng('nrb_lb', 'nrb_ub')
          .failed()) {
           return res.json(v.err);
         }
