@@ -283,7 +283,8 @@ $(function() {
       expireDate.setTime(expireDate.getTime() + (7 * 24 * 60 * 60 * 1000));
       document.cookie = 'email=' + $('#email').val() + ';expires=' + expireDate.toUTCString();
       // Redirect to the current page if the email is changed
-      if (email !== $('#email').val()) {
+      if (!email) email = $('#email');
+      else if (email.toLowerCase() !== $('#email').val().toLowerCase()) {
         return window.location.replace('/idock');
       }
       // Concat the new job to the existing jobs array, and refresh the table of jobs
