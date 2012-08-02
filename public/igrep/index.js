@@ -2736,22 +2736,13 @@ $(function() {
     }, 'json');
   });
 
-  // Add a comma every 3 digits, e.g. turn 11386040 into 11,386,040
-  var d3 = /(\d+)(\d{3})/;
-  function addCommas(n)
-  {
-    var s = n.toString();
-    while (d3.test(s)) s = s.replace(d3, '$1' + ',' + '$2');
-    return s;
-  }
-
   // Construct the accordion section of a genome
   function section(g) {
     var trs = new Array(g.files.length);
     g.files.forEach(function(f, i) {
-      trs[i] = '<tr><td>' + i + '</td><td><a href="genomes/' + g.name + '/' + f.file + '">' + f.file + '</a></td><td>' + f.header + '</td><td style="text-align: right">' + addCommas(f.nucleotides) + '</td></tr>';
+      trs[i] = '<tr><td>' + i + '</td><td><a href="genomes/' + g.name + '/' + f.file + '">' + f.file + '</a></td><td>' + f.header + '</td><td style="text-align: right">' + $.comma(f.nucleotides) + '</td></tr>';
     });
-    return '<h3><a href="#">' + g.name + ', taxonomy id ' + g.taxid + ', NCBI build ' + g.ncbiBuild + ', version ' + g.version + ', released on ' + g.releaseDate + ', total ' + addCommas(g.nucleotides) + ' nucleotides in ' + g.files.length + ' files</a></h3><div><table class="table"><thead><tr><th>Index</th><th>File</th><th>Header</th><th>Nucleotides</th></tr></thead><tbody>' + trs.join('') + '</tbody></table></div>';
+    return '<h3><a href="#">' + g.name + ', taxonomy id ' + g.taxid + ', NCBI build ' + g.ncbiBuild + ', version ' + g.version + ', released on ' + g.releaseDate + ', total ' + $.comma(g.nucleotides) + ' nucleotides in ' + g.files.length + ' files</a></h3><div><table class="table"><thead><tr><th>Index</th><th>File</th><th>Header</th><th>Nucleotides</th></tr></thead><tbody>' + trs.join('') + '</tbody></table></div>';
   }
 
   // Apply accordion to genomes

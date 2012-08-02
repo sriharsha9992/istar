@@ -63,9 +63,9 @@ $(function() {
       return tds;
     }
     var done = job.done != undefined;
-    tds[0] = job.ligands.toString();
+    tds[0] = $.comma(job.ligands);
     tds[1] = $.format.date(new Date(job.submitted), 'yyyy/MM/dd HH:mm:ss');
-	tds[2] = 'progress';
+    tds[2] = 'progress';
     tds[3] = (done ? $.format.date(new Date(job.done), 'yyyy/MM/dd HH:mm:ss') : 'Queued for execution');
     tds[4] = (done ? '<a href="jobs/' + job._id + '/result.tar.gz"><img src="/excel.png" alt="result.tar.gz"/></a>' : null);
     return tds;
@@ -259,7 +259,7 @@ $(function() {
       nrb_ub: $('#nrb_ub').text()
     }, function(res) {
       // If server side validation fails, show the tooltips
-      if (res) {
+      if (!Array.isArray(res)) {
         Object.keys(res).forEach(function(param) {
           $('#' + param + '_label').tooltip('show');
         });
