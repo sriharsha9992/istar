@@ -90,7 +90,6 @@ int main(int argc, char* argv[])
 	const auto epoch = boost::gregorian::date(1970, 1, 1);
 
 	// Initialize a Mersenne Twister random number generator.
-	cout << "Using random seed " << seed << '\n';
 	mt19937eng eng(seed);
 
 	// Initialize a thread pool and create worker threads for later use.
@@ -98,7 +97,6 @@ int main(int argc, char* argv[])
 	thread_pool tp(num_threads);
 
 	// Precalculate the scoring function in parallel.
-	cout << "Precalculating scoring function in parallel\n";
 	scoring_function sf;
 	{
 		// Precalculate reciprocal square root values.
@@ -178,11 +176,6 @@ int main(int argc, char* argv[])
 		// Execute the job slice.
 		cout << "Executing job " << _id << ", slice " << slice << '\n';
 		conn.update(collection, BSON("_id" << _id << "$atomic" << 1), BSON("$inc" << BSON("scheduled" << 1)));
-		const auto err = conn.getLastError();
-		if (!err.empty())
-		{
-			cerr << err << '\n';
-		}
 
 		const path job_path = jobs_path / _id.str();
 		const path slice_path = job_path / (lexical_cast<string>(slice) + ".csv");
