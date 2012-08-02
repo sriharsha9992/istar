@@ -62,12 +62,25 @@ $(function() {
       tds[4] = '&nbsp;';
       return tds;
     }
-    var done = job.done != undefined;
+    var status, progress;
+    if (!job.scheduled) {
+      status = 'Queued for execution';
+      progress = 0;
+    } else if (job.completed < 100) {
+      status = 'Phase 1 in progress';
+      progress = 32 / job.ligands;
+    } else if (!job.done) {
+      status = 'Phase 2 in progress';
+      progress = 32 / 1000; // May be less than 1000
+    } else {
+      status = 'Done on ' + $.format.date(new Date(job.done), 'yyyy/MM/dd HH:mm:ss');
+      progress = 1;
+    }
     tds[0] = $.comma(job.ligands);
     tds[1] = $.format.date(new Date(job.submitted), 'yyyy/MM/dd HH:mm:ss');
-    tds[2] = 'progress';
-    tds[3] = (done ? $.format.date(new Date(job.done), 'yyyy/MM/dd HH:mm:ss') : 'Queued for execution');
-    tds[4] = (done ? '<a href="jobs/' + job._id + '/result.tar.gz"><img src="/excel.png" alt="result.tar.gz"/></a>' : null);
+    tds[2] = status;
+    tds[3] = (100 * progress).toFixed(5) + '%';
+    tds[4] = job.done ? '<a href="jobs/' + job._id + '/result.tar.gz"><img src="/excel.png" alt="result.tar.gz"/></a>' : null;
     return tds;
   }
 
