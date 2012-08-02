@@ -376,17 +376,17 @@ int main(int argc, char* argv[])
 			if (!(++num_completed_ligands & 32))
 			{
 				cout << "Current progress " << num_completed_ligands << '\n';
-				conn.update(collection, BSON("_id" << _id << "$atomic" << 1), BSON("$set" << BSON(slice_str << num_completed_ligands)));
+				conn.update(collection, BSON("_id" << _id), BSON("$set" << BSON(slice_str << num_completed_ligands)));
 			}
 		}
 		csv.close();
 
 		// Increment the completed indicator.
-		conn.update(collection, BSON("_id" << _id << "$atomic" << 1), BSON("$set" << BSON(slice_str << num_completed_ligands)));
+		conn.update(collection, BSON("_id" << _id), BSON("$set" << BSON(slice_str << num_completed_ligands)));
 		conn.update(collection, BSON("_id" << _id << "$atomic" << 1), BSON("$inc" << BSON("completed" << 1)));
 
 		// If all the slices are done, perform phase 2 screening.
-		if (!conn.query(collection, QUERY("_id" << _id << "completed" << 100), 1)->more()) continue;
+		if (!conn.query(collection, QUERY("_id" << _id << "completed" << 100))->more()) continue;
 
 		// Initialize necessary variables for storing ligand summaries.
 		ptr_vector<summary> summaries(num_ligands);
@@ -416,7 +416,8 @@ int main(int argc, char* argv[])
 			}
 		}
 
-		// Phase 2
+		// Phase 2, report progress every 1 ligand.
+		conn.update(collection, BSON("_id" << _id), BSON("$set" << BSON("phase2" << num_completed_ligands)));
 
 		// Update progress
 		using boost::chrono::system_clock;
