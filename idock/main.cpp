@@ -262,7 +262,7 @@ int main(int argc, char* argv[])
 		const size_t num_gm_tasks = b.num_probes[0];
 		gm_tasks.reserve(num_gm_tasks);
 
-		// Perform phase 1 screening. 
+		// Perform phase 1 screening.
 		cout << "Running " << num_mc_tasks << " Monte Carlo tasks per ligand\n";
 
 		// Initialize slice csv. TODO: use bin instead of csv, one size_t for ZINC ID and one float for free energy.
@@ -394,11 +394,14 @@ int main(int argc, char* argv[])
 		// Combine multiple csv's.
 		for (size_t s = 0; s < 100; ++s)
 		{
-			ifstream in(job_path / (lexical_cast<string>(s) + ".csv"));
+			const auto csv_path = job_path / (lexical_cast<string>(s) + ".csv");
+			ifstream in(csv_path);
 			while (getline(in, line))
 			{
 				summaries.push_back(new summary(line.substr(0, 8), lexical_cast<fl>(line.substr(9))));
 			}
+			// Delete csv
+			remove(csv_path);
 		}
 
 		// Sort the summaries.
@@ -434,7 +437,7 @@ int main(int argc, char* argv[])
 		using boost::posix_time::ptime;
 		using posix_millis = boost::posix_time::milliseconds;
 		using boost::posix_time::to_simple_string;
-		message.setContent("Your igrep job submitted on " + to_simple_string(ptime(epoch, posix_millis(job["submitted"].Date().millis))) + " UTC docking " + lexical_cast<string>(job["ligands"].Int()) + " ligands was done on " + to_simple_string(ptime(epoch, posix_millis(millis_since_epoch))) + " UTC. View result at http://idock.cse.cuhk.edu.hk");
+		message.setContent("Your idock job submitted on " + to_simple_string(ptime(epoch, posix_millis(job["submitted"].Date().millis))) + " UTC docking " + lexical_cast<string>(job["ligands"].Int()) + " ligands with description as \"" + job["description"].String() + "\" was done on " + to_simple_string(ptime(epoch, posix_millis(millis_since_epoch))) + " UTC. View result at http://idock.cse.cuhk.edu.hk");
 		message.addRecipient(MailRecipient(MailRecipient::PRIMARY_RECIPIENT, email));
 		SMTPClientSession session("137.189.91.190");
 		session.login();
