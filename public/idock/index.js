@@ -68,10 +68,14 @@ $(function() {
       progress = 0;
     } else if (job.completed < 100) {
       status = 'Phase 1 in progress';
-      progress = 32 / job.ligands;
+      var num_completed_ligands = 0;
+      for (var i = 0; i < job.scheduled; ++i) {
+        num_completed_ligands += parseInt(job["slice" + i]);
+      }
+      progress = num_completed_ligands / job.ligands;
     } else if (!job.done) {
       status = 'Phase 2 in progress';
-      progress = 32 / 1000; // May be less than 1000
+      progress = job.phase2 / Math.min(job.ligands, 1000);
     } else {
       status = 'Done on ' + $.format.date(new Date(job.done), 'yyyy/MM/dd HH:mm:ss');
       progress = 1;
