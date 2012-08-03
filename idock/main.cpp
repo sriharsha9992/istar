@@ -48,7 +48,7 @@ int main(int argc, char* argv[])
 	using boost::bind;
 	using namespace idock;
 
-	// Daemonize itself, changing the current working directory to / and redirecting stdin, stdout and stderr to /dev/null.
+	// Daemonize itself, retaining the current working directory and redirecting stdin, stdout and stderr to /dev/null.
 //	daemon(0, 0);
 	cout << "idock 1.5\n";
 
@@ -75,13 +75,14 @@ int main(int argc, char* argv[])
 	// Initialize default values of constant arguments.
 	const path ligands_path = "16_lig.pdbqt";
 	const path headers_path = "16_hdr.bin";
-	const path log1_path = "log1.csv"; // Phase 1 log
-	const path log2_path = "log2.csv"; // Phase 2 log
+	const path phase1_path = "phase1.csv";
+	const path phase2_path = "phase2.csv";
 	const path output_folder_path = "output";
 	const size_t num_ligands = 12171187;
 	const size_t num_threads = thread::hardware_concurrency();
 	const size_t seed = time(0);
-	const size_t num_mc_tasks = 32;
+	const size_t phase1_num_mc_tasks = 32;
+	const size_t phase2_num_mc_tasks = 256;
 	const size_t max_conformations = 100;
 	const size_t max_results = 20; // Maximum number of results obtained from a single Monte Carlo task.
 	const size_t slices[101] = { 0, 121712, 243424, 365136, 486848, 608560, 730272, 851984, 973696, 1095408, 1217120, 1338832, 1460544, 1582256, 1703968, 1825680, 1947392, 2069104, 2190816, 2312528, 2434240, 2555952, 2677664, 2799376, 2921088, 3042800, 3164512, 3286224, 3407936, 3529648, 3651360, 3773072, 3894784, 4016496, 4138208, 4259920, 4381632, 4503344, 4625056, 4746768, 4868480, 4990192, 5111904, 5233616, 5355328, 5477040, 5598752, 5720464, 5842176, 5963888, 6085600, 6207312, 6329024, 6450736, 6572448, 6694160, 6815872, 6937584, 7059296, 7181008, 7302720, 7424432, 7546144, 7667856, 7789568, 7911280, 8032992, 8154704, 8276416, 8398128, 8519840, 8641552, 8763264, 8884976, 9006688, 9128400, 9250112, 9371824, 9493536, 9615248, 9736960, 9858672, 9980384, 10102096, 10223808, 10345520, 10467232, 10588944, 10710655, 10832366, 10954077, 11075788, 11197499, 11319210, 11440921, 11562632, 11684343, 11806054, 11927765, 12049476, 12171187 };
@@ -138,15 +139,15 @@ int main(int argc, char* argv[])
 	line.reserve(80);
 	vector<array3d<fl>> grid_maps(XS_TYPE_SIZE);
 	ptr_vector<packaged_task<void>> gm_tasks;
-	ptr_vector<packaged_task<void>> mc_tasks(num_mc_tasks);
+	ptr_vector<packaged_task<void>> mc_tasks(phase1_num_mc_tasks);
 	ptr_vector<ptr_vector<result>> result_containers;
-	result_containers.resize(num_mc_tasks);
+	result_containers.resize(phase1_num_mc_tasks);
 	for (auto& rc : result_containers)
 	{
 		rc.reserve(max_results);
 	}
 	ptr_vector<result> results;
-	results.reserve(max_results * num_mc_tasks);
+	results.reserve(max_results * phase1_num_mc_tasks);
 	vector<size_t> atom_types_to_populate;
 	atom_types_to_populate.reserve(XS_TYPE_SIZE);
 
@@ -171,14 +172,14 @@ int main(int argc, char* argv[])
 		const auto job = cursor->next();
 		const auto _id = job["_id"].OID();
 		const auto slice = job["scheduled"].Int();
-		const auto slice_str = "slice" + lexical_cast<string>(slice);
 
-		// Execute the job slice.
-		cout << "Executing job " << _id << ", slice " << slice << '\n';
+		// Perform phase 1.
+		cout << "Executing job " << _id << " phase 1 slice " << slice << '\n';
 		conn.update(collection, BSON("_id" << _id << "$atomic" << 1), BSON("$inc" << BSON("scheduled" << 1)));
 
 		const path job_path = jobs_path / _id.str();
 		const path slice_path = job_path / (lexical_cast<string>(slice) + ".csv");
+		const auto slice_key = "slice" + lexical_cast<string>(slice);
 		const auto start_lig = slices[slice];
 		const auto end_lig = slices[slice + 1];
 		const auto center_x = job["center_x"].Number();
@@ -255,16 +256,12 @@ int main(int argc, char* argv[])
 		const size_t num_gm_tasks = b.num_probes[0];
 		gm_tasks.reserve(num_gm_tasks);
 
-		// Perform phase 1 screening.
-		cout << "Running " << num_mc_tasks << " Monte Carlo tasks per ligand\n";
-
-		// Initialize slice csv. TODO: use bin instead of csv, one size_t for ZINC ID and one float for free energy.
-		ofstream csv(slice_path);
-		csv.setf(std::ios::fixed, std::ios::floatfield);
-		csv << '\n' << std::setprecision(3);
-
+		cout << "Running " << phase1_num_mc_tasks << " Monte Carlo tasks per ligand\n";
 		unsigned int num_completed_ligands = 0;
 		headers.seekg(sizeof(size_t) * start_lig);
+		ofstream slice_csv(slice_path); // TODO: use bin instead of csv, one size_t for ZINC ID and one float for free energy.
+		slice_csv.setf(std::ios::fixed, std::ios::floatfield);
+		slice_csv << '\n' << std::setprecision(3);
 		for (size_t i = start_lig; i < end_lig; ++i)
 		{
 			// Locate a ligand.
@@ -289,7 +286,6 @@ int main(int argc, char* argv[])
 			const auto lig_id = line.substr(10, 8);
 
 			// Parse the ligand.
-			cout << "Parsing ligand " << lig_id << '\n';
 			ligand lig(ligands);
 
 			// Create grid maps on the fly if necessary.
@@ -323,9 +319,8 @@ int main(int argc, char* argv[])
 			}
 
 			// Run Monte Carlo tasks.
-			cout << "Running " << num_mc_tasks << " Monte Carlo tasks\n";
 			BOOST_ASSERT(mc_tasks.empty());
-			for (size_t i = 0; i < num_mc_tasks; ++i)
+			for (size_t i = 0; i < phase1_num_mc_tasks; ++i)
 			{
 				BOOST_ASSERT(result_containers[i].empty());
 				mc_tasks.push_back(new packaged_task<void>(bind<void>(monte_carlo_task, boost::ref(result_containers[i]), boost::cref(lig), eng(), boost::cref(alphas), boost::cref(sf), boost::cref(b), boost::cref(grid_maps))));
@@ -335,7 +330,7 @@ int main(int argc, char* argv[])
 			// Merge results from all the tasks into one single result container.
 			BOOST_ASSERT(results.empty());
 			const fl required_square_error = static_cast<fl>(4 * lig.num_heavy_atoms); // Ligands with RMSD < 2.0 will be clustered into the same cluster.
-			for (size_t i = 0; i < num_mc_tasks; ++i)
+			for (size_t i = 0; i < phase1_num_mc_tasks; ++i)
 			{
 				mc_tasks[i].get_future().get();
 				ptr_vector<result>& task_results = result_containers[i];
@@ -363,53 +358,49 @@ int main(int argc, char* argv[])
 			results.clear();
 
 			// Dump ligand summaries to the csv file.
-			cout << lig_id << ',' << best_result.e_nd << '\n';
+			slice_csv << i << ',' << lig_id << ',' << best_result.e_nd << '\n';
 
-			// Refresh progress every 32 ligands.
+			// Report progress every 32 ligands.
 			if (!(++num_completed_ligands & 32))
 			{
 				cout << "Current progress " << num_completed_ligands << '\n';
-				conn.update(collection, BSON("_id" << _id), BSON("$set" << BSON(slice_str << num_completed_ligands)));
+				conn.update(collection, BSON("_id" << _id), BSON("$set" << BSON(slice_key << num_completed_ligands)));
 			}
 		}
-		csv.close();
+		slice_csv.close();
 
 		// Increment the completed indicator.
-		conn.update(collection, BSON("_id" << _id), BSON("$set" << BSON(slice_str << num_completed_ligands)));
+		conn.update(collection, BSON("_id" << _id), BSON("$set" << BSON(slice_key << num_completed_ligands)));
 		conn.update(collection, BSON("_id" << _id << "$atomic" << 1), BSON("$inc" << BSON("completed" << 1)));
 
-		// If all the slices are done, perform phase 2 screening.
+		// If phase 1 is done, perform phase 2.
 		if (!conn.query(collection, QUERY("_id" << _id << "completed" << 100))->more()) continue;
 
-		// Initialize necessary variables for storing ligand summaries.
+		// Combine and delete multiple slice csv's.
 		ptr_vector<summary> summaries(num_ligands);
-
-		// Combine multiple csv's.
 		for (size_t s = 0; s < 100; ++s)
 		{
 			const auto csv_path = job_path / (lexical_cast<string>(s) + ".csv");
 			ifstream in(csv_path);
 			while (getline(in, line))
 			{
-				summaries.push_back(new summary(line.substr(0, 8), lexical_cast<fl>(line.substr(9))));
+				const auto comma = line.find(',', 1);
+				summaries.push_back(new summary(lexical_cast<size_t>(line.substr(0, comma)), line.substr(comma + 1, 8), lexical_cast<fl>(line.substr(comma + 10))));
 			}
-			// Delete csv
+			in.close();
 			remove(csv_path);
 		}
-
-		// Sort the summaries.
 		summaries.sort();
-
-		// Save summaries.
+		ofstream phase1_csv(phase1_path);
+		for (const auto& s : summaries)
 		{
-			ofstream log1(log1_path);
-			for (const auto& s : summaries)
-			{
-				log1 << s.lig_id << ',' << s.energy << '\n';
-			}
+			phase1_csv << s.index << ',' << s.lig_id << ',' << s.energy << '\n';
 		}
 
 		// Phase 2, report progress every 1 ligand.
+		ofstream phase2_csv(phase1_path);
+		
+		phase2_csv.close();
 		conn.update(collection, BSON("_id" << _id), BSON("$set" << BSON("phase2" << num_completed_ligands)));
 
 		// Update progress

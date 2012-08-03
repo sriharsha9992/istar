@@ -28,9 +28,10 @@ namespace idock
 	class summary
 	{
 	public:
+		const size_t index;
 		const string lig_id;
 		const fl energy;
-		explicit summary(const string& lig_id, const fl energy) : lig_id(lig_id), energy(energy) {}
+		explicit summary(const size_t index, const string& lig_id, const fl energy) : index(index), lig_id(lig_id), energy(energy) {}
 	};
 
 	/// For sorting ptr_vector<summary>.
