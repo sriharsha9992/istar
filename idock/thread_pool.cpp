@@ -16,9 +16,6 @@
 
 */
 
-#include <boost/flyweight.hpp>
-#include <boost/flyweight/key_value.hpp>
-#include <boost/flyweight/no_tracking.hpp>
 #include "thread_pool.hpp"
 
 namespace idock
