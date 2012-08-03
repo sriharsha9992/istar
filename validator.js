@@ -40,7 +40,7 @@ validator.Filter.prototype.copy = function() {
   this.modify(this.str);
   return this.wrap(this.str);
 }
-validator.Filter.prototype.toDate = function() {
-  this.modify(new Date(this.str));
+validator.Filter.prototype.toLowerCase = function() {
+  this.modify(this.str.toLowerCase());
   return this.wrap(this.str);
 }

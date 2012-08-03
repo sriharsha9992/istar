@@ -120,7 +120,7 @@ if (cluster.isMaster) {
           return res.json(v.err);
         }
         f.init(req.query)
-         .snt('email').copy();
+         .snt('email').toLowerCase();
         idock.find(f.res, function(err, cursor) {
           if (err) throw err;
           cursor.sort({'submitted': 1}).toArray(function(err, docs) {
@@ -163,7 +163,7 @@ if (cluster.isMaster) {
           return res.json(v.err);
         }
         if (v.init(f.init(req.body)
-         .snt('email').copy()
+         .snt('email').toLowerCase()
          .snt('receptor').copy()
          .snt('center_x').toFloat()
          .snt('center_y').toFloat()
@@ -310,7 +310,7 @@ if (cluster.isMaster) {
           return res.json(v.err);
         }
         f.init(req.query)
-         .snt('email').copy();
+         .snt('email').toLowerCase();
         igrep.find(f.res, {'taxid': 1, 'submitted': 1, 'done': 1}, function(err, cursor) {
           if (err) throw err;
           cursor.sort({'submitted': 1}).toArray(function(err, docs) {
@@ -330,7 +330,7 @@ if (cluster.isMaster) {
           return res.json(v.err);
         }
         f.init(req.body)
-         .snt('email').copy()
+         .snt('email').toLowerCase()
          .snt('taxid').toInt()
          .snt('queries').copy()
          .res.submitted = new Date();
@@ -348,7 +348,7 @@ if (cluster.isMaster) {
           return res.json(v.err);
         }
         f.init(req.query)
-         .snt('email').copy()
+         .snt('email').toLowerCase()
          .snt('skip', 0).toInt();
         igrep.find({'email': f.res.email, 'done': {'$exists': 1}}, {'_id': 0, 'done': 1}, function(err, cursor) {
           if (err) throw err;
