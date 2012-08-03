@@ -157,7 +157,7 @@ int main(int argc, char* argv[])
 	{
 		// Fetch a job.
 		using namespace bson;
-		auto cursor = conn.query(collection, QUERY("scheduled" << BSON("$lt" << 100)).sort("submitted"), 1, 0, /*BSON("_id" << 1 << "scheduled" << 1)*/); // nToReturn = 1, nToSkip = 0, fieldsToReturn
+		auto cursor = conn.query(collection, QUERY("scheduled" << BSON("$lt" << 100)).sort("submitted"), 1, 0/*, BSON("_id" << 1 << "scheduled" << 1)*/); // nToReturn = 1, nToSkip = 0, fieldsToReturn
 		if (!cursor->more())
 		{
 			// Sleep for a second.
@@ -320,8 +320,8 @@ int main(int argc, char* argv[])
 			BOOST_ASSERT(mc_tasks.empty());
 			for (size_t i = 0; i < phase1_num_mc_tasks; ++i)
 			{
-				BOOST_ASSERT(result_containers[i].empty());
-				mc_tasks.push_back(new packaged_task<void>(bind<void>(monte_carlo_task, boost::ref(result_containers[i]), boost::cref(lig), eng(), boost::cref(alphas), boost::cref(sf), boost::cref(b), boost::cref(grid_maps))));
+				BOOST_ASSERT(phase1_result_containers[i].empty());
+				mc_tasks.push_back(new packaged_task<void>(bind<void>(monte_carlo_task, boost::ref(phase1_result_containers[i]), boost::cref(lig), eng(), boost::cref(alphas), boost::cref(sf), boost::cref(b), boost::cref(grid_maps))));
 			}
 			tp.run(mc_tasks);
 
@@ -459,7 +459,7 @@ int main(int argc, char* argv[])
 			BOOST_ASSERT(mc_tasks.empty());
 			for (size_t i = 0; i < phase2_num_mc_tasks; ++i)
 			{
-				BOOST_ASSERT(result_containers[i].empty());
+				BOOST_ASSERT(phase2_result_containers[i].empty());
 				mc_tasks.push_back(new packaged_task<void>(bind<void>(monte_carlo_task, boost::ref(phase2_result_containers[i]), boost::cref(lig), eng(), boost::cref(alphas), boost::cref(sf), boost::cref(b), boost::cref(grid_maps))));
 			}
 			tp.run(mc_tasks);
@@ -472,7 +472,7 @@ int main(int argc, char* argv[])
 				mc_tasks[i].get_future().get();
 				ptr_vector<result>& task_results = phase2_result_containers[i];
 				const size_t num_task_results = task_results.size();
-				for (size_t j = 0; j < phase2_num_task_results; ++j)
+				for (size_t j = 0; j < num_task_results; ++j)
 				{
 					add_to_result_container(phase2_results, static_cast<result&&>(task_results[j]), required_square_error);
 				}
