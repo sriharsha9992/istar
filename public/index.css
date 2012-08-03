@@ -1,5 +1,15 @@
+.nav {
+  font-weight: bold;
+}
+
+.navbar img {
+  height: 20px;
+  padding-right: 8px;
+}
+
 .ribbon {
   position: absolute;
+  z-index: 2000;
   top: 0;
   right: 0;
   width: 149px;
@@ -17,18 +27,17 @@
   opacity: 1;
 }
 
-.logo {
+.hero-unit {
+  padding-bottom: 10px;
+}
+
+.hero-unit img {
   height: 60px;
+  padding-right: 8px;
 }
 
 header, footer, h1 {
   text-align: center;
-}
-
-footer {
-  padding-top: 17px;
-  margin: 18px 0;
-  border-top: 1px solid #eeeeee;
 }
 
 table img {
@@ -45,7 +54,14 @@ table img {
   border: 1px solid #ddd;
 }
 
-img[alt="HTML5 logo"] {
+footer {
+  padding-top: 17px;
+  margin: 18px 0;
+  border-top: 1px solid #eeeeee;
+}
+
+footer img {
   width: 20px;
   height: 20px;
 }
+
