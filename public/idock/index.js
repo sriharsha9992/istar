@@ -89,7 +89,7 @@ $(function() {
   }
 
   // Refresh the table of jobs and its pager
-  var jobs, jobs_trs = $('#jobs tr');
+  var jobs = [], jobs_trs = $('#jobs tr');
   function refresh() {
     var offset = 8 * (page - 1);
     jobs_trs.each(function(i) {
@@ -236,7 +236,7 @@ $(function() {
         nrb_lb: $('#nrb_lb').text(),
         nrb_ub: $('#nrb_ub').text()
       }, function(res) {
-        $('#ligands').text(res);
+        $('#ligands').text($.comma(res));
       });
     }
   });
