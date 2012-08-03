@@ -30,14 +30,14 @@ namespace idock
 	public:
 		const size_t index;
 		const string lig_id;
-		const fl energy;
-		explicit summary(const size_t index, const string& lig_id, const fl energy) : index(index), lig_id(lig_id), energy(energy) {}
+		const vector<fl> energies;
+		explicit summary(const size_t index, const string& lig_id, vector<fl>&& energies_) : index(index), lig_id(lig_id), energies(static_cast<vector<fl>&&>(energies_)) {}
 	};
 
 	/// For sorting ptr_vector<summary>.
 	inline bool operator<(const summary& a, const summary& b)
 	{
-		return a.energy < b.energy;
+		return a.energies.front() < b.energies.front();
 	}
 }
 
