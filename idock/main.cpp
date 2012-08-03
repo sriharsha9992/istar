@@ -77,8 +77,8 @@ int main(int argc, char* argv[])
 	const path headers_path = "16_hdr.bin";
 	const path phase1_path = "phase1.csv";
 	const path phase2_path = "phase2.csv";
-	const path output_folder_path = "output";
-	const size_t num_ligands = 12171187;
+	const path hits_path = "hits.pdbqt";
+//	const size_t num_ligands = 12171187;
 	const size_t num_threads = thread::hardware_concurrency();
 	const size_t seed = time(0);
 	const size_t phase1_num_mc_tasks = 32;
@@ -135,21 +135,19 @@ int main(int argc, char* argv[])
 	}
 
 	// Reserve space for containers.
-	string line;
-	line.reserve(80);
+	string line; line.reserve(80);
+	vector<size_t> atom_types_to_populate; atom_types_to_populate.reserve(XS_TYPE_SIZE);
 	vector<array3d<fl>> grid_maps(XS_TYPE_SIZE);
 	ptr_vector<packaged_task<void>> gm_tasks;
-	ptr_vector<packaged_task<void>> mc_tasks(phase1_num_mc_tasks);
-	ptr_vector<ptr_vector<result>> result_containers;
-	result_containers.resize(phase1_num_mc_tasks);
-	for (auto& rc : result_containers)
-	{
-		rc.reserve(max_results);
-	}
-	ptr_vector<result> results;
-	results.reserve(max_results * phase1_num_mc_tasks);
-	vector<size_t> atom_types_to_populate;
-	atom_types_to_populate.reserve(XS_TYPE_SIZE);
+	ptr_vector<packaged_task<void>> mc_tasks(phase2_num_mc_tasks);
+	ptr_vector<ptr_vector<result>> phase1_result_containers, phase2_result_containers;
+	phase1_result_containers.resize(phase1_num_mc_tasks);
+	phase2_result_containers.resize(phase2_num_mc_tasks);
+	for (auto& rc : phase1_result_containers) rc.reserve(1);
+	for (auto& rc : phase2_result_containers) rc.reserve(max_results);
+	ptr_vector<result> phase1_results, phase2_results;
+	phase1_results.reserve(1);
+	phase2_results.reserve(max_results * phase2_num_mc_tasks);
 
 	// Open files for reading.
 	ifstream headers(headers_path);
@@ -159,7 +157,7 @@ int main(int argc, char* argv[])
 	{
 		// Fetch a job.
 		using namespace bson;
-		auto cursor = conn.query(collection, QUERY("scheduled" << BSON("$lt" << 100)).sort("submitted"), 1); // nToReturn = 1
+		auto cursor = conn.query(collection, QUERY("scheduled" << BSON("$lt" << 100)).sort("submitted"), 1, 0, /*BSON("_id" << 1 << "scheduled" << 1)*/); // nToReturn = 1, nToSkip = 0, fieldsToReturn
 		if (!cursor->more())
 		{
 			// Sleep for a second.
@@ -182,6 +180,7 @@ int main(int argc, char* argv[])
 		const auto slice_key = "slice" + lexical_cast<string>(slice);
 		const auto start_lig = slices[slice];
 		const auto end_lig = slices[slice + 1];
+		const auto num_ligands = job["ligands"].Int();
 		const auto center_x = job["center_x"].Number();
 		const auto center_y = job["center_y"].Number();
 		const auto center_z = job["center_z"].Number();
@@ -259,7 +258,7 @@ int main(int argc, char* argv[])
 		cout << "Running " << phase1_num_mc_tasks << " Monte Carlo tasks per ligand\n";
 		unsigned int num_completed_ligands = 0;
 		headers.seekg(sizeof(size_t) * start_lig);
-		ofstream slice_csv(slice_path); // TODO: use bin instead of csv, one size_t for ZINC ID and one float for free energy.
+		ofstream slice_csv(slice_path); // TODO: use bin instead of csv, one uint16_t for index, one size_t for ZINC ID and one float for free energy.
 		slice_csv.setf(std::ios::fixed, std::ios::floatfield);
 		slice_csv << std::setprecision(3);
 		for (size_t i = start_lig; i < end_lig; ++i)
@@ -328,16 +327,16 @@ int main(int argc, char* argv[])
 
 			// TODO: only retain the best conformation.
 			// Merge results from all the tasks into one single result container.
-			BOOST_ASSERT(results.empty());
+			BOOST_ASSERT(phase1_results.empty());
 			const fl required_square_error = static_cast<fl>(4 * lig.num_heavy_atoms); // Ligands with RMSD < 2.0 will be clustered into the same cluster.
 			for (size_t i = 0; i < phase1_num_mc_tasks; ++i)
 			{
 				mc_tasks[i].get_future().get();
-				ptr_vector<result>& task_results = result_containers[i];
+				ptr_vector<result>& task_results = phase1_result_containers[i];
 				const size_t num_task_results = task_results.size();
 				for (size_t j = 0; j < num_task_results; ++j)
 				{
-					add_to_result_container(results, static_cast<result&&>(task_results[j]), required_square_error);
+					add_to_result_container(phase1_results, static_cast<result&&>(task_results[j]), required_square_error);
 				}
 				task_results.clear();
 			}
@@ -347,18 +346,17 @@ int main(int argc, char* argv[])
 			mc_tasks.clear();
 
 			// If no conformation can be found, skip the current ligand and proceed with the next one.
-			if (results.empty()) continue; // Possible if and only if results.size() == 0 because max_conformations >= 1 is enforced when parsing command line arguments.
-			const size_t num_results = std::min<size_t>(results.size(), max_conformations);
+			//if (phase1_results.empty()) continue; // Possible if and only if results.size() == 0 because max_conformations >= 1 is enforced when parsing command line arguments.
 
 			// Adjust free energy relative to flexibility.
-			result& best_result = results.front();
+			result& best_result = phase1_results.front();
 			best_result.e_nd = best_result.f * lig.flexibility_penalty_factor;
-
-			// Clear the results of the current ligand.
-			results.clear();
 
 			// Dump ligand summaries to the csv file.
 			slice_csv << i << ',' << lig_id << ',' << best_result.e_nd << '\n';
+
+			// Clear the results of the current ligand.
+			phase1_results.clear();
 
 			// Report progress every 32 ligands.
 			if (!(++num_completed_ligands & 32))
@@ -385,29 +383,23 @@ int main(int argc, char* argv[])
 			while (getline(in, line))
 			{
 				const auto comma = line.find(',', 1);
-				summaries.push_back(new summary(lexical_cast<size_t>(line.substr(0, comma)), line.substr(comma + 1, 8), lexical_cast<fl>(line.substr(comma + 10))));
+				summaries.push_back(new summary(lexical_cast<size_t>(line.substr(0, comma)), line.substr(comma + 1, 8), { lexical_cast<fl>(line.substr(comma + 10)) }));
 			}
 			in.close();
 			remove(csv_path);
 		}
+		BOOST_ASSERT(summaries.size() == num_ligands);
 		summaries.sort();
 		ofstream phase1_csv(phase1_path); // TODO: gzip phase 1 log.
 		for (const auto& s : summaries)
 		{
-			phase1_csv << s.index << ',' << s.lig_id << ',' << s.energy << '\n';
+			phase1_csv << s.index << ',' << s.lig_id << ',' << s.energies.front() << '\n';
 		}
 		phase1_csv.close();
 
 		// Perform phase 2.
-		ofstream phase2_csv(phase2_path);
-		phase2_csv << "Ligand,Conf";
-		for (size_t i = 1; i <= max_conformations; ++i)
-		{
-			phase2_csv << ",FE" << i << ",HB" << i;
-		}
-		phase2_csv.setf(std::ios::fixed, std::ios::floatfield);
-		phase2_csv << '\n' << std::setprecision(3);
-		for (auto i = 0; i < 1000; ++i) // TODO: min(summaries.size(), 1000);
+		ptr_vector<summary> phase2_summaries(1000);
+		for (auto i = 0; i < 1000; ++i) // TODO: min(num_ligands, 1000);
 		{			
 			// Locate a ligand.
 			const auto& s = summaries[i];
@@ -468,21 +460,21 @@ int main(int argc, char* argv[])
 			for (size_t i = 0; i < phase2_num_mc_tasks; ++i)
 			{
 				BOOST_ASSERT(result_containers[i].empty());
-				mc_tasks.push_back(new packaged_task<void>(bind<void>(monte_carlo_task, boost::ref(result_containers[i]), boost::cref(lig), eng(), boost::cref(alphas), boost::cref(sf), boost::cref(b), boost::cref(grid_maps))));
+				mc_tasks.push_back(new packaged_task<void>(bind<void>(monte_carlo_task, boost::ref(phase2_result_containers[i]), boost::cref(lig), eng(), boost::cref(alphas), boost::cref(sf), boost::cref(b), boost::cref(grid_maps))));
 			}
 			tp.run(mc_tasks);
 
 			// Merge results from all the tasks into one single result container.
-			BOOST_ASSERT(results.empty());
+			BOOST_ASSERT(phase2_results.empty());
 			const fl required_square_error = static_cast<fl>(4 * lig.num_heavy_atoms); // Ligands with RMSD < 2.0 will be clustered into the same cluster.
-			for (size_t i = 0; i < phase1_num_mc_tasks; ++i)
+			for (size_t i = 0; i < phase2_num_mc_tasks; ++i)
 			{
 				mc_tasks[i].get_future().get();
-				ptr_vector<result>& task_results = result_containers[i];
+				ptr_vector<result>& task_results = phase2_result_containers[i];
 				const size_t num_task_results = task_results.size();
-				for (size_t j = 0; j < num_task_results; ++j)
+				for (size_t j = 0; j < phase2_num_task_results; ++j)
 				{
-					add_to_result_container(results, static_cast<result&&>(task_results[j]), required_square_error);
+					add_to_result_container(phase2_results, static_cast<result&&>(task_results[j]), required_square_error);
 				}
 				task_results.clear();
 			}
@@ -492,23 +484,99 @@ int main(int argc, char* argv[])
 			mc_tasks.clear();
 
 			// If no conformation can be found, skip the current ligand and proceed with the next one.
-			if (results.empty()) continue; // Possible if and only if results.size() == 0 because max_conformations >= 1 is enforced when parsing command line arguments.
-			const size_t num_results = std::min<size_t>(results.size(), max_conformations);
+//			if (phase2_results.empty()) continue; // Possible if and only if results.size() == 0 because max_conformations >= 1 is enforced when parsing command line arguments.
+			const size_t num_results = std::min<size_t>(phase2_results.size(), max_conformations);
 
 			// Adjust free energy relative to flexibility.
-			result& best_result = results.front();
-			best_result.e_nd = best_result.f * lig.flexibility_penalty_factor;
+			result& best_result = phase2_results.front();
+			const fl best_result_intra_e = best_result.e - best_result.f;
+			for (size_t i = 0; i < num_results; ++i)
+			{
+				phase2_results[i].e_nd = (phase2_results[i].e - best_result_intra_e) * lig.flexibility_penalty_factor;
+			}
+
+			// Determine the number of conformations to output according to user-supplied max_conformations and energy_range.
+			const fl energy_upper_bound = best_result.e_nd + energy_range;
+			size_t num_conformations;
+			for (num_conformations = 1; (num_conformations < num_results) && (phase2_results[num_conformations].e_nd <= energy_upper_bound); ++num_conformations);
+
+			if (num_conformations)
+			{
+/*
+				// Find the number of hydrogen bonds.
+				const size_t num_lig_hbda = lig.hbda.size();
+				for (size_t k = 0; k < num_conformations; ++k)
+				{
+					result& r = results[k];
+					r.num_hbonds = 0;
+					for (size_t i = 0; i < num_lig_hbda; ++i)
+					{
+						const size_t lig_xs = lig.heavy_atoms[lig.hbda[i]].xs;
+						BOOST_ASSERT(xs_is_donor_acceptor(lig_xs));
+
+						// Find the possibly interacting receptor atoms via partitions.
+						const vec3 lig_coords = r.heavy_atoms[lig.hbda[i]];
+						const vector<size_t>& rec_hbda = rec.hbda_3d(b.partition_index(lig_coords));
+
+						// Accumulate individual free energies for each atom types to populate.
+						const size_t num_rec_hbda = rec_hbda.size();
+						for (size_t l = 0; l < num_rec_hbda; ++l)
+						{
+							const atom& a = rec.atoms[rec_hbda[l]];
+							BOOST_ASSERT(xs_is_donor_acceptor(a.xs));
+							if (!xs_hbond(lig_xs, a.xs)) continue;
+							const fl r2 = distance_sqr(lig_coords, a.coordinate);
+							if (r2 <= hbond_dist_sqr) ++r.num_hbonds;
+						}
+					}
+				}
+*/
+				// Write models to file. TODO: use append mode.
+				lig.write_models(hits_path, phase2_results, num_conformations, b, grid_maps);
+
+				// Add to summaries.
+				vector<fl> energies(num_conformations);
+				for (size_t k = 0; k < num_conformations; ++k)
+				{
+					energies[k] = phase2_results[k].e_nd;
+				}
+				phase2_summaries.push_back(new summary(s.index, s.lig_id, static_cast<vector<fl>&&>(energies)));
+			}
 
 			// Clear the results of the current ligand.
-			results.clear();
+			phase2_results.clear();
 
-			// Dump ligand summaries to the csv file.
-			phase2_csv << s.index << ',' << s.lig_id << ',' << best_result.e_nd << '\n';
-
-			// Report progress every 32 ligands.
+			// Report progress every ligand.
 			cout << "Current progress " << (i + 1) << '\n';
 			conn.update(collection, BSON("_id" << _id), BSON("$set" << BSON("phase2" << (i + 1))));
-		}		
+		}
+
+		// Sort summaries.
+		phase2_summaries.sort();
+
+		// Write phase 2 csv.
+		ofstream phase2_csv(phase2_path);
+		phase2_csv << "Ligand,Conf";
+		for (size_t i = 1; i <= max_conformations; ++i)
+		{
+			phase2_csv << ",FE" << i/* << ",HB" << i*/;
+		}
+		phase2_csv.setf(std::ios::fixed, std::ios::floatfield);
+		phase2_csv << '\n' << std::setprecision(3);
+		for (const auto& s : phase2_summaries)
+		{
+			const size_t num_conformations = s.energies.size();
+			phase2_csv << s.index << ',' << s.lig_id << ',' << num_conformations;
+			for (size_t j = 0; j < num_conformations; ++j)
+			{
+				phase2_csv << ',' << s.energies[j]/* << ',' << s.hbonds[j]*/;
+			}
+			for (size_t j = num_conformations; j < max_conformations; ++j)
+			{
+				phase2_csv << ',';
+			}
+			phase2_csv << '\n';
+		}
 		phase2_csv.close();
 
 		// Set done time.
