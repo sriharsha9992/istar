@@ -302,7 +302,6 @@ int main(int argc, char* argv[])
 			const size_t num_atom_types_to_populate = atom_types_to_populate.size();
 			if (num_atom_types_to_populate)
 			{
-				cout << "Creating " << std::setw(2) << num_atom_types_to_populate << " grid maps\n";
 				BOOST_ASSERT(gm_tasks.empty());
 				for (size_t x = 0; x < num_gm_tasks; ++x)
 				{
@@ -449,7 +448,6 @@ int main(int argc, char* argv[])
 			const size_t num_atom_types_to_populate = atom_types_to_populate.size();
 			if (num_atom_types_to_populate)
 			{
-				cout << "Creating " << std::setw(2) << num_atom_types_to_populate << " grid maps\n";
 				BOOST_ASSERT(gm_tasks.empty());
 				for (size_t x = 0; x < num_gm_tasks; ++x)
 				{
