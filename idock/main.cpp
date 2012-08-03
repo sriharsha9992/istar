@@ -261,7 +261,7 @@ int main(int argc, char* argv[])
 		headers.seekg(sizeof(size_t) * start_lig);
 		ofstream slice_csv(slice_path); // TODO: use bin instead of csv, one size_t for ZINC ID and one float for free energy.
 		slice_csv.setf(std::ios::fixed, std::ios::floatfield);
-		slice_csv << '\n' << std::setprecision(3);
+		slice_csv << std::setprecision(3);
 		for (size_t i = start_lig; i < end_lig; ++i)
 		{
 			// Locate a ligand.
@@ -327,6 +327,7 @@ int main(int argc, char* argv[])
 			}
 			tp.run(mc_tasks);
 
+			// TODO: only retain the best conformation.
 			// Merge results from all the tasks into one single result container.
 			BOOST_ASSERT(results.empty());
 			const fl required_square_error = static_cast<fl>(4 * lig.num_heavy_atoms); // Ligands with RMSD < 2.0 will be clustered into the same cluster.
@@ -373,7 +374,7 @@ int main(int argc, char* argv[])
 		conn.update(collection, BSON("_id" << _id), BSON("$set" << BSON(slice_key << num_completed_ligands)));
 		conn.update(collection, BSON("_id" << _id << "$atomic" << 1), BSON("$inc" << BSON("completed" << 1)));
 
-		// If phase 1 is done, perform phase 2.
+		// If phase 1 is done, transit to phase 2.
 		if (!conn.query(collection, QUERY("_id" << _id << "completed" << 100))->more()) continue;
 
 		// Combine and delete multiple slice csv's.
@@ -391,19 +392,128 @@ int main(int argc, char* argv[])
 			remove(csv_path);
 		}
 		summaries.sort();
-		ofstream phase1_csv(phase1_path);
+		ofstream phase1_csv(phase1_path); // TODO: gzip phase 1 log.
 		for (const auto& s : summaries)
 		{
 			phase1_csv << s.index << ',' << s.lig_id << ',' << s.energy << '\n';
 		}
+		phase1_csv.close();
 
-		// Phase 2, report progress every 1 ligand.
-		ofstream phase2_csv(phase1_path);
-		
+		// Perform phase 2.
+		ofstream phase2_csv(phase2_path);
+		phase2_csv << "Ligand,Conf";
+		for (size_t i = 1; i <= max_conformations; ++i)
+		{
+			phase2_csv << ",FE" << i << ",HB" << i;
+		}
+		phase2_csv.setf(std::ios::fixed, std::ios::floatfield);
+		phase2_csv << '\n' << std::setprecision(3);
+		for (auto i = 0; i < 1000; ++i) // TODO: min(summaries.size(), 1000);
+		{			
+			// Locate a ligand.
+			const auto& s = summaries[i];
+			headers.seekg(sizeof(size_t) * s.index);
+			size_t header;
+			headers.read((char*)&header, sizeof(size_t));
+			ligands.seekg(header);
+
+			// Assert if the ligand satisfies the filtering conditions.
+			getline(ligands, line);
+			const auto lig_id = line.substr(10, 8);
+			const auto mwt = right_cast<fl>(line, 21, 28);
+			const auto logp = right_cast<fl>(line, 30, 37);
+			const auto ad = right_cast<fl>(line, 39, 46);
+			const auto pd = right_cast<fl>(line, 48, 55);
+			const auto hbd = right_cast<int>(line, 57, 59);
+			const auto hba = right_cast<int>(line, 61, 63);
+			const auto tpsa = right_cast<int>(line, 65, 67);
+			const auto charge = right_cast<int>(line, 69, 71);
+			const auto nrb = right_cast<int>(line, 73, 75);
+			BOOST_ASSERT(lig_id == s.lig_id);
+			BOOST_ASSERT((mwt_lb <= mwt) && (mwt <= mwt_ub) && (logp_lb <= logp) && (logp <= logp_ub) && (ad_lb <= ad) && (ad <= ad_ub) && (pd_lb <= pd) && (pd <= pd_ub) && (hbd_lb <= hbd) && (hbd <= hbd_ub) && (hba_lb <= hba) && (hba <= hba_ub) && (tpsa_lb <= tpsa) && (tpsa <= tpsa_ub) && (charge_lb <= charge) && (charge <= charge_ub) && (nrb_lb <= nrb) && (nrb <= nrb_ub));
+
+			// Parse the ligand.
+			ligand lig(ligands);
+
+			// Create grid maps on the fly if necessary.
+			BOOST_ASSERT(atom_types_to_populate.empty());
+			const vector<size_t> ligand_atom_types = lig.get_atom_types();
+			for (const auto t : ligand_atom_types)
+			{
+				BOOST_ASSERT(t < XS_TYPE_SIZE);
+				array3d<fl>& grid_map = grid_maps[t];
+				if (grid_map.initialized()) continue; // The grid map of XScore atom type t has already been populated.
+				grid_map.resize(b.num_probes); // An exception may be thrown in case memory is exhausted.
+				atom_types_to_populate.push_back(t);  // The grid map of XScore atom type t has not been populated and should be populated now.
+			}
+			const size_t num_atom_types_to_populate = atom_types_to_populate.size();
+			if (num_atom_types_to_populate)
+			{
+				cout << "Creating " << std::setw(2) << num_atom_types_to_populate << " grid maps\n";
+				BOOST_ASSERT(gm_tasks.empty());
+				for (size_t x = 0; x < num_gm_tasks; ++x)
+				{
+					gm_tasks.push_back(new packaged_task<void>(bind<void>(grid_map_task, boost::ref(grid_maps), boost::cref(atom_types_to_populate), x, boost::cref(sf), boost::cref(b), boost::cref(rec), boost::cref(partitions))));
+				}
+				tp.run(gm_tasks);
+				for (auto& t : gm_tasks)
+				{
+					t.get_future().get();
+				}
+				tp.sync();
+				gm_tasks.clear();
+				atom_types_to_populate.clear();
+			}
+
+			// Run Monte Carlo tasks.
+			BOOST_ASSERT(mc_tasks.empty());
+			for (size_t i = 0; i < phase2_num_mc_tasks; ++i)
+			{
+				BOOST_ASSERT(result_containers[i].empty());
+				mc_tasks.push_back(new packaged_task<void>(bind<void>(monte_carlo_task, boost::ref(result_containers[i]), boost::cref(lig), eng(), boost::cref(alphas), boost::cref(sf), boost::cref(b), boost::cref(grid_maps))));
+			}
+			tp.run(mc_tasks);
+
+			// Merge results from all the tasks into one single result container.
+			BOOST_ASSERT(results.empty());
+			const fl required_square_error = static_cast<fl>(4 * lig.num_heavy_atoms); // Ligands with RMSD < 2.0 will be clustered into the same cluster.
+			for (size_t i = 0; i < phase1_num_mc_tasks; ++i)
+			{
+				mc_tasks[i].get_future().get();
+				ptr_vector<result>& task_results = result_containers[i];
+				const size_t num_task_results = task_results.size();
+				for (size_t j = 0; j < num_task_results; ++j)
+				{
+					add_to_result_container(results, static_cast<result&&>(task_results[j]), required_square_error);
+				}
+				task_results.clear();
+			}
+
+			// Block until all the Monte Carlo tasks are completed.
+			tp.sync();
+			mc_tasks.clear();
+
+			// If no conformation can be found, skip the current ligand and proceed with the next one.
+			if (results.empty()) continue; // Possible if and only if results.size() == 0 because max_conformations >= 1 is enforced when parsing command line arguments.
+			const size_t num_results = std::min<size_t>(results.size(), max_conformations);
+
+			// Adjust free energy relative to flexibility.
+			result& best_result = results.front();
+			best_result.e_nd = best_result.f * lig.flexibility_penalty_factor;
+
+			// Clear the results of the current ligand.
+			results.clear();
+
+			// Dump ligand summaries to the csv file.
+			phase2_csv << s.index << ',' << s.lig_id << ',' << best_result.e_nd << '\n';
+
+			// Report progress every 32 ligands.
+			cout << "Current progress " << (i + 1) << '\n';
+			conn.update(collection, BSON("_id" << _id), BSON("$set" << BSON("phase2" << (i + 1))));
+		}		
 		phase2_csv.close();
-		conn.update(collection, BSON("_id" << _id), BSON("$set" << BSON("phase2" << num_completed_ligands)));
 
-		// Update progress
+		// Set done time.
 		using boost::chrono::system_clock;
 		using boost::chrono::duration_cast;
 		using chrono_millis = boost::chrono::milliseconds;
