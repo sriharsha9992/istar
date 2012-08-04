@@ -42,6 +42,7 @@ header, footer, h1 {
 
 table img {
   height: 16px;
+  padding-right: 16px;
 }
 
 .pagination input {
