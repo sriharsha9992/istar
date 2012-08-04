@@ -70,7 +70,7 @@ $(function() {
       status = 'Phase 1 in progress';
       var num_completed_ligands = 0;
       for (var i = 0; i < job.scheduled; ++i) {
-        num_completed_ligands += parseInt(job["slice" + i]);
+        num_completed_ligands += parseInt(job[i.toString()]);
       }
       progress = num_completed_ligands / job.ligands;
     } else if (!job.done) {
@@ -122,7 +122,7 @@ $(function() {
       if (!row(offset + i)) return;
       var tds = tr(jobs[offset + i]);
       $('td', $(this)).each(function(j) {
-        if (col(j)) $(this).hide().html(tds[j]).fadeIn('slow');
+        if (col(j)) $(this).html(tds[j]);
       });
     });
   }
@@ -138,22 +138,29 @@ $(function() {
   });
 
   // Activate the timer to refresh result every second
-/*
   setInterval(function() {
     $.get('done', { email: email, skip: dones }, function(res) {
       if (!res.length) return;
+      var new_dones = 0;
       res.forEach(function(job, i) {
-        jobs[dones + i].done = job.done;
+        jobs[dones + i].scheduled = job.scheduled;
+        jobs[dones + i].completed = job.completed;
+        if (job.done) {
+          jobs[dones + i].done = job.done;
+          ++new_dones;
+        }
+        for (var i = 0; i < job.scheduled; ++i) {
+          jobs[dones + i][i.toString()] = job[i.toString()];
+        }
       });
       fade(function(i) {
         return (dones <= i) && (i < dones + res.length);
       }, function(j) {
         return j >= 2;
       });
-      dones += res.length;
+      dones += new_dones;
     });
   }, 1000);
-*/
 
   // Initialize sliders
   $('#mwt').slider({
