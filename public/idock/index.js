@@ -73,9 +73,9 @@ $(function() {
         num_completed_ligands += parseInt(job[i.toString()]);
       }
       progress = num_completed_ligands / job.ligands;
-    } else if (!job.done) {
+    } else if (job.refined < job.hits) {
       status = 'Phase 2 in progress';
-      progress = job.phase2 / Math.min(job.ligands, 1000);
+      progress = job.refined / job.hits;
     } else {
       status = 'Done on ' + $.format.date(new Date(job.done), 'yyyy/MM/dd HH:mm:ss');
       progress = 1;
@@ -83,7 +83,7 @@ $(function() {
     tds[0] = $.comma(job.ligands);
     tds[1] = $.format.date(new Date(job.submitted), 'yyyy/MM/dd HH:mm:ss');
     tds[2] = status;
-    tds[3] = (100 * progress).toFixed(5) + '%';
+    tds[3] = ((100 * progress).toFixed(5) + '%').pad(10);
     tds[4] = job.done ? '<a href="jobs/' + job._id + '/result.tar.gz"><img src="/excel.png" alt="result.tar.gz"/></a>' : null;
     return tds;
   }
@@ -145,7 +145,8 @@ $(function() {
       res.forEach(function(job, i) {
         jobs[dones + i].scheduled = job.scheduled;
         jobs[dones + i].completed = job.completed;
-        jobs[dones + i].phase2 = job.phase2;
+        jobs[dones + i].refined = job.refined;
+        jobs[dones + i].hits = job.hits;
         if (job.done) {
           jobs[dones + i].done = job.done;
           ++new_dones;
