@@ -80,7 +80,7 @@ $(function() {
       status = 'Done on ' + $.format.date(new Date(job.done), 'yyyy/MM/dd HH:mm:ss');
       progress = 1;
     }
-    tds[0] = $.comma(job.ligands);
+    tds[0] = job.ligands.comma();
     tds[1] = $.format.date(new Date(job.submitted), 'yyyy/MM/dd HH:mm:ss');
     tds[2] = status;
     tds[3] = ((100 * progress).toFixed(5) + '%').pad(10);
@@ -245,7 +245,7 @@ $(function() {
         nrb_lb: $('#nrb_lb').text(),
         nrb_ub: $('#nrb_ub').text()
       }, function(res) {
-        $('#ligands').text($.comma(res));
+        $('#ligands').text(res.comma());
       });
     }
   });
