@@ -561,11 +561,11 @@ namespace idock
 		ofstream out(output_ligand_path, ios::app); // Dumping starts. Open the file stream as late as possible.
 		out.setf(ios::fixed, ios::floatfield);
 		out << setprecision(3);
+		out << "HEADER    " << id << '\n';
 		for (size_t i = 0; i < num_conformations; ++i)
 		{
 			const result& r = results[i];
-			out << "HEADER    " << id << '\n'
-			    << "MODEL     " << setw(4) << (i + 1) << '\n'
+			out << "MODEL     " << setw(4) << (i + 1) << '\n'
 				<< "REMARK       NORMALIZED FREE ENERGY PREDICTED BY IDOCK:" << setw(8) << r.e_nd    << " KCAL/MOL\n"
 				<< "REMARK            TOTAL FREE ENERGY PREDICTED BY IDOCK:" << setw(8) << r.e       << " KCAL/MOL\n"
 				<< "REMARK     INTER-LIGAND FREE ENERGY PREDICTED BY IDOCK:" << setw(8) << r.f       << " KCAL/MOL\n"
