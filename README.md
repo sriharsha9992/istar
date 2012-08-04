@@ -25,7 +25,7 @@ Features
 
 * [node.js] v0.8.4
 * [mongodb] v1.1.2
-* [express] v3.0.0rc1
+* [express] v3.0.0rc2
 * [validator] v0.4.10
 * [spdy] v1.3.1
 
@@ -48,6 +48,7 @@ Supported browsers
 * Mozilla Firefox 12+
 * Microsoft Internet Explorer 9+
 * Apple Safari 5+
+* Opera 12+
 
 
 RESTful API for idock
