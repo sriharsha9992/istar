@@ -122,7 +122,7 @@ $(function() {
       if (!row(offset + i)) return;
       var tds = tr(jobs[offset + i]);
       $('td', $(this)).each(function(j) {
-        if (col(j)) $(this).html(tds[j]);
+        if (col(j) && ($(this).html() !== tds[j])) $(this).html(tds[j]);
       });
     });
   }
@@ -145,12 +145,13 @@ $(function() {
       res.forEach(function(job, i) {
         jobs[dones + i].scheduled = job.scheduled;
         jobs[dones + i].completed = job.completed;
+        jobs[dones + i].phase2 = job.phase2;
         if (job.done) {
           jobs[dones + i].done = job.done;
           ++new_dones;
         }
-        for (var i = 0; i < job.scheduled; ++i) {
-          jobs[dones + i][i.toString()] = job[i.toString()];
+        for (var s = 0; s < job.scheduled; ++s) {
+          jobs[dones + i][s.toString()] = job[s.toString()];
         }
       });
       fade(function(i) {
