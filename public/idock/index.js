@@ -62,7 +62,7 @@ $(function() {
       tds[4] = '&nbsp;';
       return tds;
     }
-    var status, progress;
+    var status, progress, result;
     if (!job.scheduled) {
       status = 'Queued for execution';
       progress = 0;
@@ -76,15 +76,17 @@ $(function() {
     } else if (job.refined < job.hits) {
       status = 'Phase 2 in progress';
       progress = job.refined / job.hits;
+      result = '<a href="jobs/' + job._id + '/phase1.csv.gz"><img src="/excel.png" alt="phase1.csv.gz"></a>';
     } else {
       status = 'Done on ' + $.format.date(new Date(job.done), 'yyyy/MM/dd HH:mm:ss');
       progress = 1;
+      result = '<a href="jobs/' + job._id + '/phase1.csv.gz"><img src="/excel.png" alt="phase1.csv.gz"></a><a href="jobs/' + job._id + '/phase2.csv.gz"><img src="/excel.png" alt="phase2.csv.gz"></a><a href="jobs/' + job._id + '/hits.pdbqt.gz"><img src="/mol.png" alt="hits.pdbqt.gz"></a>';
     }
     tds[0] = job.ligands.comma();
     tds[1] = $.format.date(new Date(job.submitted), 'yyyy/MM/dd HH:mm:ss');
     tds[2] = status;
-    tds[3] = ((100 * progress).toFixed(5) + '%').pad(10);
-    tds[4] = job.done ? '<a href="jobs/' + job._id + '/result.tar.gz"><img src="/excel.png" alt="result.tar.gz"/></a>' : null;
+    tds[3] = ((100 * progress).toFixed(5) + '%');
+    tds[4] = result;
     return tds;
   }
 
