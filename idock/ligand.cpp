@@ -24,7 +24,7 @@ namespace idock
 	using boost::filesystem::ifstream;
 	using boost::filesystem::ofstream;
 
-	ligand::ligand(ifstream& in) : num_active_torsions(0)
+	ligand::ligand(ifstream& in, const string& id) : num_active_torsions(0), id(id)
 	{
 		// Initialize necessary variables for constructing a ligand.
 		lines.reserve(200); // A ligand typically consists of <= 200 lines.
@@ -558,13 +558,14 @@ namespace idock
 
 		// Dump binding conformations to the output ligand file.
 		using namespace std;
-		ofstream out(output_ligand_path); // Dumping starts. Open the file stream as late as possible.
+		ofstream out(output_ligand_path, ios::app); // Dumping starts. Open the file stream as late as possible.
 		out.setf(ios::fixed, ios::floatfield);
 		out << setprecision(3);
 		for (size_t i = 0; i < num_conformations; ++i)
 		{
 			const result& r = results[i];
-			out << "MODEL     " << setw(4) << (i + 1) << '\n'
+			out << "HEADER    " << id << '\n'
+			    << "MODEL     " << setw(4) << (i + 1) << '\n'
 				<< "REMARK       NORMALIZED FREE ENERGY PREDICTED BY IDOCK:" << setw(8) << r.e_nd    << " KCAL/MOL\n"
 				<< "REMARK            TOTAL FREE ENERGY PREDICTED BY IDOCK:" << setw(8) << r.e       << " KCAL/MOL\n"
 				<< "REMARK     INTER-LIGAND FREE ENERGY PREDICTED BY IDOCK:" << setw(8) << r.f       << " KCAL/MOL\n"

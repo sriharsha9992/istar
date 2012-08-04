@@ -79,8 +79,8 @@ int main(int argc, char* argv[])
 	const size_t num_threads = thread::hardware_concurrency();
 	const size_t seed = time(0);
 	const size_t phase1_num_mc_tasks = 4; // TODO: revert to 32.
-	const size_t phase2_num_mc_tasks = 256;
-	const size_t max_conformations = 100;
+	const size_t phase2_num_mc_tasks = 8; // TODO: revert to 256.
+	const size_t max_conformations = 20;
 	const size_t max_results = 20; // Maximum number of results obtained from a single Monte Carlo task.
 	const size_t slices[101] = { 0, 121712, 243424, 365136, 486848, 608560, 730272, 851984, 973696, 1095408, 1217120, 1338832, 1460544, 1582256, 1703968, 1825680, 1947392, 2069104, 2190816, 2312528, 2434240, 2555952, 2677664, 2799376, 2921088, 3042800, 3164512, 3286224, 3407936, 3529648, 3651360, 3773072, 3894784, 4016496, 4138208, 4259920, 4381632, 4503344, 4625056, 4746768, 4868480, 4990192, 5111904, 5233616, 5355328, 5477040, 5598752, 5720464, 5842176, 5963888, 6085600, 6207312, 6329024, 6450736, 6572448, 6694160, 6815872, 6937584, 7059296, 7181008, 7302720, 7424432, 7546144, 7667856, 7789568, 7911280, 8032992, 8154704, 8276416, 8398128, 8519840, 8641552, 8763264, 8884976, 9006688, 9128400, 9250112, 9371824, 9493536, 9615248, 9736960, 9858672, 9980384, 10102096, 10223808, 10345520, 10467232, 10588944, 10710655, 10832366, 10954077, 11075788, 11197499, 11319210, 11440921, 11562632, 11684343, 11806054, 11927765, 12049476, 12171187 };
 	const fl energy_range = 3.0;
@@ -286,7 +286,7 @@ int main(int argc, char* argv[])
 			const auto lig_id = line.substr(11, 8);
 
 			// Parse the ligand.
-			ligand lig(ligands);
+			ligand lig(ligands, lig_id);
 
 			// Create grid maps on the fly if necessary.
 			BOOST_ASSERT(atom_types_to_populate.empty());
@@ -335,10 +335,9 @@ int main(int argc, char* argv[])
 				mc_tasks[i].get_future().get();
 				ptr_vector<result>& task_results = phase1_result_containers[i];
 				BOOST_ASSERT(task_results.capacity() == 1);
-				const size_t num_task_results = task_results.size();
-				for (size_t j = 0; j < num_task_results; ++j)
+				for (auto& task_result : task_results)
 				{
-					add_to_result_container(phase1_results, static_cast<result&&>(task_results[j]), required_square_error);
+					add_to_result_container(phase1_results, static_cast<result&&>(task_result), required_square_error);
 				}
 				task_results.clear();
 			}
@@ -347,18 +346,15 @@ int main(int argc, char* argv[])
 			tp.sync();
 			mc_tasks.clear();
 
-			// If no conformation can be found, skip the current ligand and proceed with the next one.
-			if (phase1_results.empty()) continue; // Possible if and only if the search space is too small.
+			// No conformation can be found if the search space is too small.
+			if (phase1_results.size())
+			{
+				// Dump ligand summaries to the csv file.
+				slice_csv << i << ',' << lig_id << ',' << (phase1_results.front().f * lig.flexibility_penalty_factor) << '\n';
 
-			// Adjust free energy relative to flexibility.
-			result& best_result = phase1_results.front();
-			best_result.e_nd = best_result.f * lig.flexibility_penalty_factor;
-
-			// Dump ligand summaries to the csv file.
-			slice_csv << i << ',' << lig_id << ',' << best_result.e_nd << '\n';
-
-			// Clear the results of the current ligand.
-			phase1_results.clear();
+				// Clear the results of the current ligand.
+				phase1_results.clear();
+			}
 
 			// Report progress every 32 ligands.
 			if (!(++num_completed_ligands & 0)) conn.update(collection, BSON("_id" << _id), BSON("$set" << BSON(slice_key << num_completed_ligands)));
@@ -387,18 +383,25 @@ int main(int argc, char* argv[])
 			in.close();
 			remove(slice_csv_path);
 		}
-		BOOST_ASSERT(phase1_summaries.size() == num_ligands);
+		const unsigned int num_hits = phase1_summaries.size();
+		BOOST_ASSERT(num_hits <= num_ligands);
+		conn.update(collection, BSON("_id" << _id), BSON("$set" << BSON("hits" << num_hits)));
+
 		phase1_summaries.sort();
 		ofstream phase1_csv(phase1_csv_path); // TODO: gzip phase 1 log.
+		phase1_csv.setf(std::ios::fixed, std::ios::floatfield);
+		phase1_csv << std::setprecision(3);
+		phase1_csv << "ZINC ID,FE1\n";
 		for (const auto& s : phase1_summaries)
 		{
-			phase1_csv << s.index << ',' << s.lig_id << ',' << s.energies.front() << '\n';
+			phase1_csv << s.lig_id << ',' << s.energies.front() << '\n';
 		}
 		phase1_csv.close();
 
 		// Perform phase 2.
-		ptr_vector<summary> phase2_summaries(1000);
-		for (auto i = 0; i < 1000; ++i) // TODO: min(num_ligands, 1000);
+		const auto phase2_num_ligands = std::min(num_hits, static_cast<unsigned int>(1000));
+		ptr_vector<summary> phase2_summaries(phase2_num_ligands);
+		for (auto i = 0; i < phase2_num_ligands; ++i)
 		{			
 			// Locate a ligand.
 			const auto& s = phase1_summaries[i];
@@ -409,7 +412,7 @@ int main(int argc, char* argv[])
 
 			// Assert if the ligand satisfies the filtering conditions.
 			getline(ligands, line);
-			const auto lig_id = line.substr(10, 8);
+			const auto lig_id = line.substr(11, 8);
 			const auto mwt = right_cast<fl>(line, 21, 28);
 			const auto logp = right_cast<fl>(line, 30, 37);
 			const auto ad = right_cast<fl>(line, 39, 46);
@@ -423,7 +426,7 @@ int main(int argc, char* argv[])
 			BOOST_ASSERT((mwt_lb <= mwt) && (mwt <= mwt_ub) && (logp_lb <= logp) && (logp <= logp_ub) && (ad_lb <= ad) && (ad <= ad_ub) && (pd_lb <= pd) && (pd <= pd_ub) && (hbd_lb <= hbd) && (hbd <= hbd_ub) && (hba_lb <= hba) && (hba <= hba_ub) && (tpsa_lb <= tpsa) && (tpsa <= tpsa_ub) && (charge_lb <= charge) && (charge <= charge_ub) && (nrb_lb <= nrb) && (nrb <= nrb_ub));
 
 			// Parse the ligand.
-			ligand lig(ligands);
+			ligand lig(ligands, lig_id);
 
 			// Create grid maps on the fly if necessary.
 			BOOST_ASSERT(atom_types_to_populate.empty());
@@ -470,10 +473,9 @@ int main(int argc, char* argv[])
 			{
 				mc_tasks[i].get_future().get();
 				ptr_vector<result>& task_results = phase2_result_containers[i];
-				const size_t num_task_results = task_results.size();
-				for (size_t j = 0; j < num_task_results; ++j)
+				for (auto& task_result : task_results)
 				{
-					add_to_result_container(phase2_results, static_cast<result&&>(task_results[j]), required_square_error);
+					add_to_result_container(phase2_results, static_cast<result&&>(task_result), required_square_error);
 				}
 				task_results.clear();
 			}
@@ -528,7 +530,7 @@ int main(int argc, char* argv[])
 					}
 				}
 */
-				// Write models to file. TODO: use append mode.
+				// Write models to file.
 				lig.write_models(hits_pdbqt_path, phase2_results, num_conformations, b, grid_maps);
 
 				// Add to summaries.
@@ -544,7 +546,7 @@ int main(int argc, char* argv[])
 			phase2_results.clear();
 
 			// Report progress every ligand.
-			conn.update(collection, BSON("_id" << _id), BSON("$set" << BSON("phase2" << (i + 1))));
+			conn.update(collection, BSON("_id" << _id), BSON("$set" << BSON("refined" << (i + 1))));
 		}
 
 		// Sort summaries.
@@ -562,7 +564,7 @@ int main(int argc, char* argv[])
 		for (const auto& s : phase2_summaries)
 		{
 			const size_t num_conformations = s.energies.size();
-			phase2_csv << s.index << ',' << s.lig_id << ',' << num_conformations;
+			phase2_csv << s.lig_id << ',' << num_conformations;
 			for (size_t j = 0; j < num_conformations; ++j)
 			{
 				phase2_csv << ',' << s.energies[j]/* << ',' << s.hbonds[j]*/;
@@ -594,7 +596,7 @@ int main(int argc, char* argv[])
 		using boost::posix_time::ptime;
 		using posix_millis = boost::posix_time::milliseconds;
 		using boost::posix_time::to_simple_string;
-		message.setContent("Your idock job submitted on " + to_simple_string(ptime(epoch, posix_millis(job["submitted"].Date().millis))) + " UTC docking " + lexical_cast<string>(job["ligands"].Int()) + " ligands with description as \"" + job["description"].String() + "\" was done on " + to_simple_string(ptime(epoch, posix_millis(millis_since_epoch))) + " UTC. View result at http://idock.cse.cuhk.edu.hk");
+		message.setContent("Your idock job submitted on " + to_simple_string(ptime(epoch, posix_millis(job["submitted"].Date().millis))) + " UTC docking " + lexical_cast<string>(job["ligands"].Int()) + " ligands with description as \"" + job["description"].String() + "\" was done on " + to_simple_string(ptime(epoch, posix_millis(millis_since_epoch))) + " UTC. " + lexical_cast<string>(num_hits) + " hits were shortlisted. View result at http://idock.cse.cuhk.edu.hk");
 		message.addRecipient(MailRecipient(MailRecipient::PRIMARY_RECIPIENT, email));
 		SMTPClientSession session("137.189.91.190");
 		session.login();
