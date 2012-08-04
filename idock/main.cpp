@@ -75,11 +75,10 @@ int main(int argc, char* argv[])
 	// Initialize default values of constant arguments.
 	const path ligands_path = "16_lig.pdbqt";
 	const path headers_path = "16_hdr.bin";
-//	const size_t num_ligands = 12171187;
 	const size_t num_threads = thread::hardware_concurrency();
 	const size_t seed = time(0);
-	const size_t phase1_num_mc_tasks = 4; // TODO: revert to 32.
-	const size_t phase2_num_mc_tasks = 8; // TODO: revert to 256.
+	const size_t phase1_num_mc_tasks = 2; // TODO: revert to 32.
+	const size_t phase2_num_mc_tasks = 32; // TODO: revert to 256.
 	const size_t max_conformations = 20;
 	const size_t max_results = 20; // Maximum number of results obtained from a single Monte Carlo task.
 	const size_t slices[101] = { 0, 121712, 243424, 365136, 486848, 608560, 730272, 851984, 973696, 1095408, 1217120, 1338832, 1460544, 1582256, 1703968, 1825680, 1947392, 2069104, 2190816, 2312528, 2434240, 2555952, 2677664, 2799376, 2921088, 3042800, 3164512, 3286224, 3407936, 3529648, 3651360, 3773072, 3894784, 4016496, 4138208, 4259920, 4381632, 4503344, 4625056, 4746768, 4868480, 4990192, 5111904, 5233616, 5355328, 5477040, 5598752, 5720464, 5842176, 5963888, 6085600, 6207312, 6329024, 6450736, 6572448, 6694160, 6815872, 6937584, 7059296, 7181008, 7302720, 7424432, 7546144, 7667856, 7789568, 7911280, 8032992, 8154704, 8276416, 8398128, 8519840, 8641552, 8763264, 8884976, 9006688, 9128400, 9250112, 9371824, 9493536, 9615248, 9736960, 9858672, 9980384, 10102096, 10223808, 10345520, 10467232, 10588944, 10710655, 10832366, 10954077, 11075788, 11197499, 11319210, 11440921, 11562632, 11684343, 11806054, 11927765, 12049476, 12171187 };
@@ -175,8 +174,8 @@ int main(int argc, char* argv[])
 		const path job_path = jobs_path / _id.str();
 		const auto slice_key = lexical_cast<string>(slice);
 		const path slice_csv_path = job_path / (slice_key + ".csv");
-		const path phase1_csv_path = job_path / "phase1.csv";
-		const path phase2_csv_path = job_path / "phase2.csv";
+		const path phase1_csv_path = job_path / "phase1.csv.gz";
+		const path phase2_csv_path = job_path / "phase2.csv.gz";
 		const path hits_pdbqt_path = job_path / "hits.pdbqt";
 		const auto start_lig = slices[slice];
 		const auto end_lig = slices[slice + 1];
@@ -387,22 +386,29 @@ int main(int argc, char* argv[])
 		BOOST_ASSERT(num_hits <= num_ligands);
 		conn.update(collection, BSON("_id" << _id), BSON("$set" << BSON("hits" << num_hits)));
 
+		// Write phase 1 csv.
 		phase1_summaries.sort();
-		ofstream phase1_csv(phase1_csv_path); // TODO: gzip phase 1 log.
-		phase1_csv.setf(std::ios::fixed, std::ios::floatfield);
-		phase1_csv << std::setprecision(3);
-		phase1_csv << "ZINC ID,FE1\n";
-		for (const auto& s : phase1_summaries)
+		using boost::iostreams::filtering_ostream;
+		using boost::iostreams::gzip_compressor;
 		{
-			phase1_csv << s.lig_id << ',' << s.energies.front() << '\n';
+			ofstream phase1_csv(phase1_csv_path);
+			filtering_ostream phase1_csv_gz;
+			phase1_csv_gz.push(gzip_compressor());
+			phase1_csv_gz.push(phase1_csv);
+			phase1_csv_gz.setf(std::ios::fixed, std::ios::floatfield);
+			phase1_csv_gz << std::setprecision(3);
+			phase1_csv_gz << "ZINC ID,FE1\n";
+			for (const auto& s : phase1_summaries)
+			{
+				phase1_csv_gz << s.lig_id << ',' << s.energies.front() << '\n';
+			}
 		}
-		phase1_csv.close();
 
 		// Perform phase 2.
 		const auto phase2_num_ligands = std::min(num_hits, static_cast<unsigned int>(1000));
 		ptr_vector<summary> phase2_summaries(phase2_num_ligands);
 		for (auto i = 0; i < phase2_num_ligands; ++i)
-		{			
+		{
 			// Locate a ligand.
 			const auto& s = phase1_summaries[i];
 			headers.seekg(sizeof(size_t) * s.index);
@@ -553,29 +559,31 @@ int main(int argc, char* argv[])
 		phase2_summaries.sort();
 
 		// Write phase 2 csv.
-		ofstream phase2_csv(phase2_csv_path);
-		phase2_csv << "Ligand,Conf";
-		for (size_t i = 1; i <= max_conformations; ++i)
 		{
-			phase2_csv << ",FE" << i/* << ",HB" << i*/;
-		}
-		phase2_csv.setf(std::ios::fixed, std::ios::floatfield);
-		phase2_csv << '\n' << std::setprecision(3);
-		for (const auto& s : phase2_summaries)
-		{
-			const size_t num_conformations = s.energies.size();
-			phase2_csv << s.lig_id << ',' << num_conformations;
-			for (size_t j = 0; j < num_conformations; ++j)
+			ofstream phase2_csv(phase2_csv_path);
+			filtering_ostream phase2_csv_gz;
+			phase2_csv_gz.push(gzip_compressor());
+			phase2_csv_gz.push(phase2_csv);
+			phase2_csv_gz.setf(std::ios::fixed, std::ios::floatfield);
+			phase2_csv_gz << std::setprecision(3);
+			phase2_csv_gz << "Ligand,Conf";
+			for (size_t i = 1; i <= max_conformations; ++i) phase2_csv_gz << ",FE" << i/* << ",HB" << i*/;
+			phase2_csv_gz << '\n';
+			for (const auto& s : phase2_summaries)
 			{
-				phase2_csv << ',' << s.energies[j]/* << ',' << s.hbonds[j]*/;
+				const size_t num_conformations = s.energies.size();
+				phase2_csv_gz << s.lig_id << ',' << num_conformations;
+				for (size_t j = 0; j < num_conformations; ++j)
+				{
+					phase2_csv_gz << ',' << s.energies[j]/* << ',' << s.hbonds[j]*/;
+				}
+				for (size_t j = num_conformations; j < max_conformations; ++j)
+				{
+					phase2_csv_gz << ',';
+				}
+				phase2_csv_gz << '\n';
 			}
-			for (size_t j = num_conformations; j < max_conformations; ++j)
-			{
-				phase2_csv << ',';
-			}
-			phase2_csv << '\n';
 		}
-		phase2_csv.close();
 
 		// Set done time.
 		using boost::chrono::system_clock;
