@@ -570,7 +570,7 @@ int main(int argc, char* argv[])
 			phase2_results.clear();
 
 			// Report progress every ligand.
-			conn.update(collection, BSON("_id" << _id), BSON("inc" << BSON("refined" << 1)));
+			conn.update(collection, BSON("_id" << _id), BSON("$inc" << BSON("refined" << 1)));
 		}
 
 		// Write phase 2 csv.
