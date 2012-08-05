@@ -16,6 +16,8 @@
 
 */
 
+#include <boost/iostreams/filtering_stream.hpp>
+#include <boost/iostreams/filter/gzip.hpp>
 #include "parsing_error.hpp"
 #include "ligand.hpp"
 
@@ -558,14 +560,19 @@ namespace idock
 
 		// Dump binding conformations to the output ligand file.
 		using namespace std;
-		ofstream out(output_ligand_path, ios::app); // Dumping starts. Open the file stream as late as possible.
-		out.setf(ios::fixed, ios::floatfield);
-		out << setprecision(3);
-		out << "HEADER    " << id << '\n';
+		using boost::iostreams::filtering_ostream;
+		using boost::iostreams::gzip_compressor;
+		ofstream hits_pdbqt(output_ligand_path, ios::app); // Dumping starts. Open the file stream as late as possible.
+		filtering_ostream hits_pdbqt_gz;
+		hits_pdbqt_gz.push(gzip_compressor());
+		hits_pdbqt_gz.push(hits_pdbqt);
+		hits_pdbqt_gz.setf(ios::fixed, ios::floatfield);
+		hits_pdbqt_gz << setprecision(3);
+		hits_pdbqt_gz << "HEADER    " << id << '\n';
 		for (size_t i = 0; i < num_conformations; ++i)
 		{
 			const result& r = results[i];
-			out << "MODEL     " << setw(4) << (i + 1) << '\n'
+			hits_pdbqt_gz << "MODEL     " << setw(4) << (i + 1) << '\n'
 				<< "REMARK       NORMALIZED FREE ENERGY PREDICTED BY IDOCK:" << setw(8) << r.e_nd    << " KCAL/MOL\n"
 				<< "REMARK            TOTAL FREE ENERGY PREDICTED BY IDOCK:" << setw(8) << r.e       << " KCAL/MOL\n"
 				<< "REMARK     INTER-LIGAND FREE ENERGY PREDICTED BY IDOCK:" << setw(8) << r.f       << " KCAL/MOL\n"
@@ -577,7 +584,7 @@ namespace idock
 				{
 					const fl   free_energy = line[77] == 'H' ? 0 : grid_maps[heavy_atoms[heavy_atom].xs](b.grid_index(r.heavy_atoms[heavy_atom]));
 					const vec3& coordinate = line[77] == 'H' ? r.hydrogens[hydrogen++] : r.heavy_atoms[heavy_atom++];
-					out << line.substr(0, 30)
+					hits_pdbqt_gz << line.substr(0, 30)
 						<< setw(8) << coordinate[0]
 						<< setw(8) << coordinate[1]
 						<< setw(8) << coordinate[2]
@@ -587,12 +594,11 @@ namespace idock
 				}
 				else // This line starts with "ROOT", "ENDROOT", "BRANCH", "ENDBRANCH", TORSDOF", which will not change during docking.
 				{
-					out << line;
+					hits_pdbqt_gz << line;
 				}
-				out << '\n';
+				hits_pdbqt_gz << '\n';
 			}
-			out << "ENDMDL\n";
+			hits_pdbqt_gz << "ENDMDL\n";
 		}
-		out.close(); // Dumping finishes. Close the file stream as soon as possible.
 	}
 }

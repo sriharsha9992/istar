@@ -424,7 +424,7 @@ int main(int argc, char* argv[])
 		}
 
 		// Perform phase 2.
-		const path hits_pdbqt_path = job_path / "hits.pdbqt";
+		const path hits_pdbqt_path = job_path / "hits.pdbqt.gz";
 		ptr_vector<summary> phase2_summaries(num_hits);
 		for (auto i = 0; i < num_hits; ++i)
 		{
