@@ -113,6 +113,18 @@ if (cluster.isMaster) {
         }
       });
       // Get idock jobs by email
+      var idockGetJobsFields = {
+        'ligands': 1,
+        'submitted': 1,
+        'scheduled': 1,
+        'completed': 1,
+        'refined': 1,
+        'hits': 1,
+        'done': 1
+      };
+      for (var i = 0; i < 100; ++i) {
+        idockGetJobsFields[i.toString()] = 1;
+      }
       app.get('/idock/jobs', function(req, res) {
         if (v.init(req.query)
          .chk('email', 'must be valid', true).isEmail()
@@ -121,7 +133,7 @@ if (cluster.isMaster) {
         }
         f.init(req.query)
          .snt('email').toLowerCase();
-        idock.find(f.res, function(err, cursor) { // TODO: retrieve necessary fields only
+        idock.find(f.res, idockGetJobsFields, function(err, cursor) {
           if (err) throw err;
           cursor.sort({'submitted': 1}).toArray(function(err, docs) {
             cursor.close();
@@ -243,6 +255,17 @@ if (cluster.isMaster) {
         });
       });
       // Get the progress of jobs
+      var idockGetDoneFields = {
+        '_id': 0,
+        'scheduled': 1,
+        'completed': 1,
+        'refined': 1,
+        'hits': 1,
+        'done': 1
+      };
+      for (var i = 0; i < 100; ++i) {
+        idockGetDoneFields[i.toString()] = 1;
+      }
       app.get('/idock/done', function(req, res) {
         if (v.init(req.query)
          .chk('email', 'must be valid', true).isEmail()
@@ -253,18 +276,7 @@ if (cluster.isMaster) {
         f.init(req.query)
          .snt('email').toLowerCase()
          .snt('skip', 0).toInt();
-        var fieldsToReturn = {
-          '_id': 0,
-          'scheduled': 1,
-          'completed': 1,
-          'refined': 1,
-          'hits': 1,
-          'done': 1
-        };
-        for (var i = 0; i < 100; ++i) {
-          fieldsToReturn[i.toString()] = 1;
-        }
-        idock.find({'email': f.res.email}, fieldsToReturn, function(err, cursor) {
+        idock.find({'email': f.res.email}, idockGetDoneFields, function(err, cursor) {
           if (err) throw err;
           cursor.sort({'submitted': 1}).skip(f.res.skip).toArray(function(err, docs) {
             if (err) throw err;
