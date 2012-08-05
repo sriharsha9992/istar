@@ -272,7 +272,7 @@ int main(int argc, char** argv)
 		string errmsg;
 		if ((!conn.connect(host, errmsg)) || (!conn.auth("istar", user, pwd, errmsg)))
 		{
-			syslog(LOG_ERR, errmsg.c_str());
+			syslog(LOG_ERR, "%s", errmsg.c_str());
 			return 1;
 		}
 	}
