@@ -16,8 +16,7 @@
 
 */
 
-#include <iostream>
-#include <iomanip>
+#include <syslog.h>
 #include <ctime>
 #include <boost/thread/thread.hpp>
 #include <boost/filesystem/operations.hpp>
@@ -38,7 +37,6 @@
 
 int main(int argc, char* argv[])
 {
-	using std::cout;
 	using std::string;
 	using boost::array;
 	using boost::filesystem::path;
@@ -49,8 +47,8 @@ int main(int argc, char* argv[])
 	using namespace idock;
 
 	// Daemonize itself, retaining the current working directory and redirecting stdin, stdout and stderr to /dev/null.
-//	daemon(0, 0);
-	cout << "idock 1.5\n";
+	daemon(1, 0);
+	syslog(LOG_INFO, "idock 1.5");
 
 	// Fetch command line arguments.
 	const auto host = argv[1];
@@ -62,11 +60,11 @@ int main(int argc, char* argv[])
 	DBClientConnection conn;
 	{
 		// Connect to host and authenticate user.
-//		syslog(LOG_INFO, "Connecting to %s and authenticating %s", host, user);
+		syslog(LOG_INFO, "Connecting to %s and authenticating %s", host, user);
 		string errmsg;
 		if ((!conn.connect(host, errmsg)) || (!conn.auth("istar", user, pwd, errmsg)))
 		{
-//			syslog(LOG_ERR, errmsg.c_str());
+			syslog(LOG_ERR, errmsg.c_str());
 			return 1;
 		}
 	}
@@ -90,7 +88,7 @@ int main(int argc, char* argv[])
 	const auto epoch = boost::gregorian::date(1970, 1, 1);
 
 	// Initialize variables for job caching.
-	auto _id = OID();
+	auto _id = OID(); // TODO
 	path job_path;
 	double center_x, center_y, center_z, mwt_lb, mwt_ub, logp_lb, logp_ub, ad_lb, ad_ub, pd_lb, pd_ub;
 	int num_ligands, size_x, size_y, size_z, hbd_lb, hbd_ub, hba_lb, hba_ub, tpsa_lb, tpsa_ub, charge_lb, charge_ub, nrb_lb, nrb_ub;
@@ -105,7 +103,6 @@ int main(int argc, char* argv[])
 	mt19937eng eng(seed);
 
 	// Initialize a thread pool and create worker threads for later use.
-	cout << "Creating a thread pool of " << num_threads << " worker threads\n";
 	thread_pool tp(num_threads);
 
 	// Precalculate the scoring function in parallel.
@@ -266,7 +263,7 @@ int main(int argc, char* argv[])
 		const auto slice = job["scheduled"].Int();
 
 		// Perform phase 1.
-		cout << "Executing job " << _id << " phase 1 slice " << slice << '\n';
+		syslog(LOG_INFO, "Executing job %s phase 1 slice %d", _id, slice);
 		const auto slice_key = lexical_cast<string>(slice);
 		const auto start_lig = slices[slice];
 		const auto end_lig = slices[slice + 1];
@@ -378,7 +375,7 @@ int main(int argc, char* argv[])
 
 		// If phase 1 is done, transit to phase 2.
 		if (!conn.query(collection, QUERY("_id" << _id << "completed" << 100))->more()) continue;
-		cout << "Executing job " << _id << " phase 2\n";
+		syslog(LOG_INFO, "Executing job %s phase 2", _id);
 
 		// Combine and delete multiple slice csv's.
 		ptr_vector<summary> phase1_summaries(num_ligands);
@@ -525,35 +522,6 @@ int main(int argc, char* argv[])
 
 			if (num_conformations)
 			{
-/*
-				// Find the number of hydrogen bonds.
-				const size_t num_lig_hbda = lig.hbda.size();
-				for (size_t k = 0; k < num_conformations; ++k)
-				{
-					result& r = results[k];
-					r.num_hbonds = 0;
-					for (size_t i = 0; i < num_lig_hbda; ++i)
-					{
-						const size_t lig_xs = lig.heavy_atoms[lig.hbda[i]].xs;
-						BOOST_ASSERT(xs_is_donor_acceptor(lig_xs));
-
-						// Find the possibly interacting receptor atoms via partitions.
-						const vec3 lig_coords = r.heavy_atoms[lig.hbda[i]];
-						const vector<size_t>& rec_hbda = rec.hbda_3d(b.partition_index(lig_coords));
-
-						// Accumulate individual free energies for each atom types to populate.
-						const size_t num_rec_hbda = rec_hbda.size();
-						for (size_t l = 0; l < num_rec_hbda; ++l)
-						{
-							const atom& a = rec.atoms[rec_hbda[l]];
-							BOOST_ASSERT(xs_is_donor_acceptor(a.xs));
-							if (!xs_hbond(lig_xs, a.xs)) continue;
-							const fl r2 = distance_sqr(lig_coords, a.coordinate);
-							if (r2 <= hbond_dist_sqr) ++r.num_hbonds;
-						}
-					}
-				}
-*/
 				// Write models to file.
 				lig.write_models(hits_pdbqt_path, phase2_results, num_conformations, b, grid_maps);
 
