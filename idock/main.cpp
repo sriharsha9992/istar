@@ -263,7 +263,7 @@ int main(int argc, char* argv[])
 		const auto slice = job["scheduled"].Int();
 
 		// Perform phase 1.
-		syslog(LOG_INFO, "Executing job %s phase 1 slice %d", _id, slice);
+		syslog(LOG_INFO, "Executing job %s phase 1 slice %d", _id.str().c_str(), slice);
 		const auto slice_key = lexical_cast<string>(slice);
 		const auto start_lig = slices[slice];
 		const auto end_lig = slices[slice + 1];
@@ -375,7 +375,7 @@ int main(int argc, char* argv[])
 
 		// If phase 1 is done, transit to phase 2.
 		if (!conn.query(collection, QUERY("_id" << _id << "completed" << 100))->more()) continue;
-		syslog(LOG_INFO, "Executing job %s phase 2", _id);
+		syslog(LOG_INFO, "Executing job %s phase 2", _id.str().c_str());
 
 		// Combine and delete multiple slice csv's.
 		ptr_vector<summary> phase1_summaries(num_ligands);
@@ -430,25 +430,10 @@ int main(int argc, char* argv[])
 			headers.seekg(sizeof(size_t) * s.index);
 			size_t header;
 			headers.read((char*)&header, sizeof(size_t));
-			ligands.seekg(header);
-
-			// Assert if the ligand satisfies the filtering conditions.
-			getline(ligands, line);
-			const auto lig_id = line.substr(11, 8);
-			const auto mwt = right_cast<fl>(line, 21, 28);
-			const auto logp = right_cast<fl>(line, 30, 37);
-			const auto ad = right_cast<fl>(line, 39, 46);
-			const auto pd = right_cast<fl>(line, 48, 55);
-			const auto hbd = right_cast<int>(line, 57, 59);
-			const auto hba = right_cast<int>(line, 61, 63);
-			const auto tpsa = right_cast<int>(line, 65, 67);
-			const auto charge = right_cast<int>(line, 69, 71);
-			const auto nrb = right_cast<int>(line, 73, 75);
-			BOOST_ASSERT(lig_id == s.lig_id);
-			BOOST_ASSERT((mwt_lb <= mwt) && (mwt <= mwt_ub) && (logp_lb <= logp) && (logp <= logp_ub) && (ad_lb <= ad) && (ad <= ad_ub) && (pd_lb <= pd) && (pd <= pd_ub) && (hbd_lb <= hbd) && (hbd <= hbd_ub) && (hba_lb <= hba) && (hba <= hba_ub) && (tpsa_lb <= tpsa) && (tpsa <= tpsa_ub) && (charge_lb <= charge) && (charge <= charge_ub) && (nrb_lb <= nrb) && (nrb <= nrb_ub));
+			ligands.seekg(header + 80); // Bypass the header line.
 
 			// Parse the ligand.
-			ligand lig(ligands, lig_id);
+			ligand lig(ligands, s.lig_id);
 
 			// Create grid maps on the fly if necessary.
 			BOOST_ASSERT(atom_types_to_populate.empty());
@@ -550,8 +535,8 @@ int main(int argc, char* argv[])
 			phase2_csv_gz.push(phase2_csv);
 			phase2_csv_gz.setf(std::ios::fixed, std::ios::floatfield);
 			phase2_csv_gz << std::setprecision(3);
-			phase2_csv_gz << "Ligand,Conf";
-			for (size_t i = 1; i <= max_conformations; ++i) phase2_csv_gz << ",FE" << i/* << ",HB" << i*/;
+			phase2_csv_gz << "ZINC ID,Conf";
+			for (size_t i = 1; i <= max_conformations; ++i) phase2_csv_gz << ",FE" << i;
 			phase2_csv_gz << '\n';
 			for (const auto& s : phase2_summaries)
 			{
@@ -559,7 +544,7 @@ int main(int argc, char* argv[])
 				phase2_csv_gz << s.lig_id << ',' << num_conformations;
 				for (size_t j = 0; j < num_conformations; ++j)
 				{
-					phase2_csv_gz << ',' << s.energies[j]/* << ',' << s.hbonds[j]*/;
+					phase2_csv_gz << ',' << s.energies[j];
 				}
 				for (size_t j = num_conformations; j < max_conformations; ++j)
 				{
@@ -580,7 +565,7 @@ int main(int argc, char* argv[])
 		const auto compt_cursor = conn.query(collection, QUERY("_id" << _id), 1, 0, &compt_fields);
 		const auto compt = compt_cursor->next();
 		const auto email = compt["email"].String();
-		cout << "Sending a completion notification email to " << email << '\n';
+		syslog(LOG_INFO, "Sending a completion notification email to %s", email.c_str());
 		using Poco::Net::MailMessage;
 		using Poco::Net::MailRecipient;
 		using Poco::Net::SMTPClientSession;
