@@ -123,6 +123,7 @@ The logo image is collected from [Open Clip Art].
 [HTML5 Boilerplate]: https://github.com/h5bp/html5-boilerplate
 [Modernizr]: https://github.com/Modernizr/Modernizr
 [jQuery]: https://github.com/jquery/jquery
+[jQuery UI]: https://github.com/jquery/jquery-ui
 [node.js]: https://github.com/joyent/node
 [mongodb]: https://github.com/mongodb/node-mongodb-native
 [express]: https://github.com/visionmedia/express
