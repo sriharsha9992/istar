@@ -271,7 +271,6 @@ int main(int argc, char* argv[])
 		const auto start_lig = slices[slice];
 		const auto end_lig = slices[slice + 1];
 
-		unsigned int num_completed_ligands = 0;
 		headers.seekg(sizeof(size_t) * start_lig);
 		ofstream slice_csv(job_path / (slice_key + ".csv")); // TODO: use bin instead of csv, one uint16_t for index, one size_t for ZINC ID and one float for free energy.
 		slice_csv.setf(std::ios::fixed, std::ios::floatfield);
@@ -369,13 +368,12 @@ int main(int argc, char* argv[])
 				phase1_results.clear();
 			}
 
-			// Report progress every 32 ligands. TODO
-			if (!(++num_completed_ligands & 0)) conn.update(collection, BSON("_id" << _id), BSON("$set" << BSON(slice_key << num_completed_ligands)));
+			// Report progress.
+			conn.update(collection, BSON("_id" << _id), BSON("$inc" << BSON(slice_key << 1)));
 		}
 		slice_csv.close();
 
-		// Increment the completed indicator.
-		conn.update(collection, BSON("_id" << _id), BSON("$set" << BSON(slice_key << num_completed_ligands)));
+		// Increment the completed counter.
 		conn.update(collection, BSON("_id" << _id << "$atomic" << 1), BSON("$inc" << BSON("completed" << 1)));
 
 		// If phase 1 is done, transit to phase 2.
