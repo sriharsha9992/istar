@@ -70,9 +70,12 @@ int main(int argc, char* argv[])
 			return 1;
 		}
 	}
-	const auto collection = "istar.idock";
 
 	// Initialize default values of constant arguments.
+	const auto collection = "istar.idock";
+	const auto jobid_fields = BSON("_id" << 1 << "scheduled" << 1);
+	const auto param_fields = BSON("_id" << 0 << "receptor" << 1 << "ligands" << 1 << "center_x" << 1 << "center_y" << 1 << "center_z" << 1 << "size_x" << 1 << "size_y" << 1 << "size_z" << 1 << "mwt_lb" << 1 << "mwt_ub" << 1 << "logp_lb" << 1 << "logp_ub" << 1 << "ad_lb" << 1 << "ad_ub" << 1 << "pd_lb" << 1 << "pd_ub" << 1 << "hbd_lb" << 1 << "hbd_ub" << 1 << "hba_lb" << 1 << "hba_ub" << 1 << "tpsa_lb" << 1 << "tpsa_ub" << 1 << "charge_lb" << 1 << "charge_ub" << 1 << "nrb_lb" << 1 << "nrb_ub" << 1);
+	const auto compt_fields = BSON("_id" << 0 << "email" << 1 << "submitted" << 1 << "description" << 1);
 	const path ligands_path = "16_lig.pdbqt";
 	const path headers_path = "16_hdr.bin";
 	const size_t num_threads = thread::hardware_concurrency();
@@ -85,6 +88,18 @@ int main(int argc, char* argv[])
 	const fl energy_range = 3.0;
 	const fl grid_granularity = 0.8; // TODO: revert to 0.08
 	const auto epoch = boost::gregorian::date(1970, 1, 1);
+
+	// Initialize variables for job caching.
+	auto _id = OID();
+	path job_path;
+	double center_x, center_y, center_z, mwt_lb, mwt_ub, logp_lb, logp_ub, ad_lb, ad_ub, pd_lb, pd_ub;
+	int num_ligands, size_x, size_y, size_z, hbd_lb, hbd_ub, hba_lb, hba_ub, tpsa_lb, tpsa_ub, charge_lb, charge_ub, nrb_lb, nrb_ub;
+	box b;
+	receptor rec;
+	array3d<vector<size_t>> partitions;
+	size_t num_gm_tasks;
+	ptr_vector<packaged_task<void>> gm_tasks;
+	vector<array3d<fl>> grid_maps(XS_TYPE_SIZE);
 
 	// Initialize a Mersenne Twister random number generator.
 	mt19937eng eng(seed);
@@ -133,8 +148,6 @@ int main(int argc, char* argv[])
 	// Reserve space for containers.
 	string line; line.reserve(80);
 	vector<size_t> atom_types_to_populate; atom_types_to_populate.reserve(XS_TYPE_SIZE);
-	vector<array3d<fl>> grid_maps(XS_TYPE_SIZE);
-	ptr_vector<packaged_task<void>> gm_tasks;
 	ptr_vector<packaged_task<void>> mc_tasks(phase2_num_mc_tasks);
 	ptr_vector<ptr_vector<result>> phase1_result_containers, phase2_result_containers;
 	phase1_result_containers.resize(phase1_num_mc_tasks);
@@ -144,121 +157,123 @@ int main(int argc, char* argv[])
 	ptr_vector<result> phase1_results, phase2_results;
 	phase1_results.reserve(1);
 	phase2_results.reserve(max_results * phase2_num_mc_tasks);
-
+	
 	// Open files for reading.
 	ifstream headers(headers_path);
 	ifstream ligands(ligands_path);
 
 	while (true)
 	{
-		// Fetch a job.
+		// Fetch a job in a FCFS manner.
 		using namespace bson;
-		auto cursor = conn.query(collection, QUERY("scheduled" << BSON("$lt" << 100)).sort("submitted"), 1, 0/*, BSON("_id" << 1 << "scheduled" << 1)*/); // nToReturn = 1, nToSkip = 0, fieldsToReturn
-		if (!cursor->more())
+		auto jobid_cursor = conn.query(collection, QUERY("scheduled" << BSON("$lt" << 100)).sort("submitted"), 1, 0, &jobid_fields); // nToReturn = 1, nToSkip = 0, fieldsToReturn
+		if (!jobid_cursor->more())
 		{
-			// Sleep for a second.
+			// Sleep for a while.
 			using boost::this_thread::sleep_for;
 			using boost::chrono::seconds;
 			sleep_for(seconds(1));
 			continue;
 		}
+		const auto job = jobid_cursor->next();
+		conn.update(collection, BSON("_id" << job["_id"] << "$atomic" << 1), BSON("$inc" << BSON("scheduled" << 1)));
 
-		const auto job = cursor->next();
-		const auto _id = job["_id"].OID();
+		// Refresh cache if it is a new job.
+		if (_id != job["_id"].OID())
+		{
+			_id = job["_id"].OID();
+			job_path = jobs_path / _id.str();
+			if (!exists(job_path)) create_directory(job_path);
+
+			auto param_cursor = conn.query(collection, QUERY("_id" << _id), 1, 0, &param_fields);
+			const auto param = param_cursor->next();
+			rec = receptor(param["receptor"].String());
+			num_ligands = param["ligands"].Int();
+			center_x = param["center_x"].Number();
+			center_y = param["center_y"].Number();
+			center_z = param["center_z"].Number();
+			size_x = param["size_x"].Int();
+			size_y = param["size_y"].Int();
+			size_z = param["size_z"].Int();
+			mwt_lb = param["mwt_lb"].Number();
+			mwt_ub = param["mwt_ub"].Number();
+			logp_lb = param["logp_lb"].Number();
+			logp_ub = param["logp_ub"].Number();
+			ad_lb = param["ad_lb"].Number();
+			ad_ub = param["ad_ub"].Number();
+			pd_lb = param["pd_lb"].Number();
+			pd_ub = param["pd_ub"].Number();
+			hbd_lb = param["hbd_lb"].Int();
+			hbd_ub = param["hbd_ub"].Int();
+			hba_lb = param["hba_lb"].Int();
+			hba_ub = param["hba_ub"].Int();
+			tpsa_lb = param["tpsa_lb"].Int();
+			tpsa_ub = param["tpsa_ub"].Int();
+			charge_lb = param["charge_lb"].Int();
+			charge_ub = param["charge_ub"].Int();
+			nrb_lb = param["nrb_lb"].Int();
+			nrb_ub = param["nrb_ub"].Int();
+
+			// Initialize the search space of cuboid shape.
+			b = box(vec3(center_x, center_y, center_z), vec3(size_x, size_y, size_z), grid_granularity);
+
+			// Divide the box into coarse-grained partitions for subsequent grid map creation.
+			partitions = array3d<vector<size_t>>(b.num_partitions);
+			{
+				// Find all the heavy receptor atoms that are within 8A of the box.
+				vector<size_t> receptor_atoms_within_cutoff;
+				receptor_atoms_within_cutoff.reserve(rec.atoms.size());
+				const size_t num_rec_atoms = rec.atoms.size();
+				for (size_t i = 0; i < num_rec_atoms; ++i)
+				{
+					const atom& a = rec.atoms[i];
+					if (b.within_cutoff(a.coordinate))
+					{
+						receptor_atoms_within_cutoff.push_back(i);
+					}
+				}
+				const size_t num_receptor_atoms_within_cutoff = receptor_atoms_within_cutoff.size();
+
+				// Allocate each nearby receptor atom to its corresponding partition.
+				for (size_t x = 0; x < b.num_partitions[0]; ++x)
+				for (size_t y = 0; y < b.num_partitions[1]; ++y)
+				for (size_t z = 0; z < b.num_partitions[2]; ++z)
+				{
+					partitions(x, y, z).reserve(num_receptor_atoms_within_cutoff);
+					const array<size_t, 3> index1 = {{ x,     y,     z     }};
+					const array<size_t, 3> index2 = {{ x + 1, y + 1, z + 1 }};
+					const vec3 corner1 = b.partition_corner1(index1);
+					const vec3 corner2 = b.partition_corner1(index2);
+					for (size_t l = 0; l < num_receptor_atoms_within_cutoff; ++l)
+					{
+						const size_t i = receptor_atoms_within_cutoff[l];
+						if (b.within_cutoff(corner1, corner2, rec.atoms[i].coordinate))
+						{
+							partitions(x, y, z).push_back(i);
+						}
+					}
+				}
+			}
+
+			// Reserve storage for grid map task container.
+			num_gm_tasks = b.num_probes[0];
+			gm_tasks.reserve(num_gm_tasks);
+			
+			// Clear grid maps.
+			grid_maps.clear();
+			grid_maps.resize(XS_TYPE_SIZE);
+		}
 		const auto slice = job["scheduled"].Int();
 
 		// Perform phase 1.
 		cout << "Executing job " << _id << " phase 1 slice " << slice << '\n';
-		conn.update(collection, BSON("_id" << _id << "$atomic" << 1), BSON("$inc" << BSON("scheduled" << 1)));
-
-		const path job_path = jobs_path / _id.str();
 		const auto slice_key = lexical_cast<string>(slice);
-		const path slice_csv_path = job_path / (slice_key + ".csv");
-		const path phase1_csv_path = job_path / "phase1.csv.gz";
-		const path phase2_csv_path = job_path / "phase2.csv.gz";
-		const path hits_pdbqt_path = job_path / "hits.pdbqt";
 		const auto start_lig = slices[slice];
 		const auto end_lig = slices[slice + 1];
-		const auto num_ligands = job["ligands"].Int();
-		const auto center_x = job["center_x"].Number();
-		const auto center_y = job["center_y"].Number();
-		const auto center_z = job["center_z"].Number();
-		const auto size_x = job["size_x"].Int();
-		const auto size_y = job["size_y"].Int();
-		const auto size_z = job["size_z"].Int();
-		const auto mwt_lb = job["mwt_lb"].Number();
-		const auto mwt_ub = job["mwt_ub"].Number();
-		const auto logp_lb = job["logp_lb"].Number();
-		const auto logp_ub = job["logp_ub"].Number();
-		const auto ad_lb = job["ad_lb"].Number();
-		const auto ad_ub = job["ad_ub"].Number();
-		const auto pd_lb = job["pd_lb"].Number();
-		const auto pd_ub = job["pd_ub"].Number();
-		const auto hbd_lb = job["hbd_lb"].Int();
-		const auto hbd_ub = job["hbd_ub"].Int();
-		const auto hba_lb = job["hba_lb"].Int();
-		const auto hba_ub = job["hba_ub"].Int();
-		const auto tpsa_lb = job["tpsa_lb"].Int();
-		const auto tpsa_ub = job["tpsa_ub"].Int();
-		const auto charge_lb = job["charge_lb"].Int();
-		const auto charge_ub = job["charge_ub"].Int();
-		const auto nrb_lb = job["nrb_lb"].Int();
-		const auto nrb_ub = job["nrb_ub"].Int();
-
-		BOOST_ASSERT(!job[slice_key].Int());
-		if (!exists(job_path)) create_directory(job_path);
-
-		// Initialize the search space of cuboid shape.
-		const box b(vec3(center_x, center_y, center_z), vec3(size_x, size_y, size_z), grid_granularity);
-
-		// Parse the receptor.
-		const receptor rec(job["receptor"].String());
-
-		// Divide the box into coarse-grained partitions for subsequent grid map creation.
-		array3d<vector<size_t>> partitions(b.num_partitions);
-		{
-			// Find all the heavy receptor atoms that are within 8A of the box.
-			vector<size_t> receptor_atoms_within_cutoff;
-			receptor_atoms_within_cutoff.reserve(rec.atoms.size());
-			const size_t num_rec_atoms = rec.atoms.size();
-			for (size_t i = 0; i < num_rec_atoms; ++i)
-			{
-				const atom& a = rec.atoms[i];
-				if (b.within_cutoff(a.coordinate))
-				{
-					receptor_atoms_within_cutoff.push_back(i);
-				}
-			}
-			const size_t num_receptor_atoms_within_cutoff = receptor_atoms_within_cutoff.size();
-
-			// Allocate each nearby receptor atom to its corresponding partition.
-			for (size_t x = 0; x < b.num_partitions[0]; ++x)
-			for (size_t y = 0; y < b.num_partitions[1]; ++y)
-			for (size_t z = 0; z < b.num_partitions[2]; ++z)
-			{
-				partitions(x, y, z).reserve(num_receptor_atoms_within_cutoff);
-				const array<size_t, 3> index1 = {{ x,     y,     z     }};
-				const array<size_t, 3> index2 = {{ x + 1, y + 1, z + 1 }};
-				const vec3 corner1 = b.partition_corner1(index1);
-				const vec3 corner2 = b.partition_corner1(index2);
-				for (size_t l = 0; l < num_receptor_atoms_within_cutoff; ++l)
-				{
-					const size_t i = receptor_atoms_within_cutoff[l];
-					if (b.within_cutoff(corner1, corner2, rec.atoms[i].coordinate))
-					{
-						partitions(x, y, z).push_back(i);
-					}
-				}
-			}
-		}
-
-		// Resize storage for task containers.
-		const size_t num_gm_tasks = b.num_probes[0];
-		gm_tasks.reserve(num_gm_tasks);
 
 		unsigned int num_completed_ligands = 0;
 		headers.seekg(sizeof(size_t) * start_lig);
-		ofstream slice_csv(slice_csv_path); // TODO: use bin instead of csv, one uint16_t for index, one size_t for ZINC ID and one float for free energy.
+		ofstream slice_csv(job_path / (slice_key + ".csv")); // TODO: use bin instead of csv, one uint16_t for index, one size_t for ZINC ID and one float for free energy.
 		slice_csv.setf(std::ios::fixed, std::ios::floatfield);
 		slice_csv << std::setprecision(3);
 		for (size_t i = start_lig; i < end_lig; ++i)
@@ -298,8 +313,7 @@ int main(int argc, char* argv[])
 				grid_map.resize(b.num_probes); // An exception may be thrown in case memory is exhausted.
 				atom_types_to_populate.push_back(t);  // The grid map of XScore atom type t has not been populated and should be populated now.
 			}
-			const size_t num_atom_types_to_populate = atom_types_to_populate.size();
-			if (num_atom_types_to_populate)
+			if (atom_types_to_populate.size())
 			{
 				BOOST_ASSERT(gm_tasks.empty());
 				for (size_t x = 0; x < num_gm_tasks; ++x)
@@ -355,7 +369,7 @@ int main(int argc, char* argv[])
 				phase1_results.clear();
 			}
 
-			// Report progress every 32 ligands.
+			// Report progress every 32 ligands. TODO
 			if (!(++num_completed_ligands & 0)) conn.update(collection, BSON("_id" << _id), BSON("$set" << BSON(slice_key << num_completed_ligands)));
 		}
 		slice_csv.close();
@@ -377,21 +391,28 @@ int main(int argc, char* argv[])
 			while (getline(in, line))
 			{
 				const auto comma = line.find(',', 1);
-				phase1_summaries.push_back(new summary(lexical_cast<size_t>(line.substr(0, comma)), line.substr(comma + 1, 8), { lexical_cast<fl>(line.substr(comma + 10)) }));
+				vector<fl> energies;
+				energies.push_back(lexical_cast<fl>(line.substr(comma + 10)));
+				phase1_summaries.push_back(new summary(lexical_cast<size_t>(line.substr(0, comma)), line.substr(comma + 1, 8), static_cast<vector<fl>&&>(energies)));
 			}
 			in.close();
 			remove(slice_csv_path);
 		}
-		const unsigned int num_hits = phase1_summaries.size();
-		BOOST_ASSERT(num_hits <= num_ligands);
-		conn.update(collection, BSON("_id" << _id), BSON("$set" << BSON("hits" << num_hits)));
+		const auto docked = phase1_summaries.size();
+		BOOST_ASSERT(docked <= num_ligands);
+		unsigned int num_hits = 1000;
+		if (docked < 1000)
+		{
+			num_hits = docked;
+			conn.update(collection, BSON("_id" << _id), BSON("$set" << BSON("hits" << num_hits)));
+		}
 
 		// Write phase 1 csv.
 		phase1_summaries.sort();
 		using boost::iostreams::filtering_ostream;
 		using boost::iostreams::gzip_compressor;
 		{
-			ofstream phase1_csv(phase1_csv_path);
+			ofstream phase1_csv(job_path / "phase1.csv.gz");
 			filtering_ostream phase1_csv_gz;
 			phase1_csv_gz.push(gzip_compressor());
 			phase1_csv_gz.push(phase1_csv);
@@ -405,9 +426,9 @@ int main(int argc, char* argv[])
 		}
 
 		// Perform phase 2.
-		const auto phase2_num_ligands = std::min(num_hits, static_cast<unsigned int>(1000));
-		ptr_vector<summary> phase2_summaries(phase2_num_ligands);
-		for (auto i = 0; i < phase2_num_ligands; ++i)
+		const path hits_pdbqt_path = job_path / "hits.pdbqt";
+		ptr_vector<summary> phase2_summaries(num_hits);
+		for (auto i = 0; i < num_hits; ++i)
 		{
 			// Locate a ligand.
 			const auto& s = phase1_summaries[i];
@@ -445,8 +466,7 @@ int main(int argc, char* argv[])
 				grid_map.resize(b.num_probes); // An exception may be thrown in case memory is exhausted.
 				atom_types_to_populate.push_back(t);  // The grid map of XScore atom type t has not been populated and should be populated now.
 			}
-			const size_t num_atom_types_to_populate = atom_types_to_populate.size();
-			if (num_atom_types_to_populate)
+			if (atom_types_to_populate.size())
 			{
 				BOOST_ASSERT(gm_tasks.empty());
 				for (size_t x = 0; x < num_gm_tasks; ++x)
@@ -552,15 +572,13 @@ int main(int argc, char* argv[])
 			phase2_results.clear();
 
 			// Report progress every ligand.
-			conn.update(collection, BSON("_id" << _id), BSON("$set" << BSON("refined" << (i + 1))));
+			conn.update(collection, BSON("_id" << _id), BSON("inc" << BSON("refined" << 1)));
 		}
 
-		// Sort summaries.
-		phase2_summaries.sort();
-
 		// Write phase 2 csv.
+		phase2_summaries.sort();
 		{
-			ofstream phase2_csv(phase2_csv_path);
+			ofstream phase2_csv(job_path / "phase2.csv.gz");
 			filtering_ostream phase2_csv_gz;
 			phase2_csv_gz.push(gzip_compressor());
 			phase2_csv_gz.push(phase2_csv);
@@ -593,7 +611,9 @@ int main(int argc, char* argv[])
 		conn.update(collection, BSON("_id" << _id), BSON("$set" << BSON("done" << Date_t(millis_since_epoch))));
 
 		// Send completion notification email.
-		const auto email = job["email"].String();
+		const auto compt_cursor = conn.query(collection, QUERY("_id" << _id), 1, 0, &compt_fields);
+		const auto compt = compt_cursor->next();
+		const auto email = compt["email"].String();
 		cout << "Sending a completion notification email to " << email << '\n';
 		using Poco::Net::MailMessage;
 		using Poco::Net::MailRecipient;
@@ -604,7 +624,7 @@ int main(int argc, char* argv[])
 		using boost::posix_time::ptime;
 		using posix_millis = boost::posix_time::milliseconds;
 		using boost::posix_time::to_simple_string;
-		message.setContent("Your idock job submitted on " + to_simple_string(ptime(epoch, posix_millis(job["submitted"].Date().millis))) + " UTC docking " + lexical_cast<string>(job["ligands"].Int()) + " ligands with description as \"" + job["description"].String() + "\" was done on " + to_simple_string(ptime(epoch, posix_millis(millis_since_epoch))) + " UTC. " + lexical_cast<string>(num_hits) + " hits were shortlisted. View result at http://idock.cse.cuhk.edu.hk");
+		message.setContent("Your idock job submitted on " + to_simple_string(ptime(epoch, posix_millis(compt["submitted"].Date().millis))) + " UTC docking " + lexical_cast<string>(num_ligands) + " ligands with description as \"" + compt["description"].String() + "\" was done on " + to_simple_string(ptime(epoch, posix_millis(millis_since_epoch))) + " UTC. " + lexical_cast<string>(docked) + " ligands were docked and " + lexical_cast<string>(num_hits) + " hits were refined. View result at http://idock.cse.cuhk.edu.hk");
 		message.addRecipient(MailRecipient(MailRecipient::PRIMARY_RECIPIENT, email));
 		SMTPClientSession session("137.189.91.190");
 		session.login();

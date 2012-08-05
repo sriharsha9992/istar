@@ -28,6 +28,9 @@ namespace idock
 	class receptor
 	{
 	public:
+		/// Default constructor.
+		receptor() {}
+		
 		/// Constructs a receptor by parsing a receptor string in pdbqt format.
 		/// @exception parsing_error Thrown when an atom type is not recognized.
 		explicit receptor(string&& content);
