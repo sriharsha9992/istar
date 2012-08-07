@@ -2555,17 +2555,7 @@ $(function() {
   $('#taxid').html(options.join(''));
 
   // Fetch email from cookie
-  var email;
-  if (document.cookie) {
-    var cookies = document.cookie.split('; ');
-    for (var i = 0; i < cookies.length; ++i) {
-      var cookie = cookies[i];
-      if (cookie.substring(0, 6) === 'email=') {
-        email = cookie.substring(6);
-        break;
-      }
-    }
-  }
+  var email = getCookie('email');
   $('#email').val(email);
 
   // Initialize tooltips
@@ -2727,9 +2717,7 @@ $(function() {
         return;
       }
       // Save email into cookie
-      var expireDate = new Date();
-      expireDate.setTime(expireDate.getTime() + (7 * 24 * 60 * 60 * 1000));
-      document.cookie = 'email=' + $('#email').val() + ';expires=' + expireDate.toUTCString();
+      setCookie('email', $('#email').val(), 7);
       // Check if the email is changed
       if (email && email.toLowerCase() === $('#email').val().toLowerCase()) {
         // Concat the new job to the existing jobs array, and refresh the table of jobs
