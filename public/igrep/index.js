@@ -2670,15 +2670,28 @@ $(function() {
     });
   }
 
+  // Fade only the new job
+  function fadeNew() {
+    fade(function(i) {
+      return i + 1 === jobs.length;
+    }, function(j) {
+      return j <= 2;
+    });
+  }
+
   // Initialize the table of jobs
   var dones;
-  $.get('jobs', { email: email }, function(res) {
-    jobs = res;
-    for (dones = jobs.length; dones && !jobs[dones - 1].done; --dones);
-    last_page = jobs.length ? ((jobs.length + 7) >> 3) : 1;
-    page = last_page;
-    refresh();
-  });
+  function fetch(callback) {
+    $.get('jobs', { email: email }, function(res) {
+      if (Array.isArray(res)) jobs = res;
+      for (dones = jobs.length; dones && !jobs[dones - 1].done; --dones);
+      last_page = jobs.length ? ((jobs.length + 7) >> 3) : 1;
+      page = last_page;
+      refresh();
+      if (callback) callback();
+    });
+  }
+  fetch();
 
   // Activate the timer to refresh result every second
   setInterval(function() {
@@ -2717,23 +2730,20 @@ $(function() {
       var expireDate = new Date();
       expireDate.setTime(expireDate.getTime() + (7 * 24 * 60 * 60 * 1000));
       document.cookie = 'email=' + $('#email').val() + ';expires=' + expireDate.toUTCString();
-      // Redirect to the current page if the email is changed
-      if (!email) email = $('#email');
-      else if (email.toLowerCase() !== $('#email').val().toLowerCase()) {
-        return window.location.replace('/igrep');
+      // Check if the email is changed
+      if (email && email.toLowerCase() === $('#email').val().toLowerCase()) {
+        // Concat the new job to the existing jobs array, and refresh the table of jobs
+        jobs = jobs.concat(res);
+        last_page = jobs.length ? ((jobs.length + 7) >> 3) : 1;
+        if (page < last_page) {
+          page = last_page;
+          refresh();
+        }
+        fadeNew();
+      } else {
+        email = $('#email').val();
+        fetch(fadeNew);
       }
-      // Concat the new job to the existing jobs array, and refresh the table of jobs
-      jobs = jobs.concat(res);
-      last_page = jobs.length ? ((jobs.length + 7) >> 3) : 1;
-      if (page < last_page) {
-        page = last_page;
-        refresh();
-      }
-      fade(function(i) {
-        return i + 1 === jobs.length;
-      }, function(j) {
-        return j <= 2;
-      });
     }, 'json');
   });
 
