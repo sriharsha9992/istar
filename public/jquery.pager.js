@@ -53,13 +53,13 @@
         render();
       });
       return this;
-    }, refresh: function(records_arg) {
+    }, source: function(records_arg) {
       records = records_arg;
       num_pages = records.length ? ((records.length + 7) >> 3) : 1;
       page = num_pages;
       render();
       return this;
-    }, fade: function(row_lb, row_ub, col_lb, col_ub) {
+    }, refresh: function(row_lb, row_ub, col_lb, col_ub, fade) {
       var offset = 8 * (page - 1);
       tbody_trs.each(function(row) {
         row += offset;
@@ -67,8 +67,9 @@
         var tds = tr(records[row]);
         $('td', this).each(function(col) {
           if (!(col_lb <= col && col < col_ub)) return;
-          if ($(this).html() === tds[col]) return;
-          $(this).hide().html(tds[col]).fadeIn('slow');
+          var t = $(this);
+          t.html(tds[col]);
+          if (fade) t.hide().fadeIn('slow');
         });
       });
       return this;

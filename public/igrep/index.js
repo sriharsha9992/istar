@@ -2583,7 +2583,7 @@ $(function() {
   $.get('jobs', { email: email }, function(res) {
     if (Array.isArray(res)) jobs = res;
     for (dones = jobs.length; dones && !jobs[dones - 1].done; --dones);
-    pager.pager('refresh', jobs);
+    pager.pager('source', jobs);
     // If there are jobs not done yet, activate the timer to fade status and result every second
     if (dones === jobs.length) return;
     activateTimer();
@@ -2596,7 +2596,7 @@ $(function() {
         res.forEach(function(job, i) {
           jobs[dones + i].done = job.done;
         });
-        pager.pager('fade', dones, dones + res.length, 2, 5);
+        pager.pager('refresh', dones, dones + res.length, 2, 5, true);
         dones += res.length;
         if (dones === jobs.length) clearInterval(timer);
       });
@@ -2625,15 +2625,15 @@ $(function() {
       // Check if the email is changed
       if (email && email.toLowerCase() === $('#email').val().toLowerCase()) {
         jobs = jobs.concat(res);
-        pager.pager('refresh', jobs);
-        pager.pager('fade', jobs.length - 1, jobs.length, 0, 3);
+        pager.pager('source', jobs);
+        pager.pager('refresh', jobs.length - 1, jobs.length, 0, 3, true);
       } else {
         email = $('#email').val();
         $.get('jobs', { email: email }, function(res) {
           if (Array.isArray(res)) jobs = res;
           for (dones = jobs.length; dones && !jobs[dones - 1].done; --dones);
-          pager.pager('refresh', jobs);
-          pager.pager('fade', jobs.length - 1, jobs.length, 0, 3)
+          pager.pager('source', jobs);
+          pager.pager('refresh', jobs.length - 1, jobs.length, 0, 3, true)
         });
       }
       // Save email into cookie
