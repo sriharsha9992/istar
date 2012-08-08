@@ -2578,7 +2578,7 @@ $(function() {
     ];
   });
 
-  // Initialize the table of jobs
+  // Initialize the table of jobs and its pager
   var jobs = [], dones, timer;
   $.get('jobs', { email: email }, function(res) {
     if (Array.isArray(res)) jobs = res;

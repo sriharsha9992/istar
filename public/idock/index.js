@@ -8,50 +8,8 @@ $(function() {
   $('.control-label a').tooltip();
 
   // Initialize pager
-  var last_page, page,
-      frstpage = $('#frstpage'),
-      lastpage = $('#lastpage'),
-      prevpage = $('#prevpage'),
-      nextpage = $('#nextpage'),
-      whatpage = $('#whatpage');
-  frstpage.click(function() {
-    if (frstpage.hasClass('disabled')) return;
-    page = 1;
-    refresh();
-  });
-  lastpage.click(function() {
-    if (lastpage.hasClass('disabled')) return;
-    page = last_page;
-    refresh();
-  });
-  prevpage.click(function() {
-    if (prevpage.hasClass('disabled')) return;
-    page -= 1;
-    refresh();
-  });
-  nextpage.click(function() {
-    if (nextpage.hasClass('disabled')) return;
-    page += 1;
-    refresh();
-  });
-  whatpage.change(function() {
-    var p = parseInt(whatpage.val());
-    if ((p < 1) || (p > last_page) || (p === page)) return;
-    page = p;
-    refresh();
-  });
-
-  // Construct td's of a tr from a job
-  function tr(job) {
-    var tds = new Array(5);
-    if (job === undefined) {
-      tds[0] = '&nbsp;';
-      tds[1] = '&nbsp;';
-      tds[2] = '&nbsp;';
-      tds[3] = '&nbsp;';
-      tds[4] = '&nbsp;';
-      return tds;
-    }
+  var pager = $('#pager');
+  pager.pager('init', [ 'Ligands', 'Submitted on', 'Status', 'Progress', 'Result' ], function(job) {
     var status, progress, result;
     if (!job.scheduled) {
       status = 'Queued for execution';
@@ -72,102 +30,51 @@ $(function() {
       progress = 1;
       result = '<a href="jobs/' + job._id + '/phase1.csv.gz"><img src="/excel.png" alt="phase1.csv.gz"></a><a href="jobs/' + job._id + '/phase2.csv.gz"><img src="/excel.png" alt="phase2.csv.gz"></a><a href="jobs/' + job._id + '/hits.pdbqt.gz"><img src="/mol.png" alt="hits.pdbqt.gz"></a>';
     }
-    tds[0] = job.ligands.comma();
-    tds[1] = $.format.date(new Date(job.submitted), 'yyyy/MM/dd HH:mm:ss');
-    tds[2] = status;
-    tds[3] = ((100 * progress).toFixed(5) + '%');
-    tds[4] = result;
-    return tds;
-  }
+    return [
+      job.ligands.comma(),
+      $.format.date(new Date(job.submitted), 'yyyy/MM/dd HH:mm:ss'),
+      status,
+      (100 * progress).toFixed(5) + '%',
+      result
+    ];
+  });
 
   // Refresh the table of jobs and its pager
-  var jobs = [], jobs_trs = $('#jobs tr');
-  function refresh() {
-    var offset = 8 * (page - 1);
-    jobs_trs.each(function(i) {
-      var tds = tr(jobs[offset + i]);
-      $('td', $(this)).each(function(j) {
-        $(this).html(tds[j]);
-      });
-    });
-    if (page === 1) {
-      frstpage.addClass('disabled');
-      prevpage.addClass('disabled');
-    } else {
-      frstpage.removeClass('disabled');
-      prevpage.removeClass('disabled');
-    }
-    if (page === last_page) {
-      lastpage.addClass('disabled');
-      nextpage.addClass('disabled');
-    } else {
-      lastpage.removeClass('disabled');
-      nextpage.removeClass('disabled');
-    }
-    whatpage.val(page);
-  }
-
-  // Fade selected cells
-  function fade(row, col) {
-    var offset = 8 * (page - 1);
-    jobs_trs.each(function(i) {
-      if (!row(offset + i)) return;
-      var tds = tr(jobs[offset + i]);
-      $('td', $(this)).each(function(j) {
-        if (col(j) && ($(this).html() !== tds[j])) $(this).html(tds[j]);
-      });
-    });
-  }
-
-  // Fade only the new job
-  function fadeNew() {
-    fade(function(i) {
-      return i + 1 === jobs.length;
-    }, function(j) {
-      return j <= 3;
-    });
-  }
-
-  // Initialize the table of jobs
-  var dones;
-  function fetch(callback) {
-    $.get('jobs', { email: email }, function(res) {
-      if (Array.isArray(res)) jobs = res;
-      for (dones = jobs.length; dones && !jobs[dones - 1].done; --dones);
-      last_page = jobs.length ? ((jobs.length + 7) >> 3) : 1;
-      page = last_page;
-      refresh();
-      if (callback) callback();
-    });
-  }
-  fetch();
+  var jobs = [], dones, timer;
+  $.get('jobs', { email: email }, function(res) {
+    if (Array.isArray(res)) jobs = res;
+    for (dones = jobs.length; dones && !jobs[dones - 1].done; --dones);
+    pager.pager('refresh', jobs);
+    // If there are jobs not done yet, activate the timer to fade status and result every second
+    if (dones === jobs.length) return;
+    activateTimer();
+  });
 
   // Activate the timer to refresh result every second
-  setInterval(function() {
-    $.get('done', { email: email, skip: dones }, function(res) {
-      if (!res.length) return;
-      var new_dones = 0;
-      res.forEach(function(job, i) {
-        jobs[dones + i].scheduled = job.scheduled;
-        jobs[dones + i].completed = job.completed;
-        jobs[dones + i].refined = job.refined;
-        jobs[dones + i].hits = job.hits;
-        if (job.done) {
-          jobs[dones + i].done = job.done;
-          ++new_dones;
-        }
-        for (var s = 0; s < job.scheduled; ++s) {
-          jobs[dones + i][s.toString()] = job[s.toString()];
-        }
+  function activateTimer() {
+    timer = setInterval(function() {
+      $.get('done', { email: email, skip: dones }, function(res) {
+        if (!res.length) return;
+        var new_dones = 0;
+        res.forEach(function(job, i) {
+          jobs[dones + i].scheduled = job.scheduled;
+          jobs[dones + i].completed = job.completed;
+          jobs[dones + i].refined = job.refined;
+          jobs[dones + i].hits = job.hits;
+          if (job.done) {
+            jobs[dones + i].done = job.done;
+            ++new_dones;
+          }
+          for (var s = 0; s < job.scheduled; ++s) {
+            jobs[dones + i][s.toString()] = job[s.toString()];
+          }
+        });
+        pager.pager('fade', dones, dones + res.length, 2, 5);
+        dones += new_dones;
+        if (dones === jobs.length) clearInterval(timer);
       });
-      fade(function(i) {
-        return (dones <= i) && (i < dones + res.length);
-      }, function(j) {
-        return j >= 2;
-      });
-      dones += new_dones;
-    });
-  }, 1000);
+    }, 1000);
+  }
 
   // Initialize sliders
   $('#mwt').slider({
@@ -296,22 +203,24 @@ $(function() {
         });
         return;
       }
-      // Save email into cookie
-      setCookie('email', $('#email').val(), 7);
+      // Activate the timer if it is deactivated.
+      if (dones === jobs.length) activateTimer();
       // Check if the email is changed
       if (email && email.toLowerCase() === $('#email').val().toLowerCase()) {
-        // Concat the new job to the existing jobs array, and refresh the table of jobs
         jobs = jobs.concat(res);
-        last_page = jobs.length ? ((jobs.length + 7) >> 3) : 1;
-        if (page < last_page) {
-          page = last_page;
-          refresh();
-        }
-        fadeNew();
+        pager.pager('refresh', jobs);
+        pager.pager('fade', jobs.length - 1, jobs.length, 0, 4);
       } else {
         email = $('#email').val();
-        fetch(fadeNew);
+        $.get('jobs', { email: email }, function(res) {
+          if (Array.isArray(res)) jobs = res;
+          for (dones = jobs.length; dones && !jobs[dones - 1].done; --dones);
+          pager.pager('refresh', jobs);
+          pager.pager('fade', jobs.length - 1, jobs.length, 0, 4)
+        });
       }
+      // Save email into cookie
+      setCookie('email', email, 7);
     }, 'json');
   });
 });

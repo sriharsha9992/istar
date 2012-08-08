@@ -67,6 +67,7 @@
         var tds = tr(records[row]);
         $('td', this).each(function(col) {
           if (!(col_lb <= col && col < col_ub)) return;
+          if ($(this).html() === tds[col]) return;
           $(this).hide().html(tds[col]).fadeIn('slow');
         });
       });
