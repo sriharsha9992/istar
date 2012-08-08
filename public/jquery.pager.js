@@ -56,10 +56,8 @@
     }, refresh: function(records_arg) {
       records = records_arg;
       num_pages = records.length ? ((records.length + 7) >> 3) : 1;
-      if (page < num_pages) {
-        page = num_pages;
-        render();
-      }
+      page = num_pages;
+      render();
       return this;
     }, fade: function(row_lb, row_ub, col_lb, col_ub) {
       var offset = 8 * (page - 1);

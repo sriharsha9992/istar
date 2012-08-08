@@ -2580,15 +2580,11 @@ $(function() {
 
   // Initialize the table of jobs
   var jobs = [], dones;
-  function fetch(callback) {
-    $.get('jobs', { email: email }, function(res) {
-      if (Array.isArray(res)) jobs = res;
-      for (dones = jobs.length; dones && !jobs[dones - 1].done; --dones);
-      pager.pager('refresh', jobs);
-      if (callback) callback();
-    });
-  }
-  fetch();
+  $.get('jobs', { email: email }, function(res) {
+    if (Array.isArray(res)) jobs = res;
+    for (dones = jobs.length; dones && !jobs[dones - 1].done; --dones);
+    pager.pager('refresh', jobs);
+  });
 
   // Activate the timer to refresh result every second
   setInterval(function() {
@@ -2626,10 +2622,15 @@ $(function() {
         pager.pager('fade', jobs.length - 1, jobs.length, 0, 3);
       } else {
         email = $('#email').val();
-        fetch(pager.pager('fade', jobs.length - 1, jobs.length, 0, 3));
+        $.get('jobs', { email: email }, function(res) {
+          if (Array.isArray(res)) jobs = res;
+          for (dones = jobs.length; dones && !jobs[dones - 1].done; --dones);
+          pager.pager('refresh', jobs);
+          pager.pager('fade', jobs.length - 1, jobs.length, 0, 3)
+        });
       }
       // Save email into cookie
-      setCookie('email', email.val(), 7);
+      setCookie('email', email, 7);
     }, 'json');
   });
 
