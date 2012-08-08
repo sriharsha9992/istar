@@ -2579,24 +2579,29 @@ $(function() {
   });
 
   // Initialize the table of jobs
-  var jobs = [], dones;
+  var jobs = [], dones, timer;
   $.get('jobs', { email: email }, function(res) {
     if (Array.isArray(res)) jobs = res;
     for (dones = jobs.length; dones && !jobs[dones - 1].done; --dones);
     pager.pager('refresh', jobs);
+    // If there are jobs not done yet, activate the timer to fade status and result every second
+    if (dones === jobs.length) return;
+    activateTimer();
   });
 
-  // Activate the timer to refresh result every second
-  setInterval(function() {
-    $.get('done', { email: email, skip: dones }, function(res) {
-      if (!res.length) return;
-      res.forEach(function(job, i) {
-        jobs[dones + i].done = job.done;
+  function activateTimer() {
+    timer = setInterval(function() {
+      $.get('done', { email: email, skip: dones }, function(res) {
+        if (!res.length) return;
+        res.forEach(function(job, i) {
+          jobs[dones + i].done = job.done;
+        });
+        pager.pager('fade', dones, dones + res.length, 2, 5);
+        dones += res.length;
+        if (dones === jobs.length) clearInterval(timer);
       });
-      pager.pager('fade', dones, dones + res.length, 2, 5);
-      dones += res.length;
-    });
-  }, 1000);
+    }, 1000);
+  }
 
   // Process submission
   $('#submit').click(function() {
@@ -2615,6 +2620,8 @@ $(function() {
         });
         return;
       }
+      // Activate the timer if it is deactivated.
+      if (dones === jobs.length) activateTimer();
       // Check if the email is changed
       if (email && email.toLowerCase() === $('#email').val().toLowerCase()) {
         jobs = jobs.concat(res);
