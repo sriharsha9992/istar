@@ -84,13 +84,13 @@
           <div class="span12">
             <p>The input to igrep is twofold:</p>
             <ul>
-              <li>A genome to search. Totally 26 assembled genomes are collected from <a href="ftp://ftp.ncbi.nih.gov/genomes">ftp://ftp.ncbi.nih.gov/genomes</a>. Their genome sizes vary from 3.50Gnt to 0.19Gnt, accounting for 44Gnt in total.</li>
-              <li>A set of queries. A query consists of a pattern of alphabet A, C, G, T, N, followed by an edit distance. N is a wildcard and can match either A, C, G, or T in the genome. Substitution, insertion and deletion have a uniform cost of one edit distance. The pattern length must be between 1 and 64, and the edit distance must be between 0 and 9, and must not exceed the pattern length. For each job, up to 10,000 queries will be processed.</li>
+              <li>A genome to search. Totally 26 assembled genomes are collected from <a href="ftp://ftp.ncbi.nih.gov/genomes">ftp://ftp.ncbi.nih.gov/genomes</a>. Their sizes vary from 3.50Gnt to 0.19Gnt, accounting for 44Gnt in total.</li>
+              <li>A set of queries. A query consists of a pattern of alphabet A, C, G, T, N, followed by an edit distance. N is a wildcard and can match either A, C, G, or T in the genome. The pattern length must be between 1 and 64. The edit distance must be between 0 and 9, and must not exceed the pattern length. Substitution, insertion and deletion have a uniform cost of one edit distance. For each job, up to 10,000 queries will be processed.</li>
             </ul>
             <p>As result, you can download:</p>
             <ul>
               <li><img src="/excel.png" alt="log.csv">log.csv: summary of queries and results.</li>
-              <li><img src="/excel.png" alt="pos.csv">pos.csv: ending positions of matches. For each query, up to 1000 matches will be returned.</li>
+              <li><img src="/excel.png" alt="pos.csv">pos.csv: ending positions of matches. For each query, up to 1,000 matches will be returned.</li>
             </ul>
           </div>
         </div>
