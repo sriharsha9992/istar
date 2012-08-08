@@ -543,7 +543,7 @@ int main(int argc, char* argv[])
 			phase2_csv_gz << std::setprecision(3);
 			phase2_csv_gz << "ZINC ID,Conformations";
 			for (size_t i = 1; i <= max_conformations; ++i) phase2_csv_gz << ",Free energy " << i << " (kcal/mol2)";
-			phase2_csv_gz << ",Molecular weight (g/mol),Partition coefficient xlogP,Apolar desolvation (kcal/mol),Polar desolvation (kcal/mol),Hydrogen bond donors,Hydrogen bond acceptors,Polar surface area tPSA (A^2),Net charge,Rotatable bonds\n";
+			phase2_csv_gz << ",Molecular weight (g/mol),Partition coefficient xlogP,Apolar desolvation (kcal/mol),Polar desolvation (kcal/mol),Hydrogen bond donors,Hydrogen bond acceptors,Polar surface area tPSA (A^2),Net charge,Rotatable bonds,Purchasing information\n";
 			for (const auto& s : phase2_summaries)
 			{
 				const auto comma = s.lig_id.find(',', 1);
@@ -557,7 +557,7 @@ int main(int argc, char* argv[])
 				{
 					phase2_csv_gz << ',';
 				}
-				phase2_csv_gz << ',' << s.lig_id.substr(comma + 1) << '\n';
+				phase2_csv_gz << ',' << s.lig_id.substr(comma + 1) << ",http://zinc.docking.org/substance/" << s.lig_id.substr(0, comma) << '\n';
 			}
 		}
 
