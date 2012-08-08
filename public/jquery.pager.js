@@ -68,7 +68,7 @@
         $('td', this).each(function(col) {
           if (!(col_lb <= col && col < col_ub)) return;
           var t = $(this);
-          t.html(tds[col]);
+          if (t.html() !== tds[col]) t.html(tds[col]);
           if (fade) t.hide().fadeIn('slow');
         });
       });
