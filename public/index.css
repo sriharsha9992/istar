@@ -50,6 +50,11 @@ table img {
   padding-right: 16px;
 }
 
+li img {
+  height: 16px;
+  padding-right: 8px;
+}
+
 .pagination input {
   float: left;
   padding: 0 14px;
