@@ -26,7 +26,7 @@ namespace idock
 	using boost::filesystem::ifstream;
 	using boost::filesystem::ofstream;
 
-	ligand::ligand(ifstream& in, const string& id) : num_active_torsions(0), id(id)
+	ligand::ligand(ifstream& in) : num_active_torsions(0)
 	{
 		// Initialize necessary variables for constructing a ligand.
 		lines.reserve(200); // A ligand typically consists of <= 200 lines.
@@ -551,7 +551,7 @@ namespace idock
 		return result(e, f, static_cast<vector<vec3>&&>(heavy_atoms), static_cast<vector<vec3>&&>(hydrogens));
 	}
 
-	void ligand::write_models(const path& output_ligand_path, const ptr_vector<result>& results, const size_t num_conformations, const box& b, const vector<array3d<fl>>& grid_maps)
+	void ligand::write_models(const path& output_ligand_path, const string& remark, const ptr_vector<result>& results, const size_t num_conformations, const box& b, const vector<array3d<fl>>& grid_maps)
 	{
 		BOOST_ASSERT(num_conformations > 0);
 		BOOST_ASSERT(num_conformations <= results.size());
@@ -568,7 +568,7 @@ namespace idock
 		hits_pdbqt_gz.push(hits_pdbqt);
 		hits_pdbqt_gz.setf(ios::fixed, ios::floatfield);
 		hits_pdbqt_gz << setprecision(3);
-		hits_pdbqt_gz << "HEADER    " << id << '\n';
+		hits_pdbqt_gz << remark << '\n';
 		for (size_t i = 0; i < num_conformations; ++i)
 		{
 			const result& r = results[i];

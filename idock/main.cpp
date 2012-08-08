@@ -269,10 +269,10 @@ int main(int argc, char* argv[])
 		const auto end_lig = slices[slice + 1];
 
 		headers.seekg(sizeof(size_t) * start_lig);
-		ofstream slice_csv(job_path / (slice_key + ".csv")); // TODO: use bin instead of csv, one uint16_t for index, one size_t for ZINC ID and one float for free energy.
+		ofstream slice_csv(job_path / (slice_key + ".csv"));
 		slice_csv.setf(std::ios::fixed, std::ios::floatfield);
 		slice_csv << std::setprecision(3);
-		for (size_t i = start_lig; i < end_lig; ++i)
+		for (auto i = start_lig; i < end_lig; ++i)
 		{
 			// Locate a ligand.
 			size_t header;
@@ -293,10 +293,10 @@ int main(int argc, char* argv[])
 			if (!((mwt_lb <= mwt) && (mwt <= mwt_ub) && (logp_lb <= logp) && (logp <= logp_ub) && (ad_lb <= ad) && (ad <= ad_ub) && (pd_lb <= pd) && (pd <= pd_ub) && (hbd_lb <= hbd) && (hbd <= hbd_ub) && (hba_lb <= hba) && (hba <= hba_ub) && (tpsa_lb <= tpsa) && (tpsa <= tpsa_ub) && (charge_lb <= charge) && (charge <= charge_ub) && (nrb_lb <= nrb) && (nrb <= nrb_ub))) continue;
 
 			// Obtain ligand ID. ZINC IDs are 8-character long.
-			const auto lig_id = line.substr(11, 8);
+			const auto lig_id = right_cast<int>(line, 12, 19);
 
 			// Parse the ligand.
-			ligand lig(ligands, lig_id);
+			ligand lig(ligands);
 
 			// Create grid maps on the fly if necessary.
 			BOOST_ASSERT(atom_types_to_populate.empty());
@@ -359,7 +359,7 @@ int main(int argc, char* argv[])
 			if (phase1_results.size())
 			{
 				// Dump ligand summaries to the csv file.
-				slice_csv << i << ',' << lig_id << ',' << (phase1_results.front().f * lig.flexibility_penalty_factor) << '\n';
+				slice_csv << i << ',' << lig_id << ',' << mwt << ',' << logp << ',' << ad << ',' << pd << ',' << hbd << ',' << hba << ',' << tpsa << ',' << charge << ',' << nrb << ',' << (phase1_results.front().f * lig.flexibility_penalty_factor) << '\n';
 
 				// Clear the results of the current ligand.
 				phase1_results.clear();
@@ -385,10 +385,11 @@ int main(int argc, char* argv[])
 			ifstream in(slice_csv_path);
 			while (getline(in, line))
 			{
-				const auto comma = line.find(',', 1);
+				const auto first_comma = line.find_first_of(',', 1);
+				const auto last_comma = line.find_last_of(',', line.size() - 6);
 				vector<fl> energies;
-				energies.push_back(lexical_cast<fl>(line.substr(comma + 10)));
-				phase1_summaries.push_back(new summary(lexical_cast<size_t>(line.substr(0, comma)), line.substr(comma + 1, 8), static_cast<vector<fl>&&>(energies)));
+				energies.push_back(lexical_cast<fl>(line.substr(last_comma + 1)));
+				phase1_summaries.push_back(new summary(lexical_cast<size_t>(line.substr(0, first_comma)), line.substr(first_comma + 1, last_comma - first_comma - 1), static_cast<vector<fl>&&>(energies)));
 			}
 			in.close();
 			remove(slice_csv_path);
@@ -413,10 +414,11 @@ int main(int argc, char* argv[])
 			phase1_csv_gz.push(phase1_csv);
 			phase1_csv_gz.setf(std::ios::fixed, std::ios::floatfield);
 			phase1_csv_gz << std::setprecision(3);
-			phase1_csv_gz << "ZINC ID,FE1\n";
+			phase1_csv_gz << "ZINC ID,Free energy (kcal/mol),Molecular weight (g/mol),Partition coefficient xlogP,Apolar desolvation (kcal/mol),Polar desolvation (kcal/mol),Hydrogen bond donors,Hydrogen bond acceptors,Polar surface area tPSA (A^2),Net charge,Rotatable bonds\n";
 			for (const auto& s : phase1_summaries)
 			{
-				phase1_csv_gz << s.lig_id << ',' << s.energies.front() << '\n';
+				const auto comma = s.lig_id.find(',', 1);
+				phase1_csv_gz << s.lig_id.substr(0, comma) << ',' << s.energies.front() << ',' << s.lig_id.substr(comma + 1) << '\n';
 			}
 		}
 
@@ -430,10 +432,14 @@ int main(int argc, char* argv[])
 			headers.seekg(sizeof(size_t) * s.index);
 			size_t header;
 			headers.read((char*)&header, sizeof(size_t));
-			ligands.seekg(header + 80); // Bypass the header line.
+			ligands.seekg(header);
+
+			// Get the remark line.
+			string remark;
+			getline(ligands, remark);
 
 			// Parse the ligand.
-			ligand lig(ligands, s.lig_id);
+			ligand lig(ligands);
 
 			// Create grid maps on the fly if necessary.
 			BOOST_ASSERT(atom_types_to_populate.empty());
@@ -508,7 +514,7 @@ int main(int argc, char* argv[])
 			if (num_conformations)
 			{
 				// Write models to file.
-				lig.write_models(hits_pdbqt_path, phase2_results, num_conformations, b, grid_maps);
+				lig.write_models(hits_pdbqt_path, remark, phase2_results, num_conformations, b, grid_maps);
 
 				// Add to summaries.
 				vector<fl> energies(num_conformations);
@@ -535,13 +541,14 @@ int main(int argc, char* argv[])
 			phase2_csv_gz.push(phase2_csv);
 			phase2_csv_gz.setf(std::ios::fixed, std::ios::floatfield);
 			phase2_csv_gz << std::setprecision(3);
-			phase2_csv_gz << "ZINC ID,Conf";
-			for (size_t i = 1; i <= max_conformations; ++i) phase2_csv_gz << ",FE" << i;
-			phase2_csv_gz << '\n';
+			phase2_csv_gz << "ZINC ID,Conformations";
+			for (size_t i = 1; i <= max_conformations; ++i) phase2_csv_gz << ",Free energy " << i << " (kcal/mol2)";
+			phase2_csv_gz << ",Molecular weight (g/mol),Partition coefficient xlogP,Apolar desolvation (kcal/mol),Polar desolvation (kcal/mol),Hydrogen bond donors,Hydrogen bond acceptors,Polar surface area tPSA (A^2),Net charge,Rotatable bonds\n";
 			for (const auto& s : phase2_summaries)
 			{
+				const auto comma = s.lig_id.find(',', 1);
 				const size_t num_conformations = s.energies.size();
-				phase2_csv_gz << s.lig_id << ',' << num_conformations;
+				phase2_csv_gz << s.lig_id.substr(0, comma) << ',' << num_conformations;
 				for (size_t j = 0; j < num_conformations; ++j)
 				{
 					phase2_csv_gz << ',' << s.energies[j];
@@ -550,7 +557,7 @@ int main(int argc, char* argv[])
 				{
 					phase2_csv_gz << ',';
 				}
-				phase2_csv_gz << '\n';
+				phase2_csv_gz << ',' << s.lig_id.substr(comma + 1) << '\n';
 			}
 		}
 

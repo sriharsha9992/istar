@@ -69,7 +69,6 @@ namespace idock
 	class ligand
 	{
 	public:
-		const string id;
 		vector<string> lines; ///< Input PDBQT file lines.
 		vector<frame> frames; ///< ROOT and BRANCH frames.
 		vector<atom> heavy_atoms; ///< Heavy atoms. Coordinates are relative to frame origin, which is the first atom by default.
@@ -83,7 +82,7 @@ namespace idock
 
 		/// Constructs a ligand by parsing a ligand file stream in pdbqt format.
 		/// @exception parsing_error Thrown when an atom type is not recognized or an empty branch is detected.
-		ligand(ifstream& in, const string& id);
+		ligand(ifstream& in);
 
 		/// Returns the XScore atom types presented in current ligand.
 		vector<size_t> get_atom_types() const;
@@ -95,7 +94,7 @@ namespace idock
 		result compose_result(const fl e, const fl f, const conformation& conf) const;
 
 		/// Writes a given number of conformations from a result container into a output ligand file in PDBQT format.
-		void write_models(const path& output_ligand_path, const ptr_vector<result>& results, const size_t num_conformations, const box& b, const vector<array3d<fl>>& grid_maps);
+		void write_models(const path& output_ligand_path, const string& remark, const ptr_vector<result>& results, const size_t num_conformations, const box& b, const vector<array3d<fl>>& grid_maps);
 
 	private:
 		fl num_heavy_atoms_inverse; ///< 1 / num_heavy_atoms.
