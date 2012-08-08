@@ -2562,122 +2562,29 @@ $(function() {
   $('.control-label a').tooltip();
 
   // Initialize pager
-  var last_page, page,
-      frstpage = $('#frstpage'),
-      lastpage = $('#lastpage'),
-      prevpage = $('#prevpage'),
-      nextpage = $('#nextpage'),
-      whatpage = $('#whatpage');
-  frstpage.click(function() {
-    if (frstpage.hasClass('disabled')) return;
-    page = 1;
-    refresh();
-  });
-  lastpage.click(function() {
-    if (lastpage.hasClass('disabled')) return;
-    page = last_page;
-    refresh();
-  });
-  prevpage.click(function() {
-    if (prevpage.hasClass('disabled')) return;
-    page -= 1;
-    refresh();
-  });
-  nextpage.click(function() {
-    if (nextpage.hasClass('disabled')) return;
-    page += 1;
-    refresh();
-  });
-  whatpage.change(function() {
-    var p = parseInt(whatpage.val());
-    if ((p < 1) || (p > last_page) || (p === page)) return;
-    page = p;
-    refresh();
-  });
-
   function getGenome(taxid) {
-    for (var i = 0; i < genomes.length; ++i) {
+    for (var i = 0, len = genomes.length; i < len; ++i) {
       if (genomes[i].taxid === taxid) return genomes[i];
     }
   }
-
-  // Construct td's of a tr from a job
-  function tr(job) {
-    var tds = new Array(5);
-    if (job === undefined) {
-      tds[0] = '&nbsp;';
-      tds[1] = '&nbsp;';
-      tds[2] = '&nbsp;';
-      tds[3] = '&nbsp;';
-      tds[4] = '&nbsp;';
-      return tds;
-    }
-    var done = job.done != undefined;
-    tds[0] = getGenome(job.taxid).name;
-    tds[1] = $.format.date(new Date(job.submitted), 'yyyy/MM/dd HH:mm:ss');
-    tds[2] = done ? $.format.date(new Date(job.done), 'yyyy/MM/dd HH:mm:ss') : 'Queued for execution';
-    tds[3] = done ? '<a href="jobs/' + job._id + '/log.csv"><img src="/excel.png" alt="log.csv"/></a>' : null;
-    tds[4] = done ? '<a href="jobs/' + job._id + '/pos.csv"><img src="/excel.png" alt="pos.csv"/></a>' : null;
-    return tds;
-  }
-
-  // Refresh the table of jobs and its pager
-  var jobs = [], jobs_trs = $('#jobs tr');
-  function refresh() {
-    var offset = 8 * (page - 1);
-    jobs_trs.each(function(i) {
-      var tds = tr(jobs[offset + i]);
-      $('td', $(this)).each(function(j) {
-        $(this).html(tds[j]);
-      });
-    });
-    if (page === 1) {
-      frstpage.addClass('disabled');
-      prevpage.addClass('disabled');
-    } else {
-      frstpage.removeClass('disabled');
-      prevpage.removeClass('disabled');
-    }
-    if (page === last_page) {
-      lastpage.addClass('disabled');
-      nextpage.addClass('disabled');
-    } else {
-      lastpage.removeClass('disabled');
-      nextpage.removeClass('disabled');
-    }
-    whatpage.val(page);
-  }
-
-  // Fade selected cells
-  function fade(row, col) {
-    var offset = 8 * (page - 1);
-    jobs_trs.each(function(i) {
-      if (!row(offset + i)) return;
-      var tds = tr(jobs[offset + i]);
-      $('td', $(this)).each(function(j) {
-        if (col(j)) $(this).hide().html(tds[j]).fadeIn('slow');
-      });
-    });
-  }
-
-  // Fade only the new job
-  function fadeNew() {
-    fade(function(i) {
-      return i + 1 === jobs.length;
-    }, function(j) {
-      return j <= 2;
-    });
-  }
+  var pager = $('#pager');
+  pager.pager('init', [ 'Genome', 'Submitted on', 'Status', 'Log', 'Pos' ], function(job) {
+    return [
+      getGenome(job.taxid).name,
+      $.format.date(new Date(job.submitted), 'yyyy/MM/dd HH:mm:ss'),
+      job.done ? 'Done on ' + $.format.date(new Date(job.done), 'yyyy/MM/dd HH:mm:ss') : 'Queued for execution',
+      job.done ? '<a href="jobs/' + job._id + '/log.csv"><img src="/excel.png" alt="log.csv"/></a>' : null,
+      job.done ? '<a href="jobs/' + job._id + '/pos.csv"><img src="/excel.png" alt="pos.csv"/></a>' : null
+    ];
+  });
 
   // Initialize the table of jobs
-  var dones;
+  var jobs = [], dones;
   function fetch(callback) {
     $.get('jobs', { email: email }, function(res) {
       if (Array.isArray(res)) jobs = res;
       for (dones = jobs.length; dones && !jobs[dones - 1].done; --dones);
-      last_page = jobs.length ? ((jobs.length + 7) >> 3) : 1;
-      page = last_page;
-      refresh();
+      pager.pager('refresh', jobs);
       if (callback) callback();
     });
   }
@@ -2690,11 +2597,7 @@ $(function() {
       res.forEach(function(job, i) {
         jobs[dones + i].done = job.done;
       });
-      fade(function(i) {
-        return (dones <= i) && (i < dones + res.length);
-      }, function(j) {
-        return j >= 2;
-      });
+      pager.pager('fade', dones, dones + res.length, 2, 5);
       dones += res.length;
     });
   }, 1000);
@@ -2716,22 +2619,17 @@ $(function() {
         });
         return;
       }
-      // Save email into cookie
-      setCookie('email', $('#email').val(), 7);
       // Check if the email is changed
       if (email && email.toLowerCase() === $('#email').val().toLowerCase()) {
-        // Concat the new job to the existing jobs array, and refresh the table of jobs
         jobs = jobs.concat(res);
-        last_page = jobs.length ? ((jobs.length + 7) >> 3) : 1;
-        if (page < last_page) {
-          page = last_page;
-          refresh();
-        }
-        fadeNew();
+        pager.pager('refresh', jobs);
+        pager.pager('fade', jobs.length - 1, jobs.length, 0, 3);
       } else {
         email = $('#email').val();
-        fetch(fadeNew);
+        fetch(pager.pager('fade', jobs.length - 1, jobs.length, 0, 3));
       }
+      // Save email into cookie
+      setCookie('email', email.val(), 7);
     }, 'json');
   });
 
