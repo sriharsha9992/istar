@@ -50,9 +50,10 @@ table img {
   padding-right: 16px;
 }
 
-li img {
-  height: 16px;
-  padding-right: 8px;
+.pagination ul {
+  -webkit-box-shadow: none;
+     -moz-box-shadow: none;
+          box-shadow: none;
 }
 
 .pagination input {
@@ -63,6 +64,15 @@ li img {
   text-align: center;
   text-decoration: none;
   border: 1px solid #ddd;
+  border-left-width: 0px;
+  -webkit-border-radius: 0px;
+     -moz-border-radius: 0px;
+          border-radius: 0px;
+}
+
+li img {
+  height: 16px;
+  padding-right: 8px;
 }
 
 footer {
