@@ -24,14 +24,14 @@ Features
 ### Web server
 
 * [node.js] v0.8.5
-* [mongodb] v1.1.2
+* [mongodb] v1.1.4
 * [express] v3.0.0rc2
 * [validator] v0.4.10
 * [spdy] v1.3.1
 
 ### Database
 
-* [MongoDB] v2.0.6
+* [MongoDB] v2.0.7
 
 ### Workstations
 
