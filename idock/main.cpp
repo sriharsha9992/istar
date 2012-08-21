@@ -498,8 +498,7 @@ int main(int argc, char* argv[])
 							}
 						}
 					}
-					const auto num_hbonds_str = lexical_cast<string>(num_hbonds);
-					r.hbonds = string(4 - num_hbonds_str.size(), ' ') + num_hbonds_str + r.hbonds;
+					r.hbonds = lexical_cast<string>(num_hbonds) + r.hbonds;
 				}
 
 				// Write models to file.

@@ -587,7 +587,7 @@ namespace idock
 				<< "REMARK            TOTAL FREE ENERGY PREDICTED BY IDOCK:" << setw(8) << r.e       << " KCAL/MOL\n"
 				<< "REMARK     INTER-LIGAND FREE ENERGY PREDICTED BY IDOCK:" << setw(8) << r.f       << " KCAL/MOL\n"
 				<< "REMARK     INTRA-LIGAND FREE ENERGY PREDICTED BY IDOCK:" << setw(8) << r.e - r.f << " KCAL/MOL\n"
-				<< "REMARK               HYDROGEN BONDS PREDICTED BY IDOCK:" << r.hbonds << '\n';
+				<< "REMARK               HYDROGEN BONDS PREDICTED BY IDOCK:" << string(4 - (r.hbonds.size() == 1 ? 1 : r.hbonds.find(' ', 1)), ' ') << r.hbonds << '\n';
 			for (size_t j = 0, heavy_atom = 0, hydrogen = 0; j < num_lines; ++j)
 			{
 				const string& line = lines[j];
