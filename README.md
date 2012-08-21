@@ -38,7 +38,7 @@ Features
 * Intel Core i5-2400 CPU @ 3.10GHz
 * 4GB DDR3 SDRAM
 * Mac OS X Lion 10.7.4 Build 11E53
-* Customized [idock] v1.5
+* Customized [idock] v1.6
 
 
 Supported browsers
