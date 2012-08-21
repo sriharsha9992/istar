@@ -48,7 +48,7 @@ int main(int argc, char* argv[])
 
 	// Daemonize itself, retaining the current working directory and redirecting stdin, stdout and stderr to /dev/null.
 	daemon(1, 0);
-	syslog(LOG_INFO, "idock 1.5");
+	syslog(LOG_INFO, "idock 1.6");
 
 	// Fetch command line arguments.
 	const auto host = argv[1];
@@ -79,7 +79,7 @@ int main(int argc, char* argv[])
 	const size_t num_threads = thread::hardware_concurrency();
 	const size_t seed = time(0);
 	const size_t phase1_num_mc_tasks = 32;
-	const size_t phase2_num_mc_tasks = 256;
+	const size_t phase2_num_mc_tasks = 128;
 	const size_t max_conformations = 20;
 	const size_t max_results = 20; // Maximum number of results obtained from a single Monte Carlo task.
 	const size_t slices[101] = { 0, 121712, 243424, 365136, 486848, 608560, 730272, 851984, 973696, 1095408, 1217120, 1338832, 1460544, 1582256, 1703968, 1825680, 1947392, 2069104, 2190816, 2312528, 2434240, 2555952, 2677664, 2799376, 2921088, 3042800, 3164512, 3286224, 3407936, 3529648, 3651360, 3773072, 3894784, 4016496, 4138208, 4259920, 4381632, 4503344, 4625056, 4746768, 4868480, 4990192, 5111904, 5233616, 5355328, 5477040, 5598752, 5720464, 5842176, 5963888, 6085600, 6207312, 6329024, 6450736, 6572448, 6694160, 6815872, 6937584, 7059296, 7181008, 7302720, 7424432, 7546144, 7667856, 7789568, 7911280, 8032992, 8154704, 8276416, 8398128, 8519840, 8641552, 8763264, 8884976, 9006688, 9128400, 9250112, 9371824, 9493536, 9615248, 9736960, 9858672, 9980384, 10102096, 10223808, 10345520, 10467232, 10588944, 10710655, 10832366, 10954077, 11075788, 11197499, 11319210, 11440921, 11562632, 11684343, 11806054, 11927765, 12049476, 12171187 };
@@ -90,11 +90,10 @@ int main(int argc, char* argv[])
 	// Initialize variables for job caching.
 	OID _id;
 	path job_path;
-	double center_x, center_y, center_z, mwt_lb, mwt_ub, logp_lb, logp_ub, ad_lb, ad_ub, pd_lb, pd_ub;
-	int num_ligands, size_x, size_y, size_z, hbd_lb, hbd_ub, hba_lb, hba_ub, tpsa_lb, tpsa_ub, charge_lb, charge_ub, nrb_lb, nrb_ub;
+	double mwt_lb, mwt_ub, logp_lb, logp_ub, ad_lb, ad_ub, pd_lb, pd_ub;
+	int num_ligands, hbd_lb, hbd_ub, hba_lb, hba_ub, tpsa_lb, tpsa_ub, charge_lb, charge_ub, nrb_lb, nrb_ub;
 	box b;
 	receptor rec;
-	array3d<vector<size_t>> partitions;
 	size_t num_gm_tasks;
 	ptr_vector<packaged_task<void>> gm_tasks;
 	vector<array3d<fl>> grid_maps(XS_TYPE_SIZE);
@@ -184,14 +183,10 @@ int main(int argc, char* argv[])
 
 			auto param_cursor = conn.query(collection, QUERY("_id" << _id), 1, 0, &param_fields);
 			const auto param = param_cursor->next();
-			rec = receptor(param["receptor"].String());
+			b = box(vec3(param["center_x"].Number(), param["center_y"].Number(), param["center_z"].Number()), vec3(param["size_x"].Int(), param["size_y"].Int(), param["size_z"].Int()), grid_granularity);
+			rec = receptor(param["receptor"].String(), b);
+
 			num_ligands = param["ligands"].Int();
-			center_x = param["center_x"].Number();
-			center_y = param["center_y"].Number();
-			center_z = param["center_z"].Number();
-			size_x = param["size_x"].Int();
-			size_y = param["size_y"].Int();
-			size_z = param["size_z"].Int();
 			mwt_lb = param["mwt_lb"].Number();
 			mwt_ub = param["mwt_ub"].Number();
 			logp_lb = param["logp_lb"].Number();
@@ -210,47 +205,6 @@ int main(int argc, char* argv[])
 			charge_ub = param["charge_ub"].Int();
 			nrb_lb = param["nrb_lb"].Int();
 			nrb_ub = param["nrb_ub"].Int();
-
-			// Initialize the search space of cuboid shape.
-			b = box(vec3(center_x, center_y, center_z), vec3(size_x, size_y, size_z), grid_granularity);
-
-			// Divide the box into coarse-grained partitions for subsequent grid map creation.
-			partitions = array3d<vector<size_t>>(b.num_partitions);
-			{
-				// Find all the heavy receptor atoms that are within 8A of the box.
-				vector<size_t> receptor_atoms_within_cutoff;
-				receptor_atoms_within_cutoff.reserve(rec.atoms.size());
-				const size_t num_rec_atoms = rec.atoms.size();
-				for (size_t i = 0; i < num_rec_atoms; ++i)
-				{
-					const atom& a = rec.atoms[i];
-					if (b.within_cutoff(a.coordinate))
-					{
-						receptor_atoms_within_cutoff.push_back(i);
-					}
-				}
-				const size_t num_receptor_atoms_within_cutoff = receptor_atoms_within_cutoff.size();
-
-				// Allocate each nearby receptor atom to its corresponding partition.
-				for (size_t x = 0; x < b.num_partitions[0]; ++x)
-				for (size_t y = 0; y < b.num_partitions[1]; ++y)
-				for (size_t z = 0; z < b.num_partitions[2]; ++z)
-				{
-					partitions(x, y, z).reserve(num_receptor_atoms_within_cutoff);
-					const array<size_t, 3> index1 = {{ x,     y,     z     }};
-					const array<size_t, 3> index2 = {{ x + 1, y + 1, z + 1 }};
-					const vec3 corner1 = b.partition_corner1(index1);
-					const vec3 corner2 = b.partition_corner1(index2);
-					for (size_t l = 0; l < num_receptor_atoms_within_cutoff; ++l)
-					{
-						const size_t i = receptor_atoms_within_cutoff[l];
-						if (b.within_cutoff(corner1, corner2, rec.atoms[i].coordinate))
-						{
-							partitions(x, y, z).push_back(i);
-						}
-					}
-				}
-			}
 
 			// Reserve storage for grid map task container.
 			num_gm_tasks = b.num_probes[0];
@@ -314,7 +268,7 @@ int main(int argc, char* argv[])
 				BOOST_ASSERT(gm_tasks.empty());
 				for (size_t x = 0; x < num_gm_tasks; ++x)
 				{
-					gm_tasks.push_back(new packaged_task<void>(bind<void>(grid_map_task, boost::ref(grid_maps), boost::cref(atom_types_to_populate), x, boost::cref(sf), boost::cref(b), boost::cref(rec), boost::cref(partitions))));
+					gm_tasks.push_back(new packaged_task<void>(bind<void>(grid_map_task, boost::ref(grid_maps), boost::cref(atom_types_to_populate), x, boost::cref(sf), boost::cref(b), boost::cref(rec))));
 				}
 				tp.run(gm_tasks);
 				for (auto& t : gm_tasks)
@@ -389,7 +343,7 @@ int main(int argc, char* argv[])
 				const auto last_comma = line.find_last_of(',', line.size() - 6);
 				vector<fl> energies;
 				energies.push_back(lexical_cast<fl>(line.substr(last_comma + 1)));
-				phase1_summaries.push_back(new summary(lexical_cast<size_t>(line.substr(0, first_comma)), line.substr(first_comma + 1, last_comma - first_comma - 1), static_cast<vector<fl>&&>(energies)));
+				phase1_summaries.push_back(new summary(lexical_cast<size_t>(line.substr(0, first_comma)), line.substr(first_comma + 1, last_comma - first_comma - 1), static_cast<vector<fl>&&>(energies), vector<string>()));
 			}
 			in.close();
 			remove(slice_csv_path);
@@ -457,7 +411,7 @@ int main(int argc, char* argv[])
 				BOOST_ASSERT(gm_tasks.empty());
 				for (size_t x = 0; x < num_gm_tasks; ++x)
 				{
-					gm_tasks.push_back(new packaged_task<void>(bind<void>(grid_map_task, boost::ref(grid_maps), boost::cref(atom_types_to_populate), x, boost::cref(sf), boost::cref(b), boost::cref(rec), boost::cref(partitions))));
+					gm_tasks.push_back(new packaged_task<void>(bind<void>(grid_map_task, boost::ref(grid_maps), boost::cref(atom_types_to_populate), x, boost::cref(sf), boost::cref(b), boost::cref(rec))));
 				}
 				tp.run(gm_tasks);
 				for (auto& t : gm_tasks)
@@ -513,16 +467,53 @@ int main(int argc, char* argv[])
 
 			if (num_conformations)
 			{
+				// Find the number of hydrogen bonds.
+				const size_t num_lig_hbda = lig.hbda.size();
+				for (size_t k = 0; k < num_conformations; ++k)
+				{
+					result& r = phase2_results[k];
+					BOOST_ASSERT(r.hbonds.empty());
+					size_t num_hbonds = 0;
+					for (size_t i = 0; i < num_lig_hbda; ++i)
+					{
+						const atom& lig_atom = lig.heavy_atoms[lig.hbda[i]];
+						BOOST_ASSERT(xs_is_donor_acceptor(lig_atom.xs));
+
+						// Find the possibly interacting receptor atoms via partitions.
+						const vec3 lig_coords = r.heavy_atoms[lig.hbda[i]];
+						const vector<size_t>& rec_hbda = rec.hbda_3d(b.partition_index(lig_coords));
+
+						// Accumulate individual free energies for each atom types to populate.
+						const size_t num_rec_hbda = rec_hbda.size();
+						for (size_t l = 0; l < num_rec_hbda; ++l)
+						{
+							const atom& rec_atom = rec.atoms[rec_hbda[l]];
+							BOOST_ASSERT(xs_is_donor_acceptor(rec_atom.xs));
+							if (!xs_hbond(lig_atom.xs, rec_atom.xs)) continue;
+							const fl r2 = distance_sqr(lig_coords, rec_atom.coordinate);
+							if (r2 <= hbond_dist_sqr)
+							{
+								++num_hbonds;
+								r.hbonds += " | " + rec_atom.name + " - " + lig_atom.name;
+							}
+						}
+					}
+					const auto num_hbonds_str = lexical_cast<string>(num_hbonds);
+					r.hbonds = string(4 - num_hbonds_str.size(), ' ') + num_hbonds_str + r.hbonds;
+				}
+
 				// Write models to file.
 				lig.write_models(hits_pdbqt_path, remark, phase2_results, num_conformations, b, grid_maps);
 
 				// Add to summaries.
 				vector<fl> energies(num_conformations);
+				vector<string> hbonds(num_conformations);
 				for (size_t k = 0; k < num_conformations; ++k)
 				{
 					energies[k] = phase2_results[k].e_nd;
+					hbonds[k] = phase2_results[k].hbonds;
 				}
-				phase2_summaries.push_back(new summary(s.index, s.lig_id, static_cast<vector<fl>&&>(energies)));
+				phase2_summaries.push_back(new summary(s.index, s.lig_id, static_cast<vector<fl>&&>(energies), static_cast<vector<string>&&>(hbonds)));
 			}
 
 			// Clear the results of the current ligand.
@@ -542,7 +533,7 @@ int main(int argc, char* argv[])
 			phase2_csv_gz.setf(std::ios::fixed, std::ios::floatfield);
 			phase2_csv_gz << std::setprecision(3);
 			phase2_csv_gz << "ZINC ID,Conformations";
-			for (size_t i = 1; i <= max_conformations; ++i) phase2_csv_gz << ",Free energy " << i << " (kcal/mol2)";
+			for (size_t i = 1; i <= max_conformations; ++i) phase2_csv_gz << ",Free energy " << i << " (kcal/mol2), Hydrogen bonds " << i;
 			phase2_csv_gz << ",Molecular weight (g/mol),Partition coefficient xlogP,Apolar desolvation (kcal/mol),Polar desolvation (kcal/mol),Hydrogen bond donors,Hydrogen bond acceptors,Polar surface area tPSA (A^2),Net charge,Rotatable bonds,Purchasing information\n";
 			for (const auto& s : phase2_summaries)
 			{
@@ -551,11 +542,11 @@ int main(int argc, char* argv[])
 				phase2_csv_gz << s.lig_id.substr(0, comma) << ',' << num_conformations;
 				for (size_t j = 0; j < num_conformations; ++j)
 				{
-					phase2_csv_gz << ',' << s.energies[j];
+					phase2_csv_gz << ',' << s.energies[j] << ',' << s.hbonds[j];
 				}
 				for (size_t j = num_conformations; j < max_conformations; ++j)
 				{
-					phase2_csv_gz << ',';
+					phase2_csv_gz << ",,";
 				}
 				phase2_csv_gz << ',' << s.lig_id.substr(comma + 1) << ",http://zinc.docking.org/substance/" << s.lig_id.substr(0, comma) << '\n';
 			}

@@ -217,6 +217,13 @@ namespace idock
 			|| xs == XS_TYPE_O_DA;
 	}
 
+	/// Returns true if the XScore atom type is either a hydrogen bond donor or a hydrogen bond acceptor.
+	inline bool xs_is_donor_acceptor(const size_t xs)
+	{
+		BOOST_ASSERT(xs < XS_TYPE_SIZE);
+		return xs_is_donor(xs) || xs_is_acceptor(xs);
+	}
+
 	/// Returns true if the two XScore atom types are a pair of hydrogen bond donor and acceptor.
 	inline bool xs_hbond(const size_t xs1, const size_t xs2)
 	{
@@ -258,16 +265,20 @@ namespace idock
 		XS_TYPE_Met_D, // 28 = AD_TYPE_Sr
 	};
 
+	/// Distance requirement of forming hydrogen bonds.
+	const fl hbond_dist_sqr = sqr(3.5);
+
 	/// Represents an atom by very simple fields.
 	class atom
 	{
 	public:
+		string name; ///< Atom name;
 		vec3 coordinate; ///< 3D coordinate.
 		size_t ad; ///< AutoDock4 atom type.
 		size_t xs; ///< XScore atom type.
 
 		/// Constructs an atom with 3D coordinate and AutoDock4 atom type.
-		explicit atom(const vec3& coordinate, const size_t ad) : coordinate(coordinate), ad(ad), xs(ad_to_xs[ad]) {}
+		explicit atom(string&& name_, const vec3& coordinate, const size_t ad) : name(static_cast<string&&>(name_)), coordinate(coordinate), ad(ad), xs(ad_to_xs[ad]) {}
 
 		/// Returns the covalent radius of current AutoDock4 atom type.
 		fl covalent_radius() const

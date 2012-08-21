@@ -17,14 +17,16 @@
 */
 
 #include <sstream>
+#include <boost/algorithm/string.hpp>
 #include "parsing_error.hpp"
+#include "scoring_function.hpp"
 #include "receptor.hpp"
 
 namespace idock
 {
 	using std::istringstream;
 
-	receptor::receptor(string&& content)
+	receptor::receptor(string&& content, const box& b) : partitions(b.num_partitions), hbda_3d(b.num_partitions)
 	{
 		// Initialize necessary variables for constructing a receptor.
 		atoms.reserve(5000); // A receptor typically consists of <= 5,000 atoms.
@@ -53,7 +55,9 @@ namespace idock
 				if (ad == AD_TYPE_H) continue;
 
 				// Parse the Cartesian coordinate.
-				const atom a(vec3(right_cast<fl>(line, 31, 38), right_cast<fl>(line, 39, 46), right_cast<fl>(line, 47, 54)), ad);
+				string name = line.substr(12, 4);
+				boost::algorithm::trim(name);
+				const atom a(line.substr(21, 1) + ':' + line.substr(17, 3) + right_cast<string>(line, 23, 26) + ':' + name, vec3(right_cast<fl>(line, 31, 38), right_cast<fl>(line, 39, 46), right_cast<fl>(line, 47, 54)), ad);
 
 				// For a polar hydrogen, the bonded hetero atom must be a hydrogen bond donor.
 				if (ad == AD_TYPE_HD)
@@ -107,6 +111,51 @@ namespace idock
 					if (a.is_neighbor(b))
 					{
 						b.dehydrophobicize();
+					}
+				}
+			}
+		}
+		
+		// Find all the heavy receptor atoms that are within 8A of the box.
+		vector<size_t> receptor_atoms_within_cutoff;
+		receptor_atoms_within_cutoff.reserve(atoms.size());
+		const size_t num_rec_atoms = atoms.size();
+		for (size_t i = 0; i < num_rec_atoms; ++i)
+		{
+			const atom& a = atoms[i];
+			if (b.project_distance_sqr(a.coordinate) < scoring_function::Cutoff_Sqr)
+			{
+				receptor_atoms_within_cutoff.push_back(i);
+			}
+		}
+		const size_t num_receptor_atoms_within_cutoff = receptor_atoms_within_cutoff.size();
+
+		// Allocate each nearby receptor atom to its corresponding partition.
+		for (size_t x = 0; x < b.num_partitions[0]; ++x)
+		for (size_t y = 0; y < b.num_partitions[1]; ++y)
+		for (size_t z = 0; z < b.num_partitions[2]; ++z)
+		{
+			vector<size_t>& par = partitions(x, y, z);
+			vector<size_t>& hbda = hbda_3d(x, y, z);
+			par.reserve(num_receptor_atoms_within_cutoff);
+			hbda.reserve(num_receptor_atoms_within_cutoff);
+			const array<size_t, 3> index1 = {{ x,     y,     z     }};
+			const array<size_t, 3> index2 = {{ x + 1, y + 1, z + 1 }};
+			const vec3 corner1 = b.partition_corner1(index1);
+			const vec3 corner2 = b.partition_corner1(index2);
+			for (size_t l = 0; l < num_receptor_atoms_within_cutoff; ++l)
+			{
+				const size_t i = receptor_atoms_within_cutoff[l];
+				const atom& a = atoms[i];
+				const fl proj_dist_sqr = b.project_distance_sqr(corner1, corner2, a.coordinate);
+				if (proj_dist_sqr < scoring_function::Cutoff_Sqr)
+				{
+					par.push_back(i);
+
+					// Find hydrogen bond donors and acceptors.
+					if (proj_dist_sqr < hbond_dist_sqr)
+					{
+						if (xs_is_donor_acceptor(a.xs)) hbda.push_back(i);
 					}
 				}
 			}

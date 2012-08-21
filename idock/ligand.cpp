@@ -16,6 +16,7 @@
 
 */
 
+#include <boost/algorithm/string.hpp>
 #include <boost/iostreams/filtering_stream.hpp>
 #include <boost/iostreams/filter/gzip.hpp>
 #include "parsing_error.hpp"
@@ -66,7 +67,9 @@ namespace idock
 				if (ad == AD_TYPE_SIZE) throw parsing_error(num_lines, "Atom type " + ad_type_string + " is not supported by idock.");
 
 				// Parse the Cartesian coordinate.
-				atom a(vec3(right_cast<fl>(line, 31, 38), right_cast<fl>(line, 39, 46), right_cast<fl>(line, 47, 54)), ad);
+				string name = line.substr(12, 4);
+				boost::algorithm::trim(name);
+				atom a(static_cast<string&&>(name), vec3(right_cast<fl>(line, 31, 38), right_cast<fl>(line, 39, 46), right_cast<fl>(line, 47, 54)), ad);
 
 				if (a.is_hydrogen()) // Current atom is a hydrogen.
 				{
@@ -224,6 +227,13 @@ namespace idock
 		BOOST_ASSERT(num_heavy_atoms + num_hydrogens + (num_torsions << 1) + 3 == lines.size()); // ATOM/HETATM lines + BRANCH/ENDBRANCH lines + ROOT/ENDROOT/TORSDOF lines == lines.size()
 		flexibility_penalty_factor = 1 / (1 + 0.05846 * (num_active_torsions + 0.5 * (num_torsions - num_active_torsions)));
 		BOOST_ASSERT(flexibility_penalty_factor < 1);
+
+		// Find hydrogen bond donors and acceptors.
+		hbda.reserve(num_heavy_atoms);
+		for (size_t i = 0; i < num_heavy_atoms; ++i)
+		{
+			if (xs_is_donor_acceptor(heavy_atoms[i].xs)) hbda.push_back(i);
+		}
 
 		// Update heavy_atoms[].coordinate and hydrogens[].coordinate relative to frame origin.
 		for (size_t k = 0; k < num_frames; ++k)
@@ -562,21 +572,22 @@ namespace idock
 		using namespace std;
 		using boost::iostreams::filtering_ostream;
 		using boost::iostreams::gzip_compressor;
-		ofstream hits_pdbqt(output_ligand_path, ios::app); // Dumping starts. Open the file stream as late as possible.
-		filtering_ostream hits_pdbqt_gz;
-		hits_pdbqt_gz.push(gzip_compressor());
-		hits_pdbqt_gz.push(hits_pdbqt);
-		hits_pdbqt_gz.setf(ios::fixed, ios::floatfield);
-		hits_pdbqt_gz << setprecision(3);
-		hits_pdbqt_gz << remark << '\n';
+		ofstream out(output_ligand_path, ios::app); // Dumping starts. Open the file stream as late as possible.
+		filtering_ostream fos;
+		fos.push(gzip_compressor());
+		fos.push(out);
+		fos.setf(ios::fixed, ios::floatfield);
+		fos << setprecision(3);
+		fos << remark << '\n';
 		for (size_t i = 0; i < num_conformations; ++i)
 		{
 			const result& r = results[i];
-			hits_pdbqt_gz << "MODEL     " << setw(4) << (i + 1) << '\n'
+			fos << "MODEL     " << setw(4) << (i + 1) << '\n'
 				<< "REMARK       NORMALIZED FREE ENERGY PREDICTED BY IDOCK:" << setw(8) << r.e_nd    << " KCAL/MOL\n"
 				<< "REMARK            TOTAL FREE ENERGY PREDICTED BY IDOCK:" << setw(8) << r.e       << " KCAL/MOL\n"
 				<< "REMARK     INTER-LIGAND FREE ENERGY PREDICTED BY IDOCK:" << setw(8) << r.f       << " KCAL/MOL\n"
-				<< "REMARK     INTRA-LIGAND FREE ENERGY PREDICTED BY IDOCK:" << setw(8) << r.e - r.f << " KCAL/MOL\n";
+				<< "REMARK     INTRA-LIGAND FREE ENERGY PREDICTED BY IDOCK:" << setw(8) << r.e - r.f << " KCAL/MOL\n"
+				<< "REMARK               HYDROGEN BONDS PREDICTED BY IDOCK:" << r.hbonds << '\n';
 			for (size_t j = 0, heavy_atom = 0, hydrogen = 0; j < num_lines; ++j)
 			{
 				const string& line = lines[j];
@@ -584,7 +595,7 @@ namespace idock
 				{
 					const fl   free_energy = line[77] == 'H' ? 0 : grid_maps[heavy_atoms[heavy_atom].xs](b.grid_index(r.heavy_atoms[heavy_atom]));
 					const vec3& coordinate = line[77] == 'H' ? r.hydrogens[hydrogen++] : r.heavy_atoms[heavy_atom++];
-					hits_pdbqt_gz << line.substr(0, 30)
+					fos << line.substr(0, 30)
 						<< setw(8) << coordinate[0]
 						<< setw(8) << coordinate[1]
 						<< setw(8) << coordinate[2]
@@ -594,11 +605,11 @@ namespace idock
 				}
 				else // This line starts with "ROOT", "ENDROOT", "BRANCH", "ENDBRANCH", TORSDOF", which will not change during docking.
 				{
-					hits_pdbqt_gz << line;
+					fos << line;
 				}
-				hits_pdbqt_gz << '\n';
+				fos << '\n';
 			}
-			hits_pdbqt_gz << "ENDMDL\n";
+			fos << "ENDMDL\n";
 		}
 	}
 }
