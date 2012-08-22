@@ -54,16 +54,12 @@ Supported browsers
 RESTful API for idock
 ---------------------
 
-### Get jobs
-
-    curl -Gd 'email=Jacky@cuhk.edu.hk' http://istar.cse.cuhk.edu.hk/idock/jobs
-
-### Post a new job
+### Submit a new job via HTTP POST
 
     curl -d $'email=Jacky@cuhk.edu.hk&receptor=
     ATOM      1  N   ASN A  21      63.845  98.298   0.035  1.00113.44    -0.066 N \n
     ATOM      2  HN1 ASN A  21      64.058  99.036  -0.636  1.00  0.00     0.275 HD\n
-	TER    5500      VAL A 552 &
+    TER    5500      VAL A 552 &
     center_x=1.234&center_y=5.678&center_z=9.012&
     size_x=20&size_y=18&size_z=22&
     description=Screen drug-like ligands for HIV RT&
@@ -73,7 +69,11 @@ RESTful API for idock
     ad_lb=0&ad_ub=12&pd_lb=-50&pd_ub=0&tpsa_lb=20&tpsa_ub=100'
     http://istar.cse.cuhk.edu.hk/idock/jobs
 
-### Get the number of ligands satisfying filtering conditions
+### Obtain existing jobs via HTTP GET
+
+    curl -Gd 'email=Jacky@cuhk.edu.hk' http://istar.cse.cuhk.edu.hk/idock/jobs
+
+### Count the number of ligands satisfying your custom filtering conditions via HTTP GET
 
     curl -Gd
     mwt_lb=400&mwt_ub=500&logp_lb=0&logp_ub=5&nrb_lb=2&nrb_ub=8&
@@ -85,15 +85,15 @@ RESTful API for idock
 RESTful API for igrep
 ---------------------
 
-### Get jobs
-
-    curl -Gd 'email=Jacky@cuhk.edu.hk' http://istar.cse.cuhk.edu.hk/igrep/jobs
-
-### Post a new job
+### Submit a new job via HTTP POST
 
     curl -d $'email=Jacky@cuhk.edu.hk&taxid=9606&queries=CTGCATGGTGGGGAAAAGGCATAGCCTGGG3
     AAAAGTGTTATGGGTTGTTTAATCAACCACTGAACTGCGGGGGTGACTAGTTATAACTTA6'
     http://istar.cse.cuhk.edu.hk/igrep/jobs
+
+### Obtain existing jobs via HTTP GET
+
+    curl -Gd 'email=Jacky@cuhk.edu.hk' http://istar.cse.cuhk.edu.hk/igrep/jobs
 
 
 Licenses
