@@ -13,6 +13,7 @@
     <link href="/bootstrap.min.css" rel="stylesheet">
     <link href="/bootstrap-responsive.min.css" rel="stylesheet">
     <link href="/jquery-ui-1.8.23.custom.css" rel="stylesheet">
+    <link href="/prettify.css" rel="stylesheet">
     <link href="/index.css" rel="stylesheet">
 
     <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
@@ -323,7 +324,8 @@
           <div class="span12" id="tutorials">
             <h3><a href="#">Prepare a receptor in PDBQT format</a></h3>
             <div>
-              <p>pythonsh prepare_recepto4.py -r 2ZD1.pdb -A hydrogen -U lps_waters_deleteAltB</p>
+              <p>How to..</p>
+              <pre class="prettyprint linenums">pythonsh prepare_receptor4.py -r receptor.pdb -A hydrogens -U lps_waters_deleteAltB</pre>
               <img src="/grey.gif" data-original="test.jpg" alt="prepare_receptor4.py">
               <img src="/grey.gif" data-original="test.jpg" alt="prepare_receptor4.py">
               <img src="/grey.gif" data-original="test.jpg" alt="prepare_receptor4.py">
@@ -337,7 +339,7 @@
             </div>
             <h3><a href="#">Prepare a ligand in PDBQT format</a></h3>
             <div>
-              <p>Another tutorial</p>
+              <pre class="prettyprint linenums">pythonsh prepare_ligand4.py -U '' -l ligand.mol2</pre>
             </div>
           </div>
         </div>
@@ -368,6 +370,7 @@
     <script src="/jquery.dateFormat-1.0.js"></script>
     <script src="/jquery.pager.js"></script>
     <script src="/jquery.lazyload.min.js"></script>
+    <script src="/prettify.js"></script>
     <script src="/istar.js"></script>
     <script src="index.js"></script>
 

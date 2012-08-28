@@ -233,4 +233,6 @@ $(function() {
   $('#tutorials img').lazyload({
     effect: "fadeIn"
   });
+  // Make code pretty
+  prettyPrint();
 });

@@ -75,6 +75,10 @@ li img {
   padding-right: 8px;
 }
 
+pre {
+  font-size: 14px;
+}
+
 footer {
   padding-top: 17px;
   margin: 18px 0;
