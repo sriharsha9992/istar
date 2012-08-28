@@ -223,4 +223,14 @@ $(function() {
       setCookie('email', email, 7);
     }, 'json');
   });
+
+  // Apply accordion to tutorial
+  $('#tutorials').accordion({
+    collapsible: true,
+    active: false,
+    autoHeight: false
+  });
+  $('#tutorials img').lazyload({
+    effect: "fadeIn"
+  });
 });
