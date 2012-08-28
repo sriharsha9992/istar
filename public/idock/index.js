@@ -228,10 +228,13 @@ $(function() {
   $('#tutorials').accordion({
     collapsible: true,
     active: false,
-    autoHeight: false
+    autoHeight: false,
+    change: function(event, ui) {
+      $('#tutorials img').trigger('expand');
+    }
   });
   $('#tutorials img').lazyload({
-    effect: "fadeIn"
+    event: 'expand'
   });
   // Make code pretty
   prettyPrint();
