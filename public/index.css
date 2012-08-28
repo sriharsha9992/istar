@@ -75,6 +75,14 @@ li img {
   padding-right: 8px;
 }
 
+.ui-accordion .ui-accordion-content a {
+  color: #0088cc;
+}
+
+.ui-accordion .ui-accordion-content img {
+  padding: 10px 0;
+}
+
 pre {
   font-size: 14px;
 }

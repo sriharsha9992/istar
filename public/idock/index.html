@@ -119,7 +119,7 @@
                 <div class="control-group">
                   <label class="control-label" for="center_x"><span class="add-on"><i class="icon-asterisk"></i></span> <a href="#center_x" title="a decimal" id="center_x_label">center_x</a></label>
                   <div class="controls">
-                    <input type="number" class="span1" id="center_x" placeholder="1.234">
+                    <input type="number" class="span1" id="center_x" placeholder="49.712">
                   </div>
                 </div>
               </div>
@@ -127,7 +127,7 @@
                 <div class="control-group">
                   <label class="control-label" for="center_y"><span class="add-on"><i class="icon-asterisk"></i></span> <a href="#center_y" title="a decimal" id="center_y_label">center_y</a></label>
                   <div class="controls">
-                    <input type="number" class="span1" id="center_y" placeholder="5.678">
+                    <input type="number" class="span1" id="center_y" placeholder="-28.923">
                   </div>
                 </div>
               </div>
@@ -135,7 +135,7 @@
                 <div class="control-group">
                   <label class="control-label" for="center_z"><span class="add-on"><i class="icon-asterisk"></i></span> <a href="#center_z" title="a decimal" id="center_z_label">center_z</a></label>
                   <div class="controls">
-                    <input type="number" class="span1" id="center_z" placeholder="9.012">
+                    <input type="number" class="span1" id="center_z" placeholder="36.824">
                   </div>
                 </div>
               </div>
@@ -143,7 +143,7 @@
                 <div class="control-group">
                   <label class="control-label" for="size_x"><span class="add-on"><i class="icon-asterisk"></i></span> <a href="#size_x" title="within [10, 30]" id="size_x_label">size_x</a></label>
                   <div class="controls">
-                    <input type="number" min="10" max="30" class="span1" id="size_x" placeholder="20">
+                    <input type="number" min="10" max="30" class="span1" id="size_x" placeholder="18">
                   </div>
                 </div>
               </div>
@@ -159,7 +159,7 @@
                 <div class="control-group">
                   <label class="control-label" for="size_z"><span class="add-on"><i class="icon-asterisk"></i></span> <a href="#size_z" title="within [10, 30]" id="size_z_label">size_z</a></label>
                   <div class="controls">
-                    <input type="number" min="10" max="30" class="span1" id="size_z" placeholder="22">
+                    <input type="number" min="10" max="30" class="span1" id="size_z" placeholder="20">
                   </div>
                 </div>
               </div>
@@ -324,22 +324,66 @@
           <div class="span12" id="tutorials">
             <h3><a href="#">Prepare a receptor in PDBQT format</a></h3>
             <div>
-              <p>How to..</p>
-              <pre class="prettyprint linenums">pythonsh prepare_receptor4.py -r receptor.pdb -A hydrogens -U lps_waters_deleteAltB</pre>
-              <img src="/grey.gif" data-original="test.jpg" alt="prepare_receptor4.py">
-              <img src="/grey.gif" data-original="test.jpg" alt="prepare_receptor4.py">
-              <img src="/grey.gif" data-original="test.jpg" alt="prepare_receptor4.py">
-              <img src="/grey.gif" data-original="test.jpg" alt="prepare_receptor4.py">
-              <img src="/grey.gif" data-original="test.jpg" alt="prepare_receptor4.py">
-              <img src="/grey.gif" data-original="test.jpg" alt="prepare_receptor4.py">
-              <img src="/grey.gif" data-original="test.jpg" alt="prepare_receptor4.py">
-              <img src="/grey.gif" data-original="test.jpg" alt="prepare_receptor4.py">
-              <img src="/grey.gif" data-original="test.jpg" alt="prepare_receptor4.py">
-              <img src="/grey.gif" data-original="test.jpg" alt="prepare_receptor4.py">
+              <p>Download a receptor at PDB. Take HIV-1 reverse transcriptase (<a href="http://www.pdb.org/pdb/explore/explore.do?structureId=2ZD1">2ZD1</a>) as an example.</p>
+              <img src="/grey.gif" data-original="pdb.png" alt="PDB 2ZD1">
+              <p>Retain only the "ATOM" or "HETATM" records of necessary chain(s) where the binding site of interest resides. In <code>2ZD1.pdb</code>, the ligand TMC278 binds at the allosteric site, which resides in chain A. Chain A atoms start at line 613 and end at line 5118 with the "TER" record. Save lines 613 - 5118 to a new file <code>2ZD1rec.pdb</code></p>
+              <img src="/grey.gif" data-original="2zd1rec.png" alt="2ZD1 receptor chain A">
+              <p>Download MGLTools at <a href="http://mgltools.scripps.edu/downloads">http://mgltools.scripps.edu/downloads</a> and install it.
+              <img src="/grey.gif" data-original="mgltools.png" alt="MGLTools">
+              <p>Use the <code>prepare_receptor4.py</code> script to convert a receptor into PDBQT format.</p>
+              <ul>
+                <li>The <code>-r 2ZD1rec.pdb</code> option specifies a receptor for input.</li>
+                <li>The <code>-o 2ZD1rec.pdbqt</code> option specifies a receptor for output.</li>
+                <li>The <code>-A hydrogens</code> option adds both polar and non-polar hydrogens.</li>
+                <li>The <code>-U lps_water_deleteAltB</code> option removes lone pairs, water residues, and XX@B atoms.</li>
+              </ul>
+			  <p>On Windows</p>
+<pre class="prettyprint linenums">
+cd C:\Program Files (x86)\MGLTools-1.5.6rc3
+python Lib\site-packages\AutoDockTools\Utilities24\prepare_receptor4.py -r 2ZD1rec.pdb -o 2ZD1rec.pdbqt -A hydrogens -U lps_waters_deleteAltB
+</pre>
+			  <p>On Linux</p>
+<pre class="prettyprint linenums">
+cd ~/mgltools_x86_64Linux2_1.5.6rc3
+pythonsh MGLToolsPckgs\AutoDockTools\Utilities24\prepare_receptor4.py -r 2ZD1rec.pdb -o 2ZD1rec.pdbqt -A hydrogens -U lps_waters_deleteAltB
+</pre>
+              <p>Copy the content of <code>2ZD1rec.pdbqt</code> and paste it into <a href="#receptor_label">Receptor in PDBQT</a></p>
             </div>
-            <h3><a href="#">Prepare a ligand in PDBQT format</a></h3>
+            <h3><a href="#">Define a binding site</a></h3>
             <div>
-              <pre class="prettyprint linenums">pythonsh prepare_ligand4.py -U '' -l ligand.mol2</pre>
+              <p>Save the ligand TMC278 (lines 8533 - 8560) to a new file <code>2ZD1lig.pdb</code></p>
+              <img src="/grey.gif" data-original="2zd1lig.png" alt="2ZD1 ligand TMC278">
+              <p>Use the <code>prepare_ligand4.py</code> script to convert a ligand into PDBQT format.</p>
+              <ul>
+                <li>The <code>-l 2ZD1lig.pdb</code> option specifies a ligand for input.</li>
+                <li>The <code>-o 2ZD1lig.pdbqt</code> option specifies a ligand for output.</li>
+                <li>The <code>-A hydrogens</code> option adds both polar and non-polar hydrogens.</li>
+                <li>The <code>-U ''</code> option removes nothing, i.e. retains lone pairs and non-polar hydrogens.</li>
+              </ul>
+			  <p>On Windows</p>
+<pre class="prettyprint linenums">
+cd C:\Program Files (x86)\MGLTools-1.5.6rc3
+python Lib\site-packages\AutoDockTools\Utilities24\prepare_ligand4.py -r 2ZD1lig.pdb -o 2ZD1lig.pdbqt -A hydrogens -U ''
+</pre>
+			  <p>On Linux</p>
+<pre class="prettyprint linenums">
+cd ~/mgltools_x86_64Linux2_1.5.6rc3
+pythonsh MGLToolsPckgs\AutoDockTools\Utilities24\prepare_ligand4.py -r 2ZD1lig.pdb -o 2ZD1lig.pdbqt -A hydrogens -U ''
+</pre>
+              <p>Run AutoDockTools, which is a component of MGLTools. From the menu of ADT4.2</p>
+              <ul>
+                <li>Grid -> Macromolecule -> Open -> <code>2ZD1rec.pdbqt</code>. Ignore all the warnings about charge, because idock ignores charge.</li>
+                <li>Grid -> Set Map Types -> Open Ligand -> <code>2ZD1lig.pdbqt</code>.</li>
+                <li>Grid -> Grid Box.</li>
+              </ul>
+              <img src="/grey.gif" data-original="adt.png" alt="AutoDock Tools">
+              <p>The "Grid Options" dialog pops out.</p>
+              <ul>
+                <li>From the menu, click Center -> Center on ligand.</li>
+                <li>Scroll "Spacing (angstrom)" from 0.375 to 1.000.</li>
+                <li>Manually adjust number of points in x-, y-, z- dimension and x y z center, so that the grid box fully covers the ligand.</li>
+              </ul>
+              <p>Paste the corresponding values into <a href="#center_x_label">center_x</a>, <a href="#center_y_label">center_y</a>, <a href="#center_z_label">center_z</a>, <a href="#size_x_label">size_x</a>, <a href="#size_y_label">size_y</a>, <a href="#size_z_label">size_z</a>.</p>
             </div>
           </div>
         </div>
