@@ -16,7 +16,7 @@ Features
 ### Web client
 
 * [Twitter Bootstrap] v2.1.0
-* [HTML5 Boilerplate] v3.0.2
+* [HTML5 Boilerplate] v4.0.0
 * [Modernizr] v2.6.1
 * [jQuery] v1.8.0
 * [jQuery UI] v1.8.23
