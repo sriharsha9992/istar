@@ -25,13 +25,13 @@ Features
 
 * [node.js] v0.8.7
 * [mongodb] v1.1.5
-* [express] v3.0.0rc3
+* [express] v3.0.0rc4
 * [validator] v0.4.11
 * [spdy] v1.3.3
 
 ### Database
 
-* [MongoDB] v2.0.7
+* [MongoDB] v2.2.0
 
 ### Workstations
 
