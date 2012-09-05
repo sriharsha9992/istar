@@ -16,7 +16,7 @@ Features
 ### Web client
 
 * [Twitter Bootstrap] v2.1.0
-* [HTML5 Boilerplate] v3.0.2
+* [HTML5 Boilerplate] v4.0.0
 * [Modernizr] v2.6.1
 * [jQuery] v1.8.0
 * [jQuery UI] v1.8.23
@@ -24,14 +24,14 @@ Features
 ### Web server
 
 * [node.js] v0.8.7
-* [mongodb] v1.1.4
-* [express] v3.0.0rc3
+* [mongodb] v1.1.5
+* [express] v3.0.0rc4
 * [validator] v0.4.11
 * [spdy] v1.3.3
 
 ### Database
 
-* [MongoDB] v2.0.7
+* [MongoDB] v2.2.0
 
 ### Workstations
 

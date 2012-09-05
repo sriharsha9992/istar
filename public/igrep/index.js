@@ -2637,7 +2637,7 @@ $(function() {
         });
       }
       // Save email into cookie
-      setCookie('email', email, 7);
+      setCookie('email', email);
     }, 'json');
   });
 

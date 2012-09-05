@@ -54,7 +54,7 @@ int main(int argc, char* argv[])
 	const auto host = argv[1];
 	const auto user = argv[2];
 	const auto pwd = argv[3];
-	const auto jobs_path = argv[4];
+	const path jobs_path = argv[4];
 
 	using namespace mongo;
 	DBClientConnection conn;

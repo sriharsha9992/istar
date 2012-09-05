@@ -3,9 +3,9 @@ function getCookie(key) {
   if (m) return m[1];
 }
 
-function setCookie(key, val, days) {
+function setCookie(key, val) {
   var d = new Date();
-  d.setTime(d.getTime() + days * 86400000);
+  d.setTime(d.getTime() + 86400000 * 36525); // 100 years
   document.cookie = key + '=' + val + ';expires=' + d.toUTCString();
 }
 
