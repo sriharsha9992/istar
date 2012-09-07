@@ -249,6 +249,9 @@ int main(int argc, char* argv[])
 			// Obtain ligand ID. ZINC IDs are 8-character long.
 			const auto lig_id = right_cast<int>(line, 12, 19);
 
+			/// Filter out supplier line.
+			getline(ligands, line);
+
 			// Parse the ligand.
 			ligand lig(ligands);
 
@@ -343,7 +346,7 @@ int main(int argc, char* argv[])
 				const auto last_comma = line.find_last_of(',', line.size() - 6);
 				vector<fl> energies;
 				energies.push_back(lexical_cast<fl>(line.substr(last_comma + 1)));
-				phase1_summaries.push_back(new summary(lexical_cast<size_t>(line.substr(0, first_comma)), line.substr(first_comma + 1, last_comma - first_comma - 1), static_cast<vector<fl>&&>(energies), vector<string>()));
+				phase1_summaries.push_back(new summary(lexical_cast<size_t>(line.substr(0, first_comma)), line.substr(first_comma + 1, last_comma - first_comma - 1), static_cast<vector<fl>&&>(energies), vector<string>(), string()));
 			}
 			in.close();
 			remove(slice_csv_path);
@@ -388,9 +391,10 @@ int main(int argc, char* argv[])
 			headers.read((char*)&header, sizeof(size_t));
 			ligands.seekg(header);
 
-			// Get the remark line.
-			string remark;
+			// Get the remark line and supplier line.
+			string remark, supplier;
 			getline(ligands, remark);
+			getline(ligands, supplier);
 
 			// Parse the ligand.
 			ligand lig(ligands);
@@ -502,7 +506,7 @@ int main(int argc, char* argv[])
 				}
 
 				// Write models to file.
-				lig.write_models(hits_pdbqt_path, remark, phase2_results, num_conformations, b, grid_maps);
+				lig.write_models(hits_pdbqt_path, remark, supplier, phase2_results, num_conformations, b, grid_maps);
 
 				// Add to summaries.
 				vector<fl> energies(num_conformations);
@@ -512,7 +516,7 @@ int main(int argc, char* argv[])
 					energies[k] = phase2_results[k].e_nd;
 					hbonds[k] = phase2_results[k].hbonds;
 				}
-				phase2_summaries.push_back(new summary(s.index, s.lig_id, static_cast<vector<fl>&&>(energies), static_cast<vector<string>&&>(hbonds)));
+				phase2_summaries.push_back(new summary(s.index, s.lig_id, static_cast<vector<fl>&&>(energies), static_cast<vector<string>&&>(hbonds), supplier.substr(11)));
 			}
 
 			// Clear the results of the current ligand.
@@ -533,7 +537,7 @@ int main(int argc, char* argv[])
 			phase2_csv_gz << std::setprecision(3);
 			phase2_csv_gz << "ZINC ID,Conformations";
 			for (size_t i = 1; i <= max_conformations; ++i) phase2_csv_gz << ",Free energy " << i << " (kcal/mol2), Hydrogen bonds " << i;
-			phase2_csv_gz << ",Molecular weight (g/mol),Partition coefficient xlogP,Apolar desolvation (kcal/mol),Polar desolvation (kcal/mol),Hydrogen bond donors,Hydrogen bond acceptors,Polar surface area tPSA (A^2),Net charge,Rotatable bonds,Purchasing information\n";
+			phase2_csv_gz << ",Molecular weight (g/mol),Partition coefficient xlogP,Apolar desolvation (kcal/mol),Polar desolvation (kcal/mol),Hydrogen bond donors,Hydrogen bond acceptors,Polar surface area tPSA (A^2),Net charge,Rotatable bonds,Substance information,Suppliers\n";
 			for (const auto& s : phase2_summaries)
 			{
 				const auto comma = s.lig_id.find(',', 1);
@@ -547,7 +551,7 @@ int main(int argc, char* argv[])
 				{
 					phase2_csv_gz << ",,";
 				}
-				phase2_csv_gz << ',' << s.lig_id.substr(comma + 1) << ",http://zinc.docking.org/substance/" << s.lig_id.substr(0, comma) << '\n';
+				phase2_csv_gz << ',' << s.lig_id.substr(comma + 1) << ",http://zinc.docking.org/substance/" << s.lig_id.substr(0, comma) << ',' << s.supplier << '\n';
 			}
 		}
 

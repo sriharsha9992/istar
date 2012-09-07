@@ -80,8 +80,8 @@
           <div class="span12">
             <p>The input to idock is threefold:</p>
             <ul>
-              <li>A receptor in PDBQT format. The receptor can contain one or more chains, which should start with ATOM records and end with a TER record. Refer to tutorial 1 on how to prepare a receptor in PDBQT format.</li>
-              <li>A search space defined by a center and a size in unit Å. The search space should define a binding site (e.g. enzymatic site or allosteric site) of the receptor in cuboid shape. Refer to tutorial 2 on how to define a binding site.</li>
+              <li>A receptor in PDBQT format. The receptor can contain one or more chains, which should start with ATOM records and end with a TER record. Refer to tutorial 1 on how to prepare a receptor in PDBQT format with MGLTools.</li>
+              <li>A search space defined by a center and a size in unit Å. The search space should define a binding site (e.g. enzymatic site or allosteric site) of the receptor in cuboid shape. Refer to tutorial 2 on how to define a binding site with MGLTools, Chimera or PyMOL.</li>
               <li>A set of ligands to dock. Totally 12,171,187 ligands are collected from <a href="http://zinc.docking.org">ZINC</a>. Filtering conditions on 9 molecular properties (e.g. mwt, logp, hbd, hba, nrb) can be specified as closed intervals. Only the ligands satisfying all the 9 filtering conditions will be docked.</li>
             </ul>
           </div>
@@ -95,9 +95,9 @@
             </ul>
             <p>As result, you can download:</p>
             <ul>
-              <li><img src="/excel.png" alt="phase1.csv.gz">phase1.csv.gz: the predicted free energy and 9 molecular properties of the selected ligands produced in phase 1</li>
-              <li><img src="/excel.png" alt="phase2.csv.gz">phase2.csv.gz: the predicted free energy and 9 molecular properties as well as link to purchasing information of the top 1000 ligands produced in phase 2</li>
-              <li><img src="/mol.png" alt="hits.pdbqt.gz">hits.pdbqt.gz: the predicted conformations of the top 1000 ligands produced in phase 2</li>
+              <li><img src="/excel.png" alt="phase1.csv.gz">phase1.csv.gz: the predicted free energy and 9 molecular properties of the selected ligands produced in phase 1.</li>
+              <li><img src="/excel.png" alt="phase2.csv.gz">phase2.csv.gz: the predicted free energy and 9 molecular properties, as well as link to substance information and supplier list of the top 1000 ligands produced in phase 2.</li>
+              <li><img src="/mol.png" alt="hits.pdbqt.gz">hits.pdbqt.gz: the predicted conformations of the top 1000 ligands produced in phase 2.</li>
             </ul>
           </div>
           <div class="span6">
@@ -326,7 +326,7 @@
             <div>
               <p>Download a receptor at PDB. Take HIV-1 reverse transcriptase (<a href="http://www.pdb.org/pdb/explore/explore.do?structureId=2ZD1">2ZD1</a>) as an example.</p>
               <img src="/grey.gif" data-original="pdb.png" alt="PDB 2ZD1">
-              <p>Retain only the "ATOM" or "HETATM" records of necessary chain(s) where the binding site of interest resides. In <code>2ZD1.pdb</code>, the ligand TMC278 binds at the allosteric site, which resides in chain A. Chain A atoms start at line 613 and end at line 5118 with the "TER" record. Save lines 613 - 5118 to a new file <code>2ZD1rec.pdb</code></p>
+              <p>Retain only the "ATOM" or "HETATM" records of necessary chain(s) where the binding site of interest resides. In <code>2ZD1.pdb</code>, the ligand TMC278 binds at the allosteric site, which resides in chain A. Chain A atoms start at line 613 and end at line 5118 with the "TER" record. Save lines 613 - 5118 to a new file <code>2ZD1rec.pdb</code>.</p>
               <img src="/grey.gif" data-original="2zd1rec.png" alt="2ZD1 receptor chain A">
               <p>Download MGLTools at <a href="http://mgltools.scripps.edu/downloads">http://mgltools.scripps.edu/downloads</a> and install it.
               <img src="/grey.gif" data-original="mgltools.png" alt="MGLTools">
@@ -358,7 +358,7 @@ pythonsh MGLToolsPckgs\AutoDockTools\Utilities24\prepare_receptor4.py -r 2ZD1rec
                 <li><a href="#pymol">PyMOL</a></li>
               </ul>
               <h4 id="mgltools">MGLTools</h4>
-              <p>Save the ligand TMC278 (lines 8533 - 8560) to a new file <code>2ZD1lig.pdb</code></p>
+              <p>Save the ligand TMC278 (lines 8533 - 8560) to a new file <code>2ZD1lig.pdb</code>.</p>
               <img src="/grey.gif" data-original="2zd1lig.png" alt="2ZD1 ligand TMC278">
               <p>Use the <code>prepare_ligand4.py</code> script to convert a ligand into PDBQT format.</p>
               <ul>

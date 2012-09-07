@@ -95,7 +95,7 @@ namespace idock
 		result compose_result(const fl e, const fl f, const conformation& conf) const;
 
 		/// Writes a given number of conformations from a result container into a output ligand file in PDBQT format.
-		void write_models(const path& output_ligand_path, const string& remark, const ptr_vector<result>& results, const size_t num_conformations, const box& b, const vector<array3d<fl>>& grid_maps);
+		void write_models(const path& output_ligand_path, const string& remark, const string& supplier, const ptr_vector<result>& results, const size_t num_conformations, const box& b, const vector<array3d<fl>>& grid_maps);
 
 	private:
 		fl num_heavy_atoms_inverse; ///< 1 / num_heavy_atoms.
