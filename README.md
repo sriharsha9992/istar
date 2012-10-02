@@ -18,13 +18,13 @@ Features
 * [Twitter Bootstrap] v2.1.1
 * [HTML5 Boilerplate] v4.0.0
 * [Modernizr] v2.6.2
-* [jQuery] v1.8.1
+* [jQuery] v1.8.2
 * [jQuery UI] v1.8.23
 
 ### Web server
 
-* [node.js] v0.8.9
-* [mongodb] v1.1.7
+* [node.js] v0.8.11
+* [mongodb] v1.1.8
 * [express] v3.0.0rc4
 * [validator] v0.4.12
 * [spdy] v1.3.4
