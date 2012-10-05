@@ -374,6 +374,7 @@ int main(int argc, char* argv[])
 			phase1_csv_gz << "ZINC ID,Free energy (kcal/mol),Molecular weight (g/mol),Partition coefficient xlogP,Apolar desolvation (kcal/mol),Polar desolvation (kcal/mol),Hydrogen bond donors,Hydrogen bond acceptors,Polar surface area tPSA (A^2),Net charge,Rotatable bonds\n";
 			for (const auto& s : phase1_summaries)
 			{
+				BOOST_ASSERT(s.energies.size() == 1);
 				const auto comma = s.lig_id.find(',', 1);
 				phase1_csv_gz << s.lig_id.substr(0, comma) << ',' << s.energies.front() << ',' << s.lig_id.substr(comma + 1) << '\n';
 			}
