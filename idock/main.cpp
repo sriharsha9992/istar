@@ -393,8 +393,8 @@ int main(int argc, char* argv[])
 
 			// Get the remark line and supplier line.
 			string remark, supplier;
-			getline(ligands, remark);
-			getline(ligands, supplier);
+			getline(ligands, remark);   // REMARK     00000007  277.364    2.510    9.000  -14.930   0   4  39   0   8    
+			getline(ligands, supplier); // REMARK     6 | chembl11 | chembl12 | chembl13 | chembl14 | enamine-v | pubchem
 
 			// Parse the ligand.
 			ligand lig(ligands);
