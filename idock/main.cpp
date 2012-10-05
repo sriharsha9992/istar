@@ -316,7 +316,7 @@ int main(int argc, char* argv[])
 			if (phase1_results.size())
 			{
 				// Dump ligand summaries to the csv file.
-				slice_csv << i << ',' << lig_id << ',' << (phase1_results.front().f * lig.flexibility_penalty_factor) << ',' << mwt << ',' << logp << ',' << ad << ',' << pd << ',' << hbd << ',' << hba << ',' << tpsa << ',' << charge << ',' << nrb << '\n';
+				slice_csv << i << ',' << lig_id << ',' << (phase1_results.front().f * lig.flexibility_penalty_factor) << ',' << (phase1_results.front().f / lig.num_heavy_atoms) << ',' << mwt << ',' << logp << ',' << ad << ',' << pd << ',' << hbd << ',' << hba << ',' << tpsa << ',' << charge << ',' << nrb << '\n';
 
 				// Clear the results of the current ligand.
 				phase1_results.clear();
@@ -345,10 +345,12 @@ int main(int argc, char* argv[])
 				const auto comma1 = line.find(',', 1);
 				const auto comma2 = comma1 + 9;
 				const auto comma3 = line.find(',', comma2 + 6);
+				const auto comma4 = line.find(',', comma3 + 6);
 				BOOST_ASSERT(line[comma2] == ',');
-				vector<fl> energies;
+				vector<fl> energies, efficiencies;
 				energies.push_back(lexical_cast<fl>(line.substr(comma2 + 1, comma3 - comma2 - 1)));
-				phase1_summaries.push_back(new summary(lexical_cast<size_t>(line.substr(0, comma1)), line.substr(comma1 + 1, 8), static_cast<vector<fl>&&>(energies), vector<string>(), line.substr(comma3 + 1), string()));
+				efficiencies.push_back(lexical_cast<fl>(line.substr(comma3 + 1, comma4 - comma3 - 1)));
+				phase1_summaries.push_back(new summary(lexical_cast<size_t>(line.substr(0, comma1)), line.substr(comma1 + 1, 8), static_cast<vector<fl>&&>(energies), static_cast<vector<fl>&&>(efficiencies), vector<string>(), line.substr(comma4 + 1), string()));
 			}
 			in.close();
 			remove(slice_csv_path);
@@ -373,11 +375,12 @@ int main(int argc, char* argv[])
 			phase1_csv_gz.push(phase1_csv);
 			phase1_csv_gz.setf(std::ios::fixed, std::ios::floatfield);
 			phase1_csv_gz << std::setprecision(3);
-			phase1_csv_gz << "ZINC ID,Free energy (kcal/mol),Molecular weight (g/mol),Partition coefficient xlogP,Apolar desolvation (kcal/mol),Polar desolvation (kcal/mol),Hydrogen bond donors,Hydrogen bond acceptors,Polar surface area tPSA (A^2),Net charge,Rotatable bonds\n";
+			phase1_csv_gz << "ZINC ID,Free energy (kcal/mol),Ligand efficiency (kcal/mol),Molecular weight (g/mol),Partition coefficient xlogP,Apolar desolvation (kcal/mol),Polar desolvation (kcal/mol),Hydrogen bond donors,Hydrogen bond acceptors,Polar surface area tPSA (A^2),Net charge,Rotatable bonds\n";
 			for (const auto& s : phase1_summaries)
 			{
 				BOOST_ASSERT(s.energies.size() == 1);
-				phase1_csv_gz << s.lig_id << ',' << s.energies.front() << ',' << s.property << '\n';
+				BOOST_ASSERT(s.efficiencies.size() == 1);
+				phase1_csv_gz << s.lig_id << ',' << s.energies.front() << ',' << s.efficiencies.front() << ',' << s.property << '\n';
 			}
 		}
 
@@ -511,14 +514,17 @@ int main(int argc, char* argv[])
 				lig.write_models(hits_pdbqt_path, remark, supplier, phase2_results, num_conformations, b, grid_maps);
 
 				// Add to summaries.
-				vector<fl> energies(num_conformations);
+				vector<fl> energies(num_conformations), efficiencies(num_conformations);
 				vector<string> hbonds(num_conformations);
+				const auto num_heavy_atoms_inv = static_cast<fl>(1) / lig.num_heavy_atoms;
 				for (size_t k = 0; k < num_conformations; ++k)
 				{
-					energies[k] = phase2_results[k].e_nd;
-					hbonds[k] = phase2_results[k].hbonds;
+					const auto& r = phase2_results[k];
+					energies[k] = r.e_nd;
+					efficiencies[k] = r.f * num_heavy_atoms_inv;
+					hbonds[k] = r.hbonds;
 				}
-				phase2_summaries.push_back(new summary(s.index, s.lig_id, static_cast<vector<fl>&&>(energies), static_cast<vector<string>&&>(hbonds), string(s.property), supplier.substr(11)));
+				phase2_summaries.push_back(new summary(s.index, s.lig_id, static_cast<vector<fl>&&>(energies), static_cast<vector<fl>&&>(efficiencies), static_cast<vector<string>&&>(hbonds), string(s.property), supplier.substr(11)));
 			}
 
 			// Clear the results of the current ligand.
@@ -538,7 +544,7 @@ int main(int argc, char* argv[])
 			phase2_csv_gz.setf(std::ios::fixed, std::ios::floatfield);
 			phase2_csv_gz << std::setprecision(3);
 			phase2_csv_gz << "ZINC ID,Conformations";
-			for (size_t i = 1; i <= max_conformations; ++i) phase2_csv_gz << ",Free energy " << i << " (kcal/mol2), Hydrogen bonds " << i;
+			for (size_t i = 1; i <= max_conformations; ++i) phase2_csv_gz << ",Free energy " << i << " (kcal/mol2),Ligand efficiency " << i << " (kcal/mol),Hydrogen bonds " << i;
 			phase2_csv_gz << ",Molecular weight (g/mol),Partition coefficient xlogP,Apolar desolvation (kcal/mol),Polar desolvation (kcal/mol),Hydrogen bond donors,Hydrogen bond acceptors,Polar surface area tPSA (A^2),Net charge,Rotatable bonds,Substance information,Suppliers\n";
 			for (const auto& s : phase2_summaries)
 			{
@@ -546,11 +552,11 @@ int main(int argc, char* argv[])
 				phase2_csv_gz << s.lig_id << ',' << num_conformations;
 				for (size_t j = 0; j < num_conformations; ++j)
 				{
-					phase2_csv_gz << ',' << s.energies[j] << ',' << s.hbonds[j];
+					phase2_csv_gz << ',' << s.energies[j] << ',' << s.efficiencies[j] << ',' << s.hbonds[j];
 				}
 				for (size_t j = num_conformations; j < max_conformations; ++j)
 				{
-					phase2_csv_gz << ",,";
+					phase2_csv_gz << ",,,";
 				}
 				phase2_csv_gz << ',' << s.property << ",http://zinc.docking.org/substance/" << s.lig_id << ',' << s.supplier << '\n';
 			}
