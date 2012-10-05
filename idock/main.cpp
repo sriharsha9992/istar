@@ -316,7 +316,7 @@ int main(int argc, char* argv[])
 			if (phase1_results.size())
 			{
 				// Dump ligand summaries to the csv file.
-				slice_csv << i << ',' << lig_id << ',' << mwt << ',' << logp << ',' << ad << ',' << pd << ',' << hbd << ',' << hba << ',' << tpsa << ',' << charge << ',' << nrb << ',' << (phase1_results.front().f * lig.flexibility_penalty_factor) << '\n';
+				slice_csv << i << ',' << lig_id << ',' << (phase1_results.front().f * lig.flexibility_penalty_factor) << ',' << mwt << ',' << logp << ',' << ad << ',' << pd << ',' << hbd << ',' << hba << ',' << tpsa << ',' << charge << ',' << nrb << '\n';
 
 				// Clear the results of the current ligand.
 				phase1_results.clear();
@@ -342,13 +342,13 @@ int main(int argc, char* argv[])
 			ifstream in(slice_csv_path);
 			while (getline(in, line))
 			{
-				const auto first_comma = line.find(',', 1);
-				const auto second_comma = first_comma + 9;
-				BOOST_ASSERT(line[second_comma] == ',');
-				const auto last_comma = line.find_last_of(',', line.size() - 6);
+				const auto comma1 = line.find(',', 1);
+				const auto comma2 = comma1 + 9;
+				const auto comma3 = line.find(',', comma2 + 6);
+				BOOST_ASSERT(line[comma2] == ',');
 				vector<fl> energies;
-				energies.push_back(lexical_cast<fl>(line.substr(last_comma + 1)));
-				phase1_summaries.push_back(new summary(lexical_cast<size_t>(line.substr(0, first_comma)), line.substr(first_comma + 1, 8), static_cast<vector<fl>&&>(energies), vector<string>(), line.substr(second_comma + 1, last_comma - second_comma - 1), string()));
+				energies.push_back(lexical_cast<fl>(line.substr(comma2 + 1, comma3 - comma2 - 1)));
+				phase1_summaries.push_back(new summary(lexical_cast<size_t>(line.substr(0, comma1)), line.substr(comma1 + 1, 8), static_cast<vector<fl>&&>(energies), vector<string>(), line.substr(comma3 + 1), string()));
 			}
 			in.close();
 			remove(slice_csv_path);
