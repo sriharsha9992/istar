@@ -461,12 +461,13 @@ int main(int argc, char* argv[])
 
 			const size_t num_results = std::min<size_t>(phase2_results.size(), max_conformations);
 
-			// Adjust free energy relative to flexibility.
+			// Adjust free energy relative to flexibility, and calculate ligand efficiency.
 			result& best_result = phase2_results.front();
 			const fl best_result_intra_e = best_result.e - best_result.f;
 			for (size_t i = 0; i < num_results; ++i)
 			{
 				phase2_results[i].e_nd = (phase2_results[i].e - best_result_intra_e) * lig.flexibility_penalty_factor;
+				phase2_results[i].efficiency = phase2_results[i].f * lig.num_heavy_atoms_inverse;
 			}
 
 			// Determine the number of conformations to output according to user-supplied max_conformations and energy_range.
@@ -516,12 +517,11 @@ int main(int argc, char* argv[])
 				// Add to summaries.
 				vector<fl> energies(num_conformations), efficiencies(num_conformations);
 				vector<string> hbonds(num_conformations);
-				const auto num_heavy_atoms_inv = static_cast<fl>(1) / lig.num_heavy_atoms;
 				for (size_t k = 0; k < num_conformations; ++k)
 				{
 					const auto& r = phase2_results[k];
 					energies[k] = r.e_nd;
-					efficiencies[k] = r.f * num_heavy_atoms_inv;
+					efficiencies[k] = r.efficiency;
 					hbonds[k] = r.hbonds;
 				}
 				phase2_summaries.push_back(new summary(s.index, s.lig_id, static_cast<vector<fl>&&>(energies), static_cast<vector<fl>&&>(efficiencies), static_cast<vector<string>&&>(hbonds), string(s.property), supplier.substr(11)));

@@ -80,6 +80,7 @@ namespace idock
 		size_t num_torsions; ///< Number of torsions.
 		size_t num_active_torsions; ///< Number of active torsions.
 		fl flexibility_penalty_factor; ///< A value in (0, 1] to penalize ligand flexibility.
+		fl num_heavy_atoms_inverse; ///< 1 / num_heavy_atoms.
 
 		/// Constructs a ligand by parsing a ligand file stream in pdbqt format.
 		/// @exception parsing_error Thrown when an atom type is not recognized or an empty branch is detected.
@@ -98,8 +99,6 @@ namespace idock
 		void write_models(const path& output_ligand_path, const string& remark, const string& supplier, const ptr_vector<result>& results, const size_t num_conformations, const box& b, const vector<array3d<fl>>& grid_maps);
 
 	private:
-		fl num_heavy_atoms_inverse; ///< 1 / num_heavy_atoms.
-
 		/// Represents a pair of interacting atoms that are separated by 3 consecutive covalent bonds.
 		class interacting_pair
 		{
