@@ -342,11 +342,13 @@ int main(int argc, char* argv[])
 			ifstream in(slice_csv_path);
 			while (getline(in, line))
 			{
-				const auto first_comma = line.find_first_of(',', 1);
+				const auto first_comma = line.find(',', 1);
+				const auto second_comma = first_comma + 9;
+				BOOST_ASSERT(line[second_comma] == ',');
 				const auto last_comma = line.find_last_of(',', line.size() - 6);
 				vector<fl> energies;
 				energies.push_back(lexical_cast<fl>(line.substr(last_comma + 1)));
-				phase1_summaries.push_back(new summary(lexical_cast<size_t>(line.substr(0, first_comma)), line.substr(first_comma + 1, last_comma - first_comma - 1), static_cast<vector<fl>&&>(energies), vector<string>(), string()));
+				phase1_summaries.push_back(new summary(lexical_cast<size_t>(line.substr(0, first_comma)), line.substr(first_comma + 1, 8), static_cast<vector<fl>&&>(energies), vector<string>(), line.substr(second_comma + 1, last_comma - second_comma - 1), string()));
 			}
 			in.close();
 			remove(slice_csv_path);
@@ -375,8 +377,7 @@ int main(int argc, char* argv[])
 			for (const auto& s : phase1_summaries)
 			{
 				BOOST_ASSERT(s.energies.size() == 1);
-				const auto comma = s.lig_id.find(',', 1);
-				phase1_csv_gz << s.lig_id.substr(0, comma) << ',' << s.energies.front() << ',' << s.lig_id.substr(comma + 1) << '\n';
+				phase1_csv_gz << s.lig_id << ',' << s.energies.front() << ',' << s.property << '\n';
 			}
 		}
 
@@ -517,7 +518,7 @@ int main(int argc, char* argv[])
 					energies[k] = phase2_results[k].e_nd;
 					hbonds[k] = phase2_results[k].hbonds;
 				}
-				phase2_summaries.push_back(new summary(s.index, s.lig_id, static_cast<vector<fl>&&>(energies), static_cast<vector<string>&&>(hbonds), supplier.substr(11)));
+				phase2_summaries.push_back(new summary(s.index, s.lig_id, static_cast<vector<fl>&&>(energies), static_cast<vector<string>&&>(hbonds), string(s.property), supplier.substr(11)));
 			}
 
 			// Clear the results of the current ligand.
@@ -541,9 +542,8 @@ int main(int argc, char* argv[])
 			phase2_csv_gz << ",Molecular weight (g/mol),Partition coefficient xlogP,Apolar desolvation (kcal/mol),Polar desolvation (kcal/mol),Hydrogen bond donors,Hydrogen bond acceptors,Polar surface area tPSA (A^2),Net charge,Rotatable bonds,Substance information,Suppliers\n";
 			for (const auto& s : phase2_summaries)
 			{
-				const auto comma = s.lig_id.find(',', 1);
 				const size_t num_conformations = s.energies.size();
-				phase2_csv_gz << s.lig_id.substr(0, comma) << ',' << num_conformations;
+				phase2_csv_gz << s.lig_id << ',' << num_conformations;
 				for (size_t j = 0; j < num_conformations; ++j)
 				{
 					phase2_csv_gz << ',' << s.energies[j] << ',' << s.hbonds[j];
@@ -552,7 +552,7 @@ int main(int argc, char* argv[])
 				{
 					phase2_csv_gz << ",,";
 				}
-				phase2_csv_gz << ',' << s.lig_id.substr(comma + 1) << ",http://zinc.docking.org/substance/" << s.lig_id.substr(0, comma) << ',' << s.supplier << '\n';
+				phase2_csv_gz << ',' << s.property << ",http://zinc.docking.org/substance/" << s.lig_id << ',' << s.supplier << '\n';
 			}
 		}
 

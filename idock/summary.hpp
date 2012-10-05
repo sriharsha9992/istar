@@ -34,7 +34,7 @@ namespace idock
 		const vector<string> hbonds;
 		const string property;
 		const string supplier;
-		explicit summary(const size_t index, const string& lig_id, vector<fl>&& energies_, vector<string>&& hbonds_, const string& property, const string& supplier) : index(index), lig_id(lig_id), energies(static_cast<vector<fl>&&>(energies_)), hbonds(static_cast<vector<string>&&>(hbonds_)), supplier(supplier) {}
+		explicit summary(const size_t index, const string& lig_id, vector<fl>&& energies_, vector<string>&& hbonds_, string&& property_, string&& supplier_) : index(index), lig_id(lig_id), energies(static_cast<vector<fl>&&>(energies_)), hbonds(static_cast<vector<string>&&>(hbonds_)), property(static_cast<string&&>(property_)), supplier(static_cast<string&&>(supplier_)) {}
 	};
 
 	/// For sorting ptr_vector<summary>.
