@@ -162,8 +162,10 @@ int main(int argc, char* argv[])
 	{
 		// Fetch a job in a FCFS manner.
 		using namespace bson;
-		auto jobid_cursor = conn.query(collection, QUERY("scheduled" << BSON("$lt" << 100)).sort("submitted"), 1, 0, &jobid_fields); // nToReturn = 1, nToSkip = 0, fieldsToReturn
-		if (!jobid_cursor->more())
+		BSONObj info;
+		conn.runCommand("istar", BSON("findandmodify" << "idock" << "query" << BSON("scheduled" << BSON("$lt" << 100)) << "sort" << BSON("submitted" << 1) << "update" << BSON("$inc" << BSON("scheduled" << 1)) << "fields" << jobid_fields), info);
+		const auto value = info["value"];
+		if (value.isNull())
 		{
 			// Sleep for a while.
 			using boost::this_thread::sleep_for;
@@ -171,8 +173,7 @@ int main(int argc, char* argv[])
 			sleep_for(seconds(1));
 			continue;
 		}
-		const auto job = jobid_cursor->next();
-		conn.update(collection, BSON("_id" << job["_id"] << "$atomic" << 1), BSON("$inc" << BSON("scheduled" << 1)));
+		const auto job = value.Obj();
 
 		// Refresh cache if it is a new job.
 		if (_id != job["_id"].OID())
