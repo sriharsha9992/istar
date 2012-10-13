@@ -59,7 +59,7 @@ if (cluster.isMaster) {
 } else {
   // Connect to MongoDB
   var mongodb = require('mongodb');
-  new mongodb.Db('istar', new mongodb.Server(process.argv[2], 27017)).open(function(err, db) {
+  new mongodb.Db('istar', new mongodb.Server(process.argv[2], 27017), {safe: true}).open(function(err, db) {
     if (err) throw err;
     db.authenticate(process.argv[3], process.argv[4], function(err, authenticated) {
       if (err) throw err;
@@ -248,7 +248,7 @@ if (cluster.isMaster) {
             f.res[i.toString()] = 0;
           }
           f.res.submitted = new Date();
-          idock.insert(f.res, {safe: true}, function(err, docs) {
+          idock.insert(f.res, function(err, docs) {
             if (err) throw err;
             res.json(docs);
           });
@@ -382,7 +382,7 @@ if (cluster.isMaster) {
          .snt('taxid').toInt()
          .snt('queries').copy()
          .res.submitted = new Date();
-        igrep.insert(f.res, {safe: true}, function(err, docs) {
+        igrep.insert(f.res, function(err, docs) {
           if (err) throw err;
           res.json(docs);
         });
