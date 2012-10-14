@@ -35,9 +35,9 @@ Features
 
 ### Workstations
 
-* Intel Core i5-2400 CPU @ 3.10GHz
-* 4GB DDR3 SDRAM
-* Mac OS X Lion 10.7.4 Build 11E53
+* Intel Xeon E5620 @ 2.40 GHz
+* 8GB DDR3 SDRAM
+* Fedora 17 x86_64
 * Customized [idock] v1.6
 
 
