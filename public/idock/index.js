@@ -228,8 +228,8 @@ $(function() {
   $('#tutorials').accordion({
     collapsible: true,
     active: false,
-    autoHeight: false,
-    change: function(event, ui) {
+    heightStyle: "content",
+    activate: function(event, ui) {
       $('#tutorials img').trigger('expand');
     }
   });

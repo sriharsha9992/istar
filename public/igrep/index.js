@@ -2647,7 +2647,7 @@ $(function() {
     g.files.forEach(function(f, i) {
       trs[i] = '<tr><td>' + i + '</td><td><a href="genomes/' + g.name + '/' + f.file + '">' + f.file + '</a></td><td>' + f.header + '</td><td style="text-align: right">' + f.nucleotides.comma() + '</td></tr>';
     });
-    return '<h3><a href="#">' + g.name + ', taxonomy id ' + g.taxid + ', NCBI build ' + g.ncbiBuild + ', version ' + g.version + ', released on ' + g.releaseDate + ', total ' + g.nucleotides.comma() + ' nucleotides in ' + g.files.length + ' files</a></h3><div><table class="table"><thead><tr><th>Index</th><th>File</th><th>Header</th><th>Nucleotides</th></tr></thead><tbody>' + trs.join('') + '</tbody></table></div>';
+    return '<h3>' + g.name + ', taxonomy id ' + g.taxid + ', NCBI build ' + g.ncbiBuild + ', version ' + g.version + ', released on ' + g.releaseDate + ', total ' + g.nucleotides.comma() + ' nucleotides in ' + g.files.length + ' files</h3><div><table class="table"><thead><tr><th>Index</th><th>File</th><th>Header</th><th>Nucleotides</th></tr></thead><tbody>' + trs.join('') + '</tbody></table></div>';
   }
 
   // Apply accordion to genomes
@@ -2658,6 +2658,6 @@ $(function() {
   $('#genomes').html(sections.join('')).accordion({
     collapsible: true,
     active: false,
-    autoHeight: false
+    heightStyle: "content"
   });
 });

@@ -12,7 +12,7 @@
 
     <link href="/bootstrap.min.css" rel="stylesheet">
     <link href="/bootstrap-responsive.min.css" rel="stylesheet">
-    <link href="/jquery-ui-1.8.24.custom.css" rel="stylesheet">
+    <link href="/jquery-ui-1.9.0.custom.min.css" rel="stylesheet">
     <link href="/prettify.css" rel="stylesheet">
     <link href="/index.css" rel="stylesheet">
 
@@ -322,7 +322,7 @@
         </div>
         <div class="row">
           <div class="span12" id="tutorials">
-            <h3><a href="#">Tutorial 1: prepare a receptor in PDBQT format with MGLTools</a></h3>
+            <h3>Tutorial 1: prepare a receptor in PDBQT format with MGLTools</h3>
             <div>
               <p>Download a receptor at PDB. Take HIV-1 reverse transcriptase (<a href="http://www.pdb.org/pdb/explore/explore.do?structureId=2ZD1">2ZD1</a>) as an example.</p>
               <img src="/grey.gif" data-original="pdb.png" alt="PDB 2ZD1">
@@ -337,19 +337,19 @@
                 <li>The <code>-A hydrogens</code> option adds both polar and non-polar hydrogens.</li>
                 <li>The <code>-U lps_water_deleteAltB</code> option removes lone pairs, water residues, and XX@B atoms.</li>
               </ul>
-			  <p>On Windows</p>
+              <p>On Windows</p>
 <pre class="prettyprint linenums">
 cd C:\Program Files (x86)\MGLTools-1.5.6rc3
 python Lib\site-packages\AutoDockTools\Utilities24\prepare_receptor4.py -r 2ZD1rec.pdb -o 2ZD1rec.pdbqt -A hydrogens -U lps_waters_deleteAltB
 </pre>
-			  <p>On Linux</p>
+              <p>On Linux</p>
 <pre class="prettyprint linenums">
 cd ~/mgltools_x86_64Linux2_1.5.6rc3
 pythonsh MGLToolsPckgs\AutoDockTools\Utilities24\prepare_receptor4.py -r 2ZD1rec.pdb -o 2ZD1rec.pdbqt -A hydrogens -U lps_waters_deleteAltB
 </pre>
               <p>Copy the content of <code>2ZD1rec.pdbqt</code> and paste it into <a href="#receptor_label">Receptor in PDBQT</a></p>
             </div>
-            <h3><a href="#">Tutorial 2: define a binding site with MGLTools, Chimera or PyMOL</a></h3>
+            <h3>Tutorial 2: define a binding site with MGLTools, Chimera or PyMOL</h3>
             <div>
               <p>A binding site can be defined by:</p>
               <ul>
@@ -367,12 +367,12 @@ pythonsh MGLToolsPckgs\AutoDockTools\Utilities24\prepare_receptor4.py -r 2ZD1rec
                 <li>The <code>-A hydrogens</code> option adds both polar and non-polar hydrogens.</li>
                 <li>The <code>-U ''</code> option removes nothing, i.e. retains lone pairs and non-polar hydrogens.</li>
               </ul>
-			  <p>On Windows</p>
+              <p>On Windows</p>
 <pre class="prettyprint linenums">
 cd C:\Program Files (x86)\MGLTools-1.5.6rc3
 python Lib\site-packages\AutoDockTools\Utilities24\prepare_ligand4.py -r 2ZD1lig.pdb -o 2ZD1lig.pdbqt -A hydrogens -U ''
 </pre>
-			  <p>On Linux</p>
+              <p>On Linux</p>
 <pre class="prettyprint linenums">
 cd ~/mgltools_x86_64Linux2_1.5.6rc3
 pythonsh MGLToolsPckgs\AutoDockTools\Utilities24\prepare_ligand4.py -r 2ZD1lig.pdb -o 2ZD1lig.pdbqt -A hydrogens -U ''
@@ -428,7 +428,7 @@ pythonsh MGLToolsPckgs\AutoDockTools\Utilities24\prepare_ligand4.py -r 2ZD1lig.p
     <script>window.jQuery || document.write('<script src="/jquery-1.8.2.min.js"><\/script>')</script>
 
     <script src="/bootstrap-tooltip.js"></script>
-    <script src="/jquery-ui-1.8.24.custom.min.js"></script>
+    <script src="/jquery-ui-1.9.0.custom.min.js"></script>
     <script src="/jquery.dateFormat-1.0.js"></script>
     <script src="/jquery.pager.js"></script>
     <script src="/jquery.lazyload.min.js"></script>
