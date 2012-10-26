@@ -25,7 +25,7 @@ Features
 
 * [node.js] v0.8.12
 * [mongodb] v1.1.1
-* [express] v3.0.0rc5
+* [express] v3.0.0
 * [validator] v0.4.13
 * [spdy] v1.3.5
 
