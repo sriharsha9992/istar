@@ -103,7 +103,7 @@ Licenses
 * Documentation licensed under [CC BY 3.0].
 
 
-Contact Author
+Author
 --------------
 
 [Jacky Lee]
@@ -112,9 +112,8 @@ Contact Author
 Logo
 ----
 
-![istar logo](https://github.com/HongjianLi/istar/raw/master/public/logo.png)
+![istar logo](https://github.com/HongjianLi/istar/raw/master/logo.png)
 
-The logo image is collected from [Open Clip Art].
 
 
 [istar]: http://istar.cse.cuhk.edu.hk
@@ -134,4 +133,3 @@ The logo image is collected from [Open Clip Art].
 [Apache License 2.0]: http://www.apache.org/licenses/LICENSE-2.0
 [CC BY 3.0]: http://creativecommons.org/licenses/by/3.0
 [Jacky Lee]: http://www.cse.cuhk.edu.hk/~hjli
-[Open Clip Art]: http://www.openclipart.org
