@@ -38,7 +38,7 @@ Features
 * Intel Xeon E5620 @ 2.40 GHz
 * 8GB DDR3 SDRAM
 * Fedora 17 x86_64
-* Customized [idock] v1.6
+* Customized [idock] v2.0
 
 
 Supported browsers
