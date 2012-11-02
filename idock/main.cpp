@@ -48,7 +48,7 @@ int main(int argc, char* argv[])
 
 	// Daemonize itself, retaining the current working directory and redirecting stdin, stdout and stderr to /dev/null.
 	daemon(1, 0);
-	syslog(LOG_INFO, "idock 1.6");
+	syslog(LOG_INFO, "idock 2.0");
 
 	// Fetch command line arguments.
 	const auto host = argv[1];
