@@ -88,6 +88,10 @@ namespace idock
 					atoms.push_back(a);
 				}
 			}
+			else if (starts_with(line, "TER"))
+			{
+				residue = "XXXX";
+			}
 		}
 
 		// Dehydrophobicize carbons if necessary.
