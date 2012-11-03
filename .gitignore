@@ -1,4 +1,5 @@
 node_modules
+mongodb
 *.log
 *.csv
 .dep.inc
