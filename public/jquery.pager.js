@@ -14,7 +14,7 @@
       };
       // Set up table
       var tr_tag = '<tr>';
-      for (var i = 0; i < cols; ++i) tr_tag += '<td></td>';
+      for (var i = 0; i < cols; ++i) tr_tag += '<td>&nbsp;</td>';
       tr_tag += '</tr>';
       var tbody = '';
       for (var i = 0; i < 8; ++i) tbody += tr_tag;
