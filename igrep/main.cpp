@@ -255,8 +255,8 @@ public:
 
 int main(int argc, char** argv)
 {
-	// Daemonize itself, retaining the current working directory and redirecting stdin, stdout and stderr to /dev/null.
-	daemon(1, 0);
+	// Daemonize itself, retaining the current working directory and stdin, stdout and stderr.
+	daemon(1, 1);
 	syslog(LOG_INFO, "igrep 1.0");
 
 	// Fetch command line arguments.
