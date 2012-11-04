@@ -1,7 +1,7 @@
 istar
 =====
 
-[istar] is a SaaS (Software as a Service) platform for [idock] and [igrep].
+[istar] is a SaaS (Software as a Service) platform for a general variety of software.
 
 
 Architecture
@@ -38,7 +38,13 @@ Features
 * Intel Xeon E5620 @ 2.40 GHz
 * 8GB DDR3 SDRAM
 * Fedora 17 x86_64
-* Customized [idock] v2.0
+* [idock] daemon v2.0
+
+* Intel Xeon W3520 @ 2.66 GHz
+* 8GB DDR3 SDRAM
+* NVIDIA GeForce GTX 285 (1024 MB)
+* Fedora 17 x86_64
+* [igrep] daemon v1.0
 
 
 Supported browsers
@@ -117,8 +123,9 @@ Logo
 
 
 [istar]: http://istar.cse.cuhk.edu.hk
-[idock]: http://idock.cse.cuhk.edu.hk
-[igrep]: http://igrep.cse.cuhk.edu.hk
+[idock]: http://istar.cse.cuhk.edu.hk/idock
+[igrep]: http://istar.cse.cuhk.edu.hk/igrep
+[iview]: http://istar.cse.cuhk.edu.hk/iview
 [Twitter Bootstrap]: https://github.com/twitter/bootstrap
 [HTML5 Boilerplate]: https://github.com/h5bp/html5-boilerplate
 [Modernizr]: https://github.com/Modernizr/Modernizr
