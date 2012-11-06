@@ -18,61 +18,95 @@
 
 var iview = (function() {
 
-	function Element(ad, color, covalentRadius) {
+	function Element(ad, covalentRadius) {
 		this.ad = ad;
-		this.r = parseInt(color.substring(1, 3), 16) / 255.0;
-		this.g = parseInt(color.substring(3, 5), 16) / 255.0;
-		this.b = parseInt(color.substring(5, 7), 16) / 255.0;
 		this.covalentRadius = covalentRadius;
 	}
 
-	R = [];
-	R['H' ] = new Element( 0, '#FFFFFF', 0.407);
-	R['HD'] = new Element( 1, '#FFFFFF', 0.407);
-	R['C' ] = new Element( 2, '#909090', 0.847);
-	R['A' ] = new Element( 3, '#909090', 0.847);
-	R['N' ] = new Element( 4, '#3050F8', 0.825);
-	R['NA'] = new Element( 5, '#3050F8', 0.825);
-	R['OA'] = new Element( 6, '#FF0D0D', 0.803);
-	R['S' ] = new Element( 7, '#FFFF30', 1.122);
-	R['SA'] = new Element( 8, '#FFFF30', 1.122);
-	R['Se'] = new Element( 9, '#FFA100', 1.276);
-	R['P' ] = new Element(10, '#FF8000', 1.166);
-	R['F' ] = new Element(11, '#90E050', 0.781);
-	R['Cl'] = new Element(12, '#1FF01F', 1.089);
-	R['Br'] = new Element(13, '#A62929', 1.254);
-	R['I' ] = new Element(14, '#940094', 1.463);
-	R['Zn'] = new Element(15, '#7D80B0', 1.441);
-	R['Fe'] = new Element(16, '#E06633', 1.375);
-	R['Mg'] = new Element(17, '#8AFF00', 1.430);
-	R['Ca'] = new Element(18, '#3DFF00', 1.914);
-	R['Mn'] = new Element(19, '#9C7AC7', 1.529);
-	R['Cu'] = new Element(20, '#C88033', 1.518);
-	R['Na'] = new Element(21, '#AB5CF2', 1.694);
-	R['K' ] = new Element(22, '#8F40D4', 2.156);
-	R['Hg'] = new Element(23, '#B8B8D0', 1.639);
-	R['Ni'] = new Element(24, '#50D050', 1.331);
-	R['Co'] = new Element(25, '#F090A0', 1.386);
-	R['Cd'] = new Element(26, '#FFD98F', 1.628);
-	R['As'] = new Element(27, '#BD80E3', 1.309);
-	R['Sr'] = new Element(28, '#00FF00', 2.112);
+	E = [];
+	E['H' ] = new Element( 0, 0.407);
+	E['HD'] = new Element( 1, 0.407);
+	E['C' ] = new Element( 2, 0.847);
+	E['A' ] = new Element( 3, 0.847);
+	E['N' ] = new Element( 4, 0.825);
+	E['NA'] = new Element( 5, 0.825);
+	E['OA'] = new Element( 6, 0.803);
+	E['S' ] = new Element( 7, 1.122);
+	E['SA'] = new Element( 8, 1.122);
+	E['Se'] = new Element( 9, 1.276);
+	E['P' ] = new Element(10, 1.166);
+	E['F' ] = new Element(11, 0.781);
+	E['Cl'] = new Element(12, 1.089);
+	E['Br'] = new Element(13, 1.254);
+	E['I' ] = new Element(14, 1.463);
+	E['Zn'] = new Element(15, 1.441);
+	E['Fe'] = new Element(16, 1.375);
+	E['Mg'] = new Element(17, 1.430);
+	E['Ca'] = new Element(18, 1.914);
+	E['Mn'] = new Element(19, 1.529);
+	E['Cu'] = new Element(20, 1.518);
+	E['Na'] = new Element(21, 1.694);
+	E['K' ] = new Element(22, 2.156);
+	E['Hg'] = new Element(23, 1.639);
+	E['Ni'] = new Element(24, 1.331);
+	E['Co'] = new Element(25, 1.386);
+	E['Cd'] = new Element(26, 1.628);
+	E['As'] = new Element(27, 1.309);
+	E['Sr'] = new Element(28, 2.112);
 
+	function Color(color) {
+		this.r = parseInt(color.substring(1, 3), 16) / 255.0;
+		this.g = parseInt(color.substring(3, 5), 16) / 255.0;
+		this.b = parseInt(color.substring(5, 7), 16) / 255.0;
+	}
+
+	R = [];
+	R['H' ] = new Color('#FFFFFF');
+	R['HD'] = new Color('#FFFFFF');
+	R['C' ] = new Color('#909090');
+	R['A' ] = new Color('#909090');
+	R['N' ] = new Color('#3050F8');
+	R['NA'] = new Color('#3050F8');
+	R['OA'] = new Color('#FF0D0D');
+	R['S' ] = new Color('#FFFF30');
+	R['SA'] = new Color('#FFFF30');
+	R['Se'] = new Color('#FFA100');
+	R['P' ] = new Color('#FF8000');
+	R['F' ] = new Color('#90E050');
+	R['Cl'] = new Color('#1FF01F');
+	R['Br'] = new Color('#A62929');
+	R['I' ] = new Color('#940094');
+	R['Zn'] = new Color('#7D80B0');
+	R['Fe'] = new Color('#E06633');
+	R['Mg'] = new Color('#8AFF00');
+	R['Ca'] = new Color('#3DFF00');
+	R['Mn'] = new Color('#9C7AC7');
+	R['Cu'] = new Color('#C88033');
+	R['Na'] = new Color('#AB5CF2');
+	R['K' ] = new Color('#8F40D4');
+	R['Hg'] = new Color('#B8B8D0');
+	R['Ni'] = new Color('#50D050');
+	R['Co'] = new Color('#F090A0');
+	R['Cd'] = new Color('#FFD98F');
+	R['As'] = new Color('#BD80E3');
+	R['Sr'] = new Color('#00FF00');
+	
 	L = [];
-	L['H' ] = new Element( 0, '#E6E6E6', 0.407);
-	L['HD'] = new Element( 1, '#E6E6E6', 0.407);
-	L['C' ] = new Element( 2, '#33FF33', 0.847);
-	L['A' ] = new Element( 3, '#33FF33', 0.847);
-	L['N' ] = new Element( 4, '#3333FF', 0.825);
-	L['NA'] = new Element( 5, '#3333FF', 0.825);
-	L['OA'] = new Element( 6, '#FF4D4D', 0.803);
-	L['S' ] = new Element( 7, '#E6C640', 1.122);
-	L['SA'] = new Element( 8, '#E6C640', 1.122);
-	L['Se'] = new Element( 9, '#FFA100', 1.276);
-	L['P' ] = new Element(10, '#FF8000', 1.166);
-	L['F' ] = new Element(11, '#B3FFFF', 0.781);
-	L['Cl'] = new Element(12, '#1FF01F', 1.089);
-	L['Br'] = new Element(13, '#A62929', 1.254);
-	L['I' ] = new Element(14, '#940094', 1.463);
+	L['H' ] = new Color('#E6E6E6');
+	L['HD'] = new Color('#E6E6E6');
+	L['C' ] = new Color('#33FF33');
+	L['A' ] = new Color('#33FF33');
+	L['N' ] = new Color('#3333FF');
+	L['NA'] = new Color('#3333FF');
+	L['OA'] = new Color('#FF4D4D');
+	L['S' ] = new Color('#E6C640');
+	L['SA'] = new Color('#E6C640');
+	L['Se'] = new Color('#FFA100');
+	L['P' ] = new Color('#FF8000');
+	L['F' ] = new Color('#B3FFFF');
+	L['Cl'] = new Color('#1FF01F');
+	L['Br'] = new Color('#A62929');
+	L['I' ] = new Color('#940094');
 
 	Atom = function(coord, type) {
 		vec3.set(coord, this);
@@ -83,8 +117,8 @@ var iview = (function() {
 		this.isHBA = function() {
 			return (this.type == 'NA') || (this.type == 'OA') || (this.type == 'SA');
 		}
-		this.render = function(gl, E) {
-			var e = E[this.type];
+		this.render = function(gl, C) {
+			var e = C[this.type];
 			gl.uniform3f(gl.dUL, e.r, e.g, e.b);
 			gl.setModelViewMatrix(mat4.scale(mat4.translate(gl.modelViewMatrix, this, []), [0.3, 0.3, 0.3], []));
 			gl.drawElements(gl.TRIANGLES, gl.sphere.vertexIndexBuffer.size, gl.UNSIGNED_SHORT, 0);
@@ -94,7 +128,7 @@ var iview = (function() {
 	Bond = function(a1, a2) {
 		this.a1 = a1;
 		this.a2 = a2;
-		this.render = function(gl, E) {
+		this.render = function(gl, C) {
 			var ang = 0;
 			var axis = [0, 0, 1];
 			if (this.a1[0] == this.a2[0] && this.a1[2] == this.a2[2]) {
@@ -109,12 +143,12 @@ var iview = (function() {
 			}
 			var scaleVector = [0.3, vec3.dist(this.a1, this.a2) * 0.5, 0.3];
 			// Draw one half.
-			var e1 = E[this.a1.type];
+			var e1 = C[this.a1.type];
 			gl.uniform3f(gl.dUL, e1.r, e1.g, e1.b);
 			gl.setModelViewMatrix(mat4.scale(mat4.rotate(mat4.translate(gl.modelViewMatrix, this.a1, []), ang, axis, []), scaleVector, []));
 			gl.drawArrays(gl.TRIANGLE_STRIP, 0, gl.cylinder.vertexPositionBuffer.size);
 			// Draw the other half.
-			var e2 = E[this.a2.type];
+			var e2 = C[this.a2.type];
 			gl.uniform3f(gl.dUL, e2.r, e2.g, e2.b);
 			gl.setModelViewMatrix(mat4.scale(mat4.rotate(mat4.translate(gl.modelViewMatrix, this.a2, []), ang + Math.PI, axis, []), scaleVector, []));
 			gl.drawArrays(gl.TRIANGLE_STRIP, 0, gl.cylinder.vertexPositionBuffer.size);
@@ -142,21 +176,21 @@ var iview = (function() {
 		};
 	};
 
-	Molecule = function(E) {
+	Molecule = function(C) {
 		this.atoms = [];
 		this.bonds = [];
 		this.hbds = [];
 		this.hbas = [];
-		this.E = E;
+		this.C = C;
 	};
 	Molecule.prototype.renderAtoms = function(gl) {
 		for (var i = 0, ii = this.atoms.length; i < ii; ++i) {
-			this.atoms[i].render(gl, this.E);
+			this.atoms[i].render(gl, this.C);
 		}
 	};
 	Molecule.prototype.renderBonds = function(gl) {
 		for (var i = 0, ii = this.bonds.length; i < ii; ++i) {
-			this.bonds[i].render(gl, this.E);
+			this.bonds[i].render(gl, this.C);
 		}
 	};
 
@@ -404,7 +438,7 @@ var iview = (function() {
 				this.receptor.atoms.push(a1);
 				for (var j = i + 1; j < ii; ++j) {
 					var a2 = atoms[j];
-					if (vec3.dist(a1, a2) < R[a1.type].covalentRadius + R[a2.type].covalentRadius) {
+					if (vec3.dist(a1, a2) < E[a1.type].covalentRadius + E[a2.type].covalentRadius) {
 						this.receptor.bonds.push(new Bond(a1, a2));
 					}
 				}
@@ -440,7 +474,7 @@ var iview = (function() {
 				var a1 = this.ligand.atoms[i];
 				for (var j = i + 1; j < ii; ++j) {
 					var a2 = this.ligand.atoms[j];
-					if (vec3.dist(a1, a2) < L[a1.type].covalentRadius + L[a2.type].covalentRadius) {
+					if (vec3.dist(a1, a2) < E[a1.type].covalentRadius + E[a2.type].covalentRadius) {
 						this.ligand.bonds.push(new Bond(a1, a2));
 					}
 				}
