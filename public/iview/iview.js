@@ -108,7 +108,8 @@ var iview = (function() {
 	L['Br'] = new Color('#A62929');
 	L['I' ] = new Color('#940094');
 
-	Atom = function(coord, type) {
+	Atom = function(id, coord, type) {
+		this.id = id;
 		vec3.set(coord, this);
 		this.type = type;
 		this.isHBD = function() {
@@ -413,7 +414,7 @@ var iview = (function() {
 				}
 				var type = $.trim(line.substring(77, 79));
 				if (this.options.hideNonPolarHydrogens && (type === 'H')) continue;
-				this.receptor.atoms.push(new Atom([parseFloat(line.substring(30, 38)), parseFloat(line.substring(38, 46)), parseFloat(line.substring(46, 54))], type));
+				this.receptor.atoms.push(new Atom(line[21] + ':' + line.substring(17, 20) + $.trim(line.substring(22, 26)) + ':' +$.trim(line.substring(12, 16)), [parseFloat(line.substring(30, 38)), parseFloat(line.substring(38, 46)), parseFloat(line.substring(46, 54))], type));
 			} else if (line.match('^TER')) {
 				residue = 'XXXX';
 			}
@@ -457,7 +458,7 @@ var iview = (function() {
 			if (line.match('^ATOM|HETATM')) {
 				var type = $.trim(line.substring(77, 79));
 				if (this.options.hideNonPolarHydrogens && (type === 'H')) continue;
-				var a = new Atom([parseFloat(line.substring(30, 38)), parseFloat(line.substring(38, 46)), parseFloat(line.substring(46, 54))], type);
+				var a = new Atom($.trim(line.substring(12, 16)), [parseFloat(line.substring(30, 38)), parseFloat(line.substring(38, 46)), parseFloat(line.substring(46, 54))], type);
 				this.ligand.atoms.push(a);
 				serials[parseInt(line.substring(6, 11))] = a;
 			} else if (line.match('^BRANCH')) {
