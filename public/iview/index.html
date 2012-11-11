@@ -70,7 +70,12 @@
           <h1 id="demo">Demo</h1>
         </div>
         <div class="row">
-		  <div class="span6">
+		  <div class="span12">
+            <canvas id="iview" width="1170" height="1000">Your browser does not support HTML5 canvas.</canvas>
+		  </div>
+        </div>
+        <div class="row">
+		  <div class="span4">
             <p>iview supports the following keyrings:</p>
             <ul>
               <li>Mouse wheel: zoom in / zoom out.</li>
@@ -79,17 +84,15 @@
               <li>Ctrl + left mouse button: rotate the ligand.</li>
               <li>Ctrl + right mouse button: translate the ligand.</li>
             </ul>
+	        <p>iview supports <a href="#" id="export">exporting the canvas to png</a></p>
 		  </div>
 		  <div class="span3" id="container">
-            <p>Hydrogen bonds: <span id="hbonds"></span><p>
+            <p>Free energy (kcal/mol): <span id="fe"></span></p>
+            <ul id="fes"></ul>
 		  </div>
 		  <div class="span3" id="container">
-	        <p><a href="#" id="export">Export to png</a></p>
-		  </div>
-        </div>
-        <div class="row">
-		  <div class="span12">
-            <canvas id="iview" width="1170" height="1000">Your browser does not support HTML5 canvas.</canvas>
+            <p># of hydrogen bonds: <span id="nhbonds"></span></p>
+            <ul id="hbonds"></ul>
 		  </div>
         </div>
       </section>
