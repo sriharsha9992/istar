@@ -185,7 +185,9 @@ var iview = (function() {
 	};
 	Molecule.prototype.renderAtoms = function(gl) {
 		for (var i = 0, ii = this.atoms.length; i < ii; ++i) {
-			this.atoms[i].render(gl, this.C);
+			var a = this.atoms[i];
+			if (a.hidden) continue;
+			a.render(gl, this.C);
 		}
 	};
 	Molecule.prototype.renderBonds = function(gl) {
@@ -282,7 +284,9 @@ var iview = (function() {
 	$(document).keydown(keydownup).keyup(keydownup);
 
 	var iview = function(options) {
-		this.options = $.extend({}, options);
+		this.options = $.extend({
+			hideNonPolarHydrogens: true
+		}, options);
 		this.canvas = $('#' + this.options.id);
 		var gl = this.canvas.get(0).getContext('experimental-webgl', {
 			preserveDrawingBuffer: true
@@ -398,38 +402,40 @@ var iview = (function() {
 		this.rotationMatrix = mat4.identity();
 	}
 	iview.prototype.parseReceptor = function(content) {
-		var residues = [], atoms = [];
+		this.receptor = new Molecule(R);
+		var residues = [];
 		for (var residue = 'XXXX', lines = content.split('\n'), ii = lines.length, i = 0; i < ii; ++i) {
 			var line = lines[i];
 			if (line.match('^ATOM|HETATM')) {
 				if ((line[25] != residue[3]) || (line[24] != residue[2]) || (line[23] != residue[1]) || (line[22] != residue[0])) {
 					residue = line.substring(22, 26);
-					residues.push(atoms.length);
+					residues.push(this.receptor.atoms.length);
 				}
 				var type = $.trim(line.substring(77, 79));
-				if (type === 'H') continue;
-				atoms.push(new Atom([parseFloat(line.substring(30, 38)), parseFloat(line.substring(38, 46)), parseFloat(line.substring(46, 54))], type));
+				if (this.options.hideNonPolarHydrogens && (type === 'H')) continue;
+				this.receptor.atoms.push(new Atom([parseFloat(line.substring(30, 38)), parseFloat(line.substring(38, 46)), parseFloat(line.substring(46, 54))], type));
 			} else if (line.match('^TER')) {
 				residue = 'XXXX';
 			}
 		}
-		residues.push(atoms.length);
-		this.receptor = new Molecule(R);
+		residues.push(this.receptor.atoms.length);
 		for (var r = 0, rr = residues.length - 1; r < rr; ++r) {
-			var inside = false;
+			var hidden = true;
 			for (var i = residues[r], ii = residues[r + 1]; i < ii; ++i) {
-				var a = atoms[i];
+				var a = this.receptor.atoms[i];
 				if ((this.corner1[0] <= a[0]) && (a[0] < this.corner2[0]) && (this.corner1[1] <= a[1]) && (a[1] < this.corner2[1]) && (this.corner1[2] <= a[2]) && (a[2] < this.corner2[2])) {
-					inside = true;
+					hidden = false;
 					break;
 				}
 			}
-			if (!inside) continue;
 			for (var i = residues[r], ii = residues[r + 1]; i < ii; ++i) {
-				var a1 = atoms[i];
-				this.receptor.atoms.push(a1);
+				var a1 = this.receptor.atoms[i];
+				if (hidden) {
+					a1.hidden = true;
+					continue;
+				}
 				for (var j = i + 1; j < ii; ++j) {
-					var a2 = atoms[j];
+					var a2 = this.receptor.atoms[j];
 					if (vec3.dist(a1, a2) < E[a1.type].covalentRadius + E[a2.type].covalentRadius) {
 						this.receptor.bonds.push(new Bond(a1, a2));
 					}
@@ -450,7 +456,7 @@ var iview = (function() {
 			var line = lines[i];
 			if (line.match('^ATOM|HETATM')) {
 				var type = $.trim(line.substring(77, 79));
-				if (type === 'H') continue;
+				if (this.options.hideNonPolarHydrogens && (type === 'H')) continue;
 				var a = new Atom([parseFloat(line.substring(30, 38)), parseFloat(line.substring(38, 46)), parseFloat(line.substring(46, 54))], type);
 				this.ligand.atoms.push(a);
 				serials[parseInt(line.substring(6, 11))] = a;
@@ -458,7 +464,7 @@ var iview = (function() {
 				frames.push(this.ligand.atoms.length);
 				rotorXes.push(parseInt(line.substring( 6, 10)));
 				rotorYes.push(parseInt(line.substring(10, 14)));
-			}
+			} else if (line.match('^ENDMDL')) break;
 		}
 		frames.push(this.ligand.atoms.length);
 		for (var f = 0, ff = frames.length - 1; f < ff; ++f) {
