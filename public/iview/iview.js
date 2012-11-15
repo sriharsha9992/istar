@@ -18,35 +18,6 @@
 
 var iview = (function() {
 
-	AD2XS = [];
-	AD2XS['C' ] =   'C_H';
-	AD2XS['A' ] =   'C_H';
-	AD2XS['N' ] =   'N_P';
-	AD2XS['NA'] =   'N_A';
-	AD2XS['OA'] =   'O_A';
-	AD2XS['S' ] =   'S_P';
-	AD2XS['SA'] =   'S_P';
-	AD2XS['Se'] =   'S_P';
-	AD2XS['P' ] =   'P_P';
-	AD2XS['F' ] =   'F_H';
-	AD2XS['Cl'] =  'Cl_H';
-	AD2XS['Br'] =  'Br_H';
-	AD2XS['I' ] =   'I_H';
-	AD2XS['Zn'] = 'Met_D';
-	AD2XS['Fe'] = 'Met_D';
-	AD2XS['Mg'] = 'Met_D';
-	AD2XS['Ca'] = 'Met_D';
-	AD2XS['Mn'] = 'Met_D';
-	AD2XS['Cu'] = 'Met_D';
-	AD2XS['Na'] = 'Met_D';
-	AD2XS['K' ] = 'Met_D';
-	AD2XS['Hg'] = 'Met_D';
-	AD2XS['Ni'] = 'Met_D';
-	AD2XS['Co'] = 'Met_D';
-	AD2XS['Cd'] = 'Met_D';
-	AD2XS['As'] = 'Met_D';
-	AD2XS['Sr'] = 'Met_D';
-
 	COVALENT = [];
 	COVALENT['H' ] = 0.407;
 	COVALENT['HD'] = 0.407;
@@ -78,6 +49,35 @@ var iview = (function() {
 	COVALENT['As'] = 1.309;
 	COVALENT['Sr'] = 2.112;
 
+	AD2XS = [];
+	AD2XS['C' ] =   'C_H';
+	AD2XS['A' ] =   'C_H';
+	AD2XS['N' ] =   'N_P';
+	AD2XS['NA'] =   'N_A';
+	AD2XS['OA'] =   'O_A';
+	AD2XS['S' ] =   'S_P';
+	AD2XS['SA'] =   'S_P';
+	AD2XS['Se'] =   'S_P';
+	AD2XS['P' ] =   'P_P';
+	AD2XS['F' ] =   'F_H';
+	AD2XS['Cl'] =  'Cl_H';
+	AD2XS['Br'] =  'Br_H';
+	AD2XS['I' ] =   'I_H';
+	AD2XS['Zn'] = 'Met_D';
+	AD2XS['Fe'] = 'Met_D';
+	AD2XS['Mg'] = 'Met_D';
+	AD2XS['Ca'] = 'Met_D';
+	AD2XS['Mn'] = 'Met_D';
+	AD2XS['Cu'] = 'Met_D';
+	AD2XS['Na'] = 'Met_D';
+	AD2XS['K' ] = 'Met_D';
+	AD2XS['Hg'] = 'Met_D';
+	AD2XS['Ni'] = 'Met_D';
+	AD2XS['Co'] = 'Met_D';
+	AD2XS['Cd'] = 'Met_D';
+	AD2XS['As'] = 'Met_D';
+	AD2XS['Sr'] = 'Met_D';
+
 	VDW = [];
 	VDW[  'C_H' ] = 1.9;
 	VDW[  'C_P' ] = 1.9;
@@ -93,7 +93,29 @@ var iview = (function() {
 	VDW[ 'Cl_H' ] = 1.8;
 	VDW[ 'Br_H' ] = 2.0;
 	VDW[  'I_H' ] = 2.2;
-	VDW['Met_D' ]= 1.2;
+	VDW['Met_D' ] = 1.2;
+
+	function HydrophobicXS(xs) {
+		return xs ===  'C_H'
+			|| xs ===  'F_H'
+			|| xs === 'Cl_H'
+			|| xs === 'Br_H'
+			|| xs ===  'I_H';
+	}
+
+	function DonorXS(xs) {
+		return xs === 'N_D'
+			|| xs === 'N_DA'
+			|| xs === 'O_DA'
+			|| xs === 'Met_D';
+	}
+
+	function AcceptorXS(xs) {
+		return xs === 'N_A'
+			|| xs === 'N_DA'
+			|| xs === 'O_A'
+			|| xs === 'O_DA';
+	}
 
 	function Color(color) {
 		this.r = parseInt(color.substring(1, 3), 16) / 255.0;
@@ -153,11 +175,25 @@ var iview = (function() {
 		this.id = id;
 		vec3.set(coord, this);
 		this.ad = ad;
+		this.xs = AD2XS[ad];
 		this.isHBD = function() {
-			return (this.ad == 'HD') || (this.ad >= 15); // TODO
+			return (this.ad === 'HD') || (this.xs === 'Met_D');
 		}
 		this.isHBA = function() {
-			return (this.ad == 'NA') || (this.ad == 'OA') || (this.ad == 'SA');
+			return (this.ad === 'NA') || (this.ad === 'OA') || (this.ad === 'SA');
+		}
+		this.isHetero = function() {
+			return !((this.ad === 'H') || (this.ad === 'HD') || (this.ad === 'C') || (this.ad === 'A'));
+		}
+		this.donorize = function() {
+			switch (this.xs) {
+				case 'N_P' : this.xs = 'N_D';  break;
+				case 'N_A' : this.xs = 'N_DA'; break;
+				case 'O_A' : this.xs = 'O_DA'; break;
+			}
+		}
+		this.isNeighbor = function(a) {
+			return (vec3.dist(this, a) < COVALENT[this.ad] + COVALENT[a.ad]);
 		}
 		this.render = function(gl, C) {
 			var e = C[this.ad];
@@ -327,7 +363,7 @@ var iview = (function() {
 
 	var iview = function(options) {
 		this.options = $.extend({
-			hideNonPolarHydrogens: true
+			ignoreNonPolarHydrogens: true
 		}, options);
 		this.canvas = $('#' + this.options.id);
 		var gl = this.canvas.get(0).getContext('experimental-webgl', {
@@ -446,16 +482,26 @@ var iview = (function() {
 	iview.prototype.parseReceptor = function(content) {
 		this.receptor = new Molecule(R);
 		var residues = [];
-		for (var residue = 'XXXX', lines = content.split('\n'), ii = lines.length, i = 0; i < ii; ++i) {
-			var line = lines[i];
+		for (var residue = 'XXXX', lines = content.split('\n'), kk = lines.length, k = 0; k < kk; ++k) {
+			var line = lines[k];
 			if (line.match('^ATOM|HETATM')) {
-				if ((line[25] != residue[3]) || (line[24] != residue[2]) || (line[23] != residue[1]) || (line[22] != residue[0])) {
+				if (!((line[25] === residue[3]) && (line[24] === residue[2]) && (line[23] === residue[1]) && (line[22] === residue[0]))) {
 					residue = line.substring(22, 26);
 					residues.push(this.receptor.atoms.length);
 				}
-				var type = $.trim(line.substring(77, 79));
-				if (this.options.hideNonPolarHydrogens && (type === 'H')) continue;
-				this.receptor.atoms.push(new Atom(line[21] + ':' + line.substring(17, 20) + $.trim(line.substring(22, 26)) + ':' +$.trim(line.substring(12, 16)), [parseFloat(line.substring(30, 38)), parseFloat(line.substring(38, 46)), parseFloat(line.substring(46, 54))], type));
+				var ad = $.trim(line.substring(77, 79));
+				if (this.options.ignoreNonPolarHydrogens && (ad === 'H')) continue;
+				var a = new Atom(line[21] + ':' + line.substring(17, 20) + $.trim(line.substring(22, 26)) + ':' + $.trim(line.substring(12, 16)), [parseFloat(line.substring(30, 38)), parseFloat(line.substring(38, 46)), parseFloat(line.substring(46, 54))], ad);
+				if (ad === 'HD') {
+					for (var i = this.receptor.atoms.length, residue_start = residues[residues.length - 1]; i > residue_start;) {
+						var b = this.receptor.atoms[--i];
+						if (b.isHetero() && a.isNeighbor(b)) {
+							b.donorize();
+							break;
+						}
+					}
+				}
+				this.receptor.atoms.push(a);
 			} else if (line.match('^TER')) {
 				residue = 'XXXX';
 			}
@@ -472,6 +518,15 @@ var iview = (function() {
 			}
 			for (var i = residues[r], ii = residues[r + 1]; i < ii; ++i) {
 				var a1 = this.receptor.atoms[i];
+				if (a1.isHetero()) {
+					for (var j = residues[r]; j < ii; ++j) {
+						var a2 = this.receptor.atoms[j];
+						if ((a2.ad === 'C' || a2.ad === 'A') && a2.isNeighbor(a1)) // If carbon atom a2 is bonded to hetero atom a1, a2 is no longer a hydrophobic atom.
+						{
+							a2.xs = 'C_P';
+						}
+					}
+				}
 				if (hidden) {
 					a1.hidden = true;
 					continue;
@@ -497,9 +552,9 @@ var iview = (function() {
 		for (var lines = content.split('\n'), ii = lines.length, i = 0; i < ii; ++i) {
 			var line = lines[i];
 			if (line.match('^ATOM|HETATM')) {
-				var type = $.trim(line.substring(77, 79));
-				if (this.options.hideNonPolarHydrogens && (type === 'H')) continue;
-				var a = new Atom($.trim(line.substring(12, 16)), [parseFloat(line.substring(30, 38)), parseFloat(line.substring(38, 46)), parseFloat(line.substring(46, 54))], type);
+				var ad = $.trim(line.substring(77, 79));
+				if (this.options.ignoreNonPolarHydrogens && (ad === 'H')) continue;
+				var a = new Atom($.trim(line.substring(12, 16)), [parseFloat(line.substring(30, 38)), parseFloat(line.substring(38, 46)), parseFloat(line.substring(46, 54))], ad);
 				this.ligand.atoms.push(a);
 				serials[parseInt(line.substring(6, 11))] = a;
 			} else if (line.match('^BRANCH')) {
