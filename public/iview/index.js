@@ -2,7 +2,13 @@ $(function() {
 	var iv = new iview({
 		id: 'iview',
 		ligandmove: function(hbonds) {
-			$('#hbonds').html(hbonds.length);
+			$('#nhbonds').html(hbonds.length);
+			var lis = [];
+			for (var i = 0, ii = hbonds.length; i < ii; ++i) {
+				var hb = hbonds[i];
+				lis.push('<li>' + hb.a1.id + ' - ' + hb.a2.id + '</li>');
+			}
+			$('#hbonds').html(lis.join(''));
 		}
 	});
 	if (iv.disabled) {
