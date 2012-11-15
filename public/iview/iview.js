@@ -18,41 +18,82 @@
 
 var iview = (function() {
 
-	function Element(ad, covalentRadius) {
-		this.ad = ad;
-		this.covalentRadius = covalentRadius;
-	}
+	AD2XS = [];
+	AD2XS['C' ] =   'C_H';
+	AD2XS['A' ] =   'C_H';
+	AD2XS['N' ] =   'N_P';
+	AD2XS['NA'] =   'N_A';
+	AD2XS['OA'] =   'O_A';
+	AD2XS['S' ] =   'S_P';
+	AD2XS['SA'] =   'S_P';
+	AD2XS['Se'] =   'S_P';
+	AD2XS['P' ] =   'P_P';
+	AD2XS['F' ] =   'F_H';
+	AD2XS['Cl'] =  'Cl_H';
+	AD2XS['Br'] =  'Br_H';
+	AD2XS['I' ] =   'I_H';
+	AD2XS['Zn'] = 'Met_D';
+	AD2XS['Fe'] = 'Met_D';
+	AD2XS['Mg'] = 'Met_D';
+	AD2XS['Ca'] = 'Met_D';
+	AD2XS['Mn'] = 'Met_D';
+	AD2XS['Cu'] = 'Met_D';
+	AD2XS['Na'] = 'Met_D';
+	AD2XS['K' ] = 'Met_D';
+	AD2XS['Hg'] = 'Met_D';
+	AD2XS['Ni'] = 'Met_D';
+	AD2XS['Co'] = 'Met_D';
+	AD2XS['Cd'] = 'Met_D';
+	AD2XS['As'] = 'Met_D';
+	AD2XS['Sr'] = 'Met_D';
 
-	E = [];
-	E['H' ] = new Element( 0, 0.407);
-	E['HD'] = new Element( 1, 0.407);
-	E['C' ] = new Element( 2, 0.847);
-	E['A' ] = new Element( 3, 0.847);
-	E['N' ] = new Element( 4, 0.825);
-	E['NA'] = new Element( 5, 0.825);
-	E['OA'] = new Element( 6, 0.803);
-	E['S' ] = new Element( 7, 1.122);
-	E['SA'] = new Element( 8, 1.122);
-	E['Se'] = new Element( 9, 1.276);
-	E['P' ] = new Element(10, 1.166);
-	E['F' ] = new Element(11, 0.781);
-	E['Cl'] = new Element(12, 1.089);
-	E['Br'] = new Element(13, 1.254);
-	E['I' ] = new Element(14, 1.463);
-	E['Zn'] = new Element(15, 1.441);
-	E['Fe'] = new Element(16, 1.375);
-	E['Mg'] = new Element(17, 1.430);
-	E['Ca'] = new Element(18, 1.914);
-	E['Mn'] = new Element(19, 1.529);
-	E['Cu'] = new Element(20, 1.518);
-	E['Na'] = new Element(21, 1.694);
-	E['K' ] = new Element(22, 2.156);
-	E['Hg'] = new Element(23, 1.639);
-	E['Ni'] = new Element(24, 1.331);
-	E['Co'] = new Element(25, 1.386);
-	E['Cd'] = new Element(26, 1.628);
-	E['As'] = new Element(27, 1.309);
-	E['Sr'] = new Element(28, 2.112);
+	COVALENT = [];
+	COVALENT['H' ] = 0.407;
+	COVALENT['HD'] = 0.407;
+	COVALENT['C' ] = 0.847;
+	COVALENT['A' ] = 0.847;
+	COVALENT['N' ] = 0.825;
+	COVALENT['NA'] = 0.825;
+	COVALENT['OA'] = 0.803;
+	COVALENT['S' ] = 1.122;
+	COVALENT['SA'] = 1.122;
+	COVALENT['Se'] = 1.276;
+	COVALENT['P' ] = 1.166;
+	COVALENT['F' ] = 0.781;
+	COVALENT['Cl'] = 1.089;
+	COVALENT['Br'] = 1.254;
+	COVALENT['I' ] = 1.463;
+	COVALENT['Zn'] = 1.441;
+	COVALENT['Fe'] = 1.375;
+	COVALENT['Mg'] = 1.430;
+	COVALENT['Ca'] = 1.914;
+	COVALENT['Mn'] = 1.529;
+	COVALENT['Cu'] = 1.518;
+	COVALENT['Na'] = 1.694;
+	COVALENT['K' ] = 2.156;
+	COVALENT['Hg'] = 1.639;
+	COVALENT['Ni'] = 1.331;
+	COVALENT['Co'] = 1.386;
+	COVALENT['Cd'] = 1.628;
+	COVALENT['As'] = 1.309;
+	COVALENT['Sr'] = 2.112;
+
+	VDW = [];
+	VDW[  'C_H' ] = 1.9;
+	VDW[  'C_P' ] = 1.9;
+	VDW[  'N_P' ] = 1.8;
+	VDW[  'N_D' ] = 1.8;
+	VDW[  'N_A' ] = 1.8;
+	VDW[  'N_DA'] = 1.8;
+	VDW[  'O_A' ] = 1.7;
+	VDW[  'O_DA'] = 1.7;
+	VDW[  'S_P' ] = 2.0;
+	VDW[  'P_P' ] = 2.1;
+	VDW[  'F_H' ] = 1.5;
+	VDW[ 'Cl_H' ] = 1.8;
+	VDW[ 'Br_H' ] = 2.0;
+	VDW[  'I_H' ] = 2.2;
+	VDW['Met_D' ]= 1.2;
 
 	function Color(color) {
 		this.r = parseInt(color.substring(1, 3), 16) / 255.0;
@@ -108,18 +149,18 @@ var iview = (function() {
 	L['Br'] = new Color('#A62929');
 	L['I' ] = new Color('#940094');
 
-	Atom = function(id, coord, type) {
+	Atom = function(id, coord, ad) {
 		this.id = id;
 		vec3.set(coord, this);
-		this.type = type;
+		this.ad = ad;
 		this.isHBD = function() {
-			return (this.type == 'HD') || (this.ad >= 15);
+			return (this.ad == 'HD') || (this.ad >= 15); // TODO
 		}
 		this.isHBA = function() {
-			return (this.type == 'NA') || (this.type == 'OA') || (this.type == 'SA');
+			return (this.ad == 'NA') || (this.ad == 'OA') || (this.ad == 'SA');
 		}
 		this.render = function(gl, C) {
-			var e = C[this.type];
+			var e = C[this.ad];
 			gl.uniform3f(gl.dUL, e.r, e.g, e.b);
 			gl.setModelViewMatrix(mat4.scale(mat4.translate(gl.modelViewMatrix, this, []), [0.3, 0.3, 0.3], []));
 			gl.drawElements(gl.TRIANGLES, gl.sphere.vertexIndexBuffer.size, gl.UNSIGNED_SHORT, 0);
@@ -144,12 +185,12 @@ var iview = (function() {
 			}
 			var scaleVector = [0.3, vec3.dist(this.a1, this.a2) * 0.5, 0.3];
 			// Draw one half.
-			var e1 = C[this.a1.type];
+			var e1 = C[this.a1.ad];
 			gl.uniform3f(gl.dUL, e1.r, e1.g, e1.b);
 			gl.setModelViewMatrix(mat4.scale(mat4.rotate(mat4.translate(gl.modelViewMatrix, this.a1, []), ang, axis, []), scaleVector, []));
 			gl.drawArrays(gl.TRIANGLE_STRIP, 0, gl.cylinder.vertexPositionBuffer.size);
 			// Draw the other half.
-			var e2 = C[this.a2.type];
+			var e2 = C[this.a2.ad];
 			gl.uniform3f(gl.dUL, e2.r, e2.g, e2.b);
 			gl.setModelViewMatrix(mat4.scale(mat4.rotate(mat4.translate(gl.modelViewMatrix, this.a2, []), ang + Math.PI, axis, []), scaleVector, []));
 			gl.drawArrays(gl.TRIANGLE_STRIP, 0, gl.cylinder.vertexPositionBuffer.size);
@@ -437,7 +478,7 @@ var iview = (function() {
 				}
 				for (var j = i + 1; j < ii; ++j) {
 					var a2 = this.receptor.atoms[j];
-					if (vec3.dist(a1, a2) < E[a1.type].covalentRadius + E[a2.type].covalentRadius) {
+					if (vec3.dist(a1, a2) < COVALENT[a1.ad] + COVALENT[a2.ad]) {
 						this.receptor.bonds.push(new Bond(a1, a2));
 					}
 				}
@@ -473,7 +514,7 @@ var iview = (function() {
 				var a1 = this.ligand.atoms[i];
 				for (var j = i + 1; j < ii; ++j) {
 					var a2 = this.ligand.atoms[j];
-					if (vec3.dist(a1, a2) < E[a1.type].covalentRadius + E[a2.type].covalentRadius) {
+					if (vec3.dist(a1, a2) < COVALENT[a1.ad] + COVALENT[a2.ad]) {
 						this.ligand.bonds.push(new Bond(a1, a2));
 					}
 				}
