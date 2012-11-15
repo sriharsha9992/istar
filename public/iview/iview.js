@@ -555,12 +555,25 @@ var iview = (function() {
 				var ad = $.trim(line.substring(77, 79));
 				if (this.options.ignoreNonPolarHydrogens && (ad === 'H')) continue;
 				var a = new Atom($.trim(line.substring(12, 16)), [parseFloat(line.substring(30, 38)), parseFloat(line.substring(38, 46)), parseFloat(line.substring(46, 54))], ad);
+				if (ad === 'HD') {
+				/*
+					for (var i = this.ligand.atoms.length; i > residue_start;) {
+						var b = this.ligand.atoms[--i];
+						if (b.isHetero() && a.isNeighbor(b)) {
+							b.donorize();
+							break;
+						}
+					}
+				*/
+				}
 				this.ligand.atoms.push(a);
 				serials[parseInt(line.substring(6, 11))] = a;
 			} else if (line.match('^BRANCH')) {
 				frames.push(this.ligand.atoms.length);
 				rotorXes.push(parseInt(line.substring( 6, 10)));
 				rotorYes.push(parseInt(line.substring(10, 14)));
+			} else if (line.match('^ENDBRANCH')) {
+				
 			} else if (line.match('^ENDMDL')) break;
 		}
 		frames.push(this.ligand.atoms.length);
@@ -569,7 +582,7 @@ var iview = (function() {
 				var a1 = this.ligand.atoms[i];
 				for (var j = i + 1; j < ii; ++j) {
 					var a2 = this.ligand.atoms[j];
-					if (vec3.dist(a1, a2) < COVALENT[a1.ad] + COVALENT[a2.ad]) {
+					if (a1.isNeighbor(a2)) {
 						this.ligand.bonds.push(new Bond(a1, a2));
 					}
 				}
