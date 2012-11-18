@@ -247,9 +247,6 @@ int main(int argc, char* argv[])
 			const auto nrb = right_cast<int>(line, 73, 75);
 			if (!((mwt_lb <= mwt) && (mwt <= mwt_ub) && (logp_lb <= logp) && (logp <= logp_ub) && (ad_lb <= ad) && (ad <= ad_ub) && (pd_lb <= pd) && (pd <= pd_ub) && (hbd_lb <= hbd) && (hbd <= hbd_ub) && (hba_lb <= hba) && (hba <= hba_ub) && (tpsa_lb <= tpsa) && (tpsa <= tpsa_ub) && (charge_lb <= charge) && (charge <= charge_ub) && (nrb_lb <= nrb) && (nrb <= nrb_ub))) continue;
 
-			// Obtain ligand ID. ZINC IDs are 8-character long.
-			const auto lig_id = right_cast<int>(line, 12, 19);
-
 			/// Filter out supplier line.
 			getline(ligands, line);
 
@@ -317,7 +314,7 @@ int main(int argc, char* argv[])
 			if (phase1_results.size())
 			{
 				// Dump ligand summaries to the csv file.
-				slice_csv << i << ',' << lig_id << ',' << (phase1_results.front().f * lig.flexibility_penalty_factor) << ',' << (phase1_results.front().f / lig.num_heavy_atoms) << ',' << mwt << ',' << logp << ',' << ad << ',' << pd << ',' << hbd << ',' << hba << ',' << tpsa << ',' << charge << ',' << nrb << '\n';
+				slice_csv << i << ',' << line.substr(11, 8) << ',' << (phase1_results.front().f * lig.flexibility_penalty_factor) << ',' << (phase1_results.front().f / lig.num_heavy_atoms) << ',' << mwt << ',' << logp << ',' << ad << ',' << pd << ',' << hbd << ',' << hba << ',' << tpsa << ',' << charge << ',' << nrb << '\n';
 
 				// Clear the results of the current ligand.
 				phase1_results.clear();
