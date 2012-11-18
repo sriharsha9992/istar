@@ -345,25 +345,6 @@ var iview = (function() {
 	};
 	$(document).keydown(keydownup).keyup(keydownup);
 
-	function hydrophobicXS(xs) {
-		return     xs ===  'C_H'
-			|| xs ===  'F_H'
-			|| xs === 'Cl_H'
-			|| xs === 'Br_H'
-			|| xs ===  'I_H';
-	}
-	function hbdonorXS(xs) {
-		return     xs === 'N_D'
-			|| xs === 'N_DA'
-			|| xs === 'O_DA'
-			|| xs === 'Met_D';
-	}
-	function hbacceptorXS(xs) {
-		return     xs === 'N_A'
-			|| xs === 'N_DA'
-			|| xs === 'O_A'
-			|| xs === 'O_DA';
-	}
 	function score(xs1, xs2, r) {
 		var d = r - (VDW[xs1] + VDW[xs2]);
 		return (-0.035579) * Math.exp(-4 * d * d)
@@ -371,6 +352,25 @@ var iview = (function() {
 			+  ( 0.840245) * (d > 0 ? 0.0 : d * d)
 			+  (-0.035069) * ((hydrophobicXS(xs1) && hydrophobicXS(xs2)) ? ((d >= 1.5) ? 0.0 : ((d <= 0.5) ? 1.0 : 1.5 - d)) : 0.0)
 			+  (-0.587439) * (((hbdonorXS(xs1) && hbacceptorXS(xs2)) || (hbdonorXS(xs2) && hbacceptorXS(xs1))) ? ((d >= 0) ? 0.0 : ((d <= -0.7) ? 1 : d * (-1.428571))): 0.0);
+		function hydrophobicXS(xs) {
+			return xs ===  'C_H'
+				|| xs ===  'F_H'
+				|| xs === 'Cl_H'
+				|| xs === 'Br_H'
+				|| xs ===  'I_H';
+		}
+		function hbdonorXS(xs) {
+			return xs === 'N_D'
+				|| xs === 'N_DA'
+				|| xs === 'O_DA'
+				|| xs === 'Met_D';
+		}
+		function hbacceptorXS(xs) {
+			return xs === 'N_A'
+				|| xs === 'N_DA'
+				|| xs === 'O_A'
+				|| xs === 'O_DA';
+		}
 	}
 
 	var iview = function(options) {
@@ -672,7 +672,7 @@ var iview = (function() {
 		this.ligand.fe = 0;
 		for (var i = 0, ii = this.ligand.atoms.length; i < ii; ++i) {
 			var l = this.ligand.atoms[i];
-			if (l.ad === 'H' || l.ad === 'HD') continue;
+			if (l.isHydrogen()) continue;
 			l.fe = 0;
 			for (var j = 0, jj = this.receptor.atoms.length; j < jj; ++j) {
 				var r = this.receptor.atoms[j];
@@ -685,6 +685,20 @@ var iview = (function() {
 		}
 		if (this.options.refresh) this.options.refresh();
 	};
+	iview.prototype.saveLigand = function() {
+		function pad(len, str) {
+			return Array(len + 1 - str.length).join(' ') + str;
+		}
+		var lines = [
+			"REMARK       NORMALIZED FREE ENERGY PREDICTED BY IDOCK:" + pad(8, "-7.149") + " KCAL/MOL",
+			"REMARK            TOTAL FREE ENERGY PREDICTED BY IDOCK:" + " KCAL/MOL",
+			"REMARK     INTER-LIGAND FREE ENERGY PREDICTED BY IDOCK:" + " KCAL/MOL",
+			"REMARK     INTRA-LIGAND FREE ENERGY PREDICTED BY IDOCK:" + " KCAL/MOL",
+			"REMARK            LIGAND EFFICIENCY PREDICTED BY IDOCK:" + " KCAL/MOL",
+			"REMARK               HYDROGEN BONDS PREDICTED BY IDOCK:" + pad(4, this.hbonds.length.toString())
+		];
+		return lines.join('\n');
+	}
 	iview.prototype.repaint = function() {
 		this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
 		this.gl.modelViewMatrix = mat4.multiply(this.translationMatrix, this.rotationMatrix, []);
