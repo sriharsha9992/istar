@@ -174,7 +174,8 @@ var iview = (function() {
 			}
 		}
 		this.isNeighbor = function(a) {
-			return (vec3.dist(this, a) < COVALENT[this.ad] + COVALENT[a.ad]);
+			var c = COVALENT[this.ad] + COVALENT[a.ad];
+			return (vec3.squaredLength(vec3.subtract(this, a, [])) < c * c);
 		}
 		this.render = function(gl, C) {
 			var e = C[this.ad];
