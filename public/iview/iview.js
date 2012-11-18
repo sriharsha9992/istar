@@ -154,6 +154,9 @@ var iview = (function() {
 		vec3.set(coord, this);
 		this.ad = ad;
 		this.xs = AD2XS[ad];
+		this.isHydrogen = function() {
+			return (this.ad === 'H') || (this.ad === 'HD');
+		}
 		this.isHBD = function() {
 			return (this.ad === 'HD') || (this.xs === 'Met_D');
 		}
@@ -360,16 +363,14 @@ var iview = (function() {
 			|| xs === 'O_A'
 			|| xs === 'O_DA';
 	}
-/*
 	function score(xs1, xs2, r) {
-		var d = r - (VDW(xs1) + VDW(xs2));
-		return     (-0.035579) * exp(-Math.sqr(d * 2))
-			+  (-0.005156) * exp(-Math.sqr((d - 3.0) * 0.5))
+		var d = r - (VDW[xs1] + VDW[xs2]);
+		return (-0.035579) * Math.exp(-4 * d * d)
+			+  (-0.005156) * Math.exp(-0.25 * (d - 3.0) * (d - 3.0))
 			+  ( 0.840245) * (d > 0 ? 0.0 : d * d)
-			+  (-0.035069) * ((hydrophobicXS(xs1) && HydrophobicXS(xs2)) ? ((d >= 1.5) ? 0.0 : ((d <= 0.5) ? 1.0 : 1.5 - d)) : 0.0)
-			+  (-0.587439) * (((hbdonorXS(xs1) && hbacceptorXS(xs2)) || (hbdonor(xs2) && hbacceptor(xs1)) ? ((d >= 0) ? 0.0 : ((d <= -0.7) ? 1 : d * (-1.428571))): 0.0);
+			+  (-0.035069) * ((hydrophobicXS(xs1) && hydrophobicXS(xs2)) ? ((d >= 1.5) ? 0.0 : ((d <= 0.5) ? 1.0 : 1.5 - d)) : 0.0)
+			+  (-0.587439) * (((hbdonorXS(xs1) && hbacceptorXS(xs2)) || (hbdonorXS(xs2) && hbacceptorXS(xs1))) ? ((d >= 0) ? 0.0 : ((d <= -0.7) ? 1 : d * (-1.428571))): 0.0);
 	}
-*/
 
 	var iview = function(options) {
 		this.options = $.extend({
@@ -457,13 +458,13 @@ var iview = (function() {
 					for (var i = 0, ii = iv.ligand.atoms.length; i < ii; ++i) {
 						mat4.multiplyVec3(rotation, iv.ligand.atoms[i]);
 					}
-					iv.refreshHBonds();
+					iv.refresh();
 				} else if (iv.mousebuttons[3] && !iv.mousebuttons[1]) {
 					var translation = mat3.multiply(mat4.toInverseMat3(iv.gl.modelViewMatrix, []),  [dx * 0.05, -dy * 0.05, 0], []);
 					for (var i = 0, ii = iv.ligand.atoms.length; i < ii; ++i) {
 						vec3.add(iv.ligand.atoms[i], translation);
 					}
-					iv.refreshHBonds();
+					iv.refresh();
 				}
 			} else {
 				if (iv.mousebuttons[1] && !iv.mousebuttons[3]) {
@@ -645,9 +646,9 @@ var iview = (function() {
 			if (a.isHBD()) this.ligand.hbds.push(a);
 			else if (a.isHBA()) this.ligand.hbas.push(a);
 		}
-		this.refreshHBonds();
+		this.refresh();
 	}
-	iview.prototype.refreshHBonds = function() {
+	iview.prototype.refresh = function() {
 		this.hbonds = [];
 		for (var i = 0, ii = this.receptor.hbds.length; i < ii; ++i) {
 			var r = this.receptor.hbds[i];
@@ -667,7 +668,21 @@ var iview = (function() {
 				}
 			}
 		}
-		if (this.options.ligandmove) this.options.ligandmove(this.hbonds);
+		this.ligand.fe = 0;
+		for (var i = 0, ii = this.ligand.atoms.length; i < ii; ++i) {
+			var l = this.ligand.atoms[i];
+			if (l.ad === 'H' || l.ad === 'HD') continue;
+			l.fe = 0;
+			for (var j = 0, jj = this.receptor.atoms.length; j < jj; ++j) {
+				var r = this.receptor.atoms[j];
+				if (r.isHydrogen()) continue;
+				var rr = vec3.dist(l, r);
+				if (rr > 8) continue;
+				l.fe += score(l.xs, r.xs, rr);
+			}
+			this.ligand.fe += l.fe;
+		}
+		if (this.options.refresh) this.options.refresh();
 	};
 	iview.prototype.repaint = function() {
 		this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);

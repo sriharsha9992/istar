@@ -1,14 +1,22 @@
 $(function() {
 	var iv = new iview({
 		id: 'iview',
-		ligandmove: function(hbonds) {
-			$('#nhbonds').html(hbonds.length);
-			var lis = [];
-			for (var i = 0, ii = hbonds.length; i < ii; ++i) {
-				var hb = hbonds[i];
-				lis.push('<li>' + hb.a1.id + ' - ' + hb.a2.id + '</li>');
+		refresh: function() {
+			$('#nhbonds').html(iv.hbonds.length);
+			var hblis = [];
+			for (var i = 0, ii = iv.hbonds.length; i < ii; ++i) {
+				var hb = iv.hbonds[i];
+				hblis.push('<li>' + hb.a1.id + ' - ' + hb.a2.id + '</li>');
 			}
-			$('#hbonds').html(lis.join(''));
+			$('#hbonds').html(hblis.join(''));
+			$('#fe').html(iv.ligand.fe.toFixed(3));
+			var felis = [];
+			for (var i = 0, ii = iv.ligand.atoms.length; i < ii; ++i) {
+				var a = iv.ligand.atoms[i];
+				if (a.isHydrogen()) continue;
+				felis.push('<li>' + a.id + ': ' + a.fe.toFixed(3) + '</li>');
+			}
+			$('#fes').html(felis.join(''));
 		}
 	});
 	if (iv.disabled) {
