@@ -563,6 +563,7 @@ var iview = (function() {
 			begin: 0
 		};
 		this.ligand.frames = [current];
+		this.ligand.nHeavyAtoms = 0;
 		var serials = [];
 		for (var lines = content.split('\n'), kk = lines.length, k = 0; k < kk; ++k) {
 			var line = lines[k];
@@ -574,6 +575,7 @@ var iview = (function() {
 					if (this.options.hideNonPolarHydrogens) {
 						a.hidden = true;
 					}
+					a.fe = 0;
 				} else if (a.ad === 'HD') {
 					for (var i = this.ligand.atoms.length, frame_begin = this.ligand.frames[this.ligand.frames.length - 1]; i > frame_begin;) {
 						var b = this.ligand.atoms[--i];
@@ -582,6 +584,7 @@ var iview = (function() {
 							break;
 						}
 					}
+					a.fe = 0;
 				} else if (a.ad === 'C ' || a.ad === 'A ') {
 					for (var i = this.ligand.atoms.length, frame_begin = this.ligand.frames[this.ligand.frames.length - 1]; i > frame_begin;)
 					{
@@ -593,6 +596,7 @@ var iview = (function() {
 						}
 					}
 					serials[parseInt(a.serial)] = a;
+					++this.ligand.nHeavyAtoms;
 				} else {
 					for (var i = this.ligand.atoms.length, frame_begin = this.ligand.frames[this.ligand.frames.length - 1]; i > frame_begin;) {
 						var b = this.ligand.atoms[--i];
@@ -602,6 +606,7 @@ var iview = (function() {
 						}
 					}
 					serials[parseInt(a.serial)] = a;
+					++this.ligand.nHeavyAtoms;
 				}
 				this.ligand.atoms.push(a);
 			} else if (line.match('^BRANCH')) {
@@ -674,6 +679,7 @@ var iview = (function() {
 			}
 			this.ligand.fe += l.fe;
 		}
+		this.ligand.le = this.ligand.fe / this.ligand.nHeavyAtoms;
 		if (this.options.refresh) this.options.refresh();
 	};
 	iview.prototype.repaint = function() {
@@ -703,15 +709,16 @@ var iview = (function() {
 		var lines = [
 			'REMARK       NORMALIZED FREE ENERGY PREDICTED BY IDOCK:' + pad(8, "-7.149") + " KCAL/MOL",
 			'REMARK            TOTAL FREE ENERGY PREDICTED BY IDOCK:' + " KCAL/MOL",
-			'REMARK     INTER-LIGAND FREE ENERGY PREDICTED BY IDOCK:' + " KCAL/MOL",
+			'REMARK     INTER-LIGAND FREE ENERGY PREDICTED BY IDOCK:' + pad(8, this.ligand.fe.toFixed(3)) + " KCAL/MOL",
 			'REMARK     INTRA-LIGAND FREE ENERGY PREDICTED BY IDOCK:' + " KCAL/MOL",
-			'REMARK            LIGAND EFFICIENCY PREDICTED BY IDOCK:' + " KCAL/MOL",
+			'REMARK            LIGAND EFFICIENCY PREDICTED BY IDOCK:' + pad(8, this.ligand.le.toFixed(3)) + " KCAL/MOL",
 			'REMARK               HYDROGEN BONDS PREDICTED BY IDOCK:' + pad(4, this.hbonds.length),
 			'ROOT'
 		];
 		for (var i = this.ligand.frames[0].begin; i < this.ligand.frames[0].end; ++i) {
 			var a = this.ligand.atoms[i];
-			lines.push('ATOM  ' + a.serial + ' ' + a.name + pad(14, '') + pad(8, a[0].toFixed(3)) + pad(8, a[1].toFixed(3)) + pad(8, a[2].toFixed(3)) + pad(14, '') + pad(8, a.fe.toFixed(3)) + ' ' + a.ad);
+			var c = vec3.add(a, this.center, []);
+			lines.push('ATOM  ' + a.serial + ' ' + a.name + pad(14, '') + pad(8, c[0].toFixed(3)) + pad(8, c[1].toFixed(3)) + pad(8, c[2].toFixed(3)) + pad(14, '') + pad(8, a.fe.toFixed(3)) + ' ' + a.ad);
 		}
 		lines.push('ENDROOT');
 		return lines.join('\n');
