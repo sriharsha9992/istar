@@ -2,13 +2,6 @@ $(function() {
 	var iv = new iview({
 		id: 'iview',
 		refresh: function() {
-			$('#nhbonds').html(iv.hbonds.length);
-			var hblis = [];
-			for (var i = 0, ii = iv.hbonds.length; i < ii; ++i) {
-				var hb = iv.hbonds[i];
-				hblis.push('<li>' + hb.a1.id + ' - ' + hb.a2.id + '</li>');
-			}
-			$('#hbonds').html(hblis.join(''));
 			$('#conformation').html(iv.save());
 		}
 	});
