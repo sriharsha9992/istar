@@ -19,21 +19,21 @@
 var iview = (function() {
 
 	COVALENT = [];
-	COVALENT['H' ] = 0.407;
+	COVALENT['H '] = 0.407;
 	COVALENT['HD'] = 0.407;
-	COVALENT['C' ] = 0.847;
-	COVALENT['A' ] = 0.847;
-	COVALENT['N' ] = 0.825;
+	COVALENT['C '] = 0.847;
+	COVALENT['A '] = 0.847;
+	COVALENT['N '] = 0.825;
 	COVALENT['NA'] = 0.825;
 	COVALENT['OA'] = 0.803;
-	COVALENT['S' ] = 1.122;
+	COVALENT['S '] = 1.122;
 	COVALENT['SA'] = 1.122;
 	COVALENT['Se'] = 1.276;
-	COVALENT['P' ] = 1.166;
-	COVALENT['F' ] = 0.781;
+	COVALENT['P '] = 1.166;
+	COVALENT['F '] = 0.781;
 	COVALENT['Cl'] = 1.089;
 	COVALENT['Br'] = 1.254;
-	COVALENT['I' ] = 1.463;
+	COVALENT['I '] = 1.463;
 	COVALENT['Zn'] = 1.441;
 	COVALENT['Fe'] = 1.375;
 	COVALENT['Mg'] = 1.430;
@@ -41,7 +41,7 @@ var iview = (function() {
 	COVALENT['Mn'] = 1.529;
 	COVALENT['Cu'] = 1.518;
 	COVALENT['Na'] = 1.694;
-	COVALENT['K' ] = 2.156;
+	COVALENT['K '] = 2.156;
 	COVALENT['Hg'] = 1.639;
 	COVALENT['Ni'] = 1.331;
 	COVALENT['Co'] = 1.386;
@@ -50,19 +50,19 @@ var iview = (function() {
 	COVALENT['Sr'] = 2.112;
 
 	AD2XS = [];
-	AD2XS['C' ] =   'C_H';
-	AD2XS['A' ] =   'C_H';
-	AD2XS['N' ] =   'N_P';
+	AD2XS['C '] =   'C_H';
+	AD2XS['A '] =   'C_H';
+	AD2XS['N '] =   'N_P';
 	AD2XS['NA'] =   'N_A';
 	AD2XS['OA'] =   'O_A';
-	AD2XS['S' ] =   'S_P';
+	AD2XS['S '] =   'S_P';
 	AD2XS['SA'] =   'S_P';
 	AD2XS['Se'] =   'S_P';
-	AD2XS['P' ] =   'P_P';
-	AD2XS['F' ] =   'F_H';
+	AD2XS['P '] =   'P_P';
+	AD2XS['F '] =   'F_H';
 	AD2XS['Cl'] =  'Cl_H';
 	AD2XS['Br'] =  'Br_H';
-	AD2XS['I' ] =   'I_H';
+	AD2XS['I '] =   'I_H';
 	AD2XS['Zn'] = 'Met_D';
 	AD2XS['Fe'] = 'Met_D';
 	AD2XS['Mg'] = 'Met_D';
@@ -70,7 +70,7 @@ var iview = (function() {
 	AD2XS['Mn'] = 'Met_D';
 	AD2XS['Cu'] = 'Met_D';
 	AD2XS['Na'] = 'Met_D';
-	AD2XS['K' ] = 'Met_D';
+	AD2XS['K '] = 'Met_D';
 	AD2XS['Hg'] = 'Met_D';
 	AD2XS['Ni'] = 'Met_D';
 	AD2XS['Co'] = 'Met_D';
@@ -102,21 +102,21 @@ var iview = (function() {
 	}
 
 	R = [];
-	R['H' ] = new Color('#FFFFFF');
+	R['H '] = new Color('#FFFFFF');
 	R['HD'] = new Color('#FFFFFF');
-	R['C' ] = new Color('#909090');
-	R['A' ] = new Color('#909090');
-	R['N' ] = new Color('#3050F8');
+	R['C '] = new Color('#909090');
+	R['A '] = new Color('#909090');
+	R['N '] = new Color('#3050F8');
 	R['NA'] = new Color('#3050F8');
 	R['OA'] = new Color('#FF0D0D');
-	R['S' ] = new Color('#FFFF30');
+	R['S '] = new Color('#FFFF30');
 	R['SA'] = new Color('#FFFF30');
 	R['Se'] = new Color('#FFA100');
-	R['P' ] = new Color('#FF8000');
-	R['F' ] = new Color('#90E050');
+	R['P '] = new Color('#FF8000');
+	R['F '] = new Color('#90E050');
 	R['Cl'] = new Color('#1FF01F');
 	R['Br'] = new Color('#A62929');
-	R['I' ] = new Color('#940094');
+	R['I '] = new Color('#940094');
 	R['Zn'] = new Color('#7D80B0');
 	R['Fe'] = new Color('#E06633');
 	R['Mg'] = new Color('#8AFF00');
@@ -124,7 +124,7 @@ var iview = (function() {
 	R['Mn'] = new Color('#9C7AC7');
 	R['Cu'] = new Color('#C88033');
 	R['Na'] = new Color('#AB5CF2');
-	R['K' ] = new Color('#8F40D4');
+	R['K '] = new Color('#8F40D4');
 	R['Hg'] = new Color('#B8B8D0');
 	R['Ni'] = new Color('#50D050');
 	R['Co'] = new Color('#F090A0');
@@ -133,21 +133,21 @@ var iview = (function() {
 	R['Sr'] = new Color('#00FF00');
 	
 	L = [];
-	L['H' ] = new Color('#E6E6E6');
+	L['H '] = new Color('#E6E6E6');
 	L['HD'] = new Color('#E6E6E6');
-	L['C' ] = new Color('#33FF33');
-	L['A' ] = new Color('#33FF33');
-	L['N' ] = new Color('#3333FF');
+	L['C '] = new Color('#33FF33');
+	L['A '] = new Color('#33FF33');
+	L['N '] = new Color('#3333FF');
 	L['NA'] = new Color('#3333FF');
 	L['OA'] = new Color('#FF4D4D');
-	L['S' ] = new Color('#E6C640');
+	L['S '] = new Color('#E6C640');
 	L['SA'] = new Color('#E6C640');
 	L['Se'] = new Color('#FFA100');
-	L['P' ] = new Color('#FF8000');
-	L['F' ] = new Color('#B3FFFF');
+	L['P '] = new Color('#FF8000');
+	L['F '] = new Color('#B3FFFF');
 	L['Cl'] = new Color('#1FF01F');
 	L['Br'] = new Color('#A62929');
-	L['I' ] = new Color('#940094');
+	L['I '] = new Color('#940094');
 
 	Atom = function(id, coord, ad) {
 		this.id = id;
@@ -155,7 +155,7 @@ var iview = (function() {
 		this.ad = ad;
 		this.xs = AD2XS[ad];
 		this.isHydrogen = function() {
-			return (this.ad === 'H') || (this.ad === 'HD');
+			return (this.ad === 'H ') || (this.ad === 'HD');
 		}
 		this.isHBD = function() {
 			return (this.ad === 'HD') || (this.xs === 'Met_D');
@@ -164,7 +164,7 @@ var iview = (function() {
 			return (this.ad === 'NA') || (this.ad === 'OA') || (this.ad === 'SA');
 		}
 		this.isHetero = function() {
-			return !((this.ad === 'H') || (this.ad === 'HD') || (this.ad === 'C') || (this.ad === 'A'));
+			return !((this.ad === 'H ') || (this.ad === 'HD') || (this.ad === 'C ') || (this.ad === 'A '));
 		}
 		this.donorize = function() {
 			switch (this.xs) {
@@ -362,32 +362,6 @@ var iview = (function() {
 			return xs === 'N_A' || xs === 'N_DA' || xs === 'O_A' || xs === 'O_DA';
 		}
 	}
-/*
-	function scoreIndex(xs1, xs2, r2) {
-		return (xs1 + xs2 * (xs2 + 1) >> 1) * NSAMPLES + Math.floor(FACTOR * r2);
-	}
-	var CUTOFF = 8, CUTOFF_SQR = CUTOFF * CUTOFF, FACTOR = 256, FACTOR_INV = 1 / 256, NSAMPLES = FACTOR * CUTOFF_SQR + 1;
-	var RS = new Array(NSAMPLES);
-	for (var i = 0; i < NSAMPLES; ++i) {
-		RS[i] = Math.sqrt(i * FACTOR_INV);
-	}
-	var E = new Array((15 * (15 + 1) >> 1) * NSAMPLES);
-	var D = new Array(E.length);
-	for (var xs1 =   0; xs1 < 15; ++xs1)
-	for (var xs2 = xs1; xs2 < 15; ++xs2) {
-		var offset = (xs1 + xs2 * (xs2 + 1) >> 1) * NSAMPLES;
-		for (var i = 0; i < NSAMPLES; ++i)
-		{
-			E[offset + i] = score(xs1, xs2, RS[i]);
-		}
-		for (var i = 1; i < NSAMPLES - 1; ++i)
-		{
-			D[offset + i] = (E[offset + i + 1] - E[offset + i]) / ((RS[i + 1] - RS[i]) * RS[i]);
-		}
-		D[0] = 0;
-		D[NSAMPLES - 1] = 0;
-	}
-*/
 
 	var iview = function(options) {
 		this.options = $.extend({
@@ -517,8 +491,8 @@ var iview = (function() {
 					residue = line.substring(22, 26);
 					residues.push(this.receptor.atoms.length);
 				}
-				var a = new Atom(line[21] + ':' + line.substring(17, 20) + $.trim(line.substring(22, 26)) + ':' + $.trim(line.substring(12, 16)), [parseFloat(line.substring(30, 38)), parseFloat(line.substring(38, 46)), parseFloat(line.substring(46, 54))], $.trim(line.substring(77, 79)));
-				if (a.ad === 'H') {
+				var a = new Atom(line[21] + ':' + line.substring(17, 20) + $.trim(line.substring(22, 26)) + ':' + $.trim(line.substring(12, 16)), [parseFloat(line.substring(30, 38)), parseFloat(line.substring(38, 46)), parseFloat(line.substring(46, 54))], line.substring(77, 79));
+				if (a.ad === 'H ') {
 					if (this.options.hideNonPolarHydrogens) continue;
 				} else if (a.ad === 'HD') {
 					for (var i = this.receptor.atoms.length, residue_start = residues[residues.length - 1]; i > residue_start;) {
@@ -528,10 +502,10 @@ var iview = (function() {
 							break;
 						}
 					}
-				} else if (a.ad === 'C' || a.ad === 'A') {
+				} else if (a.ad === 'C ' || a.ad === 'A ') {
 					for (var i = this.receptor.atoms.length, residue_start = residues[residues.length - 1]; i > residue_start;) {
 						var b = this.receptor.atoms[--i];
-						if ((!(b.ad === 'C' || b.ad === 'A')) && b.isNeighbor(a))
+						if ((!(b.ad === 'C ' || b.ad === 'A ')) && b.isNeighbor(a))
 						{
 							a.xs = 'C_P';
 							break;
@@ -540,7 +514,7 @@ var iview = (function() {
 				} else {
 					for (var i = this.receptor.atoms.length, residue_start = residues[residues.length - 1]; i > residue_start;) {
 						var b = this.receptor.atoms[--i];
-						if ((b.ad === 'C' || b.ad === 'A') && b.isNeighbor(a))
+						if ((b.ad === 'C ' || b.ad === 'A ') && b.isNeighbor(a))
 						{
 							b.xs = 'C_P';
 						}
@@ -593,9 +567,10 @@ var iview = (function() {
 		for (var lines = content.split('\n'), kk = lines.length, k = 0; k < kk; ++k) {
 			var line = lines[k];
 			if (line.match('^ATOM|HETATM')) {
-				var a = new Atom($.trim(line.substring(12, 16)), [parseFloat(line.substring(30, 38)), parseFloat(line.substring(38, 46)), parseFloat(line.substring(46, 54))], $.trim(line.substring(77, 79)));
+				var a = new Atom($.trim(line.substring(12, 16)), [parseFloat(line.substring(30, 38)), parseFloat(line.substring(38, 46)), parseFloat(line.substring(46, 54))], line.substring(77, 79));
 				a.serial = line.substring(6, 11);
-				if (a.ad === 'H') {
+				a.name = line.substring(12, 16);
+				if (a.ad === 'H ') {
 					if (this.options.hideNonPolarHydrogens) {
 						a.hidden = true;
 					}
@@ -607,11 +582,11 @@ var iview = (function() {
 							break;
 						}
 					}
-				} else if (a.ad === 'C' || a.ad === 'A') {
+				} else if (a.ad === 'C ' || a.ad === 'A ') {
 					for (var i = this.ligand.atoms.length, frame_begin = this.ligand.frames[this.ligand.frames.length - 1]; i > frame_begin;)
 					{
 						var b = this.ligand.atoms[--i];
-						if ((!(b.ad === 'C' || b.ad === 'A')) && b.isNeighbor(a))
+						if ((!(b.ad === 'C ' || b.ad === 'A ')) && b.isNeighbor(a))
 						{
 							a.xs = 'C_P';
 							break;
@@ -621,7 +596,7 @@ var iview = (function() {
 				} else {
 					for (var i = this.ligand.atoms.length, frame_begin = this.ligand.frames[this.ligand.frames.length - 1]; i > frame_begin;) {
 						var b = this.ligand.atoms[--i];
-						if ((b.ad === 'C' || b.ad === 'A') && b.isNeighbor(a))
+						if ((b.ad === 'C ' || b.ad === 'A ') && b.isNeighbor(a))
 						{
 							b.xs = 'C_P';
 						}
@@ -640,8 +615,8 @@ var iview = (function() {
 			} else if (line.match('^ENDBRANCH')) {
 				current.rotorY = serials[(parseInt(line.substring(13, 17)))];
 				this.ligand.bonds.push(new Bond(current.rotorX, current.rotorY));
-				if (!(current.rotorY.ad === 'C' || current.rotorY.ad === 'A') && (current.rotorX.ad === 'C' || current.rotorX.ad === 'A')) current.rotorX.xs = 'C_P';
-				if (!(current.rotorX.ad === 'C' || current.rotorX.ad === 'A') && (current.rotorY.ad === 'C' || current.rotorY.ad === 'A')) current.rotorY.xs = 'C_P';
+				if (!(current.rotorY.ad === 'C ' || current.rotorY.ad === 'A ') && (current.rotorX.ad === 'C ' || current.rotorX.ad === 'A ')) current.rotorX.xs = 'C_P';
+				if (!(current.rotorX.ad === 'C ' || current.rotorX.ad === 'A ') && (current.rotorY.ad === 'C ' || current.rotorY.ad === 'A ')) current.rotorY.xs = 'C_P';
 				current = current.parent;
 			} else if (line.match('^ENDMDL')) break;
 		}
@@ -696,12 +671,6 @@ var iview = (function() {
 				var rr = vec3.dist(l, r);
 				if (rr > 8) continue;
 				l.fe += score(l.xs, r.xs, rr);
-/*
-				var r2 = vec3.squaredLength(vec3.subtract(l, r, []))
-				if (r2 > CUTOFF_SQR) continue;
-				var idx = scoreIndex(l.xs, r.xs, r2);
-				l.fe += E[idx];
-*/
 			}
 			this.ligand.fe += l.fe;
 		}
@@ -742,7 +711,7 @@ var iview = (function() {
 		];
 		for (var i = this.ligand.frames[0].begin; i < this.ligand.frames[0].end; ++i) {
 			var a = this.ligand.atoms[i];
-			lines.push('ATOM  ' + pad(5, a.id) + ' ' + pad(8, a[0].toFixed(3)) + pad(8, a[1].toFixed(3)) + pad(8, a[2].toFixed(3)));
+			lines.push('ATOM  ' + a.serial + ' ' + a.name + pad(14, '') + pad(8, a[0].toFixed(3)) + pad(8, a[1].toFixed(3)) + pad(8, a[2].toFixed(3)) + pad(14, '') + pad(8, a.fe.toFixed(3)) + ' ' + a.ad);
 		}
 		lines.push('ENDROOT');
 		return lines.join('\n');
