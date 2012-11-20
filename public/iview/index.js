@@ -29,14 +29,17 @@ $(function() {
 		$.get('ligand.pdbqt', function(ligand) {
 			iv.parseLigand(ligand);
 			iv.repaint();
-			$('#export').click(function() {
+			$('#export').click(function(e) {
+				e.preventDefault();
 				iv.export();
 			});
-			$('#save').click(function() {
+			$('#save').click(function(e) {
+				e.preventDefault();
 				var conf = iv.save();
 				alert(conf);
 			});
-			$('#dock').click(function() {
+			$('#dock').click(function(e) {
+				e.preventDefault();
 				iv.dock();
 			});
 		});
