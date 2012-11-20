@@ -350,28 +350,44 @@ var iview = (function() {
 		return (-0.035579) * Math.exp(-4 * d * d)
 			+  (-0.005156) * Math.exp(-0.25 * (d - 3.0) * (d - 3.0))
 			+  ( 0.840245) * (d > 0 ? 0.0 : d * d)
-			+  (-0.035069) * ((hydrophobicXS(xs1) && hydrophobicXS(xs2)) ? ((d >= 1.5) ? 0.0 : ((d <= 0.5) ? 1.0 : 1.5 - d)) : 0.0)
-			+  (-0.587439) * (((hbdonorXS(xs1) && hbacceptorXS(xs2)) || (hbdonorXS(xs2) && hbacceptorXS(xs1))) ? ((d >= 0) ? 0.0 : ((d <= -0.7) ? 1 : d * (-1.428571))): 0.0);
-		function hydrophobicXS(xs) {
-			return xs ===  'C_H'
-				|| xs ===  'F_H'
-				|| xs === 'Cl_H'
-				|| xs === 'Br_H'
-				|| xs ===  'I_H';
+			+  (-0.035069) * ((isHydrophobic(xs1) && isHydrophobic(xs2)) ? ((d >= 1.5) ? 0.0 : ((d <= 0.5) ? 1.0 : 1.5 - d)) : 0.0)
+			+  (-0.587439) * (((isHBdonor(xs1) && isHBacceptor(xs2)) || (isHBdonor(xs2) && isHBacceptor(xs1))) ? ((d >= 0) ? 0.0 : ((d <= -0.7) ? 1 : d * (-1.428571))): 0.0);
+		function isHydrophobic(xs) {
+			return xs ===  'C_H' || xs ===  'F_H' || xs === 'Cl_H' || xs === 'Br_H' || xs ===  'I_H';
 		}
-		function hbdonorXS(xs) {
-			return xs === 'N_D'
-				|| xs === 'N_DA'
-				|| xs === 'O_DA'
-				|| xs === 'Met_D';
+		function isHBdonor(xs) {
+			return xs === 'N_D' || xs === 'N_DA' || xs === 'O_DA' || xs === 'Met_D';
 		}
-		function hbacceptorXS(xs) {
-			return xs === 'N_A'
-				|| xs === 'N_DA'
-				|| xs === 'O_A'
-				|| xs === 'O_DA';
+		function isHBacceptor(xs) {
+			return xs === 'N_A' || xs === 'N_DA' || xs === 'O_A' || xs === 'O_DA';
 		}
 	}
+/*
+	function scoreIndex(xs1, xs2, r2) {
+		return (xs1 + xs2 * (xs2 + 1) >> 1) * NSAMPLES + Math.floor(FACTOR * r2);
+	}
+	var CUTOFF = 8, CUTOFF_SQR = CUTOFF * CUTOFF, FACTOR = 256, FACTOR_INV = 1 / 256, NSAMPLES = FACTOR * CUTOFF_SQR + 1;
+	var RS = new Array(NSAMPLES);
+	for (var i = 0; i < NSAMPLES; ++i) {
+		RS[i] = Math.sqrt(i * FACTOR_INV);
+	}
+	var E = new Array((15 * (15 + 1) >> 1) * NSAMPLES);
+	var D = new Array(E.length);
+	for (var xs1 =   0; xs1 < 15; ++xs1)
+	for (var xs2 = xs1; xs2 < 15; ++xs2) {
+		var offset = (xs1 + xs2 * (xs2 + 1) >> 1) * NSAMPLES;
+		for (var i = 0; i < NSAMPLES; ++i)
+		{
+			E[offset + i] = score(xs1, xs2, RS[i]);
+		}
+		for (var i = 1; i < NSAMPLES - 1; ++i)
+		{
+			D[offset + i] = (E[offset + i + 1] - E[offset + i]) / ((RS[i + 1] - RS[i]) * RS[i]);
+		}
+		D[0] = 0;
+		D[NSAMPLES - 1] = 0;
+	}
+*/
 
 	var iview = function(options) {
 		this.options = $.extend({
@@ -680,25 +696,17 @@ var iview = (function() {
 				var rr = vec3.dist(l, r);
 				if (rr > 8) continue;
 				l.fe += score(l.xs, r.xs, rr);
+/*
+				var r2 = vec3.squaredLength(vec3.subtract(l, r, []))
+				if (r2 > CUTOFF_SQR) continue;
+				var idx = scoreIndex(l.xs, r.xs, r2);
+				l.fe += E[idx];
+*/
 			}
 			this.ligand.fe += l.fe;
 		}
 		if (this.options.refresh) this.options.refresh();
 	};
-	iview.prototype.saveLigand = function() {
-		function pad(len, str) {
-			return Array(len + 1 - str.length).join(' ') + str;
-		}
-		var lines = [
-			"REMARK       NORMALIZED FREE ENERGY PREDICTED BY IDOCK:" + pad(8, "-7.149") + " KCAL/MOL",
-			"REMARK            TOTAL FREE ENERGY PREDICTED BY IDOCK:" + " KCAL/MOL",
-			"REMARK     INTER-LIGAND FREE ENERGY PREDICTED BY IDOCK:" + " KCAL/MOL",
-			"REMARK     INTRA-LIGAND FREE ENERGY PREDICTED BY IDOCK:" + " KCAL/MOL",
-			"REMARK            LIGAND EFFICIENCY PREDICTED BY IDOCK:" + " KCAL/MOL",
-			"REMARK               HYDROGEN BONDS PREDICTED BY IDOCK:" + pad(4, this.hbonds.length.toString())
-		];
-		return lines.join('\n');
-	}
 	iview.prototype.repaint = function() {
 		this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
 		this.gl.modelViewMatrix = mat4.multiply(this.translationMatrix, this.rotationMatrix, []);
@@ -716,7 +724,30 @@ var iview = (function() {
 			this.hbonds[i].render(this.gl);
 		}
 	};
-	iview.prototype.png = function() {
+	iview.prototype.dock = function() {
+	}
+	iview.prototype.save = function() {
+		function pad(len, val) {
+			var str = val.toString();
+			return Array(len + 1 - str.length).join(' ') + str;
+		}
+		var lines = [
+			'REMARK       NORMALIZED FREE ENERGY PREDICTED BY IDOCK:' + pad(8, "-7.149") + " KCAL/MOL",
+			'REMARK            TOTAL FREE ENERGY PREDICTED BY IDOCK:' + " KCAL/MOL",
+			'REMARK     INTER-LIGAND FREE ENERGY PREDICTED BY IDOCK:' + " KCAL/MOL",
+			'REMARK     INTRA-LIGAND FREE ENERGY PREDICTED BY IDOCK:' + " KCAL/MOL",
+			'REMARK            LIGAND EFFICIENCY PREDICTED BY IDOCK:' + " KCAL/MOL",
+			'REMARK               HYDROGEN BONDS PREDICTED BY IDOCK:' + pad(4, this.hbonds.length),
+			'ROOT'
+		];
+		for (var i = this.ligand.frames[0].begin; i < this.ligand.frames[0].end; ++i) {
+			var a = this.ligand.atoms[i];
+			lines.push('ATOM  ' + pad(5, a.id) + ' ' + pad(8, a[0].toFixed(3)) + pad(8, a[1].toFixed(3)) + pad(8, a[2].toFixed(3)));
+		}
+		lines.push('ENDROOT');
+		return lines.join('\n');
+	}
+	iview.prototype.export = function() {
 		window.open(this.canvas.get(0).toDataURL('image/png'));
 	};
 

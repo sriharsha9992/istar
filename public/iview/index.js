@@ -30,7 +30,14 @@ $(function() {
 			iv.parseLigand(ligand);
 			iv.repaint();
 			$('#export').click(function() {
-				iv.png();
+				iv.export();
+			});
+			$('#save').click(function() {
+				var conf = iv.save();
+				alert(conf);
+			});
+			$('#dock').click(function() {
+				iv.dock();
 			});
 		});
 	});
