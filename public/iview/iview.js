@@ -706,13 +706,20 @@ var iview = (function() {
 			var str = val.toString();
 			return Array(len + 1 - str.length).join(' ') + str;
 		}
+		var hbs = [
+			pad(4, this.hbonds.length)
+		];
+		for (var i = 0, ii = this.hbonds.length; i < ii; ++i) {
+			var hb = this.hbonds[i];
+			hbs.push(hb.a1.id + ' - ' + hb.a2.id);
+		}
 		var lines = [
 			'REMARK       NORMALIZED FREE ENERGY PREDICTED BY IDOCK:' + pad(8, "-7.149") + " KCAL/MOL",
 			'REMARK            TOTAL FREE ENERGY PREDICTED BY IDOCK:' + " KCAL/MOL",
 			'REMARK     INTER-LIGAND FREE ENERGY PREDICTED BY IDOCK:' + pad(8, this.ligand.fe.toFixed(3)) + " KCAL/MOL",
 			'REMARK     INTRA-LIGAND FREE ENERGY PREDICTED BY IDOCK:' + " KCAL/MOL",
 			'REMARK            LIGAND EFFICIENCY PREDICTED BY IDOCK:' + pad(8, this.ligand.le.toFixed(3)) + " KCAL/MOL",
-			'REMARK               HYDROGEN BONDS PREDICTED BY IDOCK:' + pad(4, this.hbonds.length),
+			'REMARK               HYDROGEN BONDS PREDICTED BY IDOCK:' + hbs.join(' | '),
 			'ROOT'
 		];
 		for (var i = this.ligand.frames[0].begin; i < this.ligand.frames[0].end; ++i) {
