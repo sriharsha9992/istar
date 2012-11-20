@@ -718,7 +718,7 @@ var iview = (function() {
 		for (var i = this.ligand.frames[0].begin; i < this.ligand.frames[0].end; ++i) {
 			var a = this.ligand.atoms[i];
 			var c = vec3.add(a, this.center, []);
-			lines.push('ATOM  ' + a.serial + ' ' + a.name + pad(14, '') + pad(8, c[0].toFixed(3)) + pad(8, c[1].toFixed(3)) + pad(8, c[2].toFixed(3)) + pad(14, '') + pad(8, a.fe.toFixed(3)) + ' ' + a.ad);
+			lines.push('ATOM  ' + a.serial + ' ' + a.name + pad(14, '') + pad(8, c[0].toFixed(3)) + pad(8, c[1].toFixed(3)) + pad(8, c[2].toFixed(3)) + pad(16, '') + pad(6, a.fe.toFixed(3)) + ' ' + a.ad);
 		}
 		lines.push('ENDROOT');
 		return lines.join('\n');

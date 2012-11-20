@@ -9,14 +9,7 @@ $(function() {
 				hblis.push('<li>' + hb.a1.id + ' - ' + hb.a2.id + '</li>');
 			}
 			$('#hbonds').html(hblis.join(''));
-			$('#fe').html(iv.ligand.fe.toFixed(3));
-			var felis = [];
-			for (var i = 0, ii = iv.ligand.atoms.length; i < ii; ++i) {
-				var a = iv.ligand.atoms[i];
-				if (a.isHydrogen()) continue;
-				felis.push('<li>' + a.id + ': ' + a.fe.toFixed(3) + '</li>');
-			}
-			$('#fes').html(felis.join(''));
+			$('#conformation').html(iv.save());
 		}
 	});
 	if (iv.disabled) {
@@ -32,11 +25,6 @@ $(function() {
 			$('#export').click(function(e) {
 				e.preventDefault();
 				iv.export();
-			});
-			$('#save').click(function(e) {
-				e.preventDefault();
-				var conf = iv.save();
-				alert(conf);
 			});
 			$('#dock').click(function(e) {
 				e.preventDefault();
