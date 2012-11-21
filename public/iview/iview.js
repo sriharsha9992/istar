@@ -18,7 +18,7 @@
 
 var iview = (function() {
 
-	COVALENT = [];
+	COVALENT = {};
 	COVALENT['H '] = 0.407;
 	COVALENT['HD'] = 0.407;
 	COVALENT['C '] = 0.847;
@@ -49,7 +49,7 @@ var iview = (function() {
 	COVALENT['As'] = 1.309;
 	COVALENT['Sr'] = 2.112;
 
-	AD2XS = [];
+	AD2XS = {};
 	AD2XS['C '] =   'C_H';
 	AD2XS['A '] =   'C_H';
 	AD2XS['N '] =   'N_P';
@@ -78,7 +78,7 @@ var iview = (function() {
 	AD2XS['As'] = 'Met_D';
 	AD2XS['Sr'] = 'Met_D';
 
-	VDW = [];
+	VDW = {};
 	VDW[  'C_H' ] = 1.9;
 	VDW[  'C_P' ] = 1.9;
 	VDW[  'N_P' ] = 1.8;
@@ -101,7 +101,7 @@ var iview = (function() {
 		this.b = parseInt(color.substring(5, 7), 16) / 255.0;
 	}
 
-	R = [];
+	R = {};
 	R['H '] = new Color('#FFFFFF');
 	R['HD'] = new Color('#FFFFFF');
 	R['C '] = new Color('#909090');
@@ -132,7 +132,7 @@ var iview = (function() {
 	R['As'] = new Color('#BD80E3');
 	R['Sr'] = new Color('#00FF00');
 	
-	L = [];
+	L = {};
 	L['H '] = new Color('#E6E6E6');
 	L['HD'] = new Color('#E6E6E6');
 	L['C '] = new Color('#33FF33');
@@ -560,7 +560,8 @@ var iview = (function() {
 	iview.prototype.parseLigand = function(content) {
 		this.ligand = new Molecule(L);
 		var current = {
-			begin: 0
+			begin: 0,
+			branches: []
 		};
 		this.ligand.frames = [current];
 		this.ligand.nHeavyAtoms = 0;
@@ -614,8 +615,10 @@ var iview = (function() {
 				this.ligand.frames.push({
 					parent: current,
 					begin: this.ligand.atoms.length,
-					rotorX: serials[parseInt(line.substring(6, 10))]
+					rotorX: serials[parseInt(line.substring(6, 10))],
+					branches: []
 				});
+				current.branches.push(this.ligand.frames[this.ligand.frames.length - 1]);
 				current = this.ligand.frames[this.ligand.frames.length - 1];
 			} else if (line.match('^ENDBRANCH')) {
 				current.rotorY = serials[(parseInt(line.substring(13, 17)))];
@@ -623,7 +626,7 @@ var iview = (function() {
 				if (!(current.rotorY.ad === 'C ' || current.rotorY.ad === 'A ') && (current.rotorX.ad === 'C ' || current.rotorX.ad === 'A ')) current.rotorX.xs = 'C_P';
 				if (!(current.rotorX.ad === 'C ' || current.rotorX.ad === 'A ') && (current.rotorY.ad === 'C ' || current.rotorY.ad === 'A ')) current.rotorY.xs = 'C_P';
 				current = current.parent;
-			} else if (line.match('^ENDMDL')) break;
+			} else if (line.match('^TORSDOF')) break;
 		}
 		this.ligand.frames[this.ligand.frames.length - 1].end = this.ligand.atoms.length;
 		for (var f = 0, ff = this.ligand.frames.length - 1; f < ff; ++f) {
@@ -706,20 +709,13 @@ var iview = (function() {
 			var str = val.toString();
 			return Array(len + 1 - str.length).join(' ') + str;
 		}
-		var hbs = [
-			pad(4, this.hbonds.length)
-		];
-		for (var i = 0, ii = this.hbonds.length; i < ii; ++i) {
-			var hb = this.hbonds[i];
-			hbs.push(hb.a1.id + ' - ' + hb.a2.id);
-		}
 		var lines = [
 			'REMARK       NORMALIZED FREE ENERGY PREDICTED BY IDOCK:' + pad(8, "-7.149") + " KCAL/MOL",
 			'REMARK            TOTAL FREE ENERGY PREDICTED BY IDOCK:' + " KCAL/MOL",
 			'REMARK     INTER-LIGAND FREE ENERGY PREDICTED BY IDOCK:' + pad(8, this.ligand.fe.toFixed(3)) + " KCAL/MOL",
 			'REMARK     INTRA-LIGAND FREE ENERGY PREDICTED BY IDOCK:' + " KCAL/MOL",
 			'REMARK            LIGAND EFFICIENCY PREDICTED BY IDOCK:' + pad(8, this.ligand.le.toFixed(3)) + " KCAL/MOL",
-			'REMARK               HYDROGEN BONDS PREDICTED BY IDOCK:' + hbs.join(' | '),
+			'REMARK               HYDROGEN BONDS PREDICTED BY IDOCK:' + pad(4, this.hbonds.length),
 			'ROOT'
 		];
 		for (var i = this.ligand.frames[0].begin; i < this.ligand.frames[0].end; ++i) {
@@ -728,6 +724,36 @@ var iview = (function() {
 			lines.push('ATOM  ' + a.serial + ' ' + a.name + pad(14, '') + pad(8, c[0].toFixed(3)) + pad(8, c[1].toFixed(3)) + pad(8, c[2].toFixed(3)) + pad(16, '') + pad(6, a.fe.toFixed(3)) + ' ' + a.ad);
 		}
 		lines.push('ENDROOT');
+		var stack = [];
+		var root = this.ligand.frames[0];
+		for (var i = root.branches.length; i > 0;) {
+			stack.push(root.branches[--i]);
+		}
+		for (var i = 1, ii = this.ligand.frames.length; i < ii; ++i) {
+			this.ligand.frames[i].dumped = false;
+		}
+		while (stack.length) {
+			var f = stack[stack.length - 1];
+			if (!f.dumped) // This BRANCH frame has not been dumped.
+			{
+				lines.push('BRANCH' + f.rotorX.serial.substring(1, 5) + f.rotorY.serial.substring(1, 5));
+				for (var i = f.begin; i < f.end; ++i) {
+					var a = this.ligand.atoms[i];
+					var c = vec3.add(a, this.center, []);
+					lines.push('ATOM  ' + a.serial + ' ' + a.name + pad(14, '') + pad(8, c[0].toFixed(3)) + pad(8, c[1].toFixed(3)) + pad(8, c[2].toFixed(3)) + pad(16, '') + pad(6, a.fe.toFixed(3)) + ' ' + a.ad);
+				}
+				f.dumped = true;
+				for (var i = f.branches.length; i > 0;) {
+					stack.push(f.branches[--i]);
+				}
+			}
+			else // This BRANCH frame has been dumped.
+			{
+				lines.push('ENDBRANCH' + f.rotorX.serial.substring(1, 5) + f.rotorY.serial.substring(1, 5));
+				stack.pop();
+			}
+		}
+		lines.push('TORSDOF ' + (this.ligand.frames.length - 1));
 		return lines.join('\n');
 	}
 	iview.prototype.export = function() {
