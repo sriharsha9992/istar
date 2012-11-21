@@ -95,60 +95,6 @@ var iview = (function() {
 	VDW[  'I_H' ] = 2.2;
 	VDW['Met_D' ] = 1.2;
 
-	function Color(color) {
-		this.r = parseInt(color.substring(1, 3), 16) / 255.0;
-		this.g = parseInt(color.substring(3, 5), 16) / 255.0;
-		this.b = parseInt(color.substring(5, 7), 16) / 255.0;
-	}
-
-	R = {};
-	R['H '] = new Color('#FFFFFF');
-	R['HD'] = new Color('#FFFFFF');
-	R['C '] = new Color('#909090');
-	R['A '] = new Color('#909090');
-	R['N '] = new Color('#3050F8');
-	R['NA'] = new Color('#3050F8');
-	R['OA'] = new Color('#FF0D0D');
-	R['S '] = new Color('#FFFF30');
-	R['SA'] = new Color('#FFFF30');
-	R['Se'] = new Color('#FFA100');
-	R['P '] = new Color('#FF8000');
-	R['F '] = new Color('#90E050');
-	R['Cl'] = new Color('#1FF01F');
-	R['Br'] = new Color('#A62929');
-	R['I '] = new Color('#940094');
-	R['Zn'] = new Color('#7D80B0');
-	R['Fe'] = new Color('#E06633');
-	R['Mg'] = new Color('#8AFF00');
-	R['Ca'] = new Color('#3DFF00');
-	R['Mn'] = new Color('#9C7AC7');
-	R['Cu'] = new Color('#C88033');
-	R['Na'] = new Color('#AB5CF2');
-	R['K '] = new Color('#8F40D4');
-	R['Hg'] = new Color('#B8B8D0');
-	R['Ni'] = new Color('#50D050');
-	R['Co'] = new Color('#F090A0');
-	R['Cd'] = new Color('#FFD98F');
-	R['As'] = new Color('#BD80E3');
-	R['Sr'] = new Color('#00FF00');
-	
-	L = {};
-	L['H '] = new Color('#E6E6E6');
-	L['HD'] = new Color('#E6E6E6');
-	L['C '] = new Color('#33FF33');
-	L['A '] = new Color('#33FF33');
-	L['N '] = new Color('#3333FF');
-	L['NA'] = new Color('#3333FF');
-	L['OA'] = new Color('#FF4D4D');
-	L['S '] = new Color('#E6C640');
-	L['SA'] = new Color('#E6C640');
-	L['Se'] = new Color('#FFA100');
-	L['P '] = new Color('#FF8000');
-	L['F '] = new Color('#B3FFFF');
-	L['Cl'] = new Color('#1FF01F');
-	L['Br'] = new Color('#A62929');
-	L['I '] = new Color('#940094');
-
 	Atom = function(id, coord, ad) {
 		this.id = id;
 		vec3.set(coord, this);
@@ -236,12 +182,11 @@ var iview = (function() {
 		};
 	};
 
-	Molecule = function(C) {
+	Molecule = function() {
 		this.atoms = [];
 		this.bonds = [];
 		this.hbds = [];
 		this.hbas = [];
-		this.C = C;
 	};
 	Molecule.prototype.renderAtoms = function(gl) {
 		for (var i = 0, ii = this.atoms.length; i < ii; ++i) {
@@ -257,6 +202,268 @@ var iview = (function() {
 			b.render(gl, this.C);
 		}
 	};
+	Molecule.prototype.centerize = function(center) {
+		for (var i = 0, ii = this.atoms.length; i < ii; ++i) {
+			var a = this.atoms[i];
+			vec3.subtract(a, center);
+			if (a.hidden) continue;
+			if (a.isHBD()) this.hbds.push(a);
+			else if (a.isHBA()) this.hbas.push(a);
+		}
+	};
+
+	function Color(color) {
+		this.r = parseInt(color.substring(1, 3), 16) / 255.0;
+		this.g = parseInt(color.substring(3, 5), 16) / 255.0;
+		this.b = parseInt(color.substring(5, 7), 16) / 255.0;
+	}
+
+	Receptor = function(content, hideNonPolarHydrogens, corner1, corner2) {
+		var residues = [];
+		for (var residue = 'XXXX', lines = content.split('\n'), kk = lines.length, k = 0; k < kk; ++k) {
+			var line = lines[k];
+			if (line.match('^ATOM|HETATM')) {
+				if (!((line[25] === residue[3]) && (line[24] === residue[2]) && (line[23] === residue[1]) && (line[22] === residue[0]))) {
+					residue = line.substring(22, 26);
+					residues.push(this.atoms.length);
+				}
+				var a = new Atom(line[21] + ':' + line.substring(17, 20) + $.trim(line.substring(22, 26)) + ':' + $.trim(line.substring(12, 16)), [parseFloat(line.substring(30, 38)), parseFloat(line.substring(38, 46)), parseFloat(line.substring(46, 54))], line.substring(77, 79));
+				if (a.ad === 'H ') {
+					if (hideNonPolarHydrogens) continue;
+				} else if (a.ad === 'HD') {
+					for (var i = this.atoms.length, residue_start = residues[residues.length - 1]; i > residue_start;) {
+						var b = this.atoms[--i];
+						if (b.isNeighbor(a)) {
+							b.donorize();
+							break;
+						}
+					}
+				} else if (a.ad === 'C ' || a.ad === 'A ') {
+					for (var i = this.atoms.length, residue_start = residues[residues.length - 1]; i > residue_start;) {
+						var b = this.atoms[--i];
+						if ((!(b.ad === 'C ' || b.ad === 'A ')) && b.isNeighbor(a)) {
+							a.xs = 'C_P';
+							break;
+						}
+					}
+				} else {
+					for (var i = this.atoms.length, residue_start = residues[residues.length - 1]; i > residue_start;) {
+						var b = this.atoms[--i];
+						if ((b.ad === 'C ' || b.ad === 'A ') && b.isNeighbor(a)) {
+							b.xs = 'C_P';
+						}
+					}
+				}
+				this.atoms.push(a);
+			} else if (line.match('^TER')) {
+				residue = 'XXXX';
+			}
+		}
+		residues.push(this.atoms.length);
+		for (var r = 0, rr = residues.length - 1; r < rr; ++r) {
+			var hidden = true;
+			for (var i = residues[r], ii = residues[r + 1]; i < ii; ++i) {
+				var a = this.atoms[i];
+				if ((corner1[0] <= a[0]) && (a[0] < corner2[0]) && (corner1[1] <= a[1]) && (a[1] < corner2[1]) && (corner1[2] <= a[2]) && (a[2] < corner2[2])) {
+					hidden = false;
+					break;
+				}
+			}
+			for (var i = residues[r], ii = residues[r + 1]; i < ii; ++i) {
+				var a1 = this.atoms[i];
+				if (hidden) {
+					a1.hidden = true;
+					continue;
+				}
+				for (var j = i + 1; j < ii; ++j) {
+					var a2 = this.atoms[j];
+					if (a2.isNeighbor(a1)) {
+						this.bonds.push(new Bond(a1, a2));
+					}
+				}
+			}
+		}
+		this.C = {};
+		this.C['H '] = new Color('#FFFFFF');
+		this.C['HD'] = new Color('#FFFFFF');
+		this.C['C '] = new Color('#909090');
+		this.C['A '] = new Color('#909090');
+		this.C['N '] = new Color('#3050F8');
+		this.C['NA'] = new Color('#3050F8');
+		this.C['OA'] = new Color('#FF0D0D');
+		this.C['S '] = new Color('#FFFF30');
+		this.C['SA'] = new Color('#FFFF30');
+		this.C['Se'] = new Color('#FFA100');
+		this.C['P '] = new Color('#FF8000');
+		this.C['F '] = new Color('#90E050');
+		this.C['Cl'] = new Color('#1FF01F');
+		this.C['Br'] = new Color('#A62929');
+		this.C['I '] = new Color('#940094');
+		this.C['Zn'] = new Color('#7D80B0');
+		this.C['Fe'] = new Color('#E06633');
+		this.C['Mg'] = new Color('#8AFF00');
+		this.C['Ca'] = new Color('#3DFF00');
+		this.C['Mn'] = new Color('#9C7AC7');
+		this.C['Cu'] = new Color('#C88033');
+		this.C['Na'] = new Color('#AB5CF2');
+		this.C['K '] = new Color('#8F40D4');
+		this.C['Hg'] = new Color('#B8B8D0');
+		this.C['Ni'] = new Color('#50D050');
+		this.C['Co'] = new Color('#F090A0');
+		this.C['Cd'] = new Color('#FFD98F');
+		this.C['As'] = new Color('#BD80E3');
+		this.C['Sr'] = new Color('#00FF00');
+	};
+	Receptor.prototype = new Molecule();
+
+	Ligand = function(content, hideNonPolarHydrogens) {
+		var current = {
+			begin: 0,
+			branches: []
+		};
+		this.frames = [current];
+		this.nHeavyAtoms = 0;
+		var serials = [];
+		for (var lines = content.split('\n'), kk = lines.length, k = 0; k < kk; ++k) {
+			var line = lines[k];
+			if (line.match('^ATOM|HETATM')) {
+				var a = new Atom($.trim(line.substring(12, 16)), [parseFloat(line.substring(30, 38)), parseFloat(line.substring(38, 46)), parseFloat(line.substring(46, 54))], line.substring(77, 79));
+				a.serial = line.substring(6, 11);
+				a.name = line.substring(12, 16);
+				if (a.ad === 'H ') {
+					if (hideNonPolarHydrogens) {
+						a.hidden = true;
+					}
+					a.fe = 0;
+				} else if (a.ad === 'HD') {
+					for (var i = this.atoms.length, frame_begin = this.frames[this.frames.length - 1]; i > frame_begin;) {
+						var b = this.atoms[--i];
+						if (b.isNeighbor(a)) {
+							b.donorize();
+							break;
+						}
+					}
+					a.fe = 0;
+				} else if (a.ad === 'C ' || a.ad === 'A ') {
+					for (var i = this.atoms.length, frame_begin = this.frames[this.frames.length - 1]; i > frame_begin;)
+					{
+						var b = this.atoms[--i];
+						if ((!(b.ad === 'C ' || b.ad === 'A ')) && b.isNeighbor(a)) {
+							a.xs = 'C_P';
+							break;
+						}
+					}
+					serials[parseInt(a.serial)] = a;
+					++this.nHeavyAtoms;
+				} else {
+					for (var i = this.atoms.length, frame_begin = this.frames[this.frames.length - 1]; i > frame_begin;) {
+						var b = this.atoms[--i];
+						if ((b.ad === 'C ' || b.ad === 'A ') && b.isNeighbor(a)) {
+							b.xs = 'C_P';
+						}
+					}
+					serials[parseInt(a.serial)] = a;
+					++this.nHeavyAtoms;
+				}
+				this.atoms.push(a);
+			} else if (line.match('^BRANCH')) {
+				this.frames[this.frames.length - 1].end = this.atoms.length;
+				this.frames.push({
+					parent: current,
+					begin: this.atoms.length,
+					rotorX: serials[parseInt(line.substring(6, 10))],
+					branches: []
+				});
+				current.branches.push(this.frames[this.frames.length - 1]);
+				current = this.frames[this.frames.length - 1];
+			} else if (line.match('^ENDBRANCH')) {
+				current.rotorY = serials[(parseInt(line.substring(13, 17)))];
+				this.bonds.push(new Bond(current.rotorX, current.rotorY));
+				if (!(current.rotorY.ad === 'C ' || current.rotorY.ad === 'A ') && (current.rotorX.ad === 'C ' || current.rotorX.ad === 'A ')) current.rotorX.xs = 'C_P';
+				if (!(current.rotorX.ad === 'C ' || current.rotorX.ad === 'A ') && (current.rotorY.ad === 'C ' || current.rotorY.ad === 'A ')) current.rotorY.xs = 'C_P';
+				current = current.parent;
+			} else if (line.match('^TORSDOF')) break;
+		}
+		this.frames[this.frames.length - 1].end = this.atoms.length;
+		for (var f = 0, ff = this.frames.length - 1; f < ff; ++f) {
+			for (var i = this.frames[f].begin, ii = this.frames[f].end; i < ii; ++i) {
+				var a1 = this.atoms[i];
+				for (var j = i + 1; j < ii; ++j) {
+					var a2 = this.atoms[j];
+					if (a2.isNeighbor(a1)) {
+						this.bonds.push(new Bond(a1, a2));
+					}
+				}
+			}
+		}
+		this.C = {};
+		this.C['H '] = new Color('#E6E6E6');
+		this.C['HD'] = new Color('#E6E6E6');
+		this.C['C '] = new Color('#33FF33');
+		this.C['A '] = new Color('#33FF33');
+		this.C['N '] = new Color('#3333FF');
+		this.C['NA'] = new Color('#3333FF');
+		this.C['OA'] = new Color('#FF4D4D');
+		this.C['S '] = new Color('#E6C640');
+		this.C['SA'] = new Color('#E6C640');
+		this.C['Se'] = new Color('#FFA100');
+		this.C['P '] = new Color('#FF8000');
+		this.C['F '] = new Color('#B3FFFF');
+		this.C['Cl'] = new Color('#1FF01F');
+		this.C['Br'] = new Color('#A62929');
+		this.C['I '] = new Color('#940094');
+	};
+	Ligand.prototype = new Molecule();
+	Ligand.prototype.save = function(center) {
+		function pad(len, str) {
+			return Array(len + 1 - str.length).join(' ') + str;
+		}
+		var lines = [
+			'REMARK       NORMALIZED FREE ENERGY PREDICTED BY IDOCK:' + pad(8, "-7.149") + " KCAL/MOL",
+			'REMARK            TOTAL FREE ENERGY PREDICTED BY IDOCK:' + " KCAL/MOL",
+			'REMARK     INTER-LIGAND FREE ENERGY PREDICTED BY IDOCK:' + pad(8, this.fe.toFixed(3)) + " KCAL/MOL",
+			'REMARK     INTRA-LIGAND FREE ENERGY PREDICTED BY IDOCK:' + " KCAL/MOL",
+			'REMARK            LIGAND EFFICIENCY PREDICTED BY IDOCK:' + pad(8, this.le.toFixed(3)) + " KCAL/MOL",
+			'ROOT'
+		];
+		for (var i = this.frames[0].begin; i < this.frames[0].end; ++i) {
+			var a = this.atoms[i];
+			var c = vec3.add(a, center, []);
+			lines.push('ATOM  ' + a.serial + ' ' + a.name + pad(14, '') + pad(8, c[0].toFixed(3)) + pad(8, c[1].toFixed(3)) + pad(8, c[2].toFixed(3)) + pad(16, '') + pad(6, a.fe.toFixed(3)) + ' ' + a.ad);
+		}
+		lines.push('ENDROOT');
+		var stack = [];
+		var root = this.frames[0];
+		for (var i = root.branches.length; i > 0;) {
+			stack.push(root.branches[--i]);
+		}
+		for (var i = 1, ii = this.frames.length; i < ii; ++i) {
+			this.frames[i].dumped = false;
+		}
+		while (stack.length) {
+			var f = stack[stack.length - 1];
+			if (!f.dumped) // This BRANCH frame has not been dumped.
+			{
+				lines.push('BRANCH' + f.rotorX.serial.substring(1, 5) + f.rotorY.serial.substring(1, 5));
+				for (var i = f.begin; i < f.end; ++i) {
+					var a = this.atoms[i];
+					var c = vec3.add(a, center, []);
+					lines.push('ATOM  ' + a.serial + ' ' + a.name + pad(14, '') + pad(8, c[0].toFixed(3)) + pad(8, c[1].toFixed(3)) + pad(8, c[2].toFixed(3)) + pad(16, '') + pad(6, a.fe.toFixed(3)) + ' ' + a.ad);
+				}
+				f.dumped = true;
+				for (var i = f.branches.length; i > 0;) {
+					stack.push(f.branches[--i]);
+				}
+			}
+			else // This BRANCH frame has been dumped.
+			{
+				lines.push('ENDBRANCH' + f.rotorX.serial.substring(1, 5) + f.rotorY.serial.substring(1, 5));
+				stack.pop();
+			}
+		}
+		lines.push('TORSDOF ' + (this.frames.length - 1));
+		return lines.join('\n');
+	}
 
 	Mesh = function() {
 	};
@@ -482,170 +689,12 @@ var iview = (function() {
 		this.rotationMatrix = mat4.identity();
 	}
 	iview.prototype.parseReceptor = function(content) {
-		this.receptor = new Molecule(R);
-		var residues = [];
-		for (var residue = 'XXXX', lines = content.split('\n'), kk = lines.length, k = 0; k < kk; ++k) {
-			var line = lines[k];
-			if (line.match('^ATOM|HETATM')) {
-				if (!((line[25] === residue[3]) && (line[24] === residue[2]) && (line[23] === residue[1]) && (line[22] === residue[0]))) {
-					residue = line.substring(22, 26);
-					residues.push(this.receptor.atoms.length);
-				}
-				var a = new Atom(line[21] + ':' + line.substring(17, 20) + $.trim(line.substring(22, 26)) + ':' + $.trim(line.substring(12, 16)), [parseFloat(line.substring(30, 38)), parseFloat(line.substring(38, 46)), parseFloat(line.substring(46, 54))], line.substring(77, 79));
-				if (a.ad === 'H ') {
-					if (this.options.hideNonPolarHydrogens) continue;
-				} else if (a.ad === 'HD') {
-					for (var i = this.receptor.atoms.length, residue_start = residues[residues.length - 1]; i > residue_start;) {
-						var b = this.receptor.atoms[--i];
-						if (b.isNeighbor(a)) {
-							b.donorize();
-							break;
-						}
-					}
-				} else if (a.ad === 'C ' || a.ad === 'A ') {
-					for (var i = this.receptor.atoms.length, residue_start = residues[residues.length - 1]; i > residue_start;) {
-						var b = this.receptor.atoms[--i];
-						if ((!(b.ad === 'C ' || b.ad === 'A ')) && b.isNeighbor(a))
-						{
-							a.xs = 'C_P';
-							break;
-						}
-					}
-				} else {
-					for (var i = this.receptor.atoms.length, residue_start = residues[residues.length - 1]; i > residue_start;) {
-						var b = this.receptor.atoms[--i];
-						if ((b.ad === 'C ' || b.ad === 'A ') && b.isNeighbor(a))
-						{
-							b.xs = 'C_P';
-						}
-					}
-				}
-				this.receptor.atoms.push(a);
-			} else if (line.match('^TER')) {
-				residue = 'XXXX';
-			}
-		}
-		residues.push(this.receptor.atoms.length);
-		for (var r = 0, rr = residues.length - 1; r < rr; ++r) {
-			var hidden = true;
-			for (var i = residues[r], ii = residues[r + 1]; i < ii; ++i) {
-				var a = this.receptor.atoms[i];
-				if ((this.corner1[0] <= a[0]) && (a[0] < this.corner2[0]) && (this.corner1[1] <= a[1]) && (a[1] < this.corner2[1]) && (this.corner1[2] <= a[2]) && (a[2] < this.corner2[2])) {
-					hidden = false;
-					break;
-				}
-			}
-			for (var i = residues[r], ii = residues[r + 1]; i < ii; ++i) {
-				var a1 = this.receptor.atoms[i];
-				if (hidden) {
-					a1.hidden = true;
-					continue;
-				}
-				for (var j = i + 1; j < ii; ++j) {
-					var a2 = this.receptor.atoms[j];
-					if (a2.isNeighbor(a1)) {
-						this.receptor.bonds.push(new Bond(a1, a2));
-					}
-				}
-			}
-		}
-		for (var i = 0, ii = this.receptor.atoms.length; i < ii; ++i) {
-			var a = this.receptor.atoms[i];
-			vec3.subtract(a, this.center);
-			if (a.hidden) continue;
-			if (a.isHBD()) this.receptor.hbds.push(a);
-			else if (a.isHBA()) this.receptor.hbas.push(a);
-		}
-	};
+		this.receptor = new Receptor(content, this.options.hideNonPolarHydrogens, this.corner1, this.corner2);
+		this.receptor.centerize(this.center);
+	}
 	iview.prototype.parseLigand = function(content) {
-		this.ligand = new Molecule(L);
-		var current = {
-			begin: 0,
-			branches: []
-		};
-		this.ligand.frames = [current];
-		this.ligand.nHeavyAtoms = 0;
-		var serials = [];
-		for (var lines = content.split('\n'), kk = lines.length, k = 0; k < kk; ++k) {
-			var line = lines[k];
-			if (line.match('^ATOM|HETATM')) {
-				var a = new Atom($.trim(line.substring(12, 16)), [parseFloat(line.substring(30, 38)), parseFloat(line.substring(38, 46)), parseFloat(line.substring(46, 54))], line.substring(77, 79));
-				a.serial = line.substring(6, 11);
-				a.name = line.substring(12, 16);
-				if (a.ad === 'H ') {
-					if (this.options.hideNonPolarHydrogens) {
-						a.hidden = true;
-					}
-					a.fe = 0;
-				} else if (a.ad === 'HD') {
-					for (var i = this.ligand.atoms.length, frame_begin = this.ligand.frames[this.ligand.frames.length - 1]; i > frame_begin;) {
-						var b = this.ligand.atoms[--i];
-						if (b.isNeighbor(a)) {
-							b.donorize();
-							break;
-						}
-					}
-					a.fe = 0;
-				} else if (a.ad === 'C ' || a.ad === 'A ') {
-					for (var i = this.ligand.atoms.length, frame_begin = this.ligand.frames[this.ligand.frames.length - 1]; i > frame_begin;)
-					{
-						var b = this.ligand.atoms[--i];
-						if ((!(b.ad === 'C ' || b.ad === 'A ')) && b.isNeighbor(a))
-						{
-							a.xs = 'C_P';
-							break;
-						}
-					}
-					serials[parseInt(a.serial)] = a;
-					++this.ligand.nHeavyAtoms;
-				} else {
-					for (var i = this.ligand.atoms.length, frame_begin = this.ligand.frames[this.ligand.frames.length - 1]; i > frame_begin;) {
-						var b = this.ligand.atoms[--i];
-						if ((b.ad === 'C ' || b.ad === 'A ') && b.isNeighbor(a))
-						{
-							b.xs = 'C_P';
-						}
-					}
-					serials[parseInt(a.serial)] = a;
-					++this.ligand.nHeavyAtoms;
-				}
-				this.ligand.atoms.push(a);
-			} else if (line.match('^BRANCH')) {
-				this.ligand.frames[this.ligand.frames.length - 1].end = this.ligand.atoms.length;
-				this.ligand.frames.push({
-					parent: current,
-					begin: this.ligand.atoms.length,
-					rotorX: serials[parseInt(line.substring(6, 10))],
-					branches: []
-				});
-				current.branches.push(this.ligand.frames[this.ligand.frames.length - 1]);
-				current = this.ligand.frames[this.ligand.frames.length - 1];
-			} else if (line.match('^ENDBRANCH')) {
-				current.rotorY = serials[(parseInt(line.substring(13, 17)))];
-				this.ligand.bonds.push(new Bond(current.rotorX, current.rotorY));
-				if (!(current.rotorY.ad === 'C ' || current.rotorY.ad === 'A ') && (current.rotorX.ad === 'C ' || current.rotorX.ad === 'A ')) current.rotorX.xs = 'C_P';
-				if (!(current.rotorX.ad === 'C ' || current.rotorX.ad === 'A ') && (current.rotorY.ad === 'C ' || current.rotorY.ad === 'A ')) current.rotorY.xs = 'C_P';
-				current = current.parent;
-			} else if (line.match('^TORSDOF')) break;
-		}
-		this.ligand.frames[this.ligand.frames.length - 1].end = this.ligand.atoms.length;
-		for (var f = 0, ff = this.ligand.frames.length - 1; f < ff; ++f) {
-			for (var i = this.ligand.frames[f].begin, ii = this.ligand.frames[f].end; i < ii; ++i) {
-				var a1 = this.ligand.atoms[i];
-				for (var j = i + 1; j < ii; ++j) {
-					var a2 = this.ligand.atoms[j];
-					if (a2.isNeighbor(a1)) {
-						this.ligand.bonds.push(new Bond(a1, a2));
-					}
-				}
-			}
-		}
-		for (var i = 0, ii = this.ligand.atoms.length; i < ii; ++i) {
-			var a = this.ligand.atoms[i];
-			vec3.subtract(a, this.center);
-			if (a.isHBD()) this.ligand.hbds.push(a);
-			else if (a.isHBA()) this.ligand.hbas.push(a);
-		}
+		this.ligand = new Ligand(content, this.options.hideNonPolarHydrogens);
+		this.ligand.centerize(this.center);
 		this.refresh();
 	}
 	iview.prototype.refresh = function() {
@@ -703,58 +752,21 @@ var iview = (function() {
 		}
 	};
 	iview.prototype.dock = function() {
+		var n = 6 + this.ligand.frames.length - 1;
+		var h = new Array(n * (n+1) >> 1);
+		for (var i = 0, ii = h.length; i < ii; ++i) {
+			h[i] = 0;
+		}
+		for (var i = 0; i < n; ++i) {
+			h[i * (i + 3) >> 1] = 1;
+		}
+		while (true) {
+			
+			break;
+		}
 	}
 	iview.prototype.save = function() {
-		function pad(len, val) {
-			var str = val.toString();
-			return Array(len + 1 - str.length).join(' ') + str;
-		}
-		var lines = [
-			'REMARK       NORMALIZED FREE ENERGY PREDICTED BY IDOCK:' + pad(8, "-7.149") + " KCAL/MOL",
-			'REMARK            TOTAL FREE ENERGY PREDICTED BY IDOCK:' + " KCAL/MOL",
-			'REMARK     INTER-LIGAND FREE ENERGY PREDICTED BY IDOCK:' + pad(8, this.ligand.fe.toFixed(3)) + " KCAL/MOL",
-			'REMARK     INTRA-LIGAND FREE ENERGY PREDICTED BY IDOCK:' + " KCAL/MOL",
-			'REMARK            LIGAND EFFICIENCY PREDICTED BY IDOCK:' + pad(8, this.ligand.le.toFixed(3)) + " KCAL/MOL",
-			'REMARK               HYDROGEN BONDS PREDICTED BY IDOCK:' + pad(4, this.hbonds.length),
-			'ROOT'
-		];
-		for (var i = this.ligand.frames[0].begin; i < this.ligand.frames[0].end; ++i) {
-			var a = this.ligand.atoms[i];
-			var c = vec3.add(a, this.center, []);
-			lines.push('ATOM  ' + a.serial + ' ' + a.name + pad(14, '') + pad(8, c[0].toFixed(3)) + pad(8, c[1].toFixed(3)) + pad(8, c[2].toFixed(3)) + pad(16, '') + pad(6, a.fe.toFixed(3)) + ' ' + a.ad);
-		}
-		lines.push('ENDROOT');
-		var stack = [];
-		var root = this.ligand.frames[0];
-		for (var i = root.branches.length; i > 0;) {
-			stack.push(root.branches[--i]);
-		}
-		for (var i = 1, ii = this.ligand.frames.length; i < ii; ++i) {
-			this.ligand.frames[i].dumped = false;
-		}
-		while (stack.length) {
-			var f = stack[stack.length - 1];
-			if (!f.dumped) // This BRANCH frame has not been dumped.
-			{
-				lines.push('BRANCH' + f.rotorX.serial.substring(1, 5) + f.rotorY.serial.substring(1, 5));
-				for (var i = f.begin; i < f.end; ++i) {
-					var a = this.ligand.atoms[i];
-					var c = vec3.add(a, this.center, []);
-					lines.push('ATOM  ' + a.serial + ' ' + a.name + pad(14, '') + pad(8, c[0].toFixed(3)) + pad(8, c[1].toFixed(3)) + pad(8, c[2].toFixed(3)) + pad(16, '') + pad(6, a.fe.toFixed(3)) + ' ' + a.ad);
-				}
-				f.dumped = true;
-				for (var i = f.branches.length; i > 0;) {
-					stack.push(f.branches[--i]);
-				}
-			}
-			else // This BRANCH frame has been dumped.
-			{
-				lines.push('ENDBRANCH' + f.rotorX.serial.substring(1, 5) + f.rotorY.serial.substring(1, 5));
-				stack.pop();
-			}
-		}
-		lines.push('TORSDOF ' + (this.ligand.frames.length - 1));
-		return lines.join('\n');
+		return this.ligand.save(this.center);
 	}
 	iview.prototype.export = function() {
 		window.open(this.canvas.get(0).toDataURL('image/png'));
