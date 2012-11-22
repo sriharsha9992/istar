@@ -828,6 +828,9 @@ var iview = (function() {
 		}
 	};
 	iview.prototype.dock = function() {
+		function index(i, j) {
+			return i + j * (j + 1) >> 1;
+		}
 		var n = 6 + this.ligand.frames.length - 1;
 		var h = new Array(n * (n+1) >> 1);
 		for (var i = 0, ii = h.length; i < ii; ++i) {
@@ -837,8 +840,52 @@ var iview = (function() {
 			h[i * (i + 3) >> 1] = 1;
 		}
 		while (true) {
-			
-			break;
+			for (var i = 0; i < n; ++i) {
+				var sum = 0;
+				for (var j = 0; j < n; ++j) {
+					sum += h[i < j ? index(i, j) : index(j, i)] * g1[j];
+				}
+				p[i] = -sum;
+			}
+			var pg1 = 0;
+			for (var i = 0; i < n; ++i) {
+				pg1 += p[i] * g1[i];
+			}
+			var t, alpha = 1;
+			for (t = 0; t < 10; ++t) {
+				c2.position = vec3.add(c1.position, vec3.scale(p, alpha, []), []);
+				c2.orientation = qtn4(vec3.scale([p[3], p[4], p[5]], alpha, [])) * c1.orientation;
+				for (var i = 0; i < n - 6; ++i) {
+					c2.torsions[i] = c1.torsions[i] + alpha * p[6 + i];
+				}
+				if (lig.evaluate(c2, sf, b, grid_maps, e1 + 0.0001 * alpha * pg1, e2, f2, g2)) break;
+				alpha *= 0.5;
+			}
+			if (t === 10) break;
+			for (var i = 0; i < n; ++i) {
+				y[i] = g2[i] - g1[i];
+			}
+			for (var i = 0; i < n; ++i) {
+				var sum = 0;
+				for (var j = 0; j < n; ++j) {
+					sum += h[i < j ? index(i, j) : index(j, i)] * y[j];
+				}
+				mhy[i] = -sum;
+			}
+			var yhy = 0;
+			for (var i = 0; i < n; ++i) {
+				yhy -= y[i] * mhy[i];
+			}
+			var yp = 0;
+			for (var i = 0; i < n; ++i) {
+				yp += y[i] * p[i];
+			}
+			var ryp = 1 / yp;
+			var pco = ryp * (ryp * yhy + alpha);
+			for (var i = 0; i < n; ++i)
+			for (var j = i; j < n; ++j) {
+				h[index(i, j)] += ryp * (mhy[i] * p[j] + mhy[j] * p[i]) + pco * p[i] * p[j];
+			}
 		}
 	}
 	iview.prototype.save = function() {
