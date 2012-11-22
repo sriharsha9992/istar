@@ -11,7 +11,9 @@ $(function() {
 			}
 			$('#hbonds').html(hblis.join(''));
 			$('#eNormalized').html(iv.ligand.eNormalized.toFixed(3));
+			$('#eTotal').html(iv.ligand.eTotal.toFixed(3));
 			$('#eInter').html(iv.ligand.eInter.toFixed(3));
+			$('#eIntra').html(iv.ligand.eIntra.toFixed(3));
 			$('#efficiency').html(iv.ligand.efficiency.toFixed(3));
 		}
 	});

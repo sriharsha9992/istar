@@ -446,6 +446,56 @@ var iview = (function() {
 				}
 			}
 		}
+		this.interactingPairs = [];
+		var nBonds = this.bonds.length, neighbors = [];
+		for (var k1 = 0; k1 < this.frames.length; ++k1) {
+			var f1 = this.frames[k1];
+			for (var i = f1.begin; i < f1.end; ++i) {
+				var a1 = this.atoms[i];
+				if (a1.isHydrogen()) continue;
+				neighbors.push(a1);
+				for (var bi1 = 0; bi1 < nBonds; ++bi1) {
+					var b1 = this.bonds[bi1];
+					if (!(b1.a1 === a1 || b1.a2 === a1)) continue;
+					var n1 = b1.a1 === a1 ? b1.a2 : b1.a1;
+					if (n1.isHydrogen()) continue;
+					if ($.inArray(n1, neighbors) === -1) {
+						neighbors.push(n1);
+					}
+					for (var bi2 = 0; bi2 < nBonds; ++bi2) {
+						var b2 = this.bonds[bi2];
+						if (!(b2.a1 === n1 || b2.a2 === n1)) continue;
+						var n2 = b2.a1 === n1 ? b2.a2 : b2.a1;
+						if (n2.isHydrogen()) continue;
+						if ($.inArray(n2, neighbors) === -1) {
+							neighbors.push(n2);
+						}
+						for (var bi3 = 0; bi3 < nBonds; ++bi3) {
+							var b3 = this.bonds[bi3];
+							if (!(b3.a1 === n2 || b3.a2 === n2)) continue;
+							var n3 = b3.a1 === n2 ? b3.a2 : b3.a1;
+							if (n3.isHydrogen()) continue;
+							if ($.inArray(n3, neighbors) === -1) {
+								neighbors.push(n3);
+							}
+						}
+					}
+				}
+				for (var k2 = k1 + 1; k2 < this.frames.length; ++k2) {
+					var f2 = this.frames[k2];
+					for (var j = f2.begin; j < f2.end; ++j) {
+						var a2 = this.atoms[j];
+						if (a2.isHydrogen()) continue;
+						if (((f1 === f2.parent) && ((a2 === f2.rotorY) || (a1 === f2.rotorX))) || ($.inArray(a2, neighbors) >= 0)) continue;
+						this.interactingPairs.push({
+							a1: a1,
+							a2: a2
+						});
+					}
+				}				
+				neighbors.length = 0;
+			}
+		}
 	};
 	Ligand.prototype = new Molecule();
 	Ligand.prototype.save = function(center) {
@@ -752,6 +802,12 @@ var iview = (function() {
 		}
 		this.ligand.eNormalized = this.ligand.eInter / this.ligand.flexPenalty;
 		this.ligand.efficiency = this.ligand.eInter / this.ligand.nHeavyAtoms;
+		this.ligand.eIntra = 0;
+		for (var i = 0, ii = this.ligand.interactingPairs.length; i < ii; ++i) {
+			var p = this.ligand.interactingPairs[i];
+			this.ligand.eIntra += score(p.a1.xs, p.a2.xs, vec3.dist(p.a1, p.a2));
+		}
+		this.ligand.eTotal = this.ligand.eInter + this.ligand.eIntra;
 		if (this.options.refresh) this.options.refresh();
 	};
 	iview.prototype.repaint = function() {
