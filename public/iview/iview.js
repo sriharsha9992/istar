@@ -828,6 +828,16 @@ var iview = (function() {
 		}
 	};
 	iview.prototype.dock = function() {
+		var coords = new Array[this.ligand.atoms.length];
+		for (var i = 0, ii = coords.length; i < ii; ++i) {
+			coords[i] = vec3.create(this.ligand.atoms[i]);
+		}
+		for (var k = 0; k < this.ligand.frames.length; ++k) {
+			var f = this.ligand.frames[k];
+			for (var i = f.begin; i < f.end; ++i) {
+				vec3.subtract(this.ligand.coords[i], f.rotorY);
+			}
+		}
 		function index(i, j) {
 			return i + j * (j + 1) >> 1;
 		}
