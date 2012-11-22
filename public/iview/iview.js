@@ -129,7 +129,7 @@ var iview = (function() {
 		}
 		this.toPDBQT = function(center) {
 			var c = vec3.add(this, center, []);
-			return 'ATOM  ' + this.serial + ' ' + this.name + pad(14, '') + pad(8, c[0].toFixed(3)) + pad(8, c[1].toFixed(3)) + pad(8, c[2].toFixed(3)) + pad(16, '') + pad(6, this.fe.toFixed(3)) + ' ' + this.ad;
+			return 'ATOM  ' + this.serial + ' ' + this.name + pad(14, '') + pad(8, c[0].toFixed(3)) + pad(8, c[1].toFixed(3)) + pad(8, c[2].toFixed(3)) + pad(16, '') + pad(6, this.e.toFixed(3)) + ' ' + this.ad;
 		}
 		this.render = function(gl, COLOR) {
 			var e = COLOR[this.ad];
@@ -362,8 +362,7 @@ var iview = (function() {
 			branches: []
 		};
 		this.frames = [current];
-		this.nHeavyAtoms = 0;
-		this.mwt = 0;
+		this.nHeavyAtoms = this.nActiveTors = this.mwt = 0;
 		var serials = [];
 		for (var lines = content.split('\n'), kk = lines.length, k = 0; k < kk; ++k) {
 			var line = lines[k];
@@ -376,7 +375,7 @@ var iview = (function() {
 					if (hideNonPolarHydrogens) {
 						a.hidden = true;
 					}
-					a.fe = 0;
+					a.e = 0;
 				} else if (a.ad === 'HD') {
 					for (var i = this.atoms.length, frame_begin = this.frames[this.frames.length - 1]; i > frame_begin;) {
 						var b = this.atoms[--i];
@@ -385,7 +384,7 @@ var iview = (function() {
 							break;
 						}
 					}
-					a.fe = 0;
+					a.e = 0;
 				} else if (a.ad === 'C ' || a.ad === 'A ') {
 					for (var i = this.atoms.length, frame_begin = this.frames[this.frames.length - 1]; i > frame_begin;)
 					{
@@ -423,9 +422,18 @@ var iview = (function() {
 				this.bonds.push(new Bond(current.rotorX, current.rotorY));
 				if (!(current.rotorY.ad === 'C ' || current.rotorY.ad === 'A ') && (current.rotorX.ad === 'C ' || current.rotorX.ad === 'A ')) current.rotorX.xs = 'C_P';
 				if (!(current.rotorX.ad === 'C ' || current.rotorX.ad === 'A ') && (current.rotorY.ad === 'C ' || current.rotorY.ad === 'A ')) current.rotorY.xs = 'C_P';
+				if (current === this.frames[this.frames.length - 1]) {
+					var nHeavyAtoms = 0;
+					for (var i = this.atoms.length; i > current.begin;) {
+						if (!this.atoms[--i].isHydrogen()) ++nHeavyAtoms;
+					}
+					current.inactive = nHeavyAtoms === 1;
+				}
+				if (!current.inactive) ++this.nActiveTors;
 				current = current.parent;
 			} else if (line.match('^TORSDOF')) break;
 		}
+		this.flexPenalty = 1 + 0.05846 * (this.nActiveTors + 0.5 * (this.frames.length - 1 - this.nActiveTors));
 		this.frames[this.frames.length - 1].end = this.atoms.length;
 		for (var f = 0, ff = this.frames.length - 1; f < ff; ++f) {
 			for (var i = this.frames[f].begin, ii = this.frames[f].end; i < ii; ++i) {
@@ -728,21 +736,22 @@ var iview = (function() {
 				}
 			}
 		}
-		this.ligand.fe = 0;
+		this.ligand.eInter = 0;
 		for (var i = 0, ii = this.ligand.atoms.length; i < ii; ++i) {
 			var l = this.ligand.atoms[i];
 			if (l.isHydrogen()) continue;
-			l.fe = 0;
+			l.e = 0;
 			for (var j = 0, jj = this.receptor.atoms.length; j < jj; ++j) {
 				var r = this.receptor.atoms[j];
 				if (r.isHydrogen()) continue;
 				var rr = vec3.dist(l, r);
 				if (rr > 8) continue;
-				l.fe += score(l.xs, r.xs, rr);
+				l.e += score(l.xs, r.xs, rr);
 			}
-			this.ligand.fe += l.fe;
+			this.ligand.eInter += l.e;
 		}
-		this.ligand.le = this.ligand.fe / this.ligand.nHeavyAtoms;
+		this.ligand.eNormalized = this.ligand.eInter / this.ligand.flexPenalty;
+		this.ligand.efficiency = this.ligand.eInter / this.ligand.nHeavyAtoms;
 		if (this.options.refresh) this.options.refresh();
 	};
 	iview.prototype.repaint = function() {

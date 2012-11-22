@@ -10,8 +10,9 @@ $(function() {
 				hblis.push('<li>' + hb.a1.id + ' - ' + hb.a2.id + '</li>');
 			}
 			$('#hbonds').html(hblis.join(''));
-			$('#eInter').html(iv.ligand.fe.toFixed(3));
-			$('#efficiency').html(iv.ligand.le.toFixed(3));
+			$('#eNormalized').html(iv.ligand.eNormalized.toFixed(3));
+			$('#eInter').html(iv.ligand.eInter.toFixed(3));
+			$('#efficiency').html(iv.ligand.efficiency.toFixed(3));
 		}
 	});
 	if (iv.disabled) {
@@ -29,6 +30,7 @@ $(function() {
 			$('#nrb').html(iv.ligand.frames.length - 1);
 			$('#hbds').html(iv.ligand.hbds.length);
 			$('#hbas').html(iv.ligand.hbas.length);
+			$('#flexPenalty').html(iv.ligand.flexPenalty.toFixed(3));
 			iv.repaint();
 			$('#export').click(function(e) {
 				e.preventDefault();
