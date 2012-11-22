@@ -95,6 +95,10 @@ var iview = (function() {
 	VDW[  'I_H' ] = 2.2;
 	VDW['Met_D' ] = 1.2;
 
+	function pad(len, str) {
+		return Array(len + 1 - str.length).join(' ') + str;
+	}
+
 	Atom = function(id, coord, ad) {
 		this.id = id;
 		vec3.set(coord, this);
@@ -123,8 +127,12 @@ var iview = (function() {
 			var c = COVALENT[this.ad] + COVALENT[a.ad];
 			return (vec3.squaredLength(vec3.subtract(this, a, [])) < c * c);
 		}
-		this.render = function(gl, C) {
-			var e = C[this.ad];
+		this.toPDBQT = function(center) {
+			var c = vec3.add(this, center, []);
+			return 'ATOM  ' + this.serial + ' ' + this.name + pad(14, '') + pad(8, c[0].toFixed(3)) + pad(8, c[1].toFixed(3)) + pad(8, c[2].toFixed(3)) + pad(16, '') + pad(6, this.fe.toFixed(3)) + ' ' + this.ad;
+		}
+		this.render = function(gl, COLOR) {
+			var e = COLOR[this.ad];
 			gl.uniform3f(gl.dUL, e.r, e.g, e.b);
 			gl.setModelViewMatrix(mat4.scale(mat4.translate(gl.modelViewMatrix, this, []), [0.3, 0.3, 0.3], []));
 			gl.drawElements(gl.TRIANGLES, gl.sphere.vertexIndexBuffer.size, gl.UNSIGNED_SHORT, 0);
@@ -134,7 +142,7 @@ var iview = (function() {
 	Bond = function(a1, a2) {
 		this.a1 = a1;
 		this.a2 = a2;
-		this.render = function(gl, C) {
+		this.render = function(gl, COLOR) {
 			var ang = 0;
 			var axis = [0, 0, 1];
 			if (this.a1[0] == this.a2[0] && this.a1[2] == this.a2[2]) {
@@ -149,12 +157,12 @@ var iview = (function() {
 			}
 			var scaleVector = [0.3, vec3.dist(this.a1, this.a2) * 0.5, 0.3];
 			// Draw one half.
-			var e1 = C[this.a1.ad];
+			var e1 = COLOR[this.a1.ad];
 			gl.uniform3f(gl.dUL, e1.r, e1.g, e1.b);
 			gl.setModelViewMatrix(mat4.scale(mat4.rotate(mat4.translate(gl.modelViewMatrix, this.a1, []), ang, axis, []), scaleVector, []));
 			gl.drawArrays(gl.TRIANGLE_STRIP, 0, gl.cylinder.vertexPositionBuffer.size);
 			// Draw the other half.
-			var e2 = C[this.a2.ad];
+			var e2 = COLOR[this.a2.ad];
 			gl.uniform3f(gl.dUL, e2.r, e2.g, e2.b);
 			gl.setModelViewMatrix(mat4.scale(mat4.rotate(mat4.translate(gl.modelViewMatrix, this.a2, []), ang + Math.PI, axis, []), scaleVector, []));
 			gl.drawArrays(gl.TRIANGLE_STRIP, 0, gl.cylinder.vertexPositionBuffer.size);
@@ -192,14 +200,14 @@ var iview = (function() {
 		for (var i = 0, ii = this.atoms.length; i < ii; ++i) {
 			var a = this.atoms[i];
 			if (a.hidden) continue;
-			a.render(gl, this.C);
+			a.render(gl, this.COLOR);
 		}
 	};
 	Molecule.prototype.renderBonds = function(gl) {
 		for (var i = 0, ii = this.bonds.length; i < ii; ++i) {
 			var b = this.bonds[i];
 			if (b.a1.hidden || b.a2.hidden) continue;
-			b.render(gl, this.C);
+			b.render(gl, this.COLOR);
 		}
 	};
 	Molecule.prototype.centerize = function(center) {
@@ -219,6 +227,36 @@ var iview = (function() {
 	}
 
 	Receptor = function(content, hideNonPolarHydrogens, corner1, corner2) {
+		this.COLOR = {};
+		this.COLOR['H '] = new Color('#FFFFFF');
+		this.COLOR['HD'] = new Color('#FFFFFF');
+		this.COLOR['C '] = new Color('#909090');
+		this.COLOR['A '] = new Color('#909090');
+		this.COLOR['N '] = new Color('#3050F8');
+		this.COLOR['NA'] = new Color('#3050F8');
+		this.COLOR['OA'] = new Color('#FF0D0D');
+		this.COLOR['S '] = new Color('#FFFF30');
+		this.COLOR['SA'] = new Color('#FFFF30');
+		this.COLOR['Se'] = new Color('#FFA100');
+		this.COLOR['P '] = new Color('#FF8000');
+		this.COLOR['F '] = new Color('#90E050');
+		this.COLOR['Cl'] = new Color('#1FF01F');
+		this.COLOR['Br'] = new Color('#A62929');
+		this.COLOR['I '] = new Color('#940094');
+		this.COLOR['Zn'] = new Color('#7D80B0');
+		this.COLOR['Fe'] = new Color('#E06633');
+		this.COLOR['Mg'] = new Color('#8AFF00');
+		this.COLOR['Ca'] = new Color('#3DFF00');
+		this.COLOR['Mn'] = new Color('#9C7AC7');
+		this.COLOR['Cu'] = new Color('#C88033');
+		this.COLOR['Na'] = new Color('#AB5CF2');
+		this.COLOR['K '] = new Color('#8F40D4');
+		this.COLOR['Hg'] = new Color('#B8B8D0');
+		this.COLOR['Ni'] = new Color('#50D050');
+		this.COLOR['Co'] = new Color('#F090A0');
+		this.COLOR['Cd'] = new Color('#FFD98F');
+		this.COLOR['As'] = new Color('#BD80E3');
+		this.COLOR['Sr'] = new Color('#00FF00');
 		var residues = [];
 		for (var residue = 'XXXX', lines = content.split('\n'), kk = lines.length, k = 0; k < kk; ++k) {
 			var line = lines[k];
@@ -283,46 +321,49 @@ var iview = (function() {
 				}
 			}
 		}
-		this.C = {};
-		this.C['H '] = new Color('#FFFFFF');
-		this.C['HD'] = new Color('#FFFFFF');
-		this.C['C '] = new Color('#909090');
-		this.C['A '] = new Color('#909090');
-		this.C['N '] = new Color('#3050F8');
-		this.C['NA'] = new Color('#3050F8');
-		this.C['OA'] = new Color('#FF0D0D');
-		this.C['S '] = new Color('#FFFF30');
-		this.C['SA'] = new Color('#FFFF30');
-		this.C['Se'] = new Color('#FFA100');
-		this.C['P '] = new Color('#FF8000');
-		this.C['F '] = new Color('#90E050');
-		this.C['Cl'] = new Color('#1FF01F');
-		this.C['Br'] = new Color('#A62929');
-		this.C['I '] = new Color('#940094');
-		this.C['Zn'] = new Color('#7D80B0');
-		this.C['Fe'] = new Color('#E06633');
-		this.C['Mg'] = new Color('#8AFF00');
-		this.C['Ca'] = new Color('#3DFF00');
-		this.C['Mn'] = new Color('#9C7AC7');
-		this.C['Cu'] = new Color('#C88033');
-		this.C['Na'] = new Color('#AB5CF2');
-		this.C['K '] = new Color('#8F40D4');
-		this.C['Hg'] = new Color('#B8B8D0');
-		this.C['Ni'] = new Color('#50D050');
-		this.C['Co'] = new Color('#F090A0');
-		this.C['Cd'] = new Color('#FFD98F');
-		this.C['As'] = new Color('#BD80E3');
-		this.C['Sr'] = new Color('#00FF00');
 	};
 	Receptor.prototype = new Molecule();
 
 	Ligand = function(content, hideNonPolarHydrogens) {
+		this.COLOR = {};
+		this.COLOR['H '] = new Color('#E6E6E6');
+		this.COLOR['HD'] = new Color('#E6E6E6');
+		this.COLOR['C '] = new Color('#33FF33');
+		this.COLOR['A '] = new Color('#33FF33');
+		this.COLOR['N '] = new Color('#3333FF');
+		this.COLOR['NA'] = new Color('#3333FF');
+		this.COLOR['OA'] = new Color('#FF4D4D');
+		this.COLOR['S '] = new Color('#E6C640');
+		this.COLOR['SA'] = new Color('#E6C640');
+		this.COLOR['Se'] = new Color('#FFA100');
+		this.COLOR['P '] = new Color('#FF8000');
+		this.COLOR['F '] = new Color('#B3FFFF');
+		this.COLOR['Cl'] = new Color('#1FF01F');
+		this.COLOR['Br'] = new Color('#A62929');
+		this.COLOR['I '] = new Color('#940094');
+		this.WEIGHT = {};
+		this.WEIGHT['HD'] =   1.008;
+		this.WEIGHT['H '] =   1.008;
+		this.WEIGHT['C '] =  12.01;
+		this.WEIGHT['A '] =  12.01;
+		this.WEIGHT['N '] =  14.01;
+		this.WEIGHT['NA'] =  14.01;
+		this.WEIGHT['OA'] =  16.00;
+		this.WEIGHT['SA'] =  32.07;
+		this.WEIGHT['S '] =  32.07;
+		this.WEIGHT['Se'] =  78.96;
+		this.WEIGHT['P '] =  30.97;
+		this.WEIGHT['F '] =  19.00;
+		this.WEIGHT['Cl'] =  35.45;
+		this.WEIGHT['Br'] =  79.90;
+		this.WEIGHT['I '] = 126.90;
 		var current = {
 			begin: 0,
 			branches: []
 		};
 		this.frames = [current];
 		this.nHeavyAtoms = 0;
+		this.mwt = 0;
 		var serials = [];
 		for (var lines = content.split('\n'), kk = lines.length, k = 0; k < kk; ++k) {
 			var line = lines[k];
@@ -330,6 +371,7 @@ var iview = (function() {
 				var a = new Atom($.trim(line.substring(12, 16)), [parseFloat(line.substring(30, 38)), parseFloat(line.substring(38, 46)), parseFloat(line.substring(46, 54))], line.substring(77, 79));
 				a.serial = line.substring(6, 11);
 				a.name = line.substring(12, 16);
+				this.mwt += this.WEIGHT[a.ad];
 				if (a.ad === 'H ') {
 					if (hideNonPolarHydrogens) {
 						a.hidden = true;
@@ -396,44 +438,18 @@ var iview = (function() {
 				}
 			}
 		}
-		this.C = {};
-		this.C['H '] = new Color('#E6E6E6');
-		this.C['HD'] = new Color('#E6E6E6');
-		this.C['C '] = new Color('#33FF33');
-		this.C['A '] = new Color('#33FF33');
-		this.C['N '] = new Color('#3333FF');
-		this.C['NA'] = new Color('#3333FF');
-		this.C['OA'] = new Color('#FF4D4D');
-		this.C['S '] = new Color('#E6C640');
-		this.C['SA'] = new Color('#E6C640');
-		this.C['Se'] = new Color('#FFA100');
-		this.C['P '] = new Color('#FF8000');
-		this.C['F '] = new Color('#B3FFFF');
-		this.C['Cl'] = new Color('#1FF01F');
-		this.C['Br'] = new Color('#A62929');
-		this.C['I '] = new Color('#940094');
 	};
 	Ligand.prototype = new Molecule();
 	Ligand.prototype.save = function(center) {
-		function pad(len, str) {
-			return Array(len + 1 - str.length).join(' ') + str;
-		}
 		var lines = [
-			'REMARK       NORMALIZED FREE ENERGY PREDICTED BY IDOCK:' + pad(8, "-7.149") + " KCAL/MOL",
-			'REMARK            TOTAL FREE ENERGY PREDICTED BY IDOCK:' + " KCAL/MOL",
-			'REMARK     INTER-LIGAND FREE ENERGY PREDICTED BY IDOCK:' + pad(8, this.fe.toFixed(3)) + " KCAL/MOL",
-			'REMARK     INTRA-LIGAND FREE ENERGY PREDICTED BY IDOCK:' + " KCAL/MOL",
-			'REMARK            LIGAND EFFICIENCY PREDICTED BY IDOCK:' + pad(8, this.le.toFixed(3)) + " KCAL/MOL",
 			'ROOT'
 		];
-		for (var i = this.frames[0].begin; i < this.frames[0].end; ++i) {
-			var a = this.atoms[i];
-			var c = vec3.add(a, center, []);
-			lines.push('ATOM  ' + a.serial + ' ' + a.name + pad(14, '') + pad(8, c[0].toFixed(3)) + pad(8, c[1].toFixed(3)) + pad(8, c[2].toFixed(3)) + pad(16, '') + pad(6, a.fe.toFixed(3)) + ' ' + a.ad);
+		var root = this.frames[0];
+		for (var i = root.begin; i < root.end; ++i) {
+			lines.push(this.atoms[i].toPDBQT(center));
 		}
 		lines.push('ENDROOT');
 		var stack = [];
-		var root = this.frames[0];
 		for (var i = root.branches.length; i > 0;) {
 			stack.push(root.branches[--i]);
 		}
@@ -442,21 +458,16 @@ var iview = (function() {
 		}
 		while (stack.length) {
 			var f = stack[stack.length - 1];
-			if (!f.dumped) // This BRANCH frame has not been dumped.
-			{
+			if (!f.dumped) {
 				lines.push('BRANCH' + f.rotorX.serial.substring(1, 5) + f.rotorY.serial.substring(1, 5));
 				for (var i = f.begin; i < f.end; ++i) {
-					var a = this.atoms[i];
-					var c = vec3.add(a, center, []);
-					lines.push('ATOM  ' + a.serial + ' ' + a.name + pad(14, '') + pad(8, c[0].toFixed(3)) + pad(8, c[1].toFixed(3)) + pad(8, c[2].toFixed(3)) + pad(16, '') + pad(6, a.fe.toFixed(3)) + ' ' + a.ad);
+					lines.push(this.atoms[i].toPDBQT(center));
 				}
 				f.dumped = true;
 				for (var i = f.branches.length; i > 0;) {
 					stack.push(f.branches[--i]);
 				}
-			}
-			else // This BRANCH frame has been dumped.
-			{
+			} else {
 				lines.push('ENDBRANCH' + f.rotorX.serial.substring(1, 5) + f.rotorY.serial.substring(1, 5));
 				stack.pop();
 			}

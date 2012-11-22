@@ -10,6 +10,8 @@ $(function() {
 				hblis.push('<li>' + hb.a1.id + ' - ' + hb.a2.id + '</li>');
 			}
 			$('#hbonds').html(hblis.join(''));
+			$('#eInter').html(iv.ligand.fe.toFixed(3));
+			$('#efficiency').html(iv.ligand.le.toFixed(3));
 		}
 	});
 	if (iv.disabled) {
@@ -21,6 +23,12 @@ $(function() {
 		iv.parseReceptor(receptor);
 		$.get('ligand.pdbqt', function(ligand) {
 			iv.parseLigand(ligand);
+			$('#atoms').html(iv.ligand.atoms.length);
+			$('#hatoms').html(iv.ligand.nHeavyAtoms);
+			$('#mwt').html(iv.ligand.mwt);
+			$('#nrb').html(iv.ligand.frames.length - 1);
+			$('#hbds').html(iv.ligand.hbds.length);
+			$('#hbas').html(iv.ligand.hbas.length);
 			iv.repaint();
 			$('#export').click(function(e) {
 				e.preventDefault();
