@@ -323,6 +323,17 @@ var iview = (function() {
 		}
 	};
 	Receptor.prototype = new Molecule();
+	Receptor.prototype.score = function(xs, coord) {
+		var e = 0;
+		for (var j = 0, jj = this.atoms.length; j < jj; ++j) {
+			var a = this.atoms[j];
+			if (a.isHydrogen()) continue;
+			var r = vec3.dist(a, coord);
+			if (r > 8) continue;
+			e += score(xs, a.xs, r);
+		}
+		return e;
+	}
 
 	Ligand = function(content, hideNonPolarHydrogens) {
 		this.COLOR = {};
@@ -789,17 +800,10 @@ var iview = (function() {
 		}
 		this.ligand.eInter = 0;
 		for (var i = 0, ii = this.ligand.atoms.length; i < ii; ++i) {
-			var l = this.ligand.atoms[i];
-			if (l.isHydrogen()) continue;
-			l.e = 0;
-			for (var j = 0, jj = this.receptor.atoms.length; j < jj; ++j) {
-				var r = this.receptor.atoms[j];
-				if (r.isHydrogen()) continue;
-				var rr = vec3.dist(l, r);
-				if (rr > 8) continue;
-				l.e += score(l.xs, r.xs, rr);
-			}
-			this.ligand.eInter += l.e;
+			var a = this.ligand.atoms[i];
+			if (a.isHydrogen()) continue;
+			a.e = this.receptor.score(a.xs, a);
+			this.ligand.eInter += a.e;
 		}
 		this.ligand.eNormalized = this.ligand.eInter / this.ligand.flexPenalty;
 		this.ligand.efficiency = this.ligand.eInter / this.ligand.nHeavyAtoms;
@@ -829,22 +833,17 @@ var iview = (function() {
 		}
 	};
 	iview.prototype.dock = function() {
-		var coords = new Array[this.ligand.atoms.length];
-		for (var i = 0, ii = coords.length; i < ii; ++i) {
-			coords[i] = vec3.create(this.ligand.atoms[i]);
-		}
 		for (var k = 0; k < this.ligand.frames.length; ++k) {
 			var f = this.ligand.frames[k];
 			for (var i = f.begin; i < f.end; ++i) {
-				vec3.subtract(this.ligand.coords[i], f.rotorY);
+				var a = this.ligand.atoms[i];
+				a.coord = vec3.subtract(a, f.rotorY, []);
 			}
 		}
-		var y2y = new Array(this.ligand.frames.length);
-		var x2y = new Array(this.ligand.frames.length);
 		for (var k = 1; k < this.ligand.frames.length; ++k) {
 			var f = this.ligand.frames[k];
-			y2y[i] = vec3.subtract(f.rotorY, f.parent.rotorY, []);
-			x2y[i] = vec3.normalize(vec3.subtract(f.rotorY, f.rotorX), []);
+			f.y2y = vec3.subtract(f.rotorY, f.parent.rotorY, []);
+			f.x2y = vec3.normalize(vec3.subtract(f.rotorY, f.rotorX), []);
 		}
 		function index(i, j) {
 			return i + j * (j + 1) >> 1;
@@ -857,7 +856,54 @@ var iview = (function() {
 		for (var i = 0; i < n; ++i) {
 			h[i * (i + 3) >> 1] = 1;
 		}
-		// Calculate g1.
+		var delta = 0.01;
+		var g1 = [];
+		for (var i = 0; i < this.ligand.atoms.length; ++i) {
+			var a = this.ligand.atoms[i];
+			if (a.isHydrogen()) continue;
+			a.d = [(this.receptor.score(a.xs, vec3.createFrom(a[0] + delta, a[1], a[2])) - a.e) / delta, (this.receptor.score(a.xs, vec3.createFrom(a[0], a[1] + delta, a[2])) - a.e) / delta, (this.receptor.score(a.xs, vec3.createFrom(a[0], a[1], a[2] + delta)) - a.e) / delta];
+		}
+		for (var i = 0; i < this.ligand.interactingPairs.length; ++i) {
+			var p = this.ligand.interactingPairs[i];
+			var v = vec3.subtract(p.a2, p.a1);
+			var r = vec3.length(v);
+			if (r > 8) continue;
+			vec3.scale(v, (score(p.a1.xs, p.a2.xs, r + delta) - score(p.a1.xs, p.a2.xs, r)) / delta);
+			vec3.subtract(p.a1.d, v);
+			vec3.add(p.a2.d, v);
+		}
+		for (var k = 0; k < this.ligand.frames.length; ++k) {
+			var f = this.ligand.frames[k];
+			f.force = f.torque = 0;
+		}
+		var g1 = new Array(n);
+		for (var k = this.ligand.frames.length - 1, t = this.ligand.nActiveTors; k > 0; --k) {
+			var f = this.ligand.frames[k];
+			for (var i = f.begin; i < f.end; ++i) {
+				var a = this.ligand.atoms[i];
+				if (a.isHydrogen()) continue;
+				f.force += a.d;
+				f.torque += vec3.cross(vec3.subtract(a, f.rotorY, []), a.d, []);
+			}
+			var p = f.parent;
+			p.force += f.force;
+			p.torque += f.torque + vec3.cross(vec3.subtract(f.rotorY, p.rotorY, []), f.force, []);
+			if (f.inactive) continue;
+			g1[6 + (--t)] = vec3.dot(f.torque, f.axes);
+		}
+		var root = this.ligand.frames[0];
+		for (var f = root, i = f.begin; i < f.end; ++i) {
+			var a = this.ligand.atoms[i];
+			if (a.isHydrogen()) continue;
+			f.force += a.d;
+			f.torque += vec3.cross(vec3.subtract(a, f.rotorY, []), a.e, []);
+		}
+		g1[0] = root.force[0];
+		g1[1] = root.force[1];
+		g1[2] = root.force[2];
+		g1[3] = root.torque[0];
+		g1[4] = root.torque[1];
+		g1[5] = root.torque[2];
 		while (true) {
 			for (var i = 0; i < n; ++i) {
 				var sum = 0;
