@@ -110,14 +110,14 @@ var iview = (function() {
 		this.isHydrogen = function() {
 			return (this.ad === 'H ') || (this.ad === 'HD');
 		}
+		this.isCarbon = function() {
+			return (this.ad === 'C ') || (this.ad === 'A ');
+		}
 		this.isHBD = function() {
 			return (this.ad === 'HD') || (this.xs === 'Met_D');
 		}
 		this.isHBA = function() {
 			return (this.ad === 'NA') || (this.ad === 'OA') || (this.ad === 'SA');
-		}
-		this.isHetero = function() {
-			return !((this.ad === 'H ') || (this.ad === 'HD') || (this.ad === 'C ') || (this.ad === 'A '));
 		}
 		this.donorize = function() {
 			switch (this.xs) {
@@ -264,10 +264,10 @@ var iview = (function() {
 							break;
 						}
 					}
-				} else if (a.ad === 'C ' || a.ad === 'A ') {
+				} else if (a.isCarbon()) {
 					for (var i = this.atoms.length, residue_start = residues[residues.length - 1]; i > residue_start;) {
 						var b = this.atoms[--i];
-						if ((!(b.ad === 'C ' || b.ad === 'A ')) && b.isNeighbor(a)) {
+						if (!b.isCarbon() && b.isNeighbor(a)) {
 							a.xs = 'C_P';
 							break;
 						}
@@ -275,7 +275,7 @@ var iview = (function() {
 				} else {
 					for (var i = this.atoms.length, residue_start = residues[residues.length - 1]; i > residue_start;) {
 						var b = this.atoms[--i];
-						if ((b.ad === 'C ' || b.ad === 'A ') && b.isNeighbor(a)) {
+						if (b.isCarbon() && b.isNeighbor(a)) {
 							b.xs = 'C_P';
 						}
 					}
@@ -386,11 +386,11 @@ var iview = (function() {
 						}
 					}
 					a.e = 0;
-				} else if (a.ad === 'C ' || a.ad === 'A ') {
+				} else if (a.isCarbon()) {
 					for (var i = this.atoms.length, frame_begin = this.frames[this.frames.length - 1]; i > frame_begin;)
 					{
 						var b = this.atoms[--i];
-						if ((!(b.ad === 'C ' || b.ad === 'A ')) && b.isNeighbor(a)) {
+						if (!b.isCarbon() && b.isNeighbor(a)) {
 							a.xs = 'C_P';
 							break;
 						}
@@ -400,7 +400,7 @@ var iview = (function() {
 				} else {
 					for (var i = this.atoms.length, frame_begin = this.frames[this.frames.length - 1]; i > frame_begin;) {
 						var b = this.atoms[--i];
-						if ((b.ad === 'C ' || b.ad === 'A ') && b.isNeighbor(a)) {
+						if (b.isCarbon() && b.isNeighbor(a)) {
 							b.xs = 'C_P';
 						}
 					}
@@ -421,8 +421,8 @@ var iview = (function() {
 			} else if (line.match('^ENDBRANCH')) {
 				current.rotorY = serials[(parseInt(line.substring(13, 17)))];
 				this.bonds.push(new Bond(current.rotorX, current.rotorY));
-				if (!(current.rotorY.ad === 'C ' || current.rotorY.ad === 'A ') && (current.rotorX.ad === 'C ' || current.rotorX.ad === 'A ')) current.rotorX.xs = 'C_P';
-				if (!(current.rotorX.ad === 'C ' || current.rotorX.ad === 'A ') && (current.rotorY.ad === 'C ' || current.rotorY.ad === 'A ')) current.rotorY.xs = 'C_P';
+				if (!current.rotorY.isCarbon() && current.rotorX.isCarbon()) current.rotorX.xs = 'C_P';
+				if (!current.rotorX.isCarbon() && current.rotorY.isCarbon()) current.rotorY.xs = 'C_P';
 				if (current === this.frames[this.frames.length - 1]) {
 					var nHeavyAtoms = 0;
 					for (var i = this.atoms.length; i > current.begin;) {
@@ -488,7 +488,7 @@ var iview = (function() {
 					for (var j = f2.begin; j < f2.end; ++j) {
 						var a2 = this.atoms[j];
 						if (a2.isHydrogen()) continue;
-						if (((f1 === f2.parent) && ((a2 === f2.rotorY) || (a1 === f2.rotorX))) || ($.inArray(a2, neighbors) >= 0)) continue;
+						if ((f1 === f2.parent && (a2 === f2.rotorY || a1 === f2.rotorX)) || $.inArray(a2, neighbors) >= 0) continue;
 						this.interactingPairs.push({
 							a1: a1,
 							a2: a2
@@ -628,16 +628,16 @@ var iview = (function() {
 		return (-0.035579) * Math.exp(-4 * d * d)
 			+  (-0.005156) * Math.exp(-0.25 * (d - 3.0) * (d - 3.0))
 			+  ( 0.840245) * (d > 0 ? 0.0 : d * d)
-			+  (-0.035069) * ((isHydrophobic(xs1) && isHydrophobic(xs2)) ? ((d >= 1.5) ? 0.0 : ((d <= 0.5) ? 1.0 : 1.5 - d)) : 0.0)
-			+  (-0.587439) * (((isHBdonor(xs1) && isHBacceptor(xs2)) || (isHBdonor(xs2) && isHBacceptor(xs1))) ? ((d >= 0) ? 0.0 : ((d <= -0.7) ? 1 : d * (-1.428571))): 0.0);
+			+  (-0.035069) * (isHydrophobic(xs1) && isHydrophobic(xs2) ? d >= 1.5 ? 0.0 : d <= 0.5 ? 1.0 : 1.5 - d : 0.0)
+			+  (-0.587439) * ((isHBdonor(xs1) && isHBacceptor(xs2)) || (isHBdonor(xs2) && isHBacceptor(xs1)) ? d >= 0 ? 0.0 : d <= -0.7 ? 1 : -1.428571 * d: 0.0);
 		function isHydrophobic(xs) {
-			return xs ===  'C_H' || xs ===  'F_H' || xs === 'Cl_H' || xs === 'Br_H' || xs ===  'I_H';
+			return (xs === 'C_H') || (xs === 'F_H') || (xs === 'Cl_H') || (xs === 'Br_H') || (xs === 'I_H');
 		}
 		function isHBdonor(xs) {
-			return xs === 'N_D' || xs === 'N_DA' || xs === 'O_DA' || xs === 'Met_D';
+			return (xs === 'N_D') || (xs === 'N_DA') || (xs === 'O_DA') || (xs === 'Met_D');
 		}
 		function isHBacceptor(xs) {
-			return xs === 'N_A' || xs === 'N_DA' || xs === 'O_A' || xs === 'O_DA';
+			return (xs === 'N_A') || (xs === 'N_DA') || (xs === 'O_A') || (xs === 'O_DA');
 		}
 	}
 
@@ -879,7 +879,7 @@ var iview = (function() {
 			p.force += f.force;
 			p.torque += f.torque + vec3.cross(vec3.subtract(f.rotorY, p.rotorY, []), f.force, []);
 			if (f.inactive) continue;
-			g1[6 + (--t)] = vec3.dot(f.torque, f.axes);
+			g1[6 + (--t)] = vec3.dot(f.torque, f.x2y);
 		}
 		var root = this.ligand.frames[0];
 		for (var f = root, i = f.begin; i < f.end; ++i) {
