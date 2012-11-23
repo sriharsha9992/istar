@@ -146,28 +146,20 @@ var iview = (function() {
 		this.a1 = a1;
 		this.a2 = a2;
 		this.render = function(gl, COLOR) {
-			var ang = 0;
-			var axis = [0, 0, 1];
-			if (this.a1[0] == this.a2[0] && this.a1[2] == this.a2[2]) {
-				if (this.a2[1] < this.a1[1]) {
-					ang = Math.PI;
-				}
-			} else {
-				var y = [0, 1, 0];
-				var a1m = vec3.scale(vec3.subtract(this.a2, this.a1, []), 0.5, []);
-				ang = Math.acos(vec3.dot(y, a1m) / vec3.length(a1m));
-				axis = vec3.cross(y, a1m, []);
-			}
-			var scaleVector = [0.3, vec3.dist(this.a1, this.a2) * 0.5, 0.3];
-			// Draw one half.
+			var y = [0, 1, 0];
+			var a1m = vec3.scale(vec3.subtract(this.a2, this.a1, []), 0.5, []);
+			var ang = Math.acos(vec3.dot(y, a1m) / vec3.length(a1m));
+			var axis = vec3.cross(y, a1m, []);
+			var scale = [0.3, vec3.dist(this.a1, this.a2) * 0.5, 0.3];
+			// Draw the a1 half.
 			var e1 = COLOR[this.a1.ad];
 			gl.uniform3f(gl.dUL, e1.r, e1.g, e1.b);
-			gl.setModelViewMatrix(mat4.scale(mat4.rotate(mat4.translate(gl.modelViewMatrix, this.a1, []), ang, axis, []), scaleVector, []));
+			gl.setModelViewMatrix(mat4.scale(mat4.rotate(mat4.translate(gl.modelViewMatrix, this.a1, []), ang, axis, []), scale, []));
 			gl.drawArrays(gl.TRIANGLE_STRIP, 0, gl.cylinder.vertexPositionBuffer.size);
-			// Draw the other half.
+			// Draw the a2 half.
 			var e2 = COLOR[this.a2.ad];
 			gl.uniform3f(gl.dUL, e2.r, e2.g, e2.b);
-			gl.setModelViewMatrix(mat4.scale(mat4.rotate(mat4.translate(gl.modelViewMatrix, this.a2, []), ang + Math.PI, axis, []), scaleVector, []));
+			gl.setModelViewMatrix(mat4.scale(mat4.rotate(mat4.translate(gl.modelViewMatrix, this.a2, []), ang + Math.PI, axis, []), scale, []));
 			gl.drawArrays(gl.TRIANGLE_STRIP, 0, gl.cylinder.vertexPositionBuffer.size);
 		};
 	};
@@ -176,18 +168,10 @@ var iview = (function() {
 		this.a1 = a1;
 		this.a2 = a2;
 		this.render = function(gl) {
-			var ang = 0;
-			var axis = [0, 0, 1];
-			if (this.a1[0] == this.a2[0] && this.a1[2] == this.a2[2]) {
-				if (this.a2[1] < this.a1[1]) {
-					ang = Math.PI;
-				}
-			} else {
-				var y = [0, 1, 0];
-				var a1a2 = vec3.subtract(this.a2, this.a1, []);
-				ang = Math.acos(vec3.dot(y, a1a2) / vec3.length(a1a2));
-				axis = vec3.cross(y, a1a2, []);
-			}
+			var y = [0, 1, 0];
+			var a1a2 = vec3.subtract(this.a2, this.a1, []);
+			var ang = Math.acos(vec3.dot(y, a1a2) / vec3.length(a1a2));
+			var axis = vec3.cross(y, a1a2, []);
 			gl.setModelViewMatrix(mat4.scale(mat4.rotate(mat4.translate(gl.modelViewMatrix, this.a1, []), ang, axis, []), [0.05, vec3.dist(this.a1, this.a2), 0.05], []));
 			gl.drawArrays(gl.TRIANGLE_STRIP, 0, gl.cylinder.vertexPositionBuffer.size);
 		};
@@ -230,36 +214,37 @@ var iview = (function() {
 	}
 
 	Receptor = function(content, hideNonPolarHydrogens, corner1, corner2) {
-		this.COLOR = {};
-		this.COLOR['H '] = new Color('#FFFFFF');
-		this.COLOR['HD'] = new Color('#FFFFFF');
-		this.COLOR['C '] = new Color('#909090');
-		this.COLOR['A '] = new Color('#909090');
-		this.COLOR['N '] = new Color('#3050F8');
-		this.COLOR['NA'] = new Color('#3050F8');
-		this.COLOR['OA'] = new Color('#FF0D0D');
-		this.COLOR['S '] = new Color('#FFFF30');
-		this.COLOR['SA'] = new Color('#FFFF30');
-		this.COLOR['Se'] = new Color('#FFA100');
-		this.COLOR['P '] = new Color('#FF8000');
-		this.COLOR['F '] = new Color('#90E050');
-		this.COLOR['Cl'] = new Color('#1FF01F');
-		this.COLOR['Br'] = new Color('#A62929');
-		this.COLOR['I '] = new Color('#940094');
-		this.COLOR['Zn'] = new Color('#7D80B0');
-		this.COLOR['Fe'] = new Color('#E06633');
-		this.COLOR['Mg'] = new Color('#8AFF00');
-		this.COLOR['Ca'] = new Color('#3DFF00');
-		this.COLOR['Mn'] = new Color('#9C7AC7');
-		this.COLOR['Cu'] = new Color('#C88033');
-		this.COLOR['Na'] = new Color('#AB5CF2');
-		this.COLOR['K '] = new Color('#8F40D4');
-		this.COLOR['Hg'] = new Color('#B8B8D0');
-		this.COLOR['Ni'] = new Color('#50D050');
-		this.COLOR['Co'] = new Color('#F090A0');
-		this.COLOR['Cd'] = new Color('#FFD98F');
-		this.COLOR['As'] = new Color('#BD80E3');
-		this.COLOR['Sr'] = new Color('#00FF00');
+		this.COLOR = {
+			'H ': new Color('#FFFFFF'),
+			'HD': new Color('#FFFFFF'),
+			'C ': new Color('#909090'),
+			'A ': new Color('#909090'),
+			'N ': new Color('#3050F8'),
+			'NA': new Color('#3050F8'),
+			'OA': new Color('#FF0D0D'),
+			'S ': new Color('#FFFF30'),
+			'SA': new Color('#FFFF30'),
+			'Se': new Color('#FFA100'),
+			'P ': new Color('#FF8000'),
+			'F ': new Color('#90E050'),
+			'Cl': new Color('#1FF01F'),
+			'Br': new Color('#A62929'),
+			'I ': new Color('#940094'),
+			'Zn': new Color('#7D80B0'),
+			'Fe': new Color('#E06633'),
+			'Mg': new Color('#8AFF00'),
+			'Ca': new Color('#3DFF00'),
+			'Mn': new Color('#9C7AC7'),
+			'Cu': new Color('#C88033'),
+			'Na': new Color('#AB5CF2'),
+			'K ': new Color('#8F40D4'),
+			'Hg': new Color('#B8B8D0'),
+			'Ni': new Color('#50D050'),
+			'Co': new Color('#F090A0'),
+			'Cd': new Color('#FFD98F'),
+			'As': new Color('#BD80E3'),
+			'Sr': new Color('#00FF00'),
+		};
 		var residues = [];
 		for (var residue = 'XXXX', lines = content.split('\n'), kk = lines.length, k = 0; k < kk; ++k) {
 			var line = lines[k];
@@ -339,38 +324,40 @@ var iview = (function() {
 	}
 
 	Ligand = function(content, hideNonPolarHydrogens) {
-		this.COLOR = {};
-		this.COLOR['H '] = new Color('#E6E6E6');
-		this.COLOR['HD'] = new Color('#E6E6E6');
-		this.COLOR['C '] = new Color('#33FF33');
-		this.COLOR['A '] = new Color('#33FF33');
-		this.COLOR['N '] = new Color('#3333FF');
-		this.COLOR['NA'] = new Color('#3333FF');
-		this.COLOR['OA'] = new Color('#FF4D4D');
-		this.COLOR['S '] = new Color('#E6C640');
-		this.COLOR['SA'] = new Color('#E6C640');
-		this.COLOR['Se'] = new Color('#FFA100');
-		this.COLOR['P '] = new Color('#FF8000');
-		this.COLOR['F '] = new Color('#B3FFFF');
-		this.COLOR['Cl'] = new Color('#1FF01F');
-		this.COLOR['Br'] = new Color('#A62929');
-		this.COLOR['I '] = new Color('#940094');
-		this.WEIGHT = {};
-		this.WEIGHT['HD'] =   1.008;
-		this.WEIGHT['H '] =   1.008;
-		this.WEIGHT['C '] =  12.01;
-		this.WEIGHT['A '] =  12.01;
-		this.WEIGHT['N '] =  14.01;
-		this.WEIGHT['NA'] =  14.01;
-		this.WEIGHT['OA'] =  16.00;
-		this.WEIGHT['SA'] =  32.07;
-		this.WEIGHT['S '] =  32.07;
-		this.WEIGHT['Se'] =  78.96;
-		this.WEIGHT['P '] =  30.97;
-		this.WEIGHT['F '] =  19.00;
-		this.WEIGHT['Cl'] =  35.45;
-		this.WEIGHT['Br'] =  79.90;
-		this.WEIGHT['I '] = 126.90;
+		this.COLOR = {
+			'H ': new Color('#E6E6E6'),
+			'HD': new Color('#E6E6E6'),
+			'C ': new Color('#33FF33'),
+			'A ': new Color('#33FF33'),
+			'N ': new Color('#3333FF'),
+			'NA': new Color('#3333FF'),
+			'OA': new Color('#FF4D4D'),
+			'S ': new Color('#E6C640'),
+			'SA': new Color('#E6C640'),
+			'Se': new Color('#FFA100'),
+			'P ': new Color('#FF8000'),
+			'F ': new Color('#B3FFFF'),
+			'Cl': new Color('#1FF01F'),
+			'Br': new Color('#A62929'),
+			'I ': new Color('#940094'),
+		};
+		this.WEIGHT = {
+			'HD':   1.008,
+			'H ':   1.008,
+			'C ':  12.01,
+			'A ':  12.01,
+			'N ':  14.01,
+			'NA':  14.01,
+			'OA':  16.00,
+			'SA':  32.07,
+			'S ':  32.07,
+			'Se':  78.96,
+			'P ':  30.97,
+			'F ':  19.00,
+			'Cl':  35.45,
+			'Br':  79.90,
+			'I ': 126.90,
+		};
 		var current = {
 			begin: 0,
 			branches: []
