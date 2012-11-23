@@ -435,6 +435,7 @@ var iview = (function() {
 		}
 		this.flexPenalty = 1 + 0.05846 * (this.nActiveTors + 0.5 * (this.frames.length - 1 - this.nActiveTors));
 		this.frames[this.frames.length - 1].end = this.atoms.length;
+		this.frames[0].rotorY = this.atoms[0];
 		for (var f = 0, ff = this.frames.length - 1; f < ff; ++f) {
 			for (var i = this.frames[f].begin, ii = this.frames[f].end; i < ii; ++i) {
 				var a1 = this.atoms[i];
@@ -838,6 +839,13 @@ var iview = (function() {
 				vec3.subtract(this.ligand.coords[i], f.rotorY);
 			}
 		}
+		var y2y = new Array(this.ligand.frames.length);
+		var x2y = new Array(this.ligand.frames.length);
+		for (var k = 1; k < this.ligand.frames.length; ++k) {
+			var f = this.ligand.frames[k];
+			y2y[i] = vec3.subtract(f.rotorY, f.parent.rotorY, []);
+			x2y[i] = vec3.normalize(vec3.subtract(f.rotorY, f.rotorX), []);
+		}
 		function index(i, j) {
 			return i + j * (j + 1) >> 1;
 		}
@@ -849,6 +857,7 @@ var iview = (function() {
 		for (var i = 0; i < n; ++i) {
 			h[i * (i + 3) >> 1] = 1;
 		}
+		// Calculate g1.
 		while (true) {
 			for (var i = 0; i < n; ++i) {
 				var sum = 0;
@@ -868,6 +877,13 @@ var iview = (function() {
 				for (var i = 0; i < n - 6; ++i) {
 					c2.torsions[i] = c1.torsions[i] + alpha * p[6 + i];
 				}
+				var origins = new Array(this.ligand.frames.length);
+				var axes = new Array(this.ligand.frames.length);
+				var orientations_q = new Array(this.ligand.frames.length);
+				var orientations_m = new Array(this.ligand.frames.length);
+				var forces = new Array(this.ligand.frames.length);
+				var torques = new Array(this.ligand.frames.length);
+				var derivatives = new Array(this.ligand.atoms.length);
 				if (lig.evaluate(c2, sf, b, grid_maps, e1 + 0.0001 * alpha * pg1, e2, f2, g2)) break;
 				alpha *= 0.5;
 			}
@@ -896,6 +912,8 @@ var iview = (function() {
 			for (var j = i; j < n; ++j) {
 				h[index(i, j)] += ryp * (mhy[i] * p[j] + mhy[j] * p[i]) + pco * p[i] * p[j];
 			}
+			// Update ligand atoms.
+			this.repaint();
 		}
 	}
 	iview.prototype.save = function() {
