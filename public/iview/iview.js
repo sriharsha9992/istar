@@ -18,82 +18,85 @@
 
 var iview = (function() {
 
-	COVALENT = {};
-	COVALENT['H '] = 0.407;
-	COVALENT['HD'] = 0.407;
-	COVALENT['C '] = 0.847;
-	COVALENT['A '] = 0.847;
-	COVALENT['N '] = 0.825;
-	COVALENT['NA'] = 0.825;
-	COVALENT['OA'] = 0.803;
-	COVALENT['S '] = 1.122;
-	COVALENT['SA'] = 1.122;
-	COVALENT['Se'] = 1.276;
-	COVALENT['P '] = 1.166;
-	COVALENT['F '] = 0.781;
-	COVALENT['Cl'] = 1.089;
-	COVALENT['Br'] = 1.254;
-	COVALENT['I '] = 1.463;
-	COVALENT['Zn'] = 1.441;
-	COVALENT['Fe'] = 1.375;
-	COVALENT['Mg'] = 1.430;
-	COVALENT['Ca'] = 1.914;
-	COVALENT['Mn'] = 1.529;
-	COVALENT['Cu'] = 1.518;
-	COVALENT['Na'] = 1.694;
-	COVALENT['K '] = 2.156;
-	COVALENT['Hg'] = 1.639;
-	COVALENT['Ni'] = 1.331;
-	COVALENT['Co'] = 1.386;
-	COVALENT['Cd'] = 1.628;
-	COVALENT['As'] = 1.309;
-	COVALENT['Sr'] = 2.112;
+	COVALENT = {
+		'H ': 0.407,
+		'HD': 0.407,
+		'C ': 0.847,
+		'A ': 0.847,
+		'N ': 0.825,
+		'NA': 0.825,
+		'OA': 0.803,
+		'S ': 1.122,
+		'SA': 1.122,
+		'Se': 1.276,
+		'P ': 1.166,
+		'F ': 0.781,
+		'Cl': 1.089,
+		'Br': 1.254,
+		'I ': 1.463,
+		'Zn': 1.441,
+		'Fe': 1.375,
+		'Mg': 1.430,
+		'Ca': 1.914,
+		'Mn': 1.529,
+		'Cu': 1.518,
+		'Na': 1.694,
+		'K ': 2.156,
+		'Hg': 1.639,
+		'Ni': 1.331,
+		'Co': 1.386,
+		'Cd': 1.628,
+		'As': 1.309,
+		'Sr': 2.112,
+	};
 
-	AD2XS = {};
-	AD2XS['C '] =   'C_H';
-	AD2XS['A '] =   'C_H';
-	AD2XS['N '] =   'N_P';
-	AD2XS['NA'] =   'N_A';
-	AD2XS['OA'] =   'O_A';
-	AD2XS['S '] =   'S_P';
-	AD2XS['SA'] =   'S_P';
-	AD2XS['Se'] =   'S_P';
-	AD2XS['P '] =   'P_P';
-	AD2XS['F '] =   'F_H';
-	AD2XS['Cl'] =  'Cl_H';
-	AD2XS['Br'] =  'Br_H';
-	AD2XS['I '] =   'I_H';
-	AD2XS['Zn'] = 'Met_D';
-	AD2XS['Fe'] = 'Met_D';
-	AD2XS['Mg'] = 'Met_D';
-	AD2XS['Ca'] = 'Met_D';
-	AD2XS['Mn'] = 'Met_D';
-	AD2XS['Cu'] = 'Met_D';
-	AD2XS['Na'] = 'Met_D';
-	AD2XS['K '] = 'Met_D';
-	AD2XS['Hg'] = 'Met_D';
-	AD2XS['Ni'] = 'Met_D';
-	AD2XS['Co'] = 'Met_D';
-	AD2XS['Cd'] = 'Met_D';
-	AD2XS['As'] = 'Met_D';
-	AD2XS['Sr'] = 'Met_D';
+	AD2XS = {
+		'C ':   'C_H',
+		'A ':   'C_H',
+		'N ':   'N_P',
+		'NA':   'N_A',
+		'OA':   'O_A',
+		'S ':   'S_P',
+		'SA':   'S_P',
+		'Se':   'S_P',
+		'P ':   'P_P',
+		'F ':   'F_H',
+		'Cl':  'Cl_H',
+		'Br':  'Br_H',
+		'I ':   'I_H',
+		'Zn': 'Met_D',
+		'Fe': 'Met_D',
+		'Mg': 'Met_D',
+		'Ca': 'Met_D',
+		'Mn': 'Met_D',
+		'Cu': 'Met_D',
+		'Na': 'Met_D',
+		'K ': 'Met_D',
+		'Hg': 'Met_D',
+		'Ni': 'Met_D',
+		'Co': 'Met_D',
+		'Cd': 'Met_D',
+		'As': 'Met_D',
+		'Sr': 'Met_D',
+	};
 
-	VDW = {};
-	VDW[  'C_H' ] = 1.9;
-	VDW[  'C_P' ] = 1.9;
-	VDW[  'N_P' ] = 1.8;
-	VDW[  'N_D' ] = 1.8;
-	VDW[  'N_A' ] = 1.8;
-	VDW[  'N_DA'] = 1.8;
-	VDW[  'O_A' ] = 1.7;
-	VDW[  'O_DA'] = 1.7;
-	VDW[  'S_P' ] = 2.0;
-	VDW[  'P_P' ] = 2.1;
-	VDW[  'F_H' ] = 1.5;
-	VDW[ 'Cl_H' ] = 1.8;
-	VDW[ 'Br_H' ] = 2.0;
-	VDW[  'I_H' ] = 2.2;
-	VDW['Met_D' ] = 1.2;
+	VDW = {
+		  'C_H' : 1.9,
+		  'C_P' : 1.9,
+		  'N_P' : 1.8,
+		  'N_D' : 1.8,
+		  'N_A' : 1.8,
+		  'N_DA': 1.8,
+		  'O_A' : 1.7,
+		  'O_DA': 1.7,
+		  'S_P' : 2.0,
+		  'P_P' : 2.1,
+		  'F_H' : 1.5,
+		 'Cl_H' : 1.8,
+		 'Br_H' : 2.0,
+		  'I_H' : 2.2,
+		'Met_D' : 1.2,
+	};
 
 	function pad(len, str) {
 		return Array(len + 1 - str.length).join(' ') + str;
