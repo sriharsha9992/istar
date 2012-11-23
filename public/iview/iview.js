@@ -894,7 +894,14 @@ var iview = (function() {
 		g1[3] = root.torque[0];
 		g1[4] = root.torque[1];
 		g1[5] = root.torque[2];
+		var pos1 = vec3.create(root.rotorY), pos2;
+		var ori1 = identityQuat4, ori2;
+		var tor1 = new Array(this.ligand.nActiveTors), tor2 = new Array(this.ligand.nActiveTors);
+		for (var i = 0; i < this.ligand.nActiveTors; ++i) {
+			tor1[i] = 0;
+		}
 		while (true) {
+			var p = new Array(n);
 			for (var i = 0; i < n; ++i) {
 				var sum = 0;
 				for (var j = 0; j < n; ++j) {
@@ -908,18 +915,12 @@ var iview = (function() {
 			}
 			var t, alpha = 1;
 			for (t = 0; t < 10; ++t) {
-				c2.position = vec3.add(c1.position, vec3.scale(p, alpha, []), []);
-				c2.orientation = qtn4(vec3.scale([p[3], p[4], p[5]], alpha, [])) * c1.orientation;
+				pos2 = vec3.add(pos1, vec3.scale(p, alpha, []), []);
+				ori2 = quat4.multiply(quat4.fromAngleAxis(vec3.scale([p[3], p[4], p[5]], alpha, []), []), ori1, []);
 				for (var i = 0; i < n - 6; ++i) {
 					c2.torsions[i] = c1.torsions[i] + alpha * p[6 + i];
 				}
-				var origins = new Array(this.ligand.frames.length);
-				var axes = new Array(this.ligand.frames.length);
-				var orientations_q = new Array(this.ligand.frames.length);
-				var orientations_m = new Array(this.ligand.frames.length);
-				var forces = new Array(this.ligand.frames.length);
-				var torques = new Array(this.ligand.frames.length);
-				var derivatives = new Array(this.ligand.atoms.length);
+				// f.origin, f.axe, f.oriq, f.orim, f.force, f.torque
 				if (lig.evaluate(c2, sf, b, grid_maps, e1 + 0.0001 * alpha * pg1, e2, f2, g2)) break;
 				alpha *= 0.5;
 			}
@@ -927,6 +928,7 @@ var iview = (function() {
 			for (var i = 0; i < n; ++i) {
 				y[i] = g2[i] - g1[i];
 			}
+			var mhy = new Array(n);
 			for (var i = 0; i < n; ++i) {
 				var sum = 0;
 				for (var j = 0; j < n; ++j) {
