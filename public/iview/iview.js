@@ -592,17 +592,21 @@ var iview = (function() {
 		}
 	}
 	Ligand.prototype.refreshD = function(receptor) {
-		var delta = 0.01;
+		var delta = 0.15625;
 		for (var i = 0; i < this.atoms.length; ++i) {
 			var a = this.atoms[i];
 			if (a.isHydrogen()) continue;
-			a.d = [(receptor.score(a.xs, vec3.createFrom(a[0] + delta, a[1], a[2])) - a.e) / delta, (receptor.score(a.xs, vec3.createFrom(a[0], a[1] + delta, a[2])) - a.e) / delta, (receptor.score(a.xs, vec3.createFrom(a[0], a[1], a[2] + delta)) - a.e) / delta];
+			var e100 = receptor.score(a.xs, vec3.add(a, [delta, 0, 0], []));
+			var e010 = receptor.score(a.xs, vec3.add(a, [0, delta, 0], []));
+			var e001 = receptor.score(a.xs, vec3.add(a, [0, 0, delta], []));
+			a.d = vec3.subtract([e100, e010, e001], [a.e, a.e, a.e], []);
+			vec3.scale(a.d, 1 / delta);
 		}
 		for (var i = 0; i < this.interactingPairs.length; ++i) {
 			var p = this.interactingPairs[i];
 			var v = vec3.subtract(p.a2, p.a1);
 			var r = vec3.length(v);
-			vec3.scale(v, (score(p.a1.xs, p.a2.xs, r + delta) - score(p.a1.xs, p.a2.xs, r)) / delta);
+			vec3.scale(v, (score(p.a1.xs, p.a2.xs, r + delta) - score(p.a1.xs, p.a2.xs, r)) / (r * delta));
 			vec3.subtract(p.a1.d, v);
 			vec3.add(p.a2.d, v);
 		}
@@ -999,7 +1003,7 @@ var iview = (function() {
 			pos1 = pos2;
 			ori1 = ori2;
 			tor1 = tor2;
-			e = this.ligand.e.Total;
+			e = this.ligand.eTotal;
 			this.refreshH();
 			this.repaint();
 			if (this.options.refresh) this.options.refresh();
