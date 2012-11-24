@@ -610,7 +610,8 @@ var iview = (function() {
 	Ligand.prototype.refreshG = function() {
 		for (var k = 0; k < this.frames.length; ++k) {
 			var f = this.frames[k];
-			f.force = f.torque = 0;
+			f.force  = vec3.createFrom(0, 0, 0);
+			f.torque = vec3.createFrom(0, 0, 0);
 		}
 		var g = new Array(6 + this.nActiveTors);
 		for (var k = this.frames.length - 1, t = this.nActiveTors; k > 0; --k) {
@@ -618,12 +619,12 @@ var iview = (function() {
 			for (var i = f.begin; i < f.end; ++i) {
 				var a = this.atoms[i];
 				if (a.isHydrogen()) continue;
-				f.force += a.d;
-				f.torque += vec3.cross(vec3.subtract(a, f.rotorY, []), a.d, []);
+				vec3.add(f.force, a.d);
+				vec3.add(f.torque, vec3.cross(vec3.subtract(a, f.rotorY, []), a.d, []));
 			}
 			var p = f.parent;
-			p.force += f.force;
-			p.torque += f.torque + vec3.cross(vec3.subtract(f.rotorY, p.rotorY, []), f.force, []);
+			vec3.add(p.force, f.force);
+			vec3.add(p.torque, vec3.add(f.torque, vec3.cross(vec3.subtract(f.rotorY, p.rotorY, []), f.force, []), []));
 			if (f.inactive) continue;
 			g[6 + (--t)] = vec3.dot(f.torque, f.axe);
 		}
@@ -631,8 +632,8 @@ var iview = (function() {
 		for (var f = root, i = f.begin; i < f.end; ++i) {
 			var a = this.atoms[i];
 			if (a.isHydrogen()) continue;
-			f.force += a.d;
-			f.torque += vec3.cross(vec3.subtract(a, f.rotorY, []), a.d, []);
+			vec3.add(f.force, a.d);
+			vec3.add(f.torque, vec3.cross(vec3.subtract(a, f.rotorY, []), a.d, []));
 		}
 		g[0] = root.force[0];
 		g[1] = root.force[1];
