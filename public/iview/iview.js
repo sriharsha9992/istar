@@ -213,6 +213,25 @@ var iview = (function() {
 		this.b = parseInt(color.substring(5, 7), 16) / 255.0;
 	}
 
+	function score(xs1, xs2, r) {
+		if (r > 8) return 0;
+		var d = r - (VDW[xs1] + VDW[xs2]);
+		return (-0.035579) * Math.exp(-4 * d * d)
+			+  (-0.005156) * Math.exp(-0.25 * (d - 3.0) * (d - 3.0))
+			+  ( 0.840245) * (d > 0 ? 0.0 : d * d)
+			+  (-0.035069) * (isHydrophobic(xs1) && isHydrophobic(xs2) ? d >= 1.5 ? 0.0 : d <= 0.5 ? 1.0 : 1.5 - d : 0.0)
+			+  (-0.587439) * ((isHBdonor(xs1) && isHBacceptor(xs2)) || (isHBdonor(xs2) && isHBacceptor(xs1)) ? d >= 0 ? 0.0 : d <= -0.7 ? 1 : -1.428571 * d: 0.0);
+		function isHydrophobic(xs) {
+			return (xs === 'C_H') || (xs === 'F_H') || (xs === 'Cl_H') || (xs === 'Br_H') || (xs === 'I_H');
+		}
+		function isHBdonor(xs) {
+			return (xs === 'N_D') || (xs === 'N_DA') || (xs === 'O_DA') || (xs === 'Met_D');
+		}
+		function isHBacceptor(xs) {
+			return (xs === 'N_A') || (xs === 'N_DA') || (xs === 'O_A') || (xs === 'O_DA');
+		}
+	}
+
 	Receptor = function(content, hideNonPolarHydrogens, corner1, corner2) {
 		this.COLOR = {
 			'H ': new Color('#FFFFFF'),
@@ -313,12 +332,10 @@ var iview = (function() {
 	Receptor.prototype = new Molecule();
 	Receptor.prototype.score = function(xs, coord) {
 		var e = 0;
-		for (var j = 0, jj = this.atoms.length; j < jj; ++j) {
-			var a = this.atoms[j];
+		for (var i = 0, ii = this.atoms.length; i < ii; ++i) {
+			var a = this.atoms[i];
 			if (a.isHydrogen()) continue;
-			var r = vec3.dist(a, coord);
-			if (r > 8) continue;
-			e += score(xs, a.xs, r);
+			e += score(xs, a.xs, vec3.dist(a, coord));
 		}
 		return e;
 	}
@@ -535,6 +552,110 @@ var iview = (function() {
 		lines.push('TORSDOF ' + (this.frames.length - 1));
 		return lines.join('\n');
 	}
+	Ligand.prototype.refreshE = function(receptor) {
+		this.eInter = 0;
+		for (var i = 0, ii = this.atoms.length; i < ii; ++i) {
+			var a = this.atoms[i];
+			if (a.isHydrogen()) continue;
+			a.e = receptor.score(a.xs, a);
+			this.eInter += a.e;
+		}
+		this.eIntra = 0;
+		for (var i = 0, ii = this.interactingPairs.length; i < ii; ++i) {
+			var p = this.interactingPairs[i];
+			this.eIntra += score(p.a1.xs, p.a2.xs, vec3.dist(p.a1, p.a2));
+		}
+		this.eTotal = this.eInter + this.eIntra;
+		this.eNormalized = this.eInter / this.flexPenalty;
+		this.efficiency  = this.eInter / this.nHeavyAtoms;
+	}
+	Ligand.prototype.refreshC = function(pos, ori, tor) {
+		var root = this.frames[0];
+		vec3.set(pos, root.rotorY);
+		root.ori = quat4.create(ori);
+		root.rot = quat4.toMat3(root.ori, []);
+		for (var i = root.begin; i < root.end; ++i) {
+			var a = this.atoms[i];
+			vec3.add(root.rotorY, mat3.multiplyVec3(root.rot, a.coord, []), a);
+		}
+		for (var k = 1, t = 0; k < this.frames.length; ++k) {
+			var f = this.frames[k];
+			var p = f.parent;
+			vec3.add(p.rotorY, mat3.multiplyVec3(p.rot, f.y2y, []), f.rotorY);
+			f.axe = mat3.multiplyVec3(p.rot, f.x2y, []);
+			f.ori = quat4.multiply(quat4.fromAngleAxis(f.inactive ? 0 : tor[t++], f.axe, []), p.ori, []);
+			f.rot = quat4.toMat3(f.ori, []);
+			for (var i = f.begin; i < f.end; ++i) {
+				var a = this.atoms[i];
+				vec3.add(f.rotorY, mat3.multiplyVec3(f.rot, a.coord, []), a);
+			}
+		}
+	}
+	Ligand.prototype.refreshD = function(receptor) {
+		var delta = 0.01;
+		for (var i = 0; i < this.atoms.length; ++i) {
+			var a = this.atoms[i];
+			if (a.isHydrogen()) continue;
+			a.d = [(receptor.score(a.xs, vec3.createFrom(a[0] + delta, a[1], a[2])) - a.e) / delta, (receptor.score(a.xs, vec3.createFrom(a[0], a[1] + delta, a[2])) - a.e) / delta, (receptor.score(a.xs, vec3.createFrom(a[0], a[1], a[2] + delta)) - a.e) / delta];
+		}
+		for (var i = 0; i < this.interactingPairs.length; ++i) {
+			var p = this.interactingPairs[i];
+			var v = vec3.subtract(p.a2, p.a1);
+			var r = vec3.length(v);
+			vec3.scale(v, (score(p.a1.xs, p.a2.xs, r + delta) - score(p.a1.xs, p.a2.xs, r)) / delta);
+			vec3.subtract(p.a1.d, v);
+			vec3.add(p.a2.d, v);
+		}
+	}
+	Ligand.prototype.refreshG = function() {
+		for (var k = 0; k < this.frames.length; ++k) {
+			var f = this.frames[k];
+			f.force = f.torque = 0;
+		}
+		var g = new Array(6 + this.nActiveTors);
+		for (var k = this.frames.length - 1, t = this.nActiveTors; k > 0; --k) {
+			var f = this.frames[k];
+			for (var i = f.begin; i < f.end; ++i) {
+				var a = this.atoms[i];
+				if (a.isHydrogen()) continue;
+				f.force += a.d;
+				f.torque += vec3.cross(vec3.subtract(a, f.rotorY, []), a.d, []);
+			}
+			var p = f.parent;
+			p.force += f.force;
+			p.torque += f.torque + vec3.cross(vec3.subtract(f.rotorY, p.rotorY, []), f.force, []);
+			if (f.inactive) continue;
+			g[6 + (--t)] = vec3.dot(f.torque, f.axe);
+		}
+		var root = this.frames[0];
+		for (var f = root, i = f.begin; i < f.end; ++i) {
+			var a = this.atoms[i];
+			if (a.isHydrogen()) continue;
+			f.force += a.d;
+			f.torque += vec3.cross(vec3.subtract(a, f.rotorY, []), a.d, []);
+		}
+		g[0] = root.force[0];
+		g[1] = root.force[1];
+		g[2] = root.force[2];
+		g[3] = root.torque[0];
+		g[4] = root.torque[1];
+		g[5] = root.torque[2];
+		return g;
+	}
+	Ligand.prototype.refreshR = function() {
+		for (var k = 0; k < this.frames.length; ++k) {
+			var f = this.frames[k];
+			for (var i = f.begin; i < f.end; ++i) {
+				var a = this.atoms[i];
+				a.coord = vec3.subtract(a, f.rotorY, []);
+			}
+		}
+		for (var k = 1; k < this.frames.length; ++k) {
+			var f = this.frames[k];
+			f.y2y = vec3.subtract(f.rotorY, f.parent.rotorY, []);
+			f.axe = f.x2y = vec3.normalize(vec3.subtract(f.rotorY, f.rotorX), []);
+		}
+	}
 
 	Mesh = function() {
 	};
@@ -623,24 +744,6 @@ var iview = (function() {
 	};
 	$(document).keydown(keydownup).keyup(keydownup);
 
-	function score(xs1, xs2, r) {
-		var d = r - (VDW[xs1] + VDW[xs2]);
-		return (-0.035579) * Math.exp(-4 * d * d)
-			+  (-0.005156) * Math.exp(-0.25 * (d - 3.0) * (d - 3.0))
-			+  ( 0.840245) * (d > 0 ? 0.0 : d * d)
-			+  (-0.035069) * (isHydrophobic(xs1) && isHydrophobic(xs2) ? d >= 1.5 ? 0.0 : d <= 0.5 ? 1.0 : 1.5 - d : 0.0)
-			+  (-0.587439) * ((isHBdonor(xs1) && isHBacceptor(xs2)) || (isHBdonor(xs2) && isHBacceptor(xs1)) ? d >= 0 ? 0.0 : d <= -0.7 ? 1 : -1.428571 * d: 0.0);
-		function isHydrophobic(xs) {
-			return (xs === 'C_H') || (xs === 'F_H') || (xs === 'Cl_H') || (xs === 'Br_H') || (xs === 'I_H');
-		}
-		function isHBdonor(xs) {
-			return (xs === 'N_D') || (xs === 'N_DA') || (xs === 'O_DA') || (xs === 'Met_D');
-		}
-		function isHBacceptor(xs) {
-			return (xs === 'N_A') || (xs === 'N_DA') || (xs === 'O_A') || (xs === 'O_DA');
-		}
-	}
-
 	var iview = function(options) {
 		this.options = $.extend({
 			hideNonPolarHydrogens: true
@@ -727,13 +830,17 @@ var iview = (function() {
 					for (var i = 0, ii = iv.ligand.atoms.length; i < ii; ++i) {
 						mat4.multiplyVec3(rotation, iv.ligand.atoms[i]);
 					}
-					iv.refresh();
+					iv.ligand.refreshE(iv.receptor);
+					iv.refreshH();
+					if (iv.options.refresh) iv.options.refresh();
 				} else if (iv.mousebuttons[3] && !iv.mousebuttons[1]) {
 					var translation = mat3.multiply(mat4.toInverseMat3(iv.gl.modelViewMatrix, []),  [dx * 0.05, -dy * 0.05, 0], []);
 					for (var i = 0, ii = iv.ligand.atoms.length; i < ii; ++i) {
 						vec3.add(iv.ligand.atoms[i], translation);
 					}
-					iv.refresh();
+					iv.ligand.refreshE(iv.receptor);
+					iv.refreshH();
+					if (iv.options.refresh) iv.options.refresh();
 				}
 			} else {
 				if (iv.mousebuttons[1] && !iv.mousebuttons[3]) {
@@ -766,9 +873,11 @@ var iview = (function() {
 	iview.prototype.parseLigand = function(content) {
 		this.ligand = new Ligand(content, this.options.hideNonPolarHydrogens);
 		this.ligand.centerize(this.center);
-		this.refresh();
+		this.ligand.refreshE(this.receptor);
+		this.refreshH();
+		if (this.options.refresh) this.options.refresh();
 	}
-	iview.prototype.refresh = function() {
+	iview.prototype.refreshH = function() {
 		this.hbonds = [];
 		for (var i = 0, ii = this.receptor.hbds.length; i < ii; ++i) {
 			var r = this.receptor.hbds[i];
@@ -788,22 +897,6 @@ var iview = (function() {
 				}
 			}
 		}
-		this.ligand.eInter = 0;
-		for (var i = 0, ii = this.ligand.atoms.length; i < ii; ++i) {
-			var a = this.ligand.atoms[i];
-			if (a.isHydrogen()) continue;
-			a.e = this.receptor.score(a.xs, a);
-			this.ligand.eInter += a.e;
-		}
-		this.ligand.eNormalized = this.ligand.eInter / this.ligand.flexPenalty;
-		this.ligand.efficiency = this.ligand.eInter / this.ligand.nHeavyAtoms;
-		this.ligand.eIntra = 0;
-		for (var i = 0, ii = this.ligand.interactingPairs.length; i < ii; ++i) {
-			var p = this.ligand.interactingPairs[i];
-			this.ligand.eIntra += score(p.a1.xs, p.a2.xs, vec3.dist(p.a1, p.a2));
-		}
-		this.ligand.eTotal = this.ligand.eInter + this.ligand.eIntra;
-		if (this.options.refresh) this.options.refresh();
 	};
 	iview.prototype.repaint = function() {
 		this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
@@ -823,83 +916,26 @@ var iview = (function() {
 		}
 	};
 	iview.prototype.dock = function() {
-		for (var k = 0; k < this.ligand.frames.length; ++k) {
-			var f = this.ligand.frames[k];
-			for (var i = f.begin; i < f.end; ++i) {
-				var a = this.ligand.atoms[i];
-				a.coord = vec3.subtract(a, f.rotorY, []);
-			}
-		}
-		for (var k = 1; k < this.ligand.frames.length; ++k) {
-			var f = this.ligand.frames[k];
-			f.y2y = vec3.subtract(f.rotorY, f.parent.rotorY, []);
-			f.x2y = vec3.normalize(vec3.subtract(f.rotorY, f.rotorX), []);
-		}
+		var eTotal = this.ligand.eTotal;
+		this.ligand.refreshR();
+		this.ligand.refreshD(this.receptor);
+		var g1 = this.ligand.refreshG();
 		function index(i, j) {
 			return i + j * (j + 1) >> 1;
 		}
-		var n = 6 + this.ligand.frames.length - 1;
+		var n = 6 + this.ligand.nActiveTors;
 		var h = new Array(n * (n+1) >> 1);
 		for (var i = 0, ii = h.length; i < ii; ++i) {
 			h[i] = 0;
 		}
 		for (var i = 0; i < n; ++i) {
-			h[i * (i + 3) >> 1] = 1;
+			h[index(i, i)] = 1;
 		}
-		var delta = 0.01;
-		var g1 = [];
-		for (var i = 0; i < this.ligand.atoms.length; ++i) {
-			var a = this.ligand.atoms[i];
-			if (a.isHydrogen()) continue;
-			a.d = [(this.receptor.score(a.xs, vec3.createFrom(a[0] + delta, a[1], a[2])) - a.e) / delta, (this.receptor.score(a.xs, vec3.createFrom(a[0], a[1] + delta, a[2])) - a.e) / delta, (this.receptor.score(a.xs, vec3.createFrom(a[0], a[1], a[2] + delta)) - a.e) / delta];
-		}
-		for (var i = 0; i < this.ligand.interactingPairs.length; ++i) {
-			var p = this.ligand.interactingPairs[i];
-			var v = vec3.subtract(p.a2, p.a1);
-			var r = vec3.length(v);
-			if (r > 8) continue;
-			vec3.scale(v, (score(p.a1.xs, p.a2.xs, r + delta) - score(p.a1.xs, p.a2.xs, r)) / delta);
-			vec3.subtract(p.a1.d, v);
-			vec3.add(p.a2.d, v);
-		}
-		for (var k = 0; k < this.ligand.frames.length; ++k) {
-			var f = this.ligand.frames[k];
-			f.force = f.torque = 0;
-		}
-		var g1 = new Array(n);
-		for (var k = this.ligand.frames.length - 1, t = this.ligand.nActiveTors; k > 0; --k) {
-			var f = this.ligand.frames[k];
-			for (var i = f.begin; i < f.end; ++i) {
-				var a = this.ligand.atoms[i];
-				if (a.isHydrogen()) continue;
-				f.force += a.d;
-				f.torque += vec3.cross(vec3.subtract(a, f.rotorY, []), a.d, []);
-			}
-			var p = f.parent;
-			p.force += f.force;
-			p.torque += f.torque + vec3.cross(vec3.subtract(f.rotorY, p.rotorY, []), f.force, []);
-			if (f.inactive) continue;
-			g1[6 + (--t)] = vec3.dot(f.torque, f.x2y);
-		}
-		var root = this.ligand.frames[0];
-		for (var f = root, i = f.begin; i < f.end; ++i) {
-			var a = this.ligand.atoms[i];
-			if (a.isHydrogen()) continue;
-			f.force += a.d;
-			f.torque += vec3.cross(vec3.subtract(a, f.rotorY, []), a.e, []);
-		}
-		g1[0] = root.force[0];
-		g1[1] = root.force[1];
-		g1[2] = root.force[2];
-		g1[3] = root.torque[0];
-		g1[4] = root.torque[1];
-		g1[5] = root.torque[2];
-		var pos1 = vec3.create(root.rotorY), pos2;
-		var ori1 = identityQuat4, ori2;
-		var tor1 = new Array(this.ligand.nActiveTors), tor2 = new Array(this.ligand.nActiveTors);
+		var pos1 = vec3.create(this.ligand.frames[0].rotorY), ori1 = quat4.identity(), tor1 = new Array(this.ligand.nActiveTors);
 		for (var i = 0; i < this.ligand.nActiveTors; ++i) {
 			tor1[i] = 0;
 		}
+		var pos2 = vec3.create(), ori2 = quat4.create(), tor2 = new Array(this.ligand.nActiveTors);
 		while (true) {
 			var p = new Array(n);
 			for (var i = 0; i < n; ++i) {
@@ -915,16 +951,25 @@ var iview = (function() {
 			}
 			var t, alpha = 1;
 			for (t = 0; t < 10; ++t) {
-				pos2 = vec3.add(pos1, vec3.scale(p, alpha, []), []);
-				ori2 = quat4.multiply(quat4.fromAngleAxis(vec3.scale([p[3], p[4], p[5]], alpha, []), []), ori1, []);
-				for (var i = 0; i < n - 6; ++i) {
-					c2.torsions[i] = c1.torsions[i] + alpha * p[6 + i];
+				vec3.add(pos1, vec3.scale(p, alpha, []), pos2);
+				var rot = vec3.scale([p[3], p[4], p[5]], alpha, []);
+				quat4.multiply(quat4.fromAngleAxis(vec3.length(rot), vec3.normalize(rot), []), ori1, ori2);
+				for (var i = 0; i < this.ligand.nActiveTors; ++i) {
+					tor2[i] = tor1[i] + alpha * p[6 + i];
 				}
-				// f.origin, f.axe, f.oriq, f.orim, f.force, f.torque
-				if (lig.evaluate(c2, sf, b, grid_maps, e1 + 0.0001 * alpha * pg1, e2, f2, g2)) break;
+				this.ligand.refreshC(pos2, ori2, tor2);
+				this.ligand.refreshE(this.receptor);
+				if (this.ligand.eTotal < eTotal + 0.0001 * alpha * pg1) break;
 				alpha *= 0.5;
 			}
-			if (t === 10) break;
+			if (t === 10) {
+				this.ligand.refreshC(pos1, ori1, tor1);
+				this.ligand.refreshE(this.receptor);
+				break;
+			}
+			this.ligand.refreshD(this.receptor);
+			var g2 = this.ligand.refreshG();
+			var y = new Array(n);
 			for (var i = 0; i < n; ++i) {
 				y[i] = g2[i] - g1[i];
 			}
@@ -950,8 +995,13 @@ var iview = (function() {
 			for (var j = i; j < n; ++j) {
 				h[index(i, j)] += ryp * (mhy[i] * p[j] + mhy[j] * p[i]) + pco * p[i] * p[j];
 			}
-			// Update ligand atoms.
+			pos1 = pos2;
+			ori1 = ori2;
+			tor1 = tor2;
+			e = this.ligand.e.Total;
+			this.refreshH();
 			this.repaint();
+			if (this.options.refresh) this.options.refresh();
 		}
 	}
 	iview.prototype.save = function() {
