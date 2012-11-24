@@ -604,7 +604,7 @@ var iview = (function() {
 		}
 		for (var i = 0; i < this.interactingPairs.length; ++i) {
 			var p = this.interactingPairs[i];
-			var v = vec3.subtract(p.a2, p.a1);
+			var v = vec3.subtract(p.a2, p.a1, []);
 			var r = vec3.length(v);
 			vec3.scale(v, (score(p.a1.xs, p.a2.xs, r + delta) - score(p.a1.xs, p.a2.xs, r)) / (r * delta));
 			vec3.subtract(p.a1.d, v);
@@ -970,6 +970,7 @@ var iview = (function() {
 			if (t === 10) {
 				this.ligand.refreshC(pos1, ori1, tor1);
 				this.ligand.refreshE(this.receptor);
+				this.repaint();
 				break;
 			}
 			this.ligand.refreshD(this.receptor);
