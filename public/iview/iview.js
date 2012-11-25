@@ -658,7 +658,7 @@ var iview = (function() {
 		for (var k = 1; k < this.frames.length; ++k) {
 			var f = this.frames[k];
 			f.y2y = vec3.subtract(f.rotorY, f.parent.rotorY, []);
-			f.axe = f.x2y = vec3.normalize(vec3.subtract(f.rotorY, f.rotorX), []);
+			f.axe = f.x2y = vec3.normalize(vec3.subtract(f.rotorY, f.rotorX, []), []);
 		}
 	}
 
