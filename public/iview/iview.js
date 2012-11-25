@@ -592,7 +592,7 @@ var iview = (function() {
 		}
 	}
 	Ligand.prototype.refreshD = function(receptor) {
-		var delta = 0.15625;
+		var delta = 0.001;
 		for (var i = 0; i < this.atoms.length; ++i) {
 			var a = this.atoms[i];
 			if (a.isHydrogen()) continue;
@@ -1006,7 +1006,7 @@ var iview = (function() {
 				tor1[i] = tor2[i];
 			}
 			g1 = g2;
-			e = this.ligand.eTotal;
+			eTotal = this.ligand.eTotal;
 			this.refreshH();
 			this.repaint();
 			if (this.options.refresh) this.options.refresh();
