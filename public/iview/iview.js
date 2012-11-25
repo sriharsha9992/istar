@@ -970,7 +970,6 @@ var iview = (function() {
 			if (t === 10) {
 				this.ligand.refreshC(pos1, ori1, tor1);
 				this.ligand.refreshE(this.receptor);
-				this.repaint();
 				break;
 			}
 			this.ligand.refreshD(this.receptor);
@@ -1004,10 +1003,13 @@ var iview = (function() {
 			pos1 = pos2;
 			ori1 = ori2;
 			tor1 = tor2;
+			g1 = g2;
 			e = this.ligand.eTotal;
 			this.refreshH();
 			this.repaint();
 			if (this.options.refresh) this.options.refresh();
+//			var now = new Date().getTime();
+//			while (new Date() < now + 1000);
 		}
 	}
 	iview.prototype.save = function() {
