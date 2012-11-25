@@ -569,7 +569,7 @@ var iview = (function() {
 		this.eNormalized = this.eInter / this.flexPenalty;
 		this.efficiency  = this.eInter / this.nHeavyAtoms;
 	}
-	Ligand.prototype.refreshC = function(pos, ori, tor) {
+	Ligand.prototype.refreshC = function(pos, ori, tor, corner1, corner2) {
 		var root = this.frames[0];
 		vec3.set(pos, root.rotorY);
 		root.ori = quat4.create(ori);
@@ -577,6 +577,7 @@ var iview = (function() {
 		for (var i = root.begin; i < root.end; ++i) {
 			var a = this.atoms[i];
 			vec3.add(root.rotorY, mat3.multiplyVec3(root.rot, a.coord, []), a);
+			if (!((corner1[0] <= a[0]) && (a[0] < corner2[0]) && (corner1[1] <= a[1]) && (a[1] < corner2[1]) && (corner1[2] <= a[2]) && (a[2] < corner2[2]))) return false;
 		}
 		for (var k = 1, t = 0; k < this.frames.length; ++k) {
 			var f = this.frames[k];
@@ -588,8 +589,10 @@ var iview = (function() {
 			for (var i = f.begin; i < f.end; ++i) {
 				var a = this.atoms[i];
 				vec3.add(f.rotorY, mat3.multiplyVec3(f.rot, a.coord, []), a);
+				if (!((corner1[0] <= a[0]) && (a[0] < corner2[0]) && (corner1[1] <= a[1]) && (a[1] < corner2[1]) && (corner1[2] <= a[2]) && (a[2] < corner2[2]))) return false;
 			}
 		}
+		return true;
 	}
 	Ligand.prototype.refreshD = function(receptor) {
 		var delta = 0.001;
@@ -878,6 +881,8 @@ var iview = (function() {
 	iview.prototype.parseLigand = function(content) {
 		this.ligand = new Ligand(content, this.options.hideNonPolarHydrogens);
 		this.ligand.centerize(this.center);
+		vec3.subtract(this.corner1, this.center);
+		vec3.subtract(this.corner2, this.center);
 		this.ligand.refreshE(this.receptor);
 		this.refreshH();
 		if (this.options.refresh) this.options.refresh();
@@ -962,12 +967,12 @@ var iview = (function() {
 				for (var i = 0; i < this.ligand.nActiveTors; ++i) {
 					tor2[i] = tor1[i] + alpha * p[6 + i];
 				}
-				this.ligand.refreshC(pos2, ori2, tor2);
+				if (!this.ligand.refreshC(pos2, ori2, tor2, this.corner1, this.corner2)) continue;
 				this.ligand.refreshE(this.receptor);
 				if (this.ligand.eTotal < eTotal + 0.0001 * alpha * pg1) break;
 			}
 			if (t === 10) {
-				this.ligand.refreshC(pos1, ori1, tor1);
+				this.ligand.refreshC(pos1, ori1, tor1, this.corner1, this.corner2);
 				this.ligand.refreshE(this.receptor);
 				break;
 			}
