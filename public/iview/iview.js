@@ -1000,9 +1000,11 @@ var iview = (function() {
 			for (var j = i; j < n; ++j) {
 				h[index(i, j)] += ryp * (mhy[i] * p[j] + mhy[j] * p[i]) + pco * p[i] * p[j];
 			}
-			pos1 = pos2;
-			ori1 = ori2;
-			tor1 = tor2;
+			vec3.set(pos2, pos1);
+			quat4.set(ori2, ori1);
+			for (var i = 0; i < this.ligand.nActiveTors; ++i) {
+				tor1[i] = tor2[i];
+			}
 			g1 = g2;
 			e = this.ligand.eTotal;
 			this.refreshH();
