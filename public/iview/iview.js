@@ -1014,8 +1014,6 @@ var iview = (function() {
 			this.refreshH();
 			this.repaint();
 			if (this.options.refresh) this.options.refresh();
-//			var now = new Date().getTime();
-//			while (new Date() < now + 1000);
 		}
 	}
 	iview.prototype.save = function() {
