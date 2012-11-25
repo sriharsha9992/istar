@@ -955,7 +955,7 @@ var iview = (function() {
 				pg1 += p[i] * g1[i];
 			}
 			var t, alpha = 1;
-			for (t = 0; t < 10; ++t) {
+			for (t = 0; t < 10; ++t, alpha *= 0.5) {
 				vec3.add(pos1, vec3.scale(p, alpha, []), pos2);
 				var rot = vec3.scale([p[3], p[4], p[5]], alpha, []);
 				quat4.multiply(quat4.fromAngleAxis(vec3.length(rot), vec3.normalize(rot), []), ori1, ori2);
@@ -965,7 +965,6 @@ var iview = (function() {
 				this.ligand.refreshC(pos2, ori2, tor2);
 				this.ligand.refreshE(this.receptor);
 				if (this.ligand.eTotal < eTotal + 0.0001 * alpha * pg1) break;
-				alpha *= 0.5;
 			}
 			if (t === 10) {
 				this.ligand.refreshC(pos1, ori1, tor1);
