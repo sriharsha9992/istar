@@ -617,8 +617,8 @@ var iview = (function() {
 	Ligand.prototype.refreshG = function() {
 		for (var k = 0; k < this.frames.length; ++k) {
 			var f = this.frames[k];
-			f.force  = vec3.createFrom(0, 0, 0);
-			f.torque = vec3.createFrom(0, 0, 0);
+			f.force  = vec3.create();
+			f.torque = vec3.create();
 		}
 		this.g = new Array(6 + this.nActiveTors);
 		for (var k = this.frames.length - 1, t = this.nActiveTors; k > 0; --k) {
@@ -934,18 +934,20 @@ var iview = (function() {
 			return i + j * (j + 1) >> 1;
 		}
 		var n = 6 + this.ligand.nActiveTors;
-		var h = new Array(n * (n+1) >> 1);
-		for (var i = 0, ii = h.length; i < ii; ++i) {
-			h[i] = 0;
+		var identityHessian = new Array(n*(n+1) >> 1);
+		for (var i = 0, ii = identityHessian.length; i < ii; ++i) {
+			identityHessian[i] = 0;
 		}
 		for (var i = 0; i < n; ++i) {
-			h[index(i, i)] = 1;
+			identityHessian[index(i, i)] = 1;
 		}
+		var h = identityHessian.slice(0);
 		var pos1 = vec3.create(this.ligand.frames[0].rotorY), ori1 = quat4.identity(), tor1 = new Array(this.ligand.nActiveTors);
 		for (var i = 0; i < this.ligand.nActiveTors; ++i) {
 			tor1[i] = 0;
 		}
 		var pos2 = vec3.create(), ori2 = quat4.create(), tor2 = new Array(this.ligand.nActiveTors);
+		var mc = 0;
 		while (true) {
 			var p = new Array(n);
 			for (var i = 0; i < n; ++i) {
@@ -960,8 +962,8 @@ var iview = (function() {
 				pg += p[i] * g[i];
 			}
 			pg *= 0.0001;
-			var t, alpha = 1;
-			for (t = 0; t < 20; ++t, alpha *= 0.5) {
+			var t;
+			for (t = 0, alpha = 1; t < 20; ++t, alpha *= 0.5) {
 				vec3.add(pos1, vec3.scale(p, alpha, []), pos2);
 				var rot = vec3.scale(p.slice(3, 6), alpha, []);
 				quat4.multiply(quat4.fromAngleAxis(vec3.length(rot), vec3.normalize(rot), []), ori1, ori2);
@@ -973,9 +975,14 @@ var iview = (function() {
 				if (this.ligand.eTotal < eTotal + alpha * pg) break;
 			}
 			if (t === 20) {
-				this.ligand.refreshC(pos1, ori1, tor1, this.corner1, this.corner2);
-				this.ligand.refreshE(this.receptor);
-				break;
+				if (mc === 0) {
+					this.ligand.refreshC(pos1, ori1, tor1, this.corner1, this.corner2);
+					this.ligand.refreshE(this.receptor);
+					break;
+				}
+				h = identityHessian.slice(0);
+				mc = 0;
+				continue;
 			}
 			this.ligand.refreshD(this.receptor);
 			this.ligand.refreshG();
@@ -1015,6 +1022,7 @@ var iview = (function() {
 			this.refreshH();
 			this.repaint();
 			if (this.options.refresh) this.options.refresh();
+			++mc;
 		}
 	}
 	iview.prototype.save = function() {
