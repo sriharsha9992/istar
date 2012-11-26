@@ -595,21 +595,21 @@ var iview = (function() {
 		return true;
 	}
 	Ligand.prototype.refreshD = function(receptor) {
-		var delta = 0.001;
+		var d = 0.0001;
 		for (var i = 0; i < this.atoms.length; ++i) {
 			var a = this.atoms[i];
 			if (a.isHydrogen()) continue;
-			var e100 = receptor.score(a.xs, vec3.add(a, [delta, 0, 0], []));
-			var e010 = receptor.score(a.xs, vec3.add(a, [0, delta, 0], []));
-			var e001 = receptor.score(a.xs, vec3.add(a, [0, 0, delta], []));
+			var e100 = receptor.score(a.xs, vec3.add(a, [d, 0, 0], []));
+			var e010 = receptor.score(a.xs, vec3.add(a, [0, d, 0], []));
+			var e001 = receptor.score(a.xs, vec3.add(a, [0, 0, d], []));
 			a.d = vec3.subtract([e100, e010, e001], [a.e, a.e, a.e], []);
-			vec3.scale(a.d, 1 / delta);
+			vec3.scale(a.d, 1 / d);
 		}
 		for (var i = 0; i < this.interactingPairs.length; ++i) {
 			var p = this.interactingPairs[i];
 			var v = vec3.subtract(p.a2, p.a1, []);
 			var r = vec3.length(v);
-			vec3.scale(v, (score(p.a1.xs, p.a2.xs, r + delta) - score(p.a1.xs, p.a2.xs, r)) / (r * delta));
+			vec3.scale(v, (score(p.a1.xs, p.a2.xs, r + d) - score(p.a1.xs, p.a2.xs, r)) / (r * d));
 			vec3.subtract(p.a1.d, v);
 			vec3.add(p.a2.d, v);
 		}
@@ -620,7 +620,7 @@ var iview = (function() {
 			f.force  = vec3.createFrom(0, 0, 0);
 			f.torque = vec3.createFrom(0, 0, 0);
 		}
-		var g = new Array(6 + this.nActiveTors);
+		this.g = new Array(6 + this.nActiveTors);
 		for (var k = this.frames.length - 1, t = this.nActiveTors; k > 0; --k) {
 			var f = this.frames[k];
 			for (var i = f.begin; i < f.end; ++i) {
@@ -633,7 +633,7 @@ var iview = (function() {
 			vec3.add(p.force, f.force);
 			vec3.add(p.torque, vec3.add(f.torque, vec3.cross(vec3.subtract(f.rotorY, p.rotorY, []), f.force, []), []));
 			if (f.inactive) continue;
-			g[6 + (--t)] = vec3.dot(f.torque, f.axe);
+			this.g[6 + (--t)] = vec3.dot(f.torque, f.axe);
 		}
 		var root = this.frames[0];
 		for (var f = root, i = f.begin; i < f.end; ++i) {
@@ -642,13 +642,12 @@ var iview = (function() {
 			vec3.add(f.force, a.d);
 			vec3.add(f.torque, vec3.cross(vec3.subtract(a, f.rotorY, []), a.d, []));
 		}
-		g[0] = root.force[0];
-		g[1] = root.force[1];
-		g[2] = root.force[2];
-		g[3] = root.torque[0];
-		g[4] = root.torque[1];
-		g[5] = root.torque[2];
-		return g;
+		this.g[0] = root.force[0];
+		this.g[1] = root.force[1];
+		this.g[2] = root.force[2];
+		this.g[3] = root.torque[0];
+		this.g[4] = root.torque[1];
+		this.g[5] = root.torque[2];
 	}
 	Ligand.prototype.refreshR = function() {
 		for (var k = 0; k < this.frames.length; ++k) {
@@ -926,10 +925,11 @@ var iview = (function() {
 		}
 	};
 	iview.prototype.dock = function() {
-		var eTotal = this.ligand.eTotal;
 		this.ligand.refreshR();
 		this.ligand.refreshD(this.receptor);
-		var g1 = this.ligand.refreshG();
+		this.ligand.refreshG();
+		var eTotal = this.ligand.eTotal;
+		var g = this.ligand.g;
 		function index(i, j) {
 			return i + j * (j + 1) >> 1;
 		}
@@ -951,36 +951,37 @@ var iview = (function() {
 			for (var i = 0; i < n; ++i) {
 				var sum = 0;
 				for (var j = 0; j < n; ++j) {
-					sum += h[i < j ? index(i, j) : index(j, i)] * g1[j];
+					sum += h[i < j ? index(i, j) : index(j, i)] * g[j];
 				}
 				p[i] = -sum;
 			}
-			var pg1 = 0;
+			var pg = 0;
 			for (var i = 0; i < n; ++i) {
-				pg1 += p[i] * g1[i];
+				pg += p[i] * g[i];
 			}
+			pg *= 0.0001;
 			var t, alpha = 1;
-			for (t = 0; t < 10; ++t, alpha *= 0.5) {
+			for (t = 0; t < 20; ++t, alpha *= 0.5) {
 				vec3.add(pos1, vec3.scale(p, alpha, []), pos2);
-				var rot = vec3.scale([p[3], p[4], p[5]], alpha, []);
+				var rot = vec3.scale(p.slice(3, 6), alpha, []);
 				quat4.multiply(quat4.fromAngleAxis(vec3.length(rot), vec3.normalize(rot), []), ori1, ori2);
 				for (var i = 0; i < this.ligand.nActiveTors; ++i) {
 					tor2[i] = tor1[i] + alpha * p[6 + i];
 				}
 				if (!this.ligand.refreshC(pos2, ori2, tor2, this.corner1, this.corner2)) continue;
 				this.ligand.refreshE(this.receptor);
-				if (this.ligand.eTotal < eTotal + 0.0001 * alpha * pg1) break;
+				if (this.ligand.eTotal < eTotal + alpha * pg) break;
 			}
-			if (t === 10) {
+			if (t === 20) {
 				this.ligand.refreshC(pos1, ori1, tor1, this.corner1, this.corner2);
 				this.ligand.refreshE(this.receptor);
 				break;
 			}
 			this.ligand.refreshD(this.receptor);
-			var g2 = this.ligand.refreshG();
+			this.ligand.refreshG();
 			var y = new Array(n);
 			for (var i = 0; i < n; ++i) {
-				y[i] = g2[i] - g1[i];
+				y[i] = this.ligand.g[i] - g[i];
 			}
 			var mhy = new Array(n);
 			for (var i = 0; i < n; ++i) {
@@ -1009,8 +1010,8 @@ var iview = (function() {
 			for (var i = 0; i < this.ligand.nActiveTors; ++i) {
 				tor1[i] = tor2[i];
 			}
-			g1 = g2;
 			eTotal = this.ligand.eTotal;
+			g = this.ligand.g;
 			this.refreshH();
 			this.repaint();
 			if (this.options.refresh) this.options.refresh();
