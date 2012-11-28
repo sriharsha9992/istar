@@ -27,7 +27,7 @@ Features
 * [mongodb] v1.2.0
 * [express] v3.0.3
 * [validator] v0.4.17
-* [spdy] v1.3.5
+* [spdy] v1.3.6
 
 ### Database
 
