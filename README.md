@@ -18,7 +18,7 @@ Features
 * [Twitter Bootstrap] v2.2.1
 * [HTML5 Boilerplate] v4.0.0
 * [Modernizr] v2.6.2
-* [jQuery] v1.8.2
+* [jQuery] v1.8.3
 * [jQuery UI] v1.9.1
 
 ### Web server
