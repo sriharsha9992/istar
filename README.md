@@ -19,7 +19,7 @@ Features
 * [HTML5 Boilerplate] v4.0.0
 * [Modernizr] v2.6.2
 * [jQuery] v1.8.3
-* [jQuery UI] v1.9.1
+* [jQuery UI] v1.9.2
 
 ### Web server
 
