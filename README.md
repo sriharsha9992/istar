@@ -24,7 +24,7 @@ Features
 ### Web server
 
 * [node.js] v0.8.15
-* [mongodb] v1.2.2
+* [mongodb] v1.2.4
 * [express] v3.0.4
 * [validator] v0.4.19
 * [spdy] v1.3.6
