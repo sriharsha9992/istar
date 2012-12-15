@@ -863,6 +863,16 @@ var iview = (function() {
 			mat4.translate(iv.translationMatrix, [0, 0, delta * 2.5]);
 			iv.repaint();
 		});
+		this.idock = new Worker('idock.js');
+		this.idock.onmessage = function(e) {
+			iv.ligand.refreshR();
+			iv.ligand.refreshD(iv.receptor);
+			iv.ligand.refreshC(e.data.pos, e.data.ori, e.data.tor, iv.corner1, iv.corner2)
+			iv.ligand.refreshE(iv.receptor);
+			iv.refreshH();
+			iv.repaint();
+			if (iv.options.refresh) iv.options.refresh();
+		};
 	};
 	iview.prototype.setBox = function(center, size) {
 		this.center = center;
@@ -925,6 +935,8 @@ var iview = (function() {
 		}
 	};
 	iview.prototype.dock = function() {
+		this.idock.postMessage(/*JSON.stringify(this.ligand)*/);
+		return;
 		this.ligand.refreshR();
 		this.ligand.refreshD(this.receptor);
 		this.ligand.refreshG();

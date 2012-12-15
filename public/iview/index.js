@@ -99,7 +99,6 @@ $(function() {
 				e.preventDefault();
 				iv.dock();
 			});
-		    worker.postMessage(JSON.stringify(iv.ligand));
 		});
 	});
 });
