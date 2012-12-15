@@ -91,12 +91,6 @@ $(function() {
 			$('#hbas').html(iv.ligand.hbas.length);
 			$('#flexPenalty').html(iv.ligand.flexPenalty.toFixed(3));
 			iv.repaint();
-			var worker = new Worker('worker.js');
-			worker.onmessage = function(event) {
-				console.log(event.data);
-				iv.ligand.refreshC(event.data.pos, event.data.ori, event.data.tor, iv.corner1, iv.corner2)
-				iv.ligand.refreshE(iv.receptor);
-			};
 			$('#export').click(function(e) {
 				e.preventDefault();
 				iv.export();
