@@ -28,21 +28,16 @@ namespace idock
 	class summary
 	{
 	public:
-		const size_t index;
-		const string lig_id;
-		const vector<fl> energies;
-		const vector<fl> efficiencies;
-		const vector<string> hbonds;
-		const string property;
-		const string supplier;
-		explicit summary(const size_t index, const string& lig_id, vector<fl>&& energies_, vector<fl>&& efficiencies_, vector<string>&& hbonds_, string&& property_, string&& supplier_) : index(index), lig_id(lig_id), energies(static_cast<vector<fl>&&>(energies_)), efficiencies(static_cast<vector<fl>&&>(efficiencies_)), hbonds(static_cast<vector<string>&&>(hbonds_)), property(static_cast<string&&>(property_)), supplier(static_cast<string&&>(supplier_)) {}
+		size_t index;
+		string lig_id;
+		vector<fl> energies;
+		vector<fl> efficiencies;
+		vector<fl> affinities;
+		vector<string> hbonds;
+		string property;
+		string supplier;
+		explicit summary(const size_t index, const string& lig_id, vector<fl>&& energies_, vector<fl>&& efficiencies_, vector<fl>&& affinities_, vector<string>&& hbonds_, string&& property_, string&& supplier_) : index(index), lig_id(lig_id), energies(static_cast<vector<fl>&&>(energies_)), efficiencies(static_cast<vector<fl>&&>(efficiencies_)), affinities(static_cast<vector<fl>&&>(affinities_)), hbonds(static_cast<vector<string>&&>(hbonds_)), property(static_cast<string&&>(property_)), supplier(static_cast<string&&>(supplier_)) {}
 	};
-
-	/// For sorting ptr_vector<summary>.
-	inline bool operator<(const summary& a, const summary& b)
-	{
-		return a.energies.front() < b.energies.front();
-	}
 }
 
 #endif

@@ -265,6 +265,52 @@ namespace idock
 		XS_TYPE_Met_D, // 28 = AD_TYPE_Sr
 	};
 
+	// RF-Score atom types.
+	const size_t RF_TYPE_C    = 0; ///< Carbon.
+	const size_t RF_TYPE_N    = 1; ///< Nitrogen.
+	const size_t RF_TYPE_O    = 2; ///< Oxygen.
+	const size_t RF_TYPE_S    = 3; ///< Sulfur.
+	const size_t RF_TYPE_P    = 4; ///< Phosphorus.
+	const size_t RF_TYPE_F    = 5; ///< Fluorine.
+	const size_t RF_TYPE_Cl   = 6; ///< Chlorine.
+	const size_t RF_TYPE_Br   = 7; ///< Bromine.
+	const size_t RF_TYPE_I    = 8; ///< Iodine.
+	const size_t RF_TYPE_SIZE = 9; ///< Number of supported RF-Score atom types.
+
+	/// Mapping from AutoDock4 atom type to RF-Score atom type.
+	const size_t ad_to_rf[] =
+	{
+		RF_TYPE_SIZE, //  0 = AD_TYPE_H
+		RF_TYPE_SIZE, //  1 = AD_TYPE_HD
+		RF_TYPE_C,    //  2 = AD_TYPE_C
+		RF_TYPE_C,    //  3 = AD_TYPE_A
+		RF_TYPE_N,    //  4 = AD_TYPE_N
+		RF_TYPE_N,    //  5 = AD_TYPE_NA
+		RF_TYPE_O,    //  6 = AD_TYPE_OA
+		RF_TYPE_S,    //  7 = AD_TYPE_S
+		RF_TYPE_S,    //  8 = AD_TYPE_SA
+		RF_TYPE_SIZE, //  9 = AD_TYPE_Se
+		RF_TYPE_P,    // 10 = AD_TYPE_P
+		RF_TYPE_F,    // 11 = AD_TYPE_F
+		RF_TYPE_Cl,   // 12 = AD_TYPE_Cl
+		RF_TYPE_Br,   // 13 = AD_TYPE_Br
+		RF_TYPE_I,    // 14 = AD_TYPE_I
+		RF_TYPE_SIZE, // 15 = AD_TYPE_Zn
+		RF_TYPE_SIZE, // 16 = AD_TYPE_Fe
+		RF_TYPE_SIZE, // 17 = AD_TYPE_Mg
+		RF_TYPE_SIZE, // 18 = AD_TYPE_Ca
+		RF_TYPE_SIZE, // 19 = AD_TYPE_Mn
+		RF_TYPE_SIZE, // 20 = AD_TYPE_Cu
+		RF_TYPE_SIZE, // 21 = AD_TYPE_Na
+		RF_TYPE_SIZE, // 22 = AD_TYPE_K
+		RF_TYPE_SIZE, // 23 = AD_TYPE_Hg
+		RF_TYPE_SIZE, // 24 = AD_TYPE_Ni
+		RF_TYPE_SIZE, // 25 = AD_TYPE_Co
+		RF_TYPE_SIZE, // 26 = AD_TYPE_Cd
+		RF_TYPE_SIZE, // 27 = AD_TYPE_As
+		RF_TYPE_SIZE, // 28 = AD_TYPE_Sr
+	};
+
 	/// Distance requirement of forming hydrogen bonds.
 	const fl hbond_dist_sqr = sqr(3.5);
 
@@ -276,9 +322,10 @@ namespace idock
 		vec3 coordinate; ///< 3D coordinate.
 		size_t ad; ///< AutoDock4 atom type.
 		size_t xs; ///< XScore atom type.
+		size_t rf; ///< RF-Score atom type.
 
 		/// Constructs an atom with 3D coordinate and AutoDock4 atom type.
-		explicit atom(string&& name_, const vec3& coordinate, const size_t ad) : name(static_cast<string&&>(name_)), coordinate(coordinate), ad(ad), xs(ad_to_xs[ad]) {}
+		explicit atom(string&& name_, const vec3& coordinate, const size_t ad) : name(static_cast<string&&>(name_)), coordinate(coordinate), ad(ad), xs(ad_to_xs[ad]), rf(ad_to_rf[ad]) {}
 
 		/// Returns the covalent radius of current AutoDock4 atom type.
 		fl covalent_radius() const

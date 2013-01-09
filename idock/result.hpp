@@ -35,6 +35,7 @@ namespace idock
 		fl f; ///< Inter-molecular free energy.
 		fl e_nd; ///< Normalized free energy, only for output purpose.
 		fl efficiency; ///< Ligand efficiency, only for output purpose.
+		fl affinity; ///< RF-Score, only for output purpose.
 		string hbonds; ///< Hydrogen bonds string.
 		vector<vec3> heavy_atoms; ///< Heavy atom coordinates.
 		vector<vec3> hydrogens; ///< Hydrogen atom coordinates.
@@ -43,7 +44,7 @@ namespace idock
 		explicit result(const fl e, const fl f, vector<vec3>&& heavy_atoms_, vector<vec3>&& hydrogens_) : e(e), f(f), heavy_atoms(static_cast<vector<vec3>&&>(heavy_atoms_)), hydrogens(static_cast<vector<vec3>&&>(hydrogens_)) {}
 
 		/// Move constructor.
-		result(result&& r) : e(r.e), f(r.f), heavy_atoms(static_cast<vector<vec3>&&>(r.heavy_atoms)), hydrogens(static_cast<vector<vec3>&&>(r.hydrogens)) {}
+//		result(result&& r) : e(r.e), f(r.f), heavy_atoms(static_cast<vector<vec3>&&>(r.heavy_atoms)), hydrogens(static_cast<vector<vec3>&&>(r.hydrogens)) {}
 
 		/// For sorting ptr_vector<result>.
 		bool operator<(const result& r) const

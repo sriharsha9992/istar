@@ -16,14 +16,13 @@
 
 */
 
-#include <syslog.h>
-#include <ctime>
 #include <boost/thread/thread.hpp>
 #include <boost/filesystem/operations.hpp>
 #include <boost/filesystem/fstream.hpp>
 #include <boost/iostreams/filtering_stream.hpp>
 #include <boost/iostreams/filter/gzip.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
+#include <boost/process/operations.hpp>
 #include <mongo/client/dbclient.h>
 #include <Poco/Net/MailMessage.h>
 #include <Poco/Net/MailRecipient.h>
@@ -37,6 +36,7 @@
 
 int main(int argc, char* argv[])
 {
+	using std::cout;
 	using std::string;
 	using boost::array;
 	using boost::filesystem::path;
@@ -46,9 +46,7 @@ int main(int argc, char* argv[])
 	using boost::bind;
 	using namespace idock;
 
-	// Daemonize itself, retaining the current working directory and stdin, stdout and stderr.
-	daemon(1, 1);
-	syslog(LOG_INFO, "idock 2.0");
+	cout << "idock 2.0\n";
 
 	// Fetch command line arguments.
 	const auto host = argv[1];
@@ -60,11 +58,11 @@ int main(int argc, char* argv[])
 	DBClientConnection conn;
 	{
 		// Connect to host and authenticate user.
-		syslog(LOG_INFO, "Connecting to %s and authenticating %s", host, user);
+		cout << "Connecting to " << host << " and authenticating " << user << '\n';
 		string errmsg;
 		if ((!conn.connect(host, errmsg)) || (!conn.auth("istar", user, pwd, errmsg)))
 		{
-			syslog(LOG_ERR, "%s", errmsg.c_str());
+			cout << errmsg << '\n';
 			return 1;
 		}
 	}
@@ -73,7 +71,7 @@ int main(int argc, char* argv[])
 	const auto collection = "istar.idock";
 	const auto jobid_fields = BSON("_id" << 1 << "scheduled" << 1);
 	const auto param_fields = BSON("_id" << 0 << "receptor" << 1 << "ligands" << 1 << "center_x" << 1 << "center_y" << 1 << "center_z" << 1 << "size_x" << 1 << "size_y" << 1 << "size_z" << 1 << "mwt_lb" << 1 << "mwt_ub" << 1 << "logp_lb" << 1 << "logp_ub" << 1 << "ad_lb" << 1 << "ad_ub" << 1 << "pd_lb" << 1 << "pd_ub" << 1 << "hbd_lb" << 1 << "hbd_ub" << 1 << "hba_lb" << 1 << "hba_ub" << 1 << "tpsa_lb" << 1 << "tpsa_ub" << 1 << "charge_lb" << 1 << "charge_ub" << 1 << "nrb_lb" << 1 << "nrb_ub" << 1);
-	const auto compt_fields = BSON("_id" << 0 << "email" << 1 << "submitted" << 1 << "description" << 1);
+	const auto compt_fields = BSON("_id" << 0 << "sort" << 1 << "email" << 1 << "submitted" << 1 << "description" << 1);
 	const path ligands_path = "16_lig.pdbqt";
 	const path headers_path = "16_hdr.bin";
 	const size_t num_threads = thread::hardware_concurrency();
@@ -86,6 +84,10 @@ int main(int argc, char* argv[])
 	const fl energy_range = 3.0;
 	const fl grid_granularity = 0.08;
 	const auto epoch = boost::gregorian::date(1970, 1, 1);
+	const auto rscript = boost::process::find_executable_in_path("Rscript");
+	const auto sort_summaries_by_fe = [] (const summary& s1, const summary& s2) -> bool { return s1.energies.front() < s2.energies.front(); };
+	const auto sort_summaries_by_af = [] (const summary& s1, const summary& s2) -> bool { return s1.affinities.front() > s2.affinities.front(); };
+	const auto sort_results_by_af = [] (const result& r1, const result& r2) -> bool { return r1.affinity > r2.affinity; };
 
 	// Initialize variables for job caching.
 	OID _id;
@@ -158,6 +160,8 @@ int main(int argc, char* argv[])
 	ifstream headers(headers_path);
 	ifstream ligands(ligands_path);
 
+	cout << "Fetching jobs to execute\n";
+
 	while (true)
 	{
 		// Fetch a job in a FCFS manner.
@@ -218,16 +222,19 @@ int main(int argc, char* argv[])
 		const auto slice = job["scheduled"].Int();
 
 		// Perform phase 1.
-		syslog(LOG_INFO, "Executing job %s phase 1 slice %d", _id.str().c_str(), slice);
+		cout << "Executing job " << _id.str() << " phase 1 slice " << slice << '\n';
 		const auto slice_key = lexical_cast<string>(slice);
 		const auto start_lig = slices[slice];
 		const auto end_lig = slices[slice + 1];
 
-		headers.seekg(sizeof(size_t) * start_lig);
 		ofstream slice_csv(job_path / (slice_key + ".csv"));
 		slice_csv.setf(std::ios::fixed, std::ios::floatfield);
 		slice_csv << std::setprecision(3);
-		for (auto i = start_lig; i < end_lig; ++i)
+		const auto slicef_csv_path = job_path / (slice_key + "F.csv");
+		ofstream slicef_csv(slicef_csv_path);
+		slicef_csv << "6.6,7.6,8.6,16.6,6.7,7.7,8.7,16.7,6.8,7.8,8.8,16.8,6.16,7.16,8.16,16.16,6.15,7.15,8.15,16.15,6.9,7.9,8.9,16.9,6.17,7.17,8.17,16.17,6.35,7.35,8.35,16.35,6.53,7.53,8.53,16.53\n";
+		headers.seekg(sizeof(size_t) * start_lig);
+		for (auto idx = start_lig; idx < end_lig; ++idx)
 		{
 			// Locate a ligand.
 			size_t header;
@@ -316,8 +323,30 @@ int main(int argc, char* argv[])
 			// No conformation can be found if the search space is too small.
 			if (phase1_results.size())
 			{
+				const result& r = phase1_results.front();
+
 				// Dump ligand summaries to the csv file.
-				slice_csv << i << ',' << lig_id << ',' << (phase1_results.front().f * lig.flexibility_penalty_factor) << ',' << (phase1_results.front().f / lig.num_heavy_atoms) << ',' << mwt << ',' << logp << ',' << ad << ',' << pd << ',' << hbd << ',' << hba << ',' << tpsa << ',' << charge << ',' << nrb << '\n';
+				slice_csv << idx << ',' << lig_id << ',' << (r.f * lig.flexibility_penalty_factor) << ',' << (r.f * lig.num_heavy_atoms_inverse) << ',' << mwt << ',' << logp << ',' << ad << ',' << pd << ',' << hbd << ',' << hba << ',' << tpsa << ',' << charge << ',' << nrb << '\n';
+
+				// Dump the 36 RF-Score features.
+				vector<size_t> features(RF_TYPE_SIZE << 2);
+				for (size_t i = 0; i < lig.num_heavy_atoms; ++i)
+				{
+					if (lig.heavy_atoms[i].rf == RF_TYPE_SIZE) continue;
+					for (const auto& a : rec.atoms)
+					{
+						if (a.rf == RF_TYPE_SIZE) continue;
+						const auto dist_sqr = distance_sqr(r.heavy_atoms[i], a.coordinate);
+						if (dist_sqr >= 144) continue;
+						++features[(lig.heavy_atoms[i].rf << 2) + a.rf];
+					}
+				}
+				slicef_csv << features[0];
+				for (size_t i = 1; i < features.size(); ++i)
+				{
+					slicef_csv << ',' << features[i];
+				}
+				slicef_csv << '\n';
 
 				// Clear the results of the current ligand.
 				phase1_results.clear();
@@ -327,34 +356,48 @@ int main(int argc, char* argv[])
 			conn.update(collection, BSON("_id" << _id), BSON("$inc" << BSON(slice_key << 1)));
 		}
 		slice_csv.close();
+		slicef_csv.close();
+
+		// Call Rscript RF-Score.r
+		const auto slicek_csv_path = job_path / (slice_key + "K.csv");
+		create_child(rscript, vector<string> {"RF-Score.r", slicef_csv_path.string(), slicek_csv_path.string()}, boost::process::context()).wait();
+		remove(slicef_csv_path);
 
 		// Increment the completed counter.
 		conn.update(collection, BSON("_id" << _id << "$atomic" << 1), BSON("$inc" << BSON("completed" << 1)));
 
 		// If phase 1 is done, transit to phase 2.
 		if (!conn.query(collection, QUERY("_id" << _id << "completed" << 100))->more()) continue;
-		syslog(LOG_INFO, "Executing job %s phase 2", _id.str().c_str());
+		cout << "Executing job " << _id.str() << " phase 2\n";
 
 		// Combine and delete multiple slice csv's.
 		ptr_vector<summary> phase1_summaries(num_ligands);
 		for (size_t s = 0; s < 100; ++s)
 		{
+			// Parse slice csv.
 			const auto slice_csv_path = job_path / (lexical_cast<string>(s) + ".csv");
-			ifstream in(slice_csv_path);
-			while (getline(in, line))
+			const auto slicek_csv_path = job_path / (lexical_cast<string>(s) + "K.csv");
+			ifstream slice_csv(slice_csv_path);
+			ifstream slicek_csv(slicek_csv_path);
+			while (getline(slicek_csv, line))
 			{
+				const auto rf = lexical_cast<fl>(line);
+				getline(slice_csv, line);
 				const auto comma1 = line.find(',', 1);
 				const auto comma2 = comma1 + 9;
 				const auto comma3 = line.find(',', comma2 + 6);
 				const auto comma4 = line.find(',', comma3 + 6);
 				BOOST_ASSERT(line[comma2] == ',');
-				vector<fl> energies, efficiencies;
+				vector<fl> energies, efficiencies, affinities;
 				energies.push_back(lexical_cast<fl>(line.substr(comma2 + 1, comma3 - comma2 - 1)));
 				efficiencies.push_back(lexical_cast<fl>(line.substr(comma3 + 1, comma4 - comma3 - 1)));
-				phase1_summaries.push_back(new summary(lexical_cast<size_t>(line.substr(0, comma1)), line.substr(comma1 + 1, 8), static_cast<vector<fl>&&>(energies), static_cast<vector<fl>&&>(efficiencies), vector<string>(), line.substr(comma4 + 1), string()));
+				affinities.push_back(rf);
+				phase1_summaries.push_back(new summary(lexical_cast<size_t>(line.substr(0, comma1)), line.substr(comma1 + 1, 8), static_cast<vector<fl>&&>(energies), static_cast<vector<fl>&&>(efficiencies), static_cast<vector<fl>&&>(affinities), vector<string>(), line.substr(comma4 + 1), string()));
 			}
-			in.close();
+			slice_csv.close();
+			slicek_csv.close();
 			remove(slice_csv_path);
+			remove(slicek_csv_path);
 		}
 		const auto docked = phase1_summaries.size();
 		BOOST_ASSERT(docked <= num_ligands);
@@ -365,8 +408,16 @@ int main(int argc, char* argv[])
 			conn.update(collection, BSON("_id" << _id), BSON("$set" << BSON("hits" << num_hits)));
 		}
 
+		// Determine ligand sorting criterion.
+		const auto compt_cursor = conn.query(collection, QUERY("_id" << _id), 1, 0, &compt_fields);
+		const auto compt = compt_cursor->next();
+		const auto sort = compt["sort"].Int();
+		const auto sort_summaries_by = sort == 0 ? sort_summaries_by_fe : sort_summaries_by_af;
+
 		// Write phase 1 csv.
-		phase1_summaries.sort();
+//		phase1_summaries.sort();
+		std::sort(phase1_summaries.begin(), phase1_summaries.end(), sort_summaries_by);
+
 		using boost::iostreams::filtering_ostream;
 		using boost::iostreams::gzip_compressor;
 		{
@@ -376,17 +427,20 @@ int main(int argc, char* argv[])
 			phase1_csv_gz.push(phase1_csv);
 			phase1_csv_gz.setf(std::ios::fixed, std::ios::floatfield);
 			phase1_csv_gz << std::setprecision(3);
-			phase1_csv_gz << "ZINC ID,Free energy (kcal/mol),Ligand efficiency (kcal/mol),Molecular weight (g/mol),Partition coefficient xlogP,Apolar desolvation (kcal/mol),Polar desolvation (kcal/mol),Hydrogen bond donors,Hydrogen bond acceptors,Polar surface area tPSA (A^2),Net charge,Rotatable bonds\n";
+			phase1_csv_gz << "ZINC ID,Free energy (kcal/mol),Ligand efficiency (kcal/mol),RF-Score,Molecular weight (g/mol),Partition coefficient xlogP,Apolar desolvation (kcal/mol),Polar desolvation (kcal/mol),Hydrogen bond donors,Hydrogen bond acceptors,Polar surface area tPSA (A^2),Net charge,Rotatable bonds\n";
 			for (const auto& s : phase1_summaries)
 			{
 				BOOST_ASSERT(s.energies.size() == 1);
 				BOOST_ASSERT(s.efficiencies.size() == 1);
-				phase1_csv_gz << s.lig_id << ',' << s.energies.front() << ',' << s.efficiencies.front() << ',' << s.property << '\n';
+				BOOST_ASSERT(s.affinities.size() == 1);
+				phase1_csv_gz << s.lig_id << ',' << s.energies.front() << ',' << s.efficiencies.front() << ',' << s.affinities.front() << ',' << s.property << '\n';
 			}
 		}
 
 		// Perform phase 2.
-		const path hits_pdbqt_path = job_path / "hits.pdbqt.gz";
+		const auto f_csv_path = job_path / "F.csv";
+		const auto k_csv_path = job_path / "K.csv";
+		const auto hits_pdbqt_path = job_path / "hits.pdbqt.gz";
 		ptr_vector<summary> phase2_summaries(num_hits);
 		for (auto i = 0; i < num_hits; ++i)
 		{
@@ -467,8 +521,9 @@ int main(int argc, char* argv[])
 			const fl best_result_intra_e = best_result.e - best_result.f;
 			for (size_t i = 0; i < num_results; ++i)
 			{
-				phase2_results[i].e_nd = (phase2_results[i].e - best_result_intra_e) * lig.flexibility_penalty_factor;
-				phase2_results[i].efficiency = phase2_results[i].f * lig.num_heavy_atoms_inverse;
+				auto& r = phase2_results[i];
+				r.e_nd = (r.e - best_result_intra_e) * lig.flexibility_penalty_factor;
+				r.efficiency = r.f * lig.num_heavy_atoms_inverse;
 			}
 
 			// Determine the number of conformations to output according to user-supplied max_conformations and energy_range.
@@ -478,11 +533,15 @@ int main(int argc, char* argv[])
 
 			if (num_conformations)
 			{
-				// Find the number of hydrogen bonds.
 				const size_t num_lig_hbda = lig.hbda.size();
+				vector<size_t> features(RF_TYPE_SIZE << 2);
+				ofstream f_csv(f_csv_path);
+				f_csv << "6.6,7.6,8.6,16.6,6.7,7.7,8.7,16.7,6.8,7.8,8.8,16.8,6.16,7.16,8.16,16.16,6.15,7.15,8.15,16.15,6.9,7.9,8.9,16.9,6.17,7.17,8.17,16.17,6.35,7.35,8.35,16.35,6.53,7.53,8.53,16.53\n";
 				for (size_t k = 0; k < num_conformations; ++k)
 				{
 					result& r = phase2_results[k];
+
+					// Find the number of hydrogen bonds.
 					BOOST_ASSERT(r.hbonds.empty());
 					size_t num_hbonds = 0;
 					for (size_t i = 0; i < num_lig_hbda; ++i)
@@ -510,13 +569,48 @@ int main(int argc, char* argv[])
 						}
 					}
 					r.hbonds = lexical_cast<string>(num_hbonds) + r.hbonds;
+
+					// Extract RF-Score features
+					for (auto& f : features) f = 0;
+					for (size_t i = 0; i < lig.num_heavy_atoms; ++i)
+					{
+						if (lig.heavy_atoms[i].rf == RF_TYPE_SIZE) continue;
+						for (const auto& a : rec.atoms)
+						{
+							if (a.rf == RF_TYPE_SIZE) continue;
+							const auto dist_sqr = distance_sqr(r.heavy_atoms[i], a.coordinate);
+							if (dist_sqr >= 144) continue;
+							++features[(lig.heavy_atoms[i].rf << 2) + a.rf];
+						}
+					}
+					f_csv << features[0];
+					for (size_t i = 1; i < features.size(); ++i)
+					{
+						f_csv << ',' << features[i];
+					}
+					f_csv << '\n';
 				}
+				f_csv.close();
+
+				// Call Rscript RF-Score.r
+				create_child(rscript, vector<string> {"RF-Score.r", f_csv_path.string(), k_csv_path.string()}, boost::process::context()).wait();
+
+				// Parse RF-Score affinities.
+				ifstream k_csv(k_csv_path);
+				for (size_t k = 0; k < num_conformations; ++k)
+				{
+					getline(k_csv, line);
+					phase2_results[k].affinity = lexical_cast<fl>(line);
+				}
+
+				// Sort results by RF-Score if necessary.
+				if (sort == 1) std::sort(phase2_results.begin(), phase2_results.end(), sort_results_by_af);
 
 				// Write models to file.
 				lig.write_models(hits_pdbqt_path, remark, supplier, phase2_results, num_conformations, b, grid_maps);
 
 				// Add to summaries.
-				vector<fl> energies(num_conformations), efficiencies(num_conformations);
+				vector<fl> energies(num_conformations), efficiencies(num_conformations), affinities(num_conformations);
 				vector<string> hbonds(num_conformations);
 				for (size_t k = 0; k < num_conformations; ++k)
 				{
@@ -524,8 +618,9 @@ int main(int argc, char* argv[])
 					energies[k] = r.e_nd;
 					efficiencies[k] = r.efficiency;
 					hbonds[k] = r.hbonds;
+					affinities[k] = r.affinity;
 				}
-				phase2_summaries.push_back(new summary(s.index, s.lig_id, static_cast<vector<fl>&&>(energies), static_cast<vector<fl>&&>(efficiencies), static_cast<vector<string>&&>(hbonds), string(s.property), supplier.substr(11)));
+				phase2_summaries.push_back(new summary(s.index, s.lig_id, static_cast<vector<fl>&&>(energies), static_cast<vector<fl>&&>(efficiencies), static_cast<vector<fl>&&>(affinities), static_cast<vector<string>&&>(hbonds), string(s.property), supplier.substr(11)));
 			}
 
 			// Clear the results of the current ligand.
@@ -535,8 +630,13 @@ int main(int argc, char* argv[])
 			conn.update(collection, BSON("_id" << _id), BSON("$inc" << BSON("refined" << 1)));
 		}
 
+		// Cleanup F.csv and K.csv
+		remove(f_csv_path);
+		remove(k_csv_path);
+
 		// Write phase 2 csv.
-		phase2_summaries.sort();
+//		phase2_summaries.sort();
+		std::sort(phase2_summaries.begin(), phase2_summaries.end(), sort_summaries_by);
 		{
 			ofstream phase2_csv(job_path / "phase2.csv.gz");
 			filtering_ostream phase2_csv_gz;
@@ -545,7 +645,7 @@ int main(int argc, char* argv[])
 			phase2_csv_gz.setf(std::ios::fixed, std::ios::floatfield);
 			phase2_csv_gz << std::setprecision(3);
 			phase2_csv_gz << "ZINC ID,Conformations";
-			for (size_t i = 1; i <= max_conformations; ++i) phase2_csv_gz << ",Free energy " << i << " (kcal/mol2),Ligand efficiency " << i << " (kcal/mol),Hydrogen bonds " << i;
+			for (size_t i = 1; i <= max_conformations; ++i) phase2_csv_gz << ",Conformation " << i << " free energy (kcal/mol2),Conformation " << i << " ligand efficiency (kcal/mol),Conformation " << i << " RF-Score,Conformation " << i << " hydrogen bonds";
 			phase2_csv_gz << ",Molecular weight (g/mol),Partition coefficient xlogP,Apolar desolvation (kcal/mol),Polar desolvation (kcal/mol),Hydrogen bond donors,Hydrogen bond acceptors,Polar surface area tPSA (A^2),Net charge,Rotatable bonds,Substance information,Suppliers\n";
 			for (const auto& s : phase2_summaries)
 			{
@@ -553,11 +653,11 @@ int main(int argc, char* argv[])
 				phase2_csv_gz << s.lig_id << ',' << num_conformations;
 				for (size_t j = 0; j < num_conformations; ++j)
 				{
-					phase2_csv_gz << ',' << s.energies[j] << ',' << s.efficiencies[j] << ',' << s.hbonds[j];
+					phase2_csv_gz << ',' << s.energies[j] << ',' << s.efficiencies[j] << ',' << s.affinities[j] << ',' << s.hbonds[j];
 				}
 				for (size_t j = num_conformations; j < max_conformations; ++j)
 				{
-					phase2_csv_gz << ",,,";
+					phase2_csv_gz << ",,,,";
 				}
 				phase2_csv_gz << ',' << s.property << ",http://zinc.docking.org/substance/" << s.lig_id << ',' << s.supplier << '\n';
 			}
@@ -571,10 +671,8 @@ int main(int argc, char* argv[])
 		conn.update(collection, BSON("_id" << _id), BSON("$set" << BSON("done" << Date_t(millis_since_epoch))));
 
 		// Send completion notification email.
-		const auto compt_cursor = conn.query(collection, QUERY("_id" << _id), 1, 0, &compt_fields);
-		const auto compt = compt_cursor->next();
 		const auto email = compt["email"].String();
-		syslog(LOG_INFO, "Sending a completion notification email to %s", email.c_str());
+		cout << "Sending a completion notification email to " << email << '\n';
 		using Poco::Net::MailMessage;
 		using Poco::Net::MailRecipient;
 		using Poco::Net::SMTPClientSession;

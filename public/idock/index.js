@@ -177,6 +177,7 @@ $(function() {
       size_z: $('#size_z').val(),
       description: $('#description').val(),
       email: $('#email').val(),
+      sort: $('#sort button.active').index(),
       mwt_lb: $('#mwt_lb').text(),
       mwt_ub: $('#mwt_ub').text(),
       logp_lb: $('#logp_lb').text(),
