@@ -27,6 +27,7 @@
 #include "box.hpp"
 #include "array3d.hpp"
 #include "result.hpp"
+#include "conformation.hpp"
 
 namespace idock
 {

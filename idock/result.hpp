@@ -21,7 +21,7 @@
 #define IDOCK_RESULT_HPP
 
 #include <boost/ptr_container/ptr_vector.hpp>
-#include "conformation.hpp"
+#include "vec3.hpp"
 
 namespace idock
 {
@@ -43,8 +43,10 @@ namespace idock
 		/// Constructs a result from free energy e, force f, heavy atom coordinates and hydrogen atom coordinates.
 		explicit result(const fl e, const fl f, vector<vec3>&& heavy_atoms_, vector<vec3>&& hydrogens_) : e(e), f(f), heavy_atoms(static_cast<vector<vec3>&&>(heavy_atoms_)), hydrogens(static_cast<vector<vec3>&&>(hydrogens_)) {}
 
-		/// Move constructor.
-//		result(result&& r) : e(r.e), f(r.f), heavy_atoms(static_cast<vector<vec3>&&>(r.heavy_atoms)), hydrogens(static_cast<vector<vec3>&&>(r.hydrogens)) {}
+		result(const result&) = default;
+		result(result&&) = default;
+		result& operator=(const result&) = default;
+		result& operator=(result&&) = default;
 
 		/// For sorting ptr_vector<result>.
 		bool operator<(const result& r) const
