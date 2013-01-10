@@ -99,8 +99,8 @@
             </ul>
             <p>As result, you can download:</p>
             <ul>
-              <li><img src="/excel.png" alt="phase1.csv.gz">phase1.csv.gz: the predicted free energy and 9 molecular properties of the selected ligands produced in phase 1.</li>
-              <li><img src="/excel.png" alt="phase2.csv.gz">phase2.csv.gz: the predicted free energy and 9 molecular properties, as well as link to substance information and supplier list of the top 1000 ligands produced in phase 2.</li>
+              <li><img src="/excel.png" alt="phase1.csv.gz">phase1.csv.gz: the predicted free energy, RF-Score, and 9 molecular properties of the selected ligands produced in phase 1.</li>
+              <li><img src="/excel.png" alt="phase2.csv.gz">phase2.csv.gz: the predicted free energy, RF-Score, and 9 molecular properties, as well as link to substance information and supplier list of the top 1000 ligands produced in phase 2.</li>
               <li><img src="/mol.png" alt="hits.pdbqt.gz">hits.pdbqt.gz: the predicted conformations of the top 1000 ligands produced in phase 2.</li>
             </ul>
           </div>
@@ -193,7 +193,7 @@
             <div class="row">
               <div class="span4">
                 <p>Number of ligands satisfying all the 9 filtering conditions:</p>
-				<p id="ligands">188,820</p>
+				<p id="ligands">1,107</p>
               </div>
               <div class="span2">
                 <div class="control-group">
@@ -210,7 +210,7 @@
             <div class="row">
               <div class="span6">
                 <div class="control-group">
-                  <label class="control-label">Molecular weight (g/mol): [<span id="mwt_lb">400</span>, <span id="mwt_ub">500</span>]</label>
+                  <label class="control-label">Molecular weight (g/mol): [<span id="mwt_lb">400</span>, <span id="mwt_ub">450</span>]</label>
                   <div class="controls">
                     <div class="slider" id="mwt"></div>
                   </div>
@@ -220,7 +220,7 @@
             <div class="row">
               <div class="span6">
                 <div class="control-group">
-                  <label class="control-label">Partition coefficient xlogP: [<span id="logp_lb">0</span>, <span id="logp_ub">5</span>]</label>
+                  <label class="control-label">Partition coefficient xlogP: [<span id="logp_lb">0</span>, <span id="logp_ub">4</span>]</label>
                   <div class="controls">
                     <div class="slider" id="logp"></div>
                   </div>
@@ -230,7 +230,7 @@
             <div class="row">
               <div class="span6">
                 <div class="control-group">
-                  <label class="control-label">Rotatable bonds: [<span id="nrb_lb">2</span>, <span id="nrb_ub">8</span>]</label>
+                  <label class="control-label">Rotatable bonds: [<span id="nrb_lb">3</span>, <span id="nrb_ub">6</span>]</label>
                   <div class="controls">
                     <div class="slider" id="nrb"></div>
                   </div>
@@ -250,7 +250,7 @@
             <div class="row">
               <div class="span6">
                 <div class="control-group">
-                  <label class="control-label">Hydrogen bond acceptors: [<span id="hba_lb">2</span>, <span id="hba_ub">10</span>]</label>
+                  <label class="control-label">Hydrogen bond acceptors: [<span id="hba_lb">4</span>, <span id="hba_ub">8</span>]</label>
                   <div class="controls">
                     <div class="slider" id="hba"></div>
                   </div>
@@ -270,7 +270,7 @@
             <div class="row">
               <div class="span6">
                 <div class="control-group">
-                  <label class="control-label">Apolar desolvation (kcal/mol): [<span id="ad_lb">0</span>, <span id="ad_ub">12</span>]</label>
+                  <label class="control-label">Apolar desolvation (kcal/mol): [<span id="ad_lb">0</span>, <span id="ad_ub">5</span>]</label>
                   <div class="controls">
                     <div class="slider" id="ad"></div>
                   </div>
@@ -280,7 +280,7 @@
             <div class="row">
               <div class="span6">
                 <div class="control-group">
-                  <label class="control-label">Polar desolvation (kcal/mol): [<span id="pd_lb">-50</span>, <span id="pd_ub">0</span>]</label>
+                  <label class="control-label">Polar desolvation (kcal/mol): [<span id="pd_lb">-20</span>, <span id="pd_ub">0</span>]</label>
                   <div class="controls">
                     <div class="slider" id="pd"></div>
                   </div>
@@ -290,7 +290,7 @@
             <div class="row">
               <div class="span6">
                 <div class="control-group">
-                  <label class="control-label">Polar surface area tPSA (Å<sup>2</sup>): [<span id="tpsa_lb">20</span>, <span id="tpsa_ub">100</span>]</label>
+                  <label class="control-label">Polar surface area tPSA (Å<sup>2</sup>): [<span id="tpsa_lb">60</span>, <span id="tpsa_ub">80</span>]</label>
                   <div class="controls">
                     <div class="slider" id="tpsa"></div>
                   </div>

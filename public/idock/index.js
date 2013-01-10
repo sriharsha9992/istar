@@ -9,7 +9,7 @@ $(function() {
 
   // Initialize pager
   var pager = $('#pager');
-  pager.pager('init', [ 'Ligands', 'Submitted on', 'Status', 'Progress', 'Result' ], function(job) {
+  pager.pager('init', [ 'Description', 'Ligands', 'Submitted on', 'Status', 'Progress', 'Result' ], function(job) {
     var status, progress, result;
     if (!job.scheduled) {
       status = 'Queued for execution';
@@ -31,6 +31,7 @@ $(function() {
       result = '<a href="jobs/' + job._id + '/phase1.csv.gz"><img src="/excel.png" alt="phase1.csv.gz"></a><a href="jobs/' + job._id + '/phase2.csv.gz"><img src="/excel.png" alt="phase2.csv.gz"></a><a href="jobs/' + job._id + '/hits.pdbqt.gz"><img src="/mol.png" alt="hits.pdbqt.gz"></a>';
     }
     return [
+      job.description,
       job.ligands.comma(),
       $.format.date(new Date(job.submitted), 'yyyy/MM/dd HH:mm:ss'),
       status,
@@ -81,25 +82,25 @@ $(function() {
     range: true,
     min: 55,
     max: 566,
-    values: [ 400, 500 ]
+    values: [ 400, 450 ]
   });
   $('#logp').slider({
     range: true,
     min: -6,
     max: 12,
-    values: [ 0, 5 ]
+    values: [ 0, 4 ]
   });
   $('#ad').slider({
     range: true,
     min: -25,
     max: 29,
-    values: [ 0, 12 ]
+    values: [ 0, 5 ]
   });
   $('#pd').slider({
     range: true,
     min: -504,
     max: 1,
-    values: [ -50, 0 ]
+    values: [ -20, 0 ]
   });
   $('#hbd').slider({
     range: true,
@@ -111,13 +112,13 @@ $(function() {
     range: true,
     min: 0,
     max: 18,
-    values: [ 2, 10 ]
+    values: [ 4, 8 ]
   });
   $('#tpsa').slider({
     range: true,
     min: 0,
     max: 317,
-    values: [ 20, 100 ]
+    values: [ 60, 80 ]
   });
   $('#charge').slider({
     range: true,
@@ -129,7 +130,7 @@ $(function() {
     range: true,
     min: 0,
     max: 34,
-    values: [ 2, 8 ]
+    values: [ 3, 6 ]
   });
   $('.slider').slider({
     slide: function(event, ui) {

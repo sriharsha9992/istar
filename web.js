@@ -114,6 +114,7 @@ if (cluster.isMaster) {
       });
       // Get idock jobs by email
       var idockGetJobsFields = {
+        'description': 1,
         'ligands': 1,
         'submitted': 1,
         'scheduled': 1,
@@ -152,7 +153,7 @@ if (cluster.isMaster) {
          .chk('size_x', 'must be an integer within [10, 30]', true).isInt().min(10).max(30)
          .chk('size_y', 'must be an integer within [10, 30]', true).isInt().min(10).max(30)
          .chk('size_z', 'must be an integer within [10, 30]', true).isInt().min(10).max(30)
-         .chk('description', 'must be provided', true).len(1, 1000)
+         .chk('description', 'must be provided', true).len(1, 100)
          .chk('sort', 'must be an integer within [0, 1]', true).isInt().min(0).max(1)
          .chk('mwt_lb', 'must be a decimal within [55, 566]', false).isDecimal().min(55).max(566)
          .chk('mwt_ub', 'must be a decimal within [55, 566]', false).isDecimal().min(55).max(566)
