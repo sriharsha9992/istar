@@ -33,9 +33,10 @@ namespace idock
 	public:
 		fl e; ///< Free energy.
 		fl f; ///< Inter-molecular free energy.
-		fl e_nd; ///< Normalized free energy, only for output purpose.
-		fl efficiency; ///< Ligand efficiency, only for output purpose.
-		fl affinity; ///< RF-Score, only for output purpose.
+		fl e_nd; ///< Normalized free energy.
+		fl efficiency; ///< Ligand efficiency.
+		fl rfscore; ///< RF-Score.
+		fl consensus; ///< consensus = rfscore - e_nd.
 		string hbonds; ///< Hydrogen bonds string.
 		vector<vec3> heavy_atoms; ///< Heavy atom coordinates.
 		vector<vec3> hydrogens; ///< Hydrogen atom coordinates.

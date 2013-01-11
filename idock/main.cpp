@@ -81,9 +81,11 @@ int main(int argc, char* argv[])
 	const fl energy_range = 3.0;
 	const fl grid_granularity = 0.08;
 	const auto rscript = boost::process::find_executable_in_path("Rscript");
-	const auto sort_summaries_by_fe = [] (const summary& s1, const summary& s2) -> bool { return s1.energies.front() < s2.energies.front(); };
-	const auto sort_summaries_by_af = [] (const summary& s1, const summary& s2) -> bool { return s1.affinities.front() > s2.affinities.front(); };
-	const auto sort_results_by_af = [] (const result& r1, const result& r2) -> bool { return r1.affinity > r2.affinity; };
+	const auto sort_summaries_by_idockscore = [] (const summary& s1, const summary& s2) -> bool { return s1.energies.front() < s2.energies.front(); };
+	const auto sort_summaries_by_rfscore = [] (const summary& s1, const summary& s2) -> bool { return s1.rfscores.front() > s2.rfscores.front(); };
+	const auto sort_summaries_by_consensus = [] (const summary& s1, const summary& s2) -> bool { return s1.consensuses.front() > s2.consensuses.front(); };
+	const auto sort_results_by_rfscore = [] (const result& r1, const result& r2) -> bool { return r1.rfscore > r2.rfscore; };
+	const auto sort_results_by_consensus = [] (const result& r1, const result& r2) -> bool { return r1.consensus > r2.consensus; };
 	const auto epoch = boost::gregorian::date(1970, 1, 1);
 
 	// Initialize variables for job caching.
@@ -374,18 +376,18 @@ int main(int argc, char* argv[])
 			ifstream slicek_csv(slicek_csv_path);
 			while (getline(slicek_csv, line))
 			{
-				const auto rf = lexical_cast<fl>(line);
+				const auto rfscore = lexical_cast<fl>(line);
 				getline(slice_csv, line);
 				const auto comma1 = line.find(',', 1);
 				const auto comma2 = comma1 + 9;
 				const auto comma3 = line.find(',', comma2 + 6);
 				const auto comma4 = line.find(',', comma3 + 6);
 				BOOST_ASSERT(line[comma2] == ',');
-				vector<fl> energies, efficiencies, affinities;
+				vector<fl> energies, efficiencies, rfscores;
 				energies.push_back(lexical_cast<fl>(line.substr(comma2 + 1, comma3 - comma2 - 1)));
 				efficiencies.push_back(lexical_cast<fl>(line.substr(comma3 + 1, comma4 - comma3 - 1)));
-				affinities.push_back(rf);
-				phase1_summaries.push_back(new summary(lexical_cast<size_t>(line.substr(0, comma1)), line.substr(comma1 + 1, 8), static_cast<vector<fl>&&>(energies), static_cast<vector<fl>&&>(efficiencies), static_cast<vector<fl>&&>(affinities), vector<string>(), line.substr(comma4 + 1), string()));
+				rfscores.push_back(rfscore);
+				phase1_summaries.push_back(new summary(lexical_cast<size_t>(line.substr(0, comma1)), line.substr(comma1 + 1, 8), static_cast<vector<fl>&&>(energies), static_cast<vector<fl>&&>(efficiencies), static_cast<vector<fl>&&>(rfscores), vector<string>(), line.substr(comma4 + 1), string()));
 			}
 			slice_csv.close();
 			slicek_csv.close();
@@ -405,7 +407,9 @@ int main(int argc, char* argv[])
 		const auto compt_cursor = conn.query(collection, QUERY("_id" << _id), 1, 0, &compt_fields);
 		const auto compt = compt_cursor->next();
 		const auto sort = compt["sort"].Int();
-		const auto sort_summaries_by = sort == 0 ? sort_summaries_by_fe : sort_summaries_by_af;
+		BOOST_ASSERT(sort == 0 || sort == 1 || sort == 2);
+		const auto sort_summaries_by = sort == 0 ? sort_summaries_by_idockscore : (sort == 1 ? sort_summaries_by_rfscore : sort_summaries_by_consensus);
+		const auto sort_results_by = sort == 1 ? sort_results_by_rfscore : sort_results_by_consensus;
 
 		// Sort phase 1 summaries.
 		std::sort(phase1_summaries.begin(), phase1_summaries.end(), sort_summaries_by);
@@ -420,13 +424,13 @@ int main(int argc, char* argv[])
 			phase1_csv_gz.push(phase1_csv);
 			phase1_csv_gz.setf(std::ios::fixed, std::ios::floatfield);
 			phase1_csv_gz << std::setprecision(3);
-			phase1_csv_gz << "ZINC ID,Free energy (kcal/mol),Ligand efficiency (kcal/mol),RF-Score,Molecular weight (g/mol),Partition coefficient xlogP,Apolar desolvation (kcal/mol),Polar desolvation (kcal/mol),Hydrogen bond donors,Hydrogen bond acceptors,Polar surface area tPSA (A^2),Net charge,Rotatable bonds\n";
+			phase1_csv_gz << "ZINC ID,Free energy (kcal/mol),Ligand efficiency (kcal/mol),RF-Score,Consensus score,Molecular weight (g/mol),Partition coefficient xlogP,Apolar desolvation (kcal/mol),Polar desolvation (kcal/mol),Hydrogen bond donors,Hydrogen bond acceptors,Polar surface area tPSA (A^2),Net charge,Rotatable bonds\n";
 			for (const auto& s : phase1_summaries)
 			{
 				BOOST_ASSERT(s.energies.size() == 1);
 				BOOST_ASSERT(s.efficiencies.size() == 1);
-				BOOST_ASSERT(s.affinities.size() == 1);
-				phase1_csv_gz << s.lig_id << ',' << s.energies.front() << ',' << s.efficiencies.front() << ',' << s.affinities.front() << ',' << s.property << '\n';
+				BOOST_ASSERT(s.rfscores.size() == 1);
+				phase1_csv_gz << s.lig_id << ',' << s.energies.front() << ',' << s.efficiencies.front() << ',' << s.rfscores.front() << ',' << s.consensuses.front() << ',' << s.property << '\n';
 			}
 		}
 
@@ -588,22 +592,24 @@ int main(int argc, char* argv[])
 				// Call Rscript RF-Score.r
 				create_child(rscript, vector<string> {"RF-Score.r", f_csv_path.string(), k_csv_path.string()}, boost::process::context()).wait();
 
-				// Parse RF-Score affinities.
+				// Parse RF-Score.
 				ifstream k_csv(k_csv_path);
 				for (size_t k = 0; k < num_conformations; ++k)
 				{
 					getline(k_csv, line);
-					phase2_results[k].affinity = lexical_cast<fl>(line);
+					auto& r = phase2_results[k];
+					r.rfscore = lexical_cast<fl>(line);
+					r.consensus = r.rfscore - r.e_nd;
 				}
 
-				// Sort results by RF-Score if necessary.
-				if (sort == 1) std::sort(phase2_results.begin(), phase2_results.begin() + num_conformations, sort_results_by_af);
+				// Sort results by RF-Score or consensus if necessary.
+				if (sort) std::sort(phase2_results.begin(), phase2_results.begin() + num_conformations, sort_results_by);
 
 				// Write models to file.
 				lig.write_models(hits_pdbqt_path, remark, supplier, phase2_results, num_conformations, b, grid_maps);
 
 				// Add to summaries.
-				vector<fl> energies(num_conformations), efficiencies(num_conformations), affinities(num_conformations);
+				vector<fl> energies(num_conformations), efficiencies(num_conformations), rfscores(num_conformations);
 				vector<string> hbonds(num_conformations);
 				for (size_t k = 0; k < num_conformations; ++k)
 				{
@@ -611,9 +617,9 @@ int main(int argc, char* argv[])
 					energies[k] = r.e_nd;
 					efficiencies[k] = r.efficiency;
 					hbonds[k] = r.hbonds;
-					affinities[k] = r.affinity;
+					rfscores[k] = r.rfscore;
 				}
-				phase2_summaries.push_back(new summary(s.index, s.lig_id, static_cast<vector<fl>&&>(energies), static_cast<vector<fl>&&>(efficiencies), static_cast<vector<fl>&&>(affinities), static_cast<vector<string>&&>(hbonds), string(s.property), supplier.substr(11)));
+				phase2_summaries.push_back(new summary(s.index, s.lig_id, static_cast<vector<fl>&&>(energies), static_cast<vector<fl>&&>(efficiencies), static_cast<vector<fl>&&>(rfscores), static_cast<vector<string>&&>(hbonds), string(s.property), supplier.substr(11)));
 			}
 
 			// Clear the results of the current ligand.
@@ -639,7 +645,7 @@ int main(int argc, char* argv[])
 			phase2_csv_gz.setf(std::ios::fixed, std::ios::floatfield);
 			phase2_csv_gz << std::setprecision(3);
 			phase2_csv_gz << "ZINC ID,Conformations";
-			for (size_t i = 1; i <= max_conformations; ++i) phase2_csv_gz << ",Conformation " << i << " free energy (kcal/mol2),Conformation " << i << " ligand efficiency (kcal/mol),Conformation " << i << " RF-Score,Conformation " << i << " hydrogen bonds";
+			for (size_t i = 1; i <= max_conformations; ++i) phase2_csv_gz << ",Conformation " << i << " free energy (kcal/mol2),Conformation " << i << " ligand efficiency (kcal/mol),Conformation " << i << " RF-Score,Conformation " << i << " consensus score,Conformation " << i << " hydrogen bonds";
 			phase2_csv_gz << ",Molecular weight (g/mol),Partition coefficient xlogP,Apolar desolvation (kcal/mol),Polar desolvation (kcal/mol),Hydrogen bond donors,Hydrogen bond acceptors,Polar surface area tPSA (A^2),Net charge,Rotatable bonds,Substance information,Suppliers\n";
 			for (const auto& s : phase2_summaries)
 			{
@@ -647,7 +653,7 @@ int main(int argc, char* argv[])
 				phase2_csv_gz << s.lig_id << ',' << num_conformations;
 				for (size_t j = 0; j < num_conformations; ++j)
 				{
-					phase2_csv_gz << ',' << s.energies[j] << ',' << s.efficiencies[j] << ',' << s.affinities[j] << ',' << s.hbonds[j];
+					phase2_csv_gz << ',' << s.energies[j] << ',' << s.efficiencies[j] << ',' << s.rfscores[j] << ',' << s.consensuses[j] << ',' << s.hbonds[j];
 				}
 				for (size_t j = num_conformations; j < max_conformations; ++j)
 				{

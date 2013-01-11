@@ -589,7 +589,8 @@ namespace idock
 				<< "REMARK     INTRA-LIGAND FREE ENERGY PREDICTED BY IDOCK:" << setw(8) << (r.e - r.f) << " KCAL/MOL\n"
 				<< "REMARK            LIGAND EFFICIENCY PREDICTED BY IDOCK:" << setw(8) << r.efficiency << " KCAL/MOL\n"
 				<< "REMARK               HYDROGEN BONDS PREDICTED BY IDOCK:" << string(4 - (r.hbonds.size() == 1 ? 1 : r.hbonds.find(' ', 1)), ' ') << r.hbonds << '\n'
-				<< "REMARK            -logK AFFINITY PREDICTED BY RF-SCORE:" << setw(8) << r.affinity << '\n';
+				<< "REMARK            -logK AFFINITY PREDICTED BY RF-SCORE:" << setw(8) << r.rfscore << '\n'
+				<< "REMARK                                 CONSENSUS SCORE:" << setw(8) << r.consensus << '\n';
 			for (size_t j = 0, heavy_atom = 0, hydrogen = 0; j < num_lines; ++j)
 			{
 				const string& line = lines[j];

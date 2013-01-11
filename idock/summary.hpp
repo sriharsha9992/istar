@@ -32,11 +32,20 @@ namespace idock
 		string lig_id;
 		vector<fl> energies;
 		vector<fl> efficiencies;
-		vector<fl> affinities;
+		vector<fl> rfscores;
+		vector<fl> consensuses;
 		vector<string> hbonds;
 		string property;
 		string supplier;
-		explicit summary(const size_t index, const string& lig_id, vector<fl>&& energies_, vector<fl>&& efficiencies_, vector<fl>&& affinities_, vector<string>&& hbonds_, string&& property_, string&& supplier_) : index(index), lig_id(lig_id), energies(static_cast<vector<fl>&&>(energies_)), efficiencies(static_cast<vector<fl>&&>(efficiencies_)), affinities(static_cast<vector<fl>&&>(affinities_)), hbonds(static_cast<vector<string>&&>(hbonds_)), property(static_cast<string&&>(property_)), supplier(static_cast<string&&>(supplier_)) {}
+		explicit summary(const size_t index, const string& lig_id, vector<fl>&& energies_, vector<fl>&& efficiencies_, vector<fl>&& rfscores_, vector<string>&& hbonds_, string&& property_, string&& supplier_) : index(index), lig_id(lig_id), energies(static_cast<vector<fl>&&>(energies_)), efficiencies(static_cast<vector<fl>&&>(efficiencies_)), rfscores(static_cast<vector<fl>&&>(rfscores_)), hbonds(static_cast<vector<string>&&>(hbonds_)), property(static_cast<string&&>(property_)), supplier(static_cast<string&&>(supplier_))
+		{
+			const auto size = energies.size();
+			consensuses.resize(size);
+			for (size_t i = 0; i < size; ++i)
+			{
+				consensuses[i] = rfscores[i] - energies[i];
+			}
+		}
 
 		summary(const summary&) = default;
 		summary(summary&&) = default;
