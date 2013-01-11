@@ -26,7 +26,7 @@ Features
 * [node.js] v0.8.16
 * [mongodb] v1.2.8
 * [express] v3.0.6
-* [validator] v0.4.20
+* [validator] v0.4.21
 * [spdy] v1.3.9
 
 ### Database
