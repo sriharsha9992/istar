@@ -1,7 +1,7 @@
 istar
 =====
 
-[istar] is a SaaS (Software as a Service) platform for a general variety of software.
+[istar] is a software-as-a-service platform for bioinformatics and chemoinformatics
 
 
 Architecture
@@ -16,10 +16,9 @@ Features
 ### Web client
 
 * [Twitter Bootstrap] v2.2.2
-* [HTML5 Boilerplate] v4.0.0
 * [Modernizr] v2.6.2
-* [jQuery] v1.8.3
-* [jQuery UI] v1.9.2
+* [jQuery] v1.9.0
+* [jQuery UI] v1.10.0
 
 ### Web server
 

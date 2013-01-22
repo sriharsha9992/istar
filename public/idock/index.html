@@ -12,7 +12,7 @@
 
     <link href="/bootstrap.min.css" rel="stylesheet">
     <link href="/bootstrap-responsive.min.css" rel="stylesheet">
-    <link href="/jquery-ui-1.9.2.custom.min.css" rel="stylesheet">
+    <link href="/jquery-ui-1.10.0.custom.min.css" rel="stylesheet">
     <link href="/prettify.css" rel="stylesheet">
     <link href="/index.css" rel="stylesheet">
 
@@ -50,7 +50,7 @@
               </li>
               <li class="divider-vertical"></li>
               <li>
-                <a href="/iview"><img src="/iview/logo.png" alt="iview logo">iview: Interactive HTML5 visualizer</a>
+                <a href="/iview"><img src="/iview/logo.png" alt="iview logo">iview: interactive HTML5 visualizer</a>
               </li>
             </ul>
           </div>
@@ -69,7 +69,7 @@
 
       <section>
         <div class="page-header">
-          <h1>Your jobs</h1>
+          <h1>Jobs</h1>
         </div>
         <div class="row">
           <div class="span12" id="pager"></div>
@@ -337,87 +337,89 @@
           <h1>Tutorials</h1>
         </div>
         <div class="row">
-          <div class="span12" id="tutorials">
-            <h3>Tutorial 1: prepare a receptor in PDBQT format with MGLTools</h3>
-            <div>
-              <p>Download a receptor at PDB. Take HIV-1 reverse transcriptase (<a href="http://www.pdb.org/pdb/explore/explore.do?structureId=2ZD1">2ZD1</a>) as an example.</p>
-              <img src="/grey.gif" data-original="pdb.png" alt="PDB 2ZD1">
-              <p>Retain only the "ATOM" or "HETATM" records of necessary chain(s) where the binding site of interest resides. In <code>2ZD1.pdb</code>, the ligand TMC278 binds at the allosteric site, which resides in chain A. Chain A atoms start at line 613 and end at line 5118 with the "TER" record. Save lines 613 - 5118 to a new file <code>2ZD1rec.pdb</code>.</p>
-              <img src="/grey.gif" data-original="2zd1rec.png" alt="2ZD1 receptor chain A">
-              <p>Download MGLTools at <a href="http://mgltools.scripps.edu/downloads">http://mgltools.scripps.edu/downloads</a> and install it.
-              <img src="/grey.gif" data-original="mgltools.png" alt="MGLTools">
-              <p>Use the <code>prepare_receptor4.py</code> script to convert a receptor into PDBQT format.</p>
-              <ul>
-                <li>The <code>-r 2ZD1rec.pdb</code> option specifies a receptor for input.</li>
-                <li>The <code>-o 2ZD1rec.pdbqt</code> option specifies a receptor for output.</li>
-                <li>The <code>-A hydrogens</code> option adds both polar and non-polar hydrogens.</li>
-                <li>The <code>-U lps_water_deleteAltB</code> option removes lone pairs, water residues, and XX@B atoms.</li>
-              </ul>
-              <p>On Windows</p>
+          <div class="span12">
+            <div id="tutorials" >
+              <h3>Tutorial 1: prepare a receptor in PDBQT format with MGLTools</h3>
+              <div>
+                <p>Download a receptor at PDB. Take HIV-1 reverse transcriptase (<a href="http://www.pdb.org/pdb/explore/explore.do?structureId=2ZD1">2ZD1</a>) as an example.</p>
+                <img src="/grey.gif" data-original="pdb.png" alt="PDB 2ZD1">
+                <p>Retain only the "ATOM" or "HETATM" records of necessary chain(s) where the binding site of interest resides. In <code>2ZD1.pdb</code>, the ligand TMC278 binds at the allosteric site, which resides in chain A. Chain A atoms start at line 613 and end at line 5118 with the "TER" record. Save lines 613 - 5118 to a new file <code>2ZD1rec.pdb</code>.</p>
+                <img src="/grey.gif" data-original="2zd1rec.png" alt="2ZD1 receptor chain A">
+                <p>Download MGLTools at <a href="http://mgltools.scripps.edu/downloads">http://mgltools.scripps.edu/downloads</a> and install it.
+                <img src="/grey.gif" data-original="mgltools.png" alt="MGLTools">
+                <p>Use the <code>prepare_receptor4.py</code> script to convert a receptor into PDBQT format.</p>
+                <ul>
+                  <li>The <code>-r 2ZD1rec.pdb</code> option specifies a receptor for input.</li>
+                  <li>The <code>-o 2ZD1rec.pdbqt</code> option specifies a receptor for output.</li>
+                  <li>The <code>-A hydrogens</code> option adds both polar and non-polar hydrogens.</li>
+                  <li>The <code>-U lps_water_deleteAltB</code> option removes lone pairs, water residues, and XX@B atoms.</li>
+                </ul>
+                <p>On Windows</p>
 <pre class="prettyprint linenums">
 cd C:\Program Files (x86)\MGLTools-1.5.6rc3
 python Lib\site-packages\AutoDockTools\Utilities24\prepare_receptor4.py -r 2ZD1rec.pdb -o 2ZD1rec.pdbqt -A hydrogens -U lps_waters_deleteAltB
 </pre>
-              <p>On Linux</p>
+                <p>On Linux</p>
 <pre class="prettyprint linenums">
 cd ~/mgltools_x86_64Linux2_1.5.6rc3
 pythonsh MGLToolsPckgs\AutoDockTools\Utilities24\prepare_receptor4.py -r 2ZD1rec.pdb -o 2ZD1rec.pdbqt -A hydrogens -U lps_waters_deleteAltB
 </pre>
-              <p>Copy the content of <code>2ZD1rec.pdbqt</code> and paste it into <a href="#receptor_label">Receptor in PDBQT</a></p>
-            </div>
-            <h3>Tutorial 2: define a binding site with MGLTools, Chimera or PyMOL</h3>
-            <div>
-              <p>A binding site can be defined by:</p>
-              <ul>
-                <li><a href="#mgltools">MGLTools</a></li>
-                <li><a href="#chimera">Chimera</a></li>
-                <li><a href="#pymol">PyMOL</a></li>
-              </ul>
-              <h4 id="mgltools">MGLTools</h4>
-              <p>Save the ligand TMC278 (lines 8533 - 8560) to a new file <code>2ZD1lig.pdb</code>.</p>
-              <img src="/grey.gif" data-original="2zd1lig.png" alt="2ZD1 ligand TMC278">
-              <p>Use the <code>prepare_ligand4.py</code> script to convert a ligand into PDBQT format.</p>
-              <ul>
-                <li>The <code>-l 2ZD1lig.pdb</code> option specifies a ligand for input.</li>
-                <li>The <code>-o 2ZD1lig.pdbqt</code> option specifies a ligand for output.</li>
-                <li>The <code>-A hydrogens</code> option adds both polar and non-polar hydrogens.</li>
-                <li>The <code>-U ''</code> option removes nothing, i.e. retains lone pairs and non-polar hydrogens.</li>
-              </ul>
-              <p>On Windows</p>
+                <p>Copy the content of <code>2ZD1rec.pdbqt</code> and paste it into <a href="#receptor_label">Receptor in PDBQT</a></p>
+              </div>
+              <h3>Tutorial 2: define a binding site with MGLTools, Chimera or PyMOL</h3>
+              <div>
+                <p>A binding site can be defined by:</p>
+                <ul>
+                  <li><a href="#mgltools">MGLTools</a></li>
+                  <li><a href="#chimera">Chimera</a></li>
+                  <li><a href="#pymol">PyMOL</a></li>
+                </ul>
+                <h4 id="mgltools">MGLTools</h4>
+                <p>Save the ligand TMC278 (lines 8533 - 8560) to a new file <code>2ZD1lig.pdb</code>.</p>
+                <img src="/grey.gif" data-original="2zd1lig.png" alt="2ZD1 ligand TMC278">
+                <p>Use the <code>prepare_ligand4.py</code> script to convert a ligand into PDBQT format.</p>
+                <ul>
+                  <li>The <code>-l 2ZD1lig.pdb</code> option specifies a ligand for input.</li>
+                  <li>The <code>-o 2ZD1lig.pdbqt</code> option specifies a ligand for output.</li>
+                  <li>The <code>-A hydrogens</code> option adds both polar and non-polar hydrogens.</li>
+                  <li>The <code>-U ''</code> option removes nothing, i.e. retains lone pairs and non-polar hydrogens.</li>
+                </ul>
+                <p>On Windows</p>
 <pre class="prettyprint linenums">
 cd C:\Program Files (x86)\MGLTools-1.5.6rc3
 python Lib\site-packages\AutoDockTools\Utilities24\prepare_ligand4.py -l 2ZD1lig.pdb -o 2ZD1lig.pdbqt -A hydrogens -U ''
 </pre>
-              <p>On Linux</p>
+                <p>On Linux</p>
 <pre class="prettyprint linenums">
 cd ~/mgltools_x86_64Linux2_1.5.6rc3
 pythonsh MGLToolsPckgs\AutoDockTools\Utilities24\prepare_ligand4.py -l 2ZD1lig.pdb -o 2ZD1lig.pdbqt -A hydrogens -U ''
 </pre>
-              <p>Run AutoDockTools, which is a component of MGLTools. From the menu of ADT4.2</p>
-              <ul>
-                <li>Grid -> Macromolecule -> Open -> <code>2ZD1rec.pdbqt</code>. Ignore all the warnings about charge, because idock ignores charge.</li>
-                <li>Grid -> Set Map Types -> Open Ligand -> <code>2ZD1lig.pdbqt</code>.</li>
-                <li>Grid -> Grid Box.</li>
-              </ul>
-              <img src="/grey.gif" data-original="adt.png" alt="AutoDock Tools">
-              <p>The "Grid Options" dialog pops out.</p>
-              <ul>
-                <li>From the menu, click Center -> Center on ligand.</li>
-                <li>Scroll "Spacing (angstrom)" from 0.375 to 1.000.</li>
-                <li>Manually adjust number of points in x-, y-, z- dimension and x y z center, so that the grid box fully covers the ligand.</li>
-              </ul>
-              <p>Paste the corresponding values into <a href="#center_x_label">center_x</a>, <a href="#center_y_label">center_y</a>, <a href="#center_z_label">center_z</a>, <a href="#size_x_label">size_x</a>, <a href="#size_y_label">size_y</a>, <a href="#size_z_label">size_z</a>.</p>
-              <h4 id="chimera">Chimera</h4>
-              <p>Download Chimera at <a href="http://www.cgl.ucsf.edu/chimera/download.html#daily">http://www.cgl.ucsf.edu/chimera/download.html#daily</a> and install it. Note that the AutoDock Vina plugin is only available in daily builds. It is not available in Chimera 1.6.2 or earlier versions.</p>
-              <p>File -> Fetch by ID. By default PDB is chosen. Enter 2ZD1 and click Fetch.</p>
-              <p>Tools -> Surface/Binding Analysis -> AutoDock Vina. Check "Resize search volume using". Use button 2 to manually adjust the grid box.</p>
-              <img src="/grey.gif" data-original="chimera.png" alt="UCSF Chimera">
-              <h4 id="pymol">PyMOL</h4>
-              <p>Download PyMOL at <a href="http://pymol.org">http://pymol.org</a> and install it. An educational version is available at no cost for educational use only.</p>
-              <p>Download the AutoDock plugin at <a href="https://github.com/Pymol-Scripts/Pymol-script-repo/raw/master/plugins/autodock_plugin.py"> https://github.com/Pymol-Scripts/Pymol-script-repo/raw/master/plugins/autodock_plugin.py</a></p>
-              <p>Plugin -> Manage Plugins -> Install... -> Choose autodock_plugin.py. Restart PyMOL. Note that the AutoDock plugin can only be installed by PyMOL 1.2r1. It is not supported by PyMOL 1.3r1 or later versions.</p>
-              <p>Plugin -> PDB Loader Service -> Enter 2ZD1. Plugin -> Autodock/Vina -> Grid Settings. Set Spacing to 1. Manually adjust X-, Y-, Z-points and Grid Center Coordinates.</p>
-              <img src="/grey.gif" data-original="pymol.png" alt="PyMOL">
+                <p>Run AutoDockTools, which is a component of MGLTools. From the menu of ADT4.2</p>
+                <ul>
+                  <li>Grid -> Macromolecule -> Open -> <code>2ZD1rec.pdbqt</code>. Ignore all the warnings about charge, because idock ignores charge.</li>
+                  <li>Grid -> Set Map Types -> Open Ligand -> <code>2ZD1lig.pdbqt</code>.</li>
+                  <li>Grid -> Grid Box.</li>
+                </ul>
+                <img src="/grey.gif" data-original="adt.png" alt="AutoDock Tools">
+                <p>The "Grid Options" dialog pops out.</p>
+                <ul>
+                  <li>From the menu, click Center -> Center on ligand.</li>
+                  <li>Scroll "Spacing (angstrom)" from 0.375 to 1.000.</li>
+                  <li>Manually adjust number of points in x-, y-, z- dimension and x y z center, so that the grid box fully covers the ligand.</li>
+                </ul>
+                <p>Paste the corresponding values into <a href="#center_x_label">center_x</a>, <a href="#center_y_label">center_y</a>, <a href="#center_z_label">center_z</a>, <a href="#size_x_label">size_x</a>, <a href="#size_y_label">size_y</a>, <a href="#size_z_label">size_z</a>.</p>
+                <h4 id="chimera">Chimera</h4>
+                <p>Download Chimera at <a href="http://www.cgl.ucsf.edu/chimera/download.html#daily">http://www.cgl.ucsf.edu/chimera/download.html#daily</a> and install it. Note that the AutoDock Vina plugin is only available in daily builds. It is not available in Chimera 1.6.2 or earlier versions.</p>
+                <p>File -> Fetch by ID. By default PDB is chosen. Enter 2ZD1 and click Fetch.</p>
+                <p>Tools -> Surface/Binding Analysis -> AutoDock Vina. Check "Resize search volume using". Use button 2 to manually adjust the grid box.</p>
+                <img src="/grey.gif" data-original="chimera.png" alt="UCSF Chimera">
+                <h4 id="pymol">PyMOL</h4>
+                <p>Download PyMOL at <a href="http://pymol.org">http://pymol.org</a> and install it. An educational version is available at no cost for educational use only.</p>
+                <p>Download the AutoDock plugin at <a href="https://github.com/Pymol-Scripts/Pymol-script-repo/raw/master/plugins/autodock_plugin.py"> https://github.com/Pymol-Scripts/Pymol-script-repo/raw/master/plugins/autodock_plugin.py</a></p>
+                <p>Plugin -> Manage Plugins -> Install... -> Choose autodock_plugin.py. Restart PyMOL. Note that the AutoDock plugin can only be installed by PyMOL 1.2r1. It is not supported by PyMOL 1.3r1 or later versions.</p>
+                <p>Plugin -> PDB Loader Service -> Enter 2ZD1. Plugin -> Autodock/Vina -> Grid Settings. Set Spacing to 1. Manually adjust X-, Y-, Z-points and Grid Center Coordinates.</p>
+                <img src="/grey.gif" data-original="pymol.png" alt="PyMOL">
+              </div>
             </div>
           </div>
         </div>
@@ -435,17 +437,17 @@ pythonsh MGLToolsPckgs\AutoDockTools\Utilities24\prepare_ligand4.py -l 2ZD1lig.p
       </section>
 
       <footer>
-        <p><a href="http://www.cuhk.edu.hk"><img src="/cuhk.jpg" alt="CUHK logo"></a>Copyright &copy; 2012 Chinese University of Hong Kong. Platform designed by <a href="http://www.cse.cuhk.edu.hk/~hjli">Hongjian Li</a>. Code licensed under <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License 2.0</a>. Documentation licensed under <a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a>.<a href="http://validator.w3.org/check?uri=referer"><img src="/HTML5_Badge_512.png" alt="HTML5 logo"></a></p>
+        <p><a href="http://www.cuhk.edu.hk"><img src="/cuhk.jpg" alt="CUHK logo"></a>Copyright &copy; 2012-2013 Chinese University of Hong Kong. Platform designed by <a href="http://www.cse.cuhk.edu.hk/~hjli">Hongjian Li</a>. Code licensed under <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License 2.0</a>. Documentation licensed under <a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a>.<a href="http://validator.w3.org/check?uri=referer"><img src="/HTML5_Badge_512.png" alt="HTML5 logo"></a></p>
       </footer>
 
     </div>
 
-    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
-    <script>window.jQuery || document.write('<script src="/jquery-1.8.3.min.js"><\/script>')</script>
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"></script>
+    <script>window.jQuery || document.write('<script src="/jquery-1.9.0.min.js"><\/script>')</script>
 
     <script src="/bootstrap-tooltip.js"></script>
     <script src="/bootstrap-button.js"></script>
-    <script src="/jquery-ui-1.9.2.custom.min.js"></script>
+    <script src="/jquery-ui-1.10.0.custom.min.js"></script>
     <script src="/jquery.dateFormat-1.0.js"></script>
     <script src="/jquery.pager.js"></script>
     <script src="/jquery.lazyload.min.js"></script>
