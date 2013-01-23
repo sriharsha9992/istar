@@ -38,30 +38,33 @@ $(function() {
 
   // Refresh the table of jobs and its pager every second
   var jobs = [], skip = 0;
-  setInterval(function() {
+  var tick = function() {
     $.get('jobs', { skip: skip, count: jobs.length }, function(res) {
-      if (!res.length) return; // If server side validation fails or all jobs are done, do nothing.
-      for (var i = skip; i < jobs.length; ++i) {
-        var job = res[i - skip];
-        jobs[i].scheduled = job.scheduled;
-        jobs[i].completed = job.completed;
-        jobs[i].refined = job.refined;
-        jobs[i].hits = job.hits;
-        jobs[i].done = job.done;
-        for (var s = 0; s < job.scheduled; ++s) {
-          jobs[i][s.toString()] = job[s.toString()];
+      if (res.length) {
+        for (var i = skip; i < jobs.length; ++i) {
+          var job = res[i - skip];
+          jobs[i].scheduled = job.scheduled;
+          jobs[i].completed = job.completed;
+          jobs[i].refined = job.refined;
+          jobs[i].hits = job.hits;
+          jobs[i].done = job.done;
+          for (var s = 0; s < job.scheduled; ++s) {
+            jobs[i][s.toString()] = job[s.toString()];
+          }
         }
+        pager.pager('refresh', skip, jobs.length, 3, 6, false);
+        if (res.length > jobs.length - skip) {
+          var len = jobs.length;
+          jobs = jobs.concat(res.slice(jobs.length - skip));
+          pager.pager('source', jobs);
+          pager.pager('refresh', len, jobs.length, 0, 6, true);
+	    }
+        for (skip = jobs.length; skip && !jobs[skip - 1].done; --skip);
       }
-      pager.pager('refresh', skip, jobs.length, 3, 6, false);
-      if (res.length > jobs.length - skip) {
-        var len = jobs.length;
-        jobs = jobs.concat(res.slice(jobs.length - skip));
-        pager.pager('source', jobs);
-        pager.pager('refresh', len, jobs.length, 0, 6, true);
-	  }
-      for (skip = jobs.length; skip && !jobs[skip - 1].done; --skip);
+      setTimeout(tick, 1000);
     });
-  }, 1000);
+  };
+  tick();
 
   // Initialize sliders
   $('#mwt').slider({
