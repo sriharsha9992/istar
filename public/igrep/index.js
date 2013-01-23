@@ -2576,7 +2576,7 @@ $(function() {
 
   // Refresh the table of jobs and its pager every second
   var jobs = [], skip = 0;
-  setInterval(function() {
+  var tick = function() {
     $.get('jobs', { skip: skip }, function(res) {
       if (!res.length) return;
       var nUpdate = 0;
@@ -2593,8 +2593,10 @@ $(function() {
         pager.pager('refresh', len, jobs.length, 0, 6, true);
 	  }
       for (skip = jobs.length; skip && !jobs[skip - 1].done; --skip);
+      tick();
     });
-  }, 1000);
+  };
+  tick();
 
   // Process submission
   $('#submit').click(function() {
