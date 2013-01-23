@@ -381,6 +381,7 @@ if (cluster.isMaster) {
          .snt('queries').copy()
          .res.submitted = new Date();
         igrep.insert(f.res);
+        res.end();
       });
       // Start listening
       var http_port = 3000, spdy_port = 3443;
