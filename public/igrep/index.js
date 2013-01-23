@@ -2554,10 +2554,6 @@ $(function() {
   });
   $('#taxid').html(options.join(''));
 
-  // Fetch email from cookie
-  var email = getCookie('email');
-  $('#email').val(email);
-
   // Initialize tooltips
   $('.control-label a').tooltip();
 
@@ -2578,30 +2574,27 @@ $(function() {
     ];
   });
 
-  // Initialize the table of jobs and its pager
-  var jobs = [], dones, timer;
-  $.get('jobs', { email: email }, function(res) {
-    if (Array.isArray(res)) jobs = res;
-    for (dones = jobs.length; dones && !jobs[dones - 1].done; --dones);
-    pager.pager('source', jobs);
-    // If there are jobs not done yet, activate the timer to fade status and result every second
-    if (dones === jobs.length) return;
-    activateTimer();
-  });
-
-  function activateTimer() {
-    timer = setInterval(function() {
-      $.get('done', { email: email, skip: dones }, function(res) {
-        if (!res.length) return;
-        res.forEach(function(job, i) {
-          jobs[dones + i].done = job.done;
-        });
-        pager.pager('refresh', dones, dones + res.length, 2, 5, true);
-        dones += res.length;
-        if (dones === jobs.length) clearInterval(timer);
-      });
-    }, 1000);
-  }
+  // Refresh the table of jobs and its pager every second
+  var jobs = [], skip = 0;
+  setInterval(function() {
+    $.get('jobs', { skip: skip }, function(res) {
+      if (!res.length) return;
+      var nUpdate = 0;
+      for (var i = skip; i < jobs.length; ++i) {
+        var job = res[i - skip];
+        jobs[i].done = job.done;
+        if (job.done) ++nUpdate;
+      }
+      pager.pager('refresh', skip, skip + nUpdate, 3, 6, true);
+      if (res.length > jobs.length - skip) {
+        var len = jobs.length;
+        jobs = jobs.concat(res.slice(jobs.length - skip));
+        pager.pager('source', jobs);
+        pager.pager('refresh', len, jobs.length, 0, 6, true);
+	  }
+      for (skip = jobs.length; skip && !jobs[skip - 1].done; --skip);
+    });
+  }, 1000);
 
   // Process submission
   $('#submit').click(function() {
@@ -2614,30 +2607,9 @@ $(function() {
       queries: $('#queries').val()
     }, function(res) {
       // If server side validation fails, show tooltips
-      if (!Array.isArray(res)) {
-        Object.keys(res).forEach(function(param) {
-          $('#' + param + '_label').tooltip('show');
-        });
-        return;
-      }
-      // Activate the timer if it is deactivated.
-      if (dones === jobs.length) activateTimer();
-      // Check if the email is changed
-      if (email && email.toLowerCase() === $('#email').val().toLowerCase()) {
-        jobs = jobs.concat(res);
-        pager.pager('source', jobs);
-        pager.pager('refresh', jobs.length - 1, jobs.length, 0, 3, true);
-      } else {
-        email = $('#email').val();
-        $.get('jobs', { email: email }, function(res) {
-          if (Array.isArray(res)) jobs = res;
-          for (dones = jobs.length; dones && !jobs[dones - 1].done; --dones);
-          pager.pager('source', jobs);
-          pager.pager('refresh', jobs.length - 1, jobs.length, 0, 3, true)
-        });
-      }
-      // Save email into cookie
-      setCookie('email', email);
+      Object.keys(res).forEach(function(param) {
+        $('#' + param + '_label').tooltip('show');
+      });
     }, 'json');
   });
 

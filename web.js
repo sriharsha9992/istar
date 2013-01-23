@@ -59,7 +59,7 @@ if (cluster.isMaster) {
 } else {
   // Connect to MongoDB
   var mongodb = require('mongodb');
-  new mongodb.Db('istar', new mongodb.Server(process.argv[2], 27017), {safe: true}).open(function(err, db) {
+  new mongodb.Db('istar', new mongodb.Server(process.argv[2], 27017), {safe: false}).open(function(err, db) {
     if (err) throw err;
     db.authenticate(process.argv[3], process.argv[4], function(err, authenticated) {
       if (err) throw err;
@@ -112,8 +112,7 @@ if (cluster.isMaster) {
           ligands = m.ligands;
         }
       });
-      // Get idock jobs by email
-      var idockGetJobsFields = {
+      var idockJobFields = {
         'description': 1,
         'ligands': 1,
         'submitted': 1,
@@ -124,20 +123,49 @@ if (cluster.isMaster) {
         'done': 1
       };
       for (var i = 0; i < 100; ++i) {
-        idockGetJobsFields[i.toString()] = 1;
+        idockJobFields[i.toString()] = 1;
       }
+      var idockProgressFields = {
+        '_id': 0,
+        'scheduled': 1,
+        'completed': 1,
+        'refined': 1,
+        'hits': 1,
+        'done': 1
+      };
+      for (var i = 0; i < 100; ++i) {
+        idockProgressFields[i.toString()] = 1;
+      }
+      // Get idock jobs
       app.get('/idock/jobs', function(req, res) {
         if (v.init(req.query)
-         .chk('email', 'must be valid', true).isEmail()
+         .chk('skip', 'must be a non-negative integer', false).isInt()
+         .chk('count', 'must be a non-negative integer', false).isInt()
          .failed()) {
           return res.json(v.err);
         }
-        f.init(req.query)
-         .snt('email').toLowerCase();
-        idock.find(f.res, idockGetJobsFields, function(err, cursor) {
+        if (v.init(f.init(req.query)
+         .snt('skip', 0).toInt()
+         .snt('count', 0).toInt()
+         .res)
+         .rng('skip', 'count')
+         .failed()) {
+          return res.json(v.err);
+        };
+        idock.count(function(err, count) {
           if (err) throw err;
-          cursor.sort({'submitted': 1}).toArray(function(err, docs) {
-            cursor.close();
+          if (v.init(f.res)
+           .chk('count', 'must be no greater than ' + count, true).max(count)
+           .failed()) {
+            return res.json(v.err);
+          }
+          idock.find({}, {
+            fields: f.res.count == count ? idockProgressFields : idockJobFields,
+            sort: {'submitted': 1},
+            skip: f.res.skip,
+            limit: count - f.res.skip
+          }).toArray(function(err, docs) {
+            if (err) throw err;
             res.json(docs);
           });
         });
@@ -154,7 +182,7 @@ if (cluster.isMaster) {
          .chk('size_y', 'must be an integer within [10, 30]', true).isInt().min(10).max(30)
          .chk('size_z', 'must be an integer within [10, 30]', true).isInt().min(10).max(30)
          .chk('description', 'must be provided', true).len(1, 100)
-         .chk('sort', 'must be an integer within [0, 1]', true).isInt().min(0).max(1)
+         .chk('sort', 'must be an integer within [0, 2]', true).isInt().min(0).max(2)
          .chk('mwt_lb', 'must be a decimal within [55, 566]', false).isDecimal().min(55).max(566)
          .chk('mwt_ub', 'must be a decimal within [55, 566]', false).isDecimal().min(55).max(566)
          .chk('logp_lb', 'must be a decimal within [-6, 12]', false).isDecimal().min(-6).max(12)
@@ -177,7 +205,7 @@ if (cluster.isMaster) {
           return res.json(v.err);
         }
         if (v.init(f.init(req.body)
-         .snt('email').toLowerCase()
+         .snt('email').copy()
          .snt('receptor').copy()
          .snt('center_x').toFloat()
          .snt('center_y').toFloat()
@@ -251,41 +279,8 @@ if (cluster.isMaster) {
             f.res[i.toString()] = 0;
           }
           f.res.submitted = new Date();
-          idock.insert(f.res, function(err, docs) {
-            if (err) throw err;
-            res.json(docs);
-          });
-        });
-      });
-      // Get the progress of jobs
-      var idockGetDoneFields = {
-        '_id': 0,
-        'scheduled': 1,
-        'completed': 1,
-        'refined': 1,
-        'hits': 1,
-        'done': 1
-      };
-      for (var i = 0; i < 100; ++i) {
-        idockGetDoneFields[i.toString()] = 1;
-      }
-      app.get('/idock/done', function(req, res) {
-        if (v.init(req.query)
-         .chk('email', 'must be valid', true).isEmail()
-         .chk('skip', 'must be a non-negative integer', false).isInt()
-         .failed()) {
-          return res.json(v.err);
-        }
-        f.init(req.query)
-         .snt('email').toLowerCase()
-         .snt('skip', 0).toInt();
-        idock.find({'email': f.res.email}, idockGetDoneFields, function(err, cursor) {
-          if (err) throw err;
-          cursor.sort({'submitted': 1}).skip(f.res.skip).toArray(function(err, docs) {
-            if (err) throw err;
-            cursor.close();
-            res.json(docs);
-          });
+          idock.insert(f.res);
+		  res.end();
         });
       });
       // Get the number of ligands satisfying filtering conditions
@@ -353,22 +348,22 @@ if (cluster.isMaster) {
           res.json(ligands);
         });
       });
-      // Get igrep jobs by email
+      // Get igrep jobs
       app.get('/igrep/jobs', function(req, res) {
         if (v.init(req.query)
-         .chk('email', 'must be valid', true).isEmail()
+         .chk('skip', 'must be a non-negative integer', false).isInt()
          .failed()) {
           return res.json(v.err);
         }
         f.init(req.query)
-         .snt('email').toLowerCase();
-        igrep.find(f.res, {'taxid': 1, 'submitted': 1, 'done': 1}, function(err, cursor) {
+         .snt('skip', 0).toInt();
+        igrep.find({}, {
+          fields: {'taxid': 1, 'submitted': 1, 'done': 1},
+          sort: {'submitted': 1},
+          skip: f.res.skip
+        }).toArray(function(err, docs) {
           if (err) throw err;
-          cursor.sort({'submitted': 1}).toArray(function(err, docs) {
-            if (err) throw err;
-            cursor.close();
-            res.json(docs);
-          });
+          res.json(docs);
         });
       });
       // Post a new igrep job
@@ -381,34 +376,11 @@ if (cluster.isMaster) {
           return res.json(v.err);
         }
         f.init(req.body)
-         .snt('email').toLowerCase()
+         .snt('email').copy()
          .snt('taxid').toInt()
          .snt('queries').copy()
          .res.submitted = new Date();
-        igrep.insert(f.res, function(err, docs) {
-          if (err) throw err;
-          res.json(docs);
-        });
-      });
-      // Get the done date of done jobs
-      app.get('/igrep/done', function(req, res) {
-        if (v.init(req.query)
-         .chk('email', 'must be valid', true).isEmail()
-         .chk('skip', 'must be a non-negative integer', false).isInt()
-         .failed()) {
-          return res.json(v.err);
-        }
-        f.init(req.query)
-         .snt('email').toLowerCase()
-         .snt('skip', 0).toInt();
-        igrep.find({'email': f.res.email, 'done': {'$exists': 1}}, {'_id': 0, 'done': 1}, function(err, cursor) {
-          if (err) throw err;
-          cursor.sort({'submitted': 1}).skip(f.res.skip).toArray(function(err, docs) {
-            if (err) throw err;
-            cursor.close();
-            res.json(docs);
-          });
-        });
+        igrep.insert(f.res);
       });
       // Start listening
       var http_port = 3000, spdy_port = 3443;

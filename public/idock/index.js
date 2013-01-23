@@ -1,9 +1,5 @@
 $(function() {
 
-  // Fetch email from cookie
-  var email = getCookie('email');
-  $('#email').val(email);
-
   // Initialize tooltips
   $('.control-label a').tooltip();
 
@@ -40,42 +36,32 @@ $(function() {
     ];
   });
 
-  // Refresh the table of jobs and its pager
-  var jobs = [], dones, timer;
-  $.get('jobs', { email: email }, function(res) {
-    if (Array.isArray(res)) jobs = res;
-    for (dones = jobs.length; dones && !jobs[dones - 1].done; --dones);
-    pager.pager('source', jobs);
-    // If there are jobs not done yet, activate the timer to fade status and result every second
-    if (dones === jobs.length) return;
-    activateTimer();
-  });
-
-  // Activate the timer to refresh result every second
-  function activateTimer() {
-    timer = setInterval(function() {
-      $.get('done', { email: email, skip: dones }, function(res) {
-        if (!res.length) return;
-        var new_dones = 0;
-        res.forEach(function(job, i) {
-          jobs[dones + i].scheduled = job.scheduled;
-          jobs[dones + i].completed = job.completed;
-          jobs[dones + i].refined = job.refined;
-          jobs[dones + i].hits = job.hits;
-          if (job.done) {
-            jobs[dones + i].done = job.done;
-            ++new_dones;
-          }
-          for (var s = 0; s < job.scheduled; ++s) {
-            jobs[dones + i][s.toString()] = job[s.toString()];
-          }
-        });
-        pager.pager('refresh', dones, dones + res.length, 2, 5, false);
-        dones += new_dones;
-        if (dones === jobs.length) clearInterval(timer);
-      });
-    }, 1000);
-  }
+  // Refresh the table of jobs and its pager every second
+  var jobs = [], skip = 0;
+  setInterval(function() {
+    $.get('jobs', { skip: skip, count: jobs.length }, function(res) {
+      if (!res.length) return; // If server side validation fails or all jobs are done, do nothing.
+      for (var i = skip; i < jobs.length; ++i) {
+        var job = res[i - skip];
+        jobs[i].scheduled = job.scheduled;
+        jobs[i].completed = job.completed;
+        jobs[i].refined = job.refined;
+        jobs[i].hits = job.hits;
+        jobs[i].done = job.done;
+        for (var s = 0; s < job.scheduled; ++s) {
+          jobs[i][s.toString()] = job[s.toString()];
+        }
+      }
+      pager.pager('refresh', skip, jobs.length, 3, 6, false);
+      if (res.length > jobs.length - skip) {
+        var len = jobs.length;
+        jobs = jobs.concat(res.slice(jobs.length - skip));
+        pager.pager('source', jobs);
+        pager.pager('refresh', len, jobs.length, 0, 6, true);
+	  }
+      for (skip = jobs.length; skip && !jobs[skip - 1].done; --skip);
+    });
+  }, 1000);
 
   // Initialize sliders
   $('#mwt').slider({
@@ -199,34 +185,13 @@ $(function() {
       nrb_ub: $('#nrb_ub').text()
     }, function(res) {
       // If server side validation fails, show the tooltips
-      if (!Array.isArray(res)) {
-        Object.keys(res).forEach(function(param) {
-          $('#' + param + '_label').tooltip('show');
-        });
-        return;
-      }
-      // Activate the timer if it is deactivated.
-      if (dones === jobs.length) activateTimer();
-      // Check if the email is changed
-      if (email && email.toLowerCase() === $('#email').val().toLowerCase()) {
-        jobs = jobs.concat(res);
-        pager.pager('source', jobs);
-        pager.pager('refresh', jobs.length - 1, jobs.length, 0, 4, true);
-      } else {
-        email = $('#email').val();
-        $.get('jobs', { email: email }, function(res) {
-          if (Array.isArray(res)) jobs = res;
-          for (dones = jobs.length; dones && !jobs[dones - 1].done; --dones);
-          pager.pager('source', jobs);
-          pager.pager('refresh', jobs.length - 1, jobs.length, 0, 4, true)
-        });
-      }
-      // Save email into cookie
-      setCookie('email', email);
+      Object.keys(res).forEach(function(param) {
+        $('#' + param + '_label').tooltip('show');
+      });
     }, 'json');
   });
 
-  // Apply accordion to tutorial
+  // Apply accordion to tutorials
   $('#tutorials').accordion({
     collapsible: true,
     active: false,
