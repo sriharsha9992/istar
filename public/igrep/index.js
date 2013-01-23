@@ -2585,7 +2585,7 @@ $(function() {
         jobs[i].done = job.done;
         if (job.done) ++nUpdate;
       }
-      pager.pager('refresh', skip, skip + nUpdate, 3, 6, true);
+      pager.pager('refresh', skip, skip + nUpdate, 2, 6, true);
       if (res.length > jobs.length - skip) {
         var len = jobs.length;
         jobs = jobs.concat(res.slice(jobs.length - skip));
