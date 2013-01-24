@@ -1,7 +1,7 @@
 istar
 =====
 
-[istar] is a software-as-a-service platform for bioinformatics and chemoinformatics
+[istar] is a software-as-a-service platform for bioinformatics and chemoinformatics.
 
 
 Architecture
@@ -10,8 +10,8 @@ Architecture
 ![istar architecture](https://github.com/HongjianLi/istar/raw/master/public/architecture.png)
 
 
-Features
---------
+Components
+----------
 
 ### Web client
 
@@ -32,7 +32,12 @@ Features
 
 * [MongoDB] v2.2.2
 
-### Workstations
+### Workstations and daemons
+
+* Intel Xeon E5620 @ 2.40 GHz
+* 8GB DDR3 SDRAM
+* Fedora 17 x86_64
+* [idock] daemon v2.1
 
 * Intel Xeon E5620 @ 2.40 GHz
 * 8GB DDR3 SDRAM
@@ -104,7 +109,8 @@ RESTful API for igrep
 Licenses
 --------
 
-* idock and igrep are licensed under [Apache License 2.0]. iview is licensed under [GPL 3.0].
+* idock and igrep are licensed under [Apache License 2.0].
+* iview is licensed under [GPL 3.0].
 * Documentation is licensed under [CC BY 3.0].
 
 
