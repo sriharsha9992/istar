@@ -37,7 +37,7 @@ Features
 * Intel Xeon E5620 @ 2.40 GHz
 * 8GB DDR3 SDRAM
 * Fedora 17 x86_64
-* [idock] daemon v2.0
+* [idock] daemon v2.1
 
 * Intel Xeon W3520 @ 2.66 GHz
 * 8GB DDR3 SDRAM
@@ -76,14 +76,14 @@ RESTful API for idock
 
 ### Obtain existing jobs via HTTP GET
 
-    curl -Gd 'email=Jacky@cuhk.edu.hk' http://istar.cse.cuhk.edu.hk/idock/jobs
+    curl http://istar.cse.cuhk.edu.hk/idock/jobs
 
 ### Count the number of ligands satisfying your custom filtering conditions via HTTP GET
 
     curl -Gd
-    mwt_lb=400&mwt_ub=500&logp_lb=0&logp_ub=5&nrb_lb=2&nrb_ub=8&
+    'mwt_lb=400&mwt_ub=500&logp_lb=0&logp_ub=5&nrb_lb=2&nrb_ub=8&
     hbd_lb=2&hbd_ub=5&hba_lb=2&hba_ub=10&charge_lb=0&charge_ub=0&
-    ad_lb=0&ad_ub=12&pd_lb=-50&pd_ub=0&tpsa_lb=20&tpsa_ub=100
+    ad_lb=0&ad_ub=12&pd_lb=-50&pd_ub=0&tpsa_lb=20&tpsa_ub=100'
     http://istar.cse.cuhk.edu.hk/idock/ligands
 
 
@@ -98,14 +98,14 @@ RESTful API for igrep
 
 ### Obtain existing jobs via HTTP GET
 
-    curl -Gd 'email=Jacky@cuhk.edu.hk' http://istar.cse.cuhk.edu.hk/igrep/jobs
+    curl http://istar.cse.cuhk.edu.hk/igrep/jobs
 
 
 Licenses
 --------
 
-* Code licensed under [Apache License 2.0].
-* Documentation licensed under [CC BY 3.0].
+* idock and igrep are licensed under [Apache License 2.0]. iview is licensed under [GPL 3.0].
+* Documentation is licensed under [CC BY 3.0].
 
 
 Author
@@ -126,7 +126,6 @@ Logo
 [igrep]: http://istar.cse.cuhk.edu.hk/igrep
 [iview]: http://istar.cse.cuhk.edu.hk/iview
 [Twitter Bootstrap]: https://github.com/twitter/bootstrap
-[HTML5 Boilerplate]: https://github.com/h5bp/html5-boilerplate
 [Modernizr]: https://github.com/Modernizr/Modernizr
 [jQuery]: https://github.com/jquery/jquery
 [jQuery UI]: https://github.com/jquery/jquery-ui
@@ -137,5 +136,6 @@ Logo
 [spdy]: https://github.com/indutny/node-spdy
 [MongoDB]: https://github.com/mongodb/mongo
 [Apache License 2.0]: http://www.apache.org/licenses/LICENSE-2.0
+[GPL 3.0]: http://www.gnu.org/licenses/gpl.html
 [CC BY 3.0]: http://creativecommons.org/licenses/by/3.0
 [Jacky Lee]: http://www.cse.cuhk.edu.hk/~hjli
