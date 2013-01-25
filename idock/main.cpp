@@ -599,7 +599,7 @@ int main(int argc, char* argv[])
 					getline(k_csv, line);
 					auto& r = phase2_results[k];
 					r.rfscore = lexical_cast<fl>(line);
-					r.consensus = r.rfscore - r.e_nd;
+					r.consensus = (r.rfscore - r.e_nd) * 0.5;
 				}
 
 				// Sort results by RF-Score or consensus if necessary.

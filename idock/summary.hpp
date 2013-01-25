@@ -43,7 +43,7 @@ namespace idock
 			consensuses.resize(size);
 			for (size_t i = 0; i < size; ++i)
 			{
-				consensuses[i] = rfscores[i] - energies[i];
+				consensuses[i] = (rfscores[i] - energies[i]) * 0.5;
 			}
 		}
 
