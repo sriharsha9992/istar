@@ -1,5 +1,5 @@
 $(function() {
-	var iv = new GLmol('iview');
+	var iv = new iview('iview');
 	iv.defineRepresentation = function () {
 		var all = this.getAllAtoms();
 		this.colorByAtom(all, {});
@@ -26,8 +26,8 @@ $(function() {
 		var target = this.modelGroup;
 		var allHet = this.getHetatms(all);
 		var hetatm = this.removeSolvents(allHet);
-		this.drawAtomsAsSphere(target, hetatm, this.sphereRadius);
-		//this.drawBondsAsStick(target, hetatm, this.cylinderRadius, this.cylinderRadius, true);
+		this.drawBondsAsStick(target, hetatm, this.cylinderRadius, this.cylinderRadius, true);
+		//this.drawAtomsAsSphere(target, hetatm, this.sphereRadius);
 		//this.drawBondsAsLine(target, hetatm, this.curveWidth);
 		//this.drawAtomsAsIcosahedron(target, hetatm, this.sphereRadius);
 		//this.drawBondsAsStick(target, hetatm, this.cylinderRadius / 2.0, this.cylinderRadius, true, false, 0.3); // ballAndStick
@@ -43,7 +43,7 @@ $(function() {
 
 		this.modelGroup.add(asu);
 	};
-	$.get('http://www.pdb.org/pdb/files/4tmn.pdb', function (pdb) {
+	$.get('http://www.pdb.org/pdb/files/3krv.pdb', function (pdb) {
 		iv.loadMolecule(pdb);
 	});
 
