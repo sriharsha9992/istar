@@ -2,49 +2,69 @@ var iview = (function () {
 
 	function iview(id) {
 		this.ElementColors = {
-			"H": 0xCCCCCC,
-			"C": 0xAAAAAA,
-			"O": 0xCC0000,
-			"N": 0x0000CC,
-			"S": 0xCCCC00,
-			"P": 0x6622CC,
-			"F": 0x00CC00,
-			"CL": 0x00CC00,
-			"BR": 0x882200,
-			"I": 0x6600AA,
-			"FE": 0xCC6600,
-			"CA": 0x8888AA
+			'H ': 0xFFFFFF,
+			'HD': 0xFFFFFF,
+			'C ': 0x909090,
+			'A ': 0x909090,
+			'N ': 0x3050F8,
+			'NA': 0x3050F8,
+			'OA': 0xFF0D0D,
+			'S ': 0xFFFF30,
+			'SA': 0xFFFF30,
+			'Se': 0xFFA100,
+			'P ': 0xFF8000,
+			'F ': 0x90E050,
+			'Cl': 0x1FF01F,
+			'Br': 0xA62929,
+			'I ': 0x940094,
+			'Zn': 0x7D80B0,
+			'Fe': 0xE06633,
+			'Mg': 0x8AFF00,
+			'Ca': 0x3DFF00,
+			'Mn': 0x9C7AC7,
+			'Cu': 0xC88033,
+			'Na': 0xAB5CF2,
+			'K ': 0x8F40D4,
+			'Hg': 0xB8B8D0,
+			'Ni': 0x50D050,
+			'Co': 0xF090A0,
+			'Cd': 0xFFD98F,
+			'As': 0xBD80E3,
+			'Sr': 0x00FF00,
 		};
 		
 		this.vdwRadii = {
-			"H": 1.2,
-			"Li": 1.82,
-			"Na": 2.27,
-			"K": 2.75,
-			"C": 1.7,
-			"N": 1.55,
-			"O": 1.52,
-			"F": 1.47,
-			"P": 1.80,
-			"S": 1.80,
-			"CL": 1.75,
-			"BR": 1.85,
-			"SE": 1.90,
-			"ZN": 1.39,
-			"CU": 1.4,
-			"NI": 1.63
+			'H ': 1.2,
+			'HD': 1.2,
+			'C ': 1.7,
+			'A ': 1.7,
+			'N ': 1.55,
+			'NA': 1.55,
+			'Na': 2.27,
+			'OA': 1.52,
+			'S ': 1.80,
+			'SA': 1.80,
+			'Se': 1.90,
+			'P ': 1.80,
+			'F ': 1.47,
+			'Cl': 1.75,
+			'Br': 1.85,
+			'Zn': 1.39,
+			'Cu': 1.4,
+			'K ': 2.75,
+			'Ni': 1.63
 		};
 
 		this.container = $('#' + id);
 		this.WIDTH = this.container.width();
 		this.HEIGHT = this.container.height();
 		this.ASPECT = this.WIDTH / this.HEIGHT;
-		this.CAMERA_Z = -110;
+		this.CAMERA_Z = -130;
 		this.renderer = new THREE.WebGLRenderer({
 			canvas: this.container.get(0),
 			antialias: true
 		});
-		this.renderer.sortObjects = false; // hopefully improve performance
+		this.renderer.sortObjects = false;
 		this.renderer.setSize(this.WIDTH, this.HEIGHT);
 
 		this.perspectiveCamera = new THREE.PerspectiveCamera(20, this.ASPECT, 1, 800);
@@ -69,6 +89,14 @@ var iview = (function () {
 		this.scene = null;
 		this.rotationGroup = null; // which contains modelGroup
 		this.modelGroup = null;
+		this.options = {
+			colorBy: 'spectrum',
+			protein: 'thick ribbon',
+			ligand: 'stick',
+			lonePairs: 'icosahedron',
+			background: 'white',
+			camera: 'perspective',
+		};
 
 		this.bgColor = 0xFFFFFF;
 		this.fov = 20;
@@ -180,41 +208,6 @@ var iview = (function () {
 		});
 	}
 
-	iview.prototype.parsePDB = function (str) {
-		var atoms = this.atoms;
-		var molID;
-		var atoms_cnt = 0;
-		lines = str.split("\n");
-		for (var i = 0; i < lines.length; i++) {
-			line = lines[i].replace(/^\s*/, ''); // remove indent
-			var recordName = line.substr(0, 6);
-			if (recordName == 'ATOM  ' || recordName == 'HETATM') {
-				var atom, resn, chain, resi, x, y, z, hetflag, elem, serial, altLoc, b;
-				altLoc = line.substr(16, 1);
-				if (altLoc != ' ' && altLoc != 'A') continue; // FIXME: ad hoc
-				serial = parseInt(line.substr(6, 5));
-				atom = line.substr(12, 4).replace(/ /g, "");
-				resn = line.substr(17, 3);
-				chain = line.substr(21, 1);
-				resi = parseInt(line.substr(22, 5));
-				x = parseFloat(line.substr(30, 8));
-				y = parseFloat(line.substr(38, 8));
-				z = parseFloat(line.substr(46, 8));
-				b = parseFloat(line.substr(60, 8));
-				elem = line.substr(76, 2).replace(/ /g, "");
-				if (elem == '') { // for some incorrect PDB files
-					elem = line.substr(12, 4).replace(/ /g, "");
-				}
-				hetflag = (line[0] == 'H');
-				atoms[serial] = {
-					'resn': resn, 'x': x, 'y': y, 'z': z, 'elem': elem,
-					'hetflag': hetflag, 'chain': chain, 'resi': resi, 'serial': serial, 'atom': atom,
-					'bonds': [], 'ss': 'c', 'color': 0xFFFFFF, 'bonds': [], 'bondOrder': [], 'b': b /*', altLoc': altLoc*/
-				};
-			}
-		}
-	};
-
 	// Catmull-Rom subdivision
 	iview.prototype.subdivide = function (_points, DIV) { // points as Vector3
 		var ret = [];
@@ -293,8 +286,8 @@ var iview = (function () {
 		//   if (atom1.altLoc != atom2.altLoc) return false;
 		if (isNaN(distSquared)) return 0;
 		if (distSquared < 0.5) return 0; // maybe duplicate position.
-		if (distSquared > 1.3 && (atom1.elem == 'H' || atom2.elem == 'H' || atom1.elem == 'D' || atom2.elem == 'D')) return 0;
-		if (distSquared < 3.42 && (atom1.elem == 'S' || atom2.elem == 'S')) return 1;
+		if (distSquared > 1.3 && (atom1.elem == 'H ' || atom2.elem == 'H ' || atom1.elem == 'HD' || atom2.elem == 'HD')) return 0;
+		if (distSquared < 3.42 && (atom1.elem == 'S ' || atom2.elem == 'S ')) return 1;
 		if (distSquared > 2.78) return 0;
 		return 1;
 	};
@@ -360,11 +353,11 @@ var iview = (function () {
 		var found = null;
 		for (var i = 0; i < atom1.bonds.length && !found; i++) {
 			var atom = this.atoms[atom1.bonds[i]]; if (!atom) continue;
-			if (atom.serial != atom2.serial && atom.elem != 'H') found = atom;
+			if (atom.serial != atom2.serial && atom.elem != 'H ' && atom.elem != 'HD') found = atom;
 		}
 		for (var i = 0; i < atom2.bonds.length && !found; i++) {
 			var atom = this.atoms[atom2.bonds[i]]; if (!atom) continue;
-			if (atom.serial != atom1.serial && atom.elem != 'H') found = atom;
+			if (atom.serial != atom1.serial && atom.elem != 'H ' && atom.elem != 'HD') found = atom;
 		}
 		if (found) {
 			var tmp = new THREE.Vector3(atom1.x - found.x, atom1.y - found.y, atom1.z - found.z).normalize();
@@ -639,7 +632,7 @@ var iview = (function () {
 
 	iview.prototype.drawCylinder = function (group, from, to, radius, color, cap) {
 		if (!from || !to) return;
-		var midpoint = new THREE.Vector3().add(from, to).multiplyScalar(0.5);
+		var midpoint = new THREE.Vector3().addVectors(from, to).multiplyScalar(0.5);
 		var color = new THREE.Color(color);
 		if (!this.cylinderGeometry) {
 			this.cylinderGeometry = new THREE.CylinderGeometry(1, 1, 1, this.cylinderQuality, 1, !cap);
@@ -656,30 +649,6 @@ var iview = (function () {
 		m.rotateX(Math.PI / 2);
 		cylinder.matrix.multiply(m);
 		group.add(cylinder);
-	};
-
-	// FIXME: transition!
-	iview.prototype.drawHelixAsCylinder = function (group, atomlist, radius) {
-		var start = null;
-		var currentChain, currentResi;
-		var others = [], beta = [];
-		for (var i in atomlist) {
-			var atom = this.atoms[atomlist[i]];
-			if (atom == undefined || atom.hetflag) continue;
-			if ((atom.ss != 'h' && atom.ss != 's') || atom.ssend || atom.ssbegin) others.push(atom.serial);
-			if (atom.ss == 's') beta.push(atom.serial);
-			if (atom.atom != 'CA') continue;
-			if (atom.ss == 'h' && atom.ssend) {
-				if (start != null) this.drawCylinder(group, new THREE.Vector3(start.x, start.y, start.z), new THREE.Vector3(atom.x, atom.y, atom.z), radius, atom.color, true);
-				start = null;
-			}
-			currentChain = atom.chain;
-			currentResi = atom.resi;
-			if (start == null && atom.ss == 'h' && atom.ssbegin) start = atom;
-		}
-		if (start != null) this.drawCylinder(group, new THREE.Vector3(start.x, start.y, start.z), new THREE.Vector3(atom.x, atom.y, atom.z), radius, atom.color);
-		this.drawMainchainTube(group, others, "CA", 0.3);
-		this.drawStrand(group, beta, undefined, undefined, true, 0, this.helixSheetWidth, false, this.thickness * 2);
 	};
 
 	iview.prototype.drawCartoon = function (group, atomlist, doNotSmoothen, thickness) {
@@ -786,30 +755,6 @@ var iview = (function () {
 		return ret;
 	};
 
-	iview.prototype.getSidechains = function (atomlist) {
-		var ret = [];
-		for (var i in atomlist) {
-			var atom = this.atoms[atomlist[i]];
-			if (atom == undefined) continue;
-			if (atom.hetflag) continue;
-			if (atom.atom == 'C' || atom.atom == 'O' || (atom.atom == 'N' && atom.resn != "PRO")) continue;
-			ret.push(atom.serial);
-		}
-		return ret;
-	};
-
-	iview.prototype.getChain = function (atomlist, chain) {
-		var ret = [], chains = {};
-		chain = chain.toString(); // concat if Array
-		for (var i = 0, lim = chain.length; i < lim; i++) chains[chain.substr(i, 1)] = true;
-		for (var i in atomlist) {
-			var atom = this.atoms[atomlist[i]];
-			if (atom == undefined) continue;
-			if (chains[atom.chain]) ret.push(atom.serial);
-		}
-		return ret;
-	};
-
 	// for HETATM only
 	iview.prototype.getNonbonded = function (atomlist, chain) {
 		var ret = [];
@@ -819,29 +764,6 @@ var iview = (function () {
 			if (atom.hetflag && atom.bonds.length == 0) ret.push(atom.serial);
 		}
 		return ret;
-	};
-
-	iview.prototype.colorByAtom = function (atomlist, colors) {
-		for (var i in atomlist) {
-			var atom = this.atoms[atomlist[i]];
-			if (atom == undefined) continue;
-			var c = colors[atom.elem];
-			if (c == undefined) c = this.ElementColors[atom.elem];
-			if (c == undefined) c = this.defaultColor;
-			atom.color = c;
-		}
-	};
-
-
-	// MEMO: Color only CA. maybe I should add atom.cartoonColor.
-	iview.prototype.colorByStructure = function (atomlist, helixColor, sheetColor, colorSidechains) {
-		for (var i in atomlist) {
-			var atom = this.atoms[atomlist[i]];
-			if (atom == undefined) continue;
-			if (!colorSidechains && (atom.atom != 'CA' || atom.hetflag)) continue;
-			if (atom.ss[0] == 's') atom.color = sheetColor;
-			else if (atom.ss[0] == 'h') atom.color = helixColor;
-		}
 	};
 
 	iview.prototype.colorByBFactor = function (atomlist, colorSidechains) {
@@ -874,15 +796,13 @@ var iview = (function () {
 		}
 	};
 
-	iview.prototype.colorByChain = function (atomlist, colorSidechains) {
+	iview.prototype.colorByChain = function (atomlist) {
 		for (var i in atomlist) {
 			var atom = this.atoms[atomlist[i]];
 			if (atom == undefined) continue;
 			if (atom.hetflag) continue;
-			if (colorSidechains || atom.atom == 'CA' || atom.atom == 'O3\'') {
-				var color = new THREE.Color(0);
-				color.setHSV((atom.chain.charCodeAt(0) * 5) % 17 / 17.0, 1, 0.9);
-				atom.color = color.getHex();
+			if (atom.atom == 'CA') {
+				atom.color = new THREE.Color().setHSV((atom.chain.charCodeAt(0) * 5) % 17 / 17.0, 1, 0.9).getHex();
 			}
 		}
 	};
@@ -927,22 +847,9 @@ var iview = (function () {
 		for (i in atomlist) {
 			atom = this.atoms[atomlist[i]]; if (atom == undefined) continue;
 			if ((colorSidechains || atom.atom != 'CA' || atom.atom != 'O3\'') && !atom.hetflag) {
-				var color = new THREE.Color(0);
-				color.setHSV(240.0 / 360 * (1 - cnt / total), 1, 0.9);
-				atom.color = color.getHex();
-				cnt++;
+				atom.color = new THREE.Color().setHSV(240.0 / 360 * (1 - cnt++ / total), 1, 0.9).getHex();
 			}
 		}
-	};
-
-	iview.prototype.defineRepresentation = function () {
-		var all = this.getAllAtoms();
-		var hetatm = this.removeSolvents(this.getHetatms(all));
-		this.colorByAtom(all, {});
-		this.colorByChain(all);
-		this.drawAtomsAsSphere(this.modelGroup, hetatm, this.sphereRadius);
-		this.drawMainchainCurve(this.modelGroup, all, this.curveWidth, 'P');
-		this.drawCartoon(this.modelGroup, all, this.curveWidth);
 	};
 
 	iview.prototype.setBackground = function (hex, a) {
@@ -982,7 +889,7 @@ var iview = (function () {
 		this.rotationGroup.quaternion = new THREE.Quaternion(1, 0, 0, 0);
 	};
 
-	iview.prototype.rebuildScene = function () {
+	iview.prototype.rebuildScene = function (options) {
 		var view;
 		if (!this.modelGroup) view = [0, 0, 0, 0, 0, 0, 0, 1];
 		else {
@@ -990,7 +897,7 @@ var iview = (function () {
 			var q = this.rotationGroup.quaternion;
 			view = [pos.x, pos.y, pos.z, this.rotationGroup.position.z, q.x, q.y, q.z, q.w];
 		}
-		// CHECK: Should I explicitly call scene.deallocateObject?
+		// this.scene.deallocateObject();
 		this.scene = new THREE.Scene();
 		this.scene.fog = new THREE.Fog(this.bgColor, 100, 200);
 		this.modelGroup = new THREE.Object3D();
@@ -1006,7 +913,92 @@ var iview = (function () {
 		var ambientLight = new THREE.AmbientLight(0x202020);
 		this.scene.add(ambientLight);
 
-		this.defineRepresentation();
+		var all = this.getAllAtoms();
+		$.extend(this.options, options);
+		switch (this.options.colorBy) {
+			case 'spectrum':
+				this.colorChainbow(all);
+				break;
+			case 'chain':
+				this.colorByChain(all);
+				break;
+			case 'b factor':
+				this.colorByBFactor(all);
+				break;
+			case 'polarity':
+				this.colorByPolarity(all, 0xcc0000, 0xcccccc);
+				break;
+		}
+		var target = this.modelGroup;
+		var doNotSmoothen = false; // Don't smoothen beta-sheets in ribbons
+		switch (this.options.protein) {
+			case 'thick ribbon':
+				this.drawCartoon(target, all, doNotSmoothen, this.thickness);
+				break;
+			case 'thin ribbon':
+				this.drawCartoon(target, all, doNotSmoothen);
+				break;
+			case 'strand':
+				this.drawStrand(target, all, null, null, null, null, null, doNotSmoothen);
+				break;
+			case 'c alpha trace':
+				this.drawMainchainCurve(target, all, this.curveWidth, 'CA', 1);
+				break;
+			case 'b factor Tube':
+				this.drawMainchainTube(target, all, 'CA');
+				break;
+		}
+//		this.drawBondsAsLine(target, all, this.lineWidth); // bonds (everything)
+		var allHet = this.getHetatms(all);
+		var hetatm = this.removeSolvents(allHet);
+		switch (this.options.ligand) {
+			case 'stick':
+				this.drawBondsAsStick(target, hetatm, this.cylinderRadius, this.cylinderRadius, true);
+				break;
+			case 'line':
+				this.drawBondsAsLine(target, hetatm, this.curveWidth);
+				break;
+			case 'sphere':
+				this.drawAtomsAsSphere(target, hetatm, this.sphereRadius);
+				break;
+			case 'icosahedron':
+				this.drawAtomsAsIcosahedron(target, hetatm, this.sphereRadius);
+				break;
+			case 'ball and stick':
+				this.drawBondsAsStick(target, hetatm, this.cylinderRadius / 2.0, this.cylinderRadius, true, false, 0.3);
+				break;
+			case 'ball and stick (multiple bonds)':
+				this.drawBondsAsStick(target, hetatm, this.cylinderRadius / 2.0, this.cylinderRadius, true, true, 0.3);
+				break;
+		}
+		var nonBonded = this.getNonbonded(allHet);
+		switch (this.options.loneParis) {
+			case 'icosahedron':
+				this.drawAtomsAsIcosahedron(target, nonBonded, 0.3, true);
+				break;
+			case 'sphere':
+				this.drawAtomsAsSphere(target, nonBonded, this.sphereRadius);
+				break;
+		}
+		switch (this.options.background) {
+			case 'white':
+				this.setBackground(parseInt('0xffffff'));
+				break;
+			case 'black':
+				this.setBackground(parseInt('0x000000'));
+				break;
+			case 'grey':
+				this.setBackground(parseInt('0x888888'));
+				break;
+		}
+		switch (this.options.camera) {
+			case 'perspective':
+				this.camera = this.perspectiveCamera;
+				break;
+			case 'orthoscopic':
+				this.camera = this.orthoscopicCamera;
+				break;
+		}
 		if (!this.modelGroup || !this.rotationGroup) return;
 		this.modelGroup.position.x = view[0];
 		this.modelGroup.position.y = view[1];
@@ -1019,10 +1011,33 @@ var iview = (function () {
 		this.show();
 	};
 
-	iview.prototype.loadMolecule = function (src) {
+	iview.prototype.loadReceptor = function (src) {
 		this.atoms = [];
-		this.parsePDB(src);
-		this.rebuildScene(true);
+		lines = src.split('\n');
+		for (var i = 0; i < lines.length; i++) {
+			line = lines[i];
+			if (line.match('^ATOM|HETATM')) {
+				var serial = parseInt(line.substr(6, 5));
+				var elem = line.substr(77, 2);
+				this.atoms[serial] = {
+					hetflag: line[0] == 'H',
+					serial: serial,
+					atom: line.substr(12, 4).replace(/ /g, ''),
+					resn: line.substr(17, 3),
+					chain: line.substr(21, 1),
+					resi: parseInt(line.substr(22, 5)),
+					x: parseFloat(line.substr(30, 8)),
+					y: parseFloat(line.substr(38, 8)),
+					z: parseFloat(line.substr(46, 8)),
+					b: parseFloat(line.substr(60, 8)),
+					elem: elem,
+					color: this.ElementColors[elem] || this.defaultColor,
+					bonds: [],
+					bondOrder: [],
+				};
+			}
+		}
+		this.rebuildScene();
 		this.zoomInto(this.getAllAtoms());
 		this.show();
 	};
