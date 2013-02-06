@@ -43,7 +43,7 @@ $(function() {
 
 		this.modelGroup.add(asu);
 	};
-	$.get('http://www.pdb.org/pdb/files/3krv.pdb', function (pdb) {
+	$.get('http://www.pdb.org/pdb/files/3g71.pdb', function (pdb) {
 		iv.loadMolecule(pdb);
 	});
 
