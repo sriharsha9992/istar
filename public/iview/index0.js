@@ -78,10 +78,10 @@ $(function() {
 		$('#demo').html('Your browser does not support HTML5 canvas.');
 		return;
 	}
-	$.get('receptor.pdbqt', function(receptor) {
+	$.get('receptor0.pdbqt', function(receptor) {
 		iv.setBox([49.712, -28.923, 36.824], [18, 18, 20]);
 		iv.parseReceptor(receptor);
-		$.get('ligand.pdbqt', function(ligand) {
+		$.get('ligand0.pdbqt', function(ligand) {
 			iv.parseLigand(ligand);
 			$('#atoms').html(iv.ligand.atoms.length);
 			$('#hatoms').html(iv.ligand.nHeavyAtoms);
