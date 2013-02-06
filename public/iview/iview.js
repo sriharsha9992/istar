@@ -167,7 +167,6 @@ var iview = (function () {
 				me.modelGroup.position.z = me.currentModelPos.z + translation.z;
 			} else if ((mode == 0 || me.mouseButton == 1)) { // Rotate
 				var r = Math.sqrt(dx * dx + dy * dy);
-//				if (r != 0) {}
 				var rs = Math.sin(r * Math.PI) / r;
 				me.dq.x = Math.cos(r * Math.PI);
 				me.dq.y = 0;
@@ -183,7 +182,6 @@ var iview = (function () {
 
 	iview.prototype.parsePDB = function (str) {
 		var atoms = this.atoms;
-		var protein = this.protein;
 		var molID;
 		var atoms_cnt = 0;
 		lines = str.split("\n");
@@ -207,103 +205,14 @@ var iview = (function () {
 				if (elem == '') { // for some incorrect PDB files
 					elem = line.substr(12, 4).replace(/ /g, "");
 				}
-				if (line[0] == 'H') hetflag = true;
-				else hetflag = false;
+				hetflag = (line[0] == 'H');
 				atoms[serial] = {
 					'resn': resn, 'x': x, 'y': y, 'z': z, 'elem': elem,
 					'hetflag': hetflag, 'chain': chain, 'resi': resi, 'serial': serial, 'atom': atom,
 					'bonds': [], 'ss': 'c', 'color': 0xFFFFFF, 'bonds': [], 'bondOrder': [], 'b': b /*', altLoc': altLoc*/
 				};
-			} else if (recordName == 'SHEET ') {
-				var startChain = line.substr(21, 1);
-				var startResi = parseInt(line.substr(22, 4));
-				var endChain = line.substr(32, 1);
-				var endResi = parseInt(line.substr(33, 4));
-				protein.sheet.push([startChain, startResi, endChain, endResi]);
-			} else if (recordName == 'CONECT') {
-				// MEMO: We don't have to parse SSBOND, LINK because both are also 
-				// described in CONECT. But what about 2JYT???
-				var from = parseInt(line.substr(6, 5));
-				for (var j = 0; j < 4; j++) {
-					var to = parseInt(line.substr([11, 16, 21, 26][j], 5));
-					if (isNaN(to)) continue;
-					if (atoms[from] != undefined) {
-						atoms[from].bonds.push(to);
-						atoms[from].bondOrder.push(1);
-					}
-				}
-			} else if (recordName == 'HELIX ') {
-				var startChain = line.substr(19, 1);
-				var startResi = parseInt(line.substr(21, 4));
-				var endChain = line.substr(31, 1);
-				var endResi = parseInt(line.substr(33, 4));
-				protein.helix.push([startChain, startResi, endChain, endResi]);
-			} else if (recordName == 'CRYST1') {
-				protein.a = parseFloat(line.substr(6, 9));
-				protein.b = parseFloat(line.substr(15, 9));
-				protein.c = parseFloat(line.substr(24, 9));
-				protein.alpha = parseFloat(line.substr(33, 7));
-				protein.beta = parseFloat(line.substr(40, 7));
-				protein.gamma = parseFloat(line.substr(47, 7));
-				protein.spacegroup = line.substr(55, 11);
-				this.defineCell();
-			} else if (recordName == 'REMARK') {
-				var type = parseInt(line.substr(7, 3));
-				if (type == 290 && line.substr(13, 5) == 'SMTRY') {
-					var n = parseInt(line[18]) - 1;
-					var m = parseInt(line.substr(21, 2));
-					if (protein.symMat[m] == undefined) protein.symMat[m] = new THREE.Matrix4().identity();
-					protein.symMat[m].elements[n] = parseFloat(line.substr(24, 9));
-					protein.symMat[m].elements[n + 4] = parseFloat(line.substr(34, 9));
-					protein.symMat[m].elements[n + 8] = parseFloat(line.substr(44, 9));
-					protein.symMat[m].elements[n + 12] = parseFloat(line.substr(54, 10));
-				} else if (type == 350 && line.substr(13, 5) == 'BIOMT') {
-					var n = parseInt(line[18]) - 1;
-					var m = parseInt(line.substr(21, 2));
-					if (protein.biomtMatrices[m] == undefined) protein.biomtMatrices[m] = new THREE.Matrix4().identity();
-					protein.biomtMatrices[m].elements[n] = parseFloat(line.substr(24, 9));
-					protein.biomtMatrices[m].elements[n + 4] = parseFloat(line.substr(34, 9));
-					protein.biomtMatrices[m].elements[n + 8] = parseFloat(line.substr(44, 9));
-					protein.biomtMatrices[m].elements[n + 12] = parseFloat(line.substr(54, 10));
-				} else if (type == 350 && line.substr(11, 11) == 'BIOMOLECULE') {
-					protein.biomtMatrices = []; protein.biomtChains = '';
-				} else if (type == 350 && line.substr(34, 6) == 'CHAINS') {
-					protein.biomtChains += line.substr(41, 40);
-				}
-			} else if (recordName == 'HEADER') {
-				protein.pdbID = line.substr(62, 4);
-			} else if (recordName == 'TITLE ') {
-				if (protein.title == undefined) protein.title = "";
-				protein.title += line.substr(10, 70) + "\n"; // CHECK: why 60 is not enough???
-			} else if (recordName == 'COMPND') {
-				// TODO: Implement me!
 			}
 		}
-
-		// Assign secondary structures 
-		for (i = 0; i < atoms.length; i++) {
-			atom = atoms[i]; if (atom == undefined) continue;
-			var found = false;
-			// MEMO: Can start chain and end chain differ?
-			for (j = 0; j < protein.sheet.length; j++) {
-				if (atom.chain != protein.sheet[j][0]) continue;
-				if (atom.resi < protein.sheet[j][1]) continue;
-				if (atom.resi > protein.sheet[j][3]) continue;
-				atom.ss = 's';
-				if (atom.resi == protein.sheet[j][1]) atom.ssbegin = true;
-				if (atom.resi == protein.sheet[j][3]) atom.ssend = true;
-			}
-			for (j = 0; j < protein.helix.length; j++) {
-				if (atom.chain != protein.helix[j][0]) continue;
-				if (atom.resi < protein.helix[j][1]) continue;
-				if (atom.resi > protein.helix[j][3]) continue;
-				atom.ss = 'h';
-				if (atom.resi == protein.helix[j][1]) atom.ssbegin = true;
-				else if (atom.resi == protein.helix[j][3]) atom.ssend = true;
-			}
-		}
-		protein.smallMolecule = false;
-		return true;
 	};
 
 	// Catmull-Rom subdivision
@@ -378,7 +287,6 @@ var iview = (function () {
 	iview.prototype.isConnected = function (atom1, atom2) {
 		var s = atom1.bonds.indexOf(atom2.serial);
 		if (s != -1) return atom1.bondOrder[s];
-		if (this.protein.smallMolecule && (atom1.hetflag || atom2.hetflag)) return 0; // CHECK: or should I ?
 		var distSquared = (atom1.x - atom2.x) * (atom1.x - atom2.x) +
 						  (atom1.y - atom2.y) * (atom1.y - atom2.y) +
 						  (atom1.z - atom2.z) * (atom1.z - atom2.z);
@@ -443,24 +351,6 @@ var iview = (function () {
 			if (atom1.connected) forSpheres.push(i);
 		}
 		this.drawAtomsAsSphere(group, forSpheres, atomR, !scale, scale);
-	};
-
-	iview.prototype.defineCell = function () {
-		var p = this.protein;
-		if (p.a == undefined) return;
-		p.ax = p.a;
-		p.ay = 0;
-		p.az = 0;
-		p.bx = p.b * Math.cos(Math.PI / 180.0 * p.gamma);
-		p.by = p.b * Math.sin(Math.PI / 180.0 * p.gamma);
-		p.bz = 0;
-		p.cx = p.c * Math.cos(Math.PI / 180.0 * p.beta);
-		p.cy = p.c * (Math.cos(Math.PI / 180.0 * p.alpha) -
-				   Math.cos(Math.PI / 180.0 * p.gamma)
-				 * Math.cos(Math.PI / 180.0 * p.beta)
-				 / Math.sin(Math.PI / 180.0 * p.gamma));
-		p.cz = Math.sqrt(p.c * p.c * Math.sin(Math.PI / 180.0 * p.beta)
-				   * Math.sin(Math.PI / 180.0 * p.beta) - p.cy * p.cy);
 	};
 
 	// TODO: Find inner side of a ring
@@ -896,16 +786,6 @@ var iview = (function () {
 		return ret;
 	};
 
-	iview.prototype.getProteins = function (atomlist) {
-		var ret = [];
-		for (var i in atomlist) {
-			var atom = this.atoms[atomlist[i]];
-			if (atom == undefined) continue;
-			if (!atom.hetflag) ret.push(atom.serial);
-		}
-		return ret;
-	};
-
 	iview.prototype.getSidechains = function (atomlist) {
 		var ret = [];
 		for (var i in atomlist) {
@@ -1088,7 +968,6 @@ var iview = (function () {
 			zmax = (zmax > atom.z) ? zmax : atom.z;
 		}
 		var center = new THREE.Vector3(xsum / cnt, ysum / cnt, zsum / cnt);//(xmin + xmax) / 2, (ymin + ymax) / 2, (zmin + zmax) / 2
-		if (this.protein.appliedMatrix) { center = this.protein.appliedMatrix.multiplyVector3(center); }
 		this.modelGroup.position = center.multiplyScalar(-1);
 		var x = xmax - xmin, y = ymax - ymin, z = zmax - zmin;
 		var maxD = Math.sqrt(x * x + y * y + z * z);
@@ -1141,7 +1020,6 @@ var iview = (function () {
 	};
 
 	iview.prototype.loadMolecule = function (src) {
-		this.protein = { sheet: [], helix: [], biomtChains: '', biomtMatrices: [], symMat: [], pdbID: '', title: '' };
 		this.atoms = [];
 		this.parsePDB(src);
 		this.rebuildScene(true);
