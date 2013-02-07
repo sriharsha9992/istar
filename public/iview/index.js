@@ -4,7 +4,7 @@ $(function() {
 		iv.loadReceptor(src);
 	});
 
-	[ 'camera', 'background' ].forEach(function(opt) {
+	[ 'camera', 'background', 'colorBy', 'secondaryStructure', 'primaryStructure', 'ligands', 'waters', 'ions' ].forEach(function(opt) {
 		$('#' + opt).click(function(ev){
 			var options = {};
 			options[opt] = ev.target.innerText;

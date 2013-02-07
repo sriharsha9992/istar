@@ -102,8 +102,8 @@ var iview = (function () {
 
 		this.bgColors = {
 			white: 0xFFFFFF,
-			black: 0x000000,
 			 grey: 0xCCCCCC,
+			black: 0x000000,
 		};
 		this.fov = 20;
 		this.fogStart = 0.4;
@@ -740,48 +740,59 @@ var iview = (function () {
 		return ret;
 	};
 
-	// Probably I can refactor using higher-order functions.
+	iview.prototype.getSidechains = function (atomlist) {
+		var ret = [];
+		for (var i in atomlist) {
+			var atom = this.atoms[atomlist[i]];
+			if (atom.hetflag) continue;
+			if (atom.atom == 'C' || atom.atom == 'O' || (atom.atom == 'N' && atom.resn != "PRO")) continue;
+			ret.push(atom.serial);
+		}
+		return ret;
+	};
+
 	iview.prototype.getHetatms = function (atomlist) {
 		var ret = [];
 		for (var i in atomlist) {
 			var atom = this.atoms[atomlist[i]];
-			if (atom == undefined) continue;
 			if (atom.hetflag) ret.push(atom.serial);
 		}
 		return ret;
 	};
 
-	iview.prototype.removeSolvents = function (atomlist) {
+	iview.prototype.getLigands = function (atomlist) {
 		var ret = [];
 		for (var i in atomlist) {
 			var atom = this.atoms[atomlist[i]];
-			if (atom == undefined) continue;
-			if (atom.resn != 'HOH') ret.push(atom.serial);
+			if (atom.bonds.length) ret.push(atom.serial);
 		}
 		return ret;
 	};
 
-	// for HETATM only
-	iview.prototype.getNonbonded = function (atomlist, chain) {
+	iview.prototype.getWaters = function (atomlist) {
 		var ret = [];
 		for (var i in atomlist) {
 			var atom = this.atoms[atomlist[i]];
-			if (atom == undefined) continue;
-			if (atom.hetflag && atom.bonds.length == 0) ret.push(atom.serial);
+			if (atom.bonds.length == 0 && atom.resn == 'HOH') ret.push(atom.serial);
 		}
 		return ret;
 	};
 
-	iview.prototype.colorByBFactor = function (atomlist, colorSidechains) {
+	iview.prototype.getIons = function (atomlist) {
+		var ret = [];
+		for (var i in atomlist) {
+			var atom = this.atoms[atomlist[i]];
+			if (atom.bonds.length == 0 && atom.resn != 'HOH') ret.push(atom.serial);
+		}
+		return ret;
+	};
+
+	iview.prototype.colorByBFactor = function (atomlist) {
 		var minB = 1000, maxB = -1000;
 		for (var i in atomlist) {
 			var atom = this.atoms[atomlist[i]];
-			if (atom == undefined) continue;
-			if (atom.hetflag) continue;
-			if (colorSidechains || atom.atom == 'CA' || atom.atom == 'O3\'') {
-				if (minB > atom.b) minB = atom.b;
-				if (maxB < atom.b) maxB = atom.b;
-			}
+			if (minB > atom.b) minB = atom.b;
+			if (maxB < atom.b) maxB = atom.b;
 		}
 
 		var mid = (maxB + minB) / 2;
@@ -789,44 +800,27 @@ var iview = (function () {
 		if (range < 0.01 && range > -0.01) return;
 		for (var i in atomlist) {
 			var atom = this.atoms[atomlist[i]];
-			if (atom == undefined) continue;
-			if (atom.hetflag) continue;
-			if (colorSidechains || atom.atom == 'CA' || atom.atom == 'O3\'') {
-				var color = new THREE.Color(0);
-				if (atom.b < mid)
-					color.setHSV(0.667, (mid - atom.b) / range, 1);
-				else
-					color.setHSV(0, (atom.b - mid) / range, 1);
-				atom.color = color.getHex();
-			}
+			var color = new THREE.Color(0);
+			if (atom.b < mid)
+				color.setHSV(0.667, (mid - atom.b) / range, 1);
+			else
+				color.setHSV(0, (atom.b - mid) / range, 1);
+			atom.color = color.getHex();
 		}
 	};
 
 	iview.prototype.colorByChain = function (atomlist) {
 		for (var i in atomlist) {
 			var atom = this.atoms[atomlist[i]];
-			if (atom == undefined) continue;
-			if (atom.hetflag) continue;
-			if (atom.atom == 'CA') {
-				atom.color = new THREE.Color().setHSV((atom.chain.charCodeAt(0) * 5) % 17 / 17.0, 1, 0.9).getHex();
-			}
+			atom.color = new THREE.Color().setHSV((atom.chain.charCodeAt(0) * 5) % 17 / 17.0, 1, 0.9).getHex();
 		}
 	};
 
 	iview.prototype.colorByResidue = function (atomlist, residueColors) {
 		for (var i in atomlist) {
 			var atom = this.atoms[atomlist[i]];
-			if (atom == undefined) continue;
 			c = residueColors[atom.resn]
 			if (c != undefined) atom.color = c;
-		}
-	};
-
-	iview.prototype.colorAtoms = function (atomlist, c) {
-		for (var i in atomlist) {
-			var atom = this.atoms[atomlist[i]];
-			if (atom == undefined) continue;
-			atom.color = c;
 		}
 	};
 
@@ -839,53 +833,27 @@ var iview = (function () {
 		this.colorByResidue(atomlist, colorMap);
 	};
 
-	iview.prototype.colorChainbow = function (atomlist, colorSidechains) {
+	iview.prototype.colorChainbow = function (atomlist) {
 		var cnt = 0;
 		var atom, i;
 		for (i in atomlist) {
-			atom = this.atoms[atomlist[i]]; if (atom == undefined) continue;
-			if ((colorSidechains || atom.atom != 'CA' || atom.atom != 'O3\'') && !atom.hetflag)
-				cnt++;
+			atom = this.atoms[atomlist[i]];
+			cnt++;
 		}
 
 		var total = cnt;
 		cnt = 0;
 		for (i in atomlist) {
-			atom = this.atoms[atomlist[i]]; if (atom == undefined) continue;
-			if ((colorSidechains || atom.atom != 'CA' || atom.atom != 'O3\'') && !atom.hetflag) {
-				atom.color = new THREE.Color().setHSV(240.0 / 360 * (1 - cnt++ / total), 1, 0.9).getHex();
-			}
+			atom = this.atoms[atomlist[i]];
+			atom.color = new THREE.Color().setHSV(240.0 / 360 * (1 - cnt++ / total), 1, 0.9).getHex();
 		}
 	};
 
-	iview.prototype.zoomInto = function (atomlist, keepSlab) {
-		var xmin = ymin = zmin = 9999;
-		var xmax = ymax = zmax = -9999;
-		var xsum = ysum = zsum = cnt = 0;
+	iview.prototype.colorByAtom = function (atomlist) {
 		for (var i in atomlist) {
-			var atom = this.atoms[atomlist[i]]; if (atom == undefined) continue;
-			cnt++;
-			xsum += atom.x; ysum += atom.y; zsum += atom.z;
-			xmin = (xmin < atom.x) ? xmin : atom.x;
-			ymin = (ymin < atom.y) ? ymin : atom.y;
-			zmin = (zmin < atom.z) ? zmin : atom.z;
-			xmax = (xmax > atom.x) ? xmax : atom.x;
-			ymax = (ymax > atom.y) ? ymax : atom.y;
-			zmax = (zmax > atom.z) ? zmax : atom.z;
+			var atom = this.atoms[atomlist[i]];
+			atom.color = this.ElementColors[atom.elem] || this.defaultColor;
 		}
-		var center = new THREE.Vector3(xsum / cnt, ysum / cnt, zsum / cnt);//(xmin + xmax) / 2, (ymin + ymax) / 2, (zmin + zmax) / 2
-		this.modelGroup.position = center.multiplyScalar(-1);
-		var x = xmax - xmin, y = ymax - ymin, z = zmax - zmin;
-		var maxD = Math.sqrt(x * x + y * y + z * z);
-		if (maxD < 25) maxD = 25;
-
-		if (!keepSlab) {
-			this.slabNear = -maxD / 1.9;
-			this.slabFar = maxD / 3;
-		}
-
-		this.rotationGroup.position.z = maxD * 0.35 / Math.tan(Math.PI / 180.0 * this.camera.fov / 2) - 150;
-		this.rotationGroup.quaternion = new THREE.Quaternion(1, 0, 0, 0);
 	};
 
 	iview.prototype.rebuildScene = function (options) {
@@ -933,11 +901,20 @@ var iview = (function () {
 			case 'chain':
 				this.colorByChain(all);
 				break;
+			case 'secondary structure':
+//				this.colorByStructure(all);
+				break;
 			case 'B factor':
 				this.colorByBFactor(all);
 				break;
+			case 'residue':
+//				this.colorByResidue(all);
+				break;
 			case 'polarity':
 				this.colorByPolarity(all, 0xcc0000, 0xcccccc);
+				break;
+			case 'atom':
+				this.colorByAtom(all);
 				break;
 		}
 		var target = this.modelGroup;
@@ -952,43 +929,50 @@ var iview = (function () {
 			case 'strand':
 				this.drawStrand(target, all, null, null, null, null, null, doNotSmoothen);
 				break;
-			case 'c alpha trace':
+			case 'C alpha trace':
 				this.drawMainchainCurve(target, all, this.curveWidth, 'CA', 1);
 				break;
-			case 'b factor Tube':
+			case 'B factor tube':
 				this.drawMainchainTube(target, all, 'CA');
 				break;
 		}
-//		this.drawBondsAsLine(target, all, this.lineWidth); // bonds (everything)
-		var allHet = this.getHetatms(all);
-		var hetatm = this.removeSolvents(allHet);
-		switch (this.options.ligands) {
-			case 'stick':
-				this.drawBondsAsStick(target, hetatm, this.cylinderRadius, this.cylinderRadius, true);
+		switch (this.options.primaryStructure) {
+			case 'residues':
+				this.drawBondsAsLine(target, all, this.lineWidth);
 				break;
-			case 'line':
-				this.drawBondsAsLine(target, hetatm, this.curveWidth);
-				break;
-			case 'sphere':
-				this.drawAtomsAsSphere(target, hetatm, this.sphereRadius);
-				break;
-			case 'icosahedron':
-				this.drawAtomsAsIcosahedron(target, hetatm, this.sphereRadius);
-				break;
-			case 'ball and stick':
-				this.drawBondsAsStick(target, hetatm, this.cylinderRadius / 2.0, this.cylinderRadius, true, false, 0.3);
-				break;
-			case 'ball and stick (multiple bonds)':
-				this.drawBondsAsStick(target, hetatm, this.cylinderRadius / 2.0, this.cylinderRadius, true, true, 0.3);
+			case 'sidechains':
+				this.drawBondsAsLine(target, this.getSidechains(all), this.lineWidth);
 				break;
 		}
-		var nonBonded = this.getNonbonded(allHet);
-		switch (this.options.waters) {
-			case 'icosahedron':
-				this.drawAtomsAsIcosahedron(target, nonBonded, 0.3, true);
+		var hetatms = this.getHetatms(all);
+		var ligands = this.getLigands(hetatms);
+		switch (this.options.ligands) {
+			case 'line':
+				this.drawBondsAsLine(target, ligands, this.curveWidth);
+				break;
+			case 'stick':
+				this.drawBondsAsStick(target, ligands, this.cylinderRadius, this.cylinderRadius, true);
+				break;
+			case 'ball and stick':
+				this.drawBondsAsStick(target, ligands, this.cylinderRadius / 2.0, this.cylinderRadius, true, false, 0.3);
+				break;
+			case 'ball and stick (multiple bonds)':
+//				this.drawBondsAsStick(target, ligands, this.cylinderRadius / 2.0, this.cylinderRadius, true, true, 0.3);
 				break;
 			case 'sphere':
-				this.drawAtomsAsSphere(target, nonBonded, this.sphereRadius);
+				this.drawAtomsAsSphere(target, ligands, this.sphereRadius);
+				break;
+		}
+		var waters = this.getWaters(hetatms);
+		switch (this.options.waters) {
+			case 'sphere':
+				this.drawAtomsAsSphere(target, waters, this.sphereRadius, true);
+				break;
+		}
+		var ions = this.getIons(hetatms);
+		switch (this.options.ions) {
+			case 'sphere':
+				this.drawAtomsAsSphere(target, ions, this.sphereRadius);
 				break;
 		}
 		if (!this.modelGroup || !this.rotationGroup) return;
@@ -1010,7 +994,6 @@ var iview = (function () {
 			line = lines[i];
 			if (line.match('^ATOM|HETATM')) {
 				var serial = parseInt(line.substr(6, 5));
-				var elem = line.substr(77, 2);
 				this.atoms[serial] = {
 					hetflag: line[0] == 'H',
 					serial: serial,
@@ -1022,16 +1005,15 @@ var iview = (function () {
 					y: parseFloat(line.substr(38, 8)),
 					z: parseFloat(line.substr(46, 8)),
 					b: parseFloat(line.substr(60, 8)),
-					elem: elem,
-					color: this.ElementColors[elem] || this.defaultColor,
+					elem: line.substr(77, 2),
+					color: null,
 					bonds: [],
 					bondOrder: [],
 				};
 			}
 		}
 		this.rebuildScene();
-		this.zoomInto(this.getAllAtoms());
-		this.show();
+		this.resetView();
 	};
 
 	iview.prototype.show = function () {
@@ -1058,7 +1040,31 @@ var iview = (function () {
 	};
 
 	iview.prototype.resetView = function () {
-		this.zoomInto(this.getAllAtoms());
+		var xmin = ymin = zmin = 9999;
+		var xmax = ymax = zmax = -9999;
+		var xsum = ysum = zsum = cnt = 0;
+		for (var i in this.atoms) {
+			var atom = this.atoms[i];
+			cnt++;
+			xsum += atom.x; ysum += atom.y; zsum += atom.z;
+			xmin = (xmin < atom.x) ? xmin : atom.x;
+			ymin = (ymin < atom.y) ? ymin : atom.y;
+			zmin = (zmin < atom.z) ? zmin : atom.z;
+			xmax = (xmax > atom.x) ? xmax : atom.x;
+			ymax = (ymax > atom.y) ? ymax : atom.y;
+			zmax = (zmax > atom.z) ? zmax : atom.z;
+		}
+		var center = new THREE.Vector3(xsum / cnt, ysum / cnt, zsum / cnt);//(xmin + xmax) / 2, (ymin + ymax) / 2, (zmin + zmax) / 2
+		this.modelGroup.position = center.multiplyScalar(-1);
+		var x = xmax - xmin, y = ymax - ymin, z = zmax - zmin;
+		var maxD = Math.sqrt(x * x + y * y + z * z);
+		if (maxD < 25) maxD = 25;
+
+		this.slabNear = -maxD / 1.9;
+		this.slabFar = maxD / 3;
+
+		this.rotationGroup.position.z = maxD * 0.35 / Math.tan(Math.PI / 180.0 * this.camera.fov / 2) - 150;
+		this.rotationGroup.quaternion = new THREE.Quaternion(1, 0, 0, 0);
 		this.show();
 	};
 
