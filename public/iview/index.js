@@ -2,9 +2,15 @@ $(function() {
 	var iv = new iview('iview');
 	$.get('receptor.pdbqt', function (src) {
 		iv.loadReceptor(src);
-//		iv.options.background = 'grey';
-//		iv.rebuildScene();
-//		iv.show();
+	});
+
+	[ 'camera', 'background' ].forEach(function(opt) {
+		$('#' + opt).click(function(ev){
+			var options = {};
+			options[opt] = ev.target.innerText;
+			iv.rebuildScene(options);
+			iv.show();
+		})
 	});
 
 	function loadFile() {

@@ -70,9 +70,9 @@ var iview = (function () {
 		this.perspectiveCamera = new THREE.PerspectiveCamera(20, this.ASPECT, 1, 800);
 		this.perspectiveCamera.position = new THREE.Vector3(0, 0, this.CAMERA_Z);
 		this.perspectiveCamera.lookAt(new THREE.Vector3(0, 0, 0));
-		this.orthoscopicCamera = new THREE.OrthographicCamera();
-		this.orthoscopicCamera.position.z = this.CAMERA_Z;
-		this.orthoscopicCamera.lookAt(new THREE.Vector3(0, 0, 0));
+		this.orthographicCamera = new THREE.OrthographicCamera();
+		this.orthographicCamera.position.z = this.CAMERA_Z;
+		this.orthographicCamera.lookAt(new THREE.Vector3(0, 0, 0));
 		this.camera = this.perspectiveCamera;
 
 		var me = this;
@@ -90,15 +90,21 @@ var iview = (function () {
 		this.rotationGroup = null; // which contains modelGroup
 		this.modelGroup = null;
 		this.options = {
-			colorBy: 'spectrum',
-			protein: 'thick ribbon',
-			ligand: 'stick',
-			lonePairs: 'icosahedron',
-			background: 'white',
 			camera: 'perspective',
+			background: 'white',
+			colorBy: 'spectrum',
+			secondaryStructure: 'thick ribbon',
+			primaryStructure: 'none',
+			ligands: 'stick',
+			waters: 'sphere',
+			ions: 'sphere',
 		};
 
-		this.bgColor = 0xFFFFFF;
+		this.bgColors = {
+			white: 0xFFFFFF,
+			black: 0x000000,
+			 grey: 0xCCCCCC,
+		};
 		this.fov = 20;
 		this.fogStart = 0.4;
 		this.slabNear = -50; // relative to the center of rotationGroup
@@ -852,13 +858,6 @@ var iview = (function () {
 		}
 	};
 
-	iview.prototype.setBackground = function (hex, a) {
-		a = a | 1.0;
-		this.bgColor = hex;
-		this.renderer.setClearColorHex(hex, a);
-		this.scene.fog.color = new THREE.Color(hex);
-	};
-
 	iview.prototype.zoomInto = function (atomlist, keepSlab) {
 		var xmin = ymin = zmin = 9999;
 		var xmax = ymax = zmax = -9999;
@@ -899,7 +898,6 @@ var iview = (function () {
 		}
 		// this.scene.deallocateObject();
 		this.scene = new THREE.Scene();
-		this.scene.fog = new THREE.Fog(this.bgColor, 100, 200);
 		this.modelGroup = new THREE.Object3D();
 		this.rotationGroup = new THREE.Object3D();
 		this.rotationGroup.useQuaternion = true;
@@ -913,8 +911,21 @@ var iview = (function () {
 		var ambientLight = new THREE.AmbientLight(0x202020);
 		this.scene.add(ambientLight);
 
-		var all = this.getAllAtoms();
 		$.extend(this.options, options);
+		switch (this.options.camera) {
+			case 'perspective':
+				this.camera = this.perspectiveCamera;
+				break;
+			case 'orthographic':
+				this.camera = this.orthographicCamera;
+				break;
+		}
+
+		var bgColor = this.bgColors[this.options.background] | this.options.background;
+		this.renderer.setClearColorHex(bgColor, 1.0);
+		this.scene.fog = new THREE.Fog(bgColor, 100, 200);
+
+		var all = this.getAllAtoms();
 		switch (this.options.colorBy) {
 			case 'spectrum':
 				this.colorChainbow(all);
@@ -922,7 +933,7 @@ var iview = (function () {
 			case 'chain':
 				this.colorByChain(all);
 				break;
-			case 'b factor':
+			case 'B factor':
 				this.colorByBFactor(all);
 				break;
 			case 'polarity':
@@ -931,7 +942,7 @@ var iview = (function () {
 		}
 		var target = this.modelGroup;
 		var doNotSmoothen = false; // Don't smoothen beta-sheets in ribbons
-		switch (this.options.protein) {
+		switch (this.options.secondaryStructure) {
 			case 'thick ribbon':
 				this.drawCartoon(target, all, doNotSmoothen, this.thickness);
 				break;
@@ -951,7 +962,7 @@ var iview = (function () {
 //		this.drawBondsAsLine(target, all, this.lineWidth); // bonds (everything)
 		var allHet = this.getHetatms(all);
 		var hetatm = this.removeSolvents(allHet);
-		switch (this.options.ligand) {
+		switch (this.options.ligands) {
 			case 'stick':
 				this.drawBondsAsStick(target, hetatm, this.cylinderRadius, this.cylinderRadius, true);
 				break;
@@ -972,31 +983,12 @@ var iview = (function () {
 				break;
 		}
 		var nonBonded = this.getNonbonded(allHet);
-		switch (this.options.loneParis) {
+		switch (this.options.waters) {
 			case 'icosahedron':
 				this.drawAtomsAsIcosahedron(target, nonBonded, 0.3, true);
 				break;
 			case 'sphere':
 				this.drawAtomsAsSphere(target, nonBonded, this.sphereRadius);
-				break;
-		}
-		switch (this.options.background) {
-			case 'white':
-				this.setBackground(parseInt('0xffffff'));
-				break;
-			case 'black':
-				this.setBackground(parseInt('0x000000'));
-				break;
-			case 'grey':
-				this.setBackground(parseInt('0x888888'));
-				break;
-		}
-		switch (this.options.camera) {
-			case 'perspective':
-				this.camera = this.perspectiveCamera;
-				break;
-			case 'orthoscopic':
-				this.camera = this.orthoscopicCamera;
 				break;
 		}
 		if (!this.modelGroup || !this.rotationGroup) return;
