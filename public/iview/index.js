@@ -5,11 +5,18 @@ $(function() {
 	});
 
 	[ 'camera', 'background', 'colorBy', 'secondaryStructure', 'primaryStructure', 'ligands', 'waters', 'ions' ].forEach(function(opt) {
-		$('#' + opt).click(function(ev){
+		$('#' + opt).click(function(e){
 			var options = {};
-			options[opt] = ev.target.innerText;
+			options[opt] = e.target.innerText;
 			iv.rebuildScene(options);
 			iv.show();
+		})
+	});
+
+	[ 'export', 'resetView' ].forEach(function(func) {
+		$('#' + func).click(function(e){
+			e.preventDefault();
+			iv[func]();
 		})
 	});
 
@@ -25,14 +32,5 @@ $(function() {
 			iv.loadMolecule(reader.result);
 		};
 		reader.readAsText(file[0]);
-	}
-		
-	function resetView() {
-		iv.resetView();
-	}
-
-	function saveImage() {
-		iv.show();
-		window.open(iv.renderer.domElement.toDataURL('image/png'));
 	}
 });

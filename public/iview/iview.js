@@ -67,14 +67,6 @@ var iview = (function () {
 		this.renderer.sortObjects = false;
 		this.renderer.setSize(this.WIDTH, this.HEIGHT);
 
-		this.perspectiveCamera = new THREE.PerspectiveCamera(20, this.ASPECT, 1, 800);
-		this.perspectiveCamera.position = new THREE.Vector3(0, 0, this.CAMERA_Z);
-		this.perspectiveCamera.lookAt(new THREE.Vector3(0, 0, 0));
-		this.orthographicCamera = new THREE.OrthographicCamera();
-		this.orthographicCamera.position.z = this.CAMERA_Z;
-		this.orthographicCamera.lookAt(new THREE.Vector3(0, 0, 0));
-		this.camera = this.perspectiveCamera;
-
 		var me = this;
 		$(window).resize(function () {
 			me.WIDTH = me.container.width();
@@ -86,25 +78,6 @@ var iview = (function () {
 			me.show();
 		});
 
-		this.scene = null;
-		this.rotationGroup = null; // which contains modelGroup
-		this.modelGroup = null;
-		this.options = {
-			camera: 'perspective',
-			background: 'white',
-			colorBy: 'spectrum',
-			secondaryStructure: 'thick ribbon',
-			primaryStructure: 'none',
-			ligands: 'stick',
-			waters: 'sphere',
-			ions: 'sphere',
-		};
-
-		this.bgColors = {
-			white: 0xFFFFFF,
-			 grey: 0xCCCCCC,
-			black: 0x000000,
-		};
 		this.fov = 20;
 		this.fogStart = 0.4;
 		this.slabNear = -50; // relative to the center of rotationGroup
@@ -118,12 +91,130 @@ var iview = (function () {
 		this.cylinderQuality = 16; //8;
 		this.axisDIV = 5; // 3 still gives acceptable quality
 		this.strandDIV = 6;
-		this.nucleicAcidStrandDIV = 4;
 		this.tubeDIV = 8;
 		this.coilWidth = 0.3;
 		this.helixSheetWidth = 1.3;
-		this.nucleicAcidWidth = 0.8;
 		this.thickness = 0.4;
+
+		this.perspectiveCamera = new THREE.PerspectiveCamera(20, this.ASPECT, 1, 800);
+		this.perspectiveCamera.position = new THREE.Vector3(0, 0, this.CAMERA_Z);
+		this.perspectiveCamera.lookAt(new THREE.Vector3(0, 0, 0));
+		this.orthographicCamera = new THREE.OrthographicCamera();
+		this.orthographicCamera.position.z = this.CAMERA_Z;
+		this.orthographicCamera.lookAt(new THREE.Vector3(0, 0, 0));
+		this.cameras = {
+			 perspective: this.perspectiveCamera,
+			orthographic: this.orthographicCamera,
+		}
+		this.backgroundColors = {
+			white: 0xFFFFFF,
+			 grey: 0xCCCCCC,
+			black: 0x000000,
+		};
+		this.residueColors = {
+			ALA: 0xC8C8C8,
+			ARG: 0x145AFF,
+			ASN: 0x00DCDC,
+			ASP: 0xE60A0A,
+			CYS: 0xE6E600,
+			GLN: 0x00DCDC,
+			GLU: 0xE60A0A,
+			GLY: 0xEBEBEB,
+			HIS: 0x8282D2,
+			ILE: 0x0F820F,
+			LEU: 0x0F820F,
+			LYS: 0x145AFF,
+			MET: 0xE6E600,
+			PHE: 0x3232AA,
+			PRO: 0xDC9682,
+			SER: 0xFA9600,
+			THR: 0xFA9600,
+			TRP: 0xB45AB4,
+			TYR: 0x3232AA,
+			VAL: 0x0F820F,
+			ASX: 0xFF69B4,
+			GLX: 0xFF69B4,
+		};
+		this.polarColor = 0xcc0000;
+		this.nonpolarColor = 0x00CCCC;
+		this.polarityColors = {
+			ARG: this.polarColor,
+			HIS: this.polarColor,
+			LYS: this.polarColor,
+			ASP: this.polarColor,
+			GLU: this.polarColor,
+			SER: this.polarColor,
+			THR: this.polarColor,
+			ASN: this.polarColor,
+			GLN: this.polarColor,
+			CYS: this.polarColor,
+			GLY: this.nonpolarColor,
+			PRO: this.nonpolarColor,
+			ALA: this.nonpolarColor,
+			VAL: this.nonpolarColor,
+			LEU: this.nonpolarColor,
+			ILE: this.nonpolarColor,
+			MET: this.nonpolarColor,
+			PHE: this.nonpolarColor,
+			TYR: this.nonpolarColor,
+			TRP: this.nonpolarColor,
+		};
+		this.colorBy = {
+			'spectrum': function () {
+				for (var i in me.atoms) {
+					me.atoms[i].color = new THREE.Color().setHSV(0.66 * (1 - i / me.atoms.length), 1, 0.9).getHex();
+				}
+			},
+			'chain': function () {
+				for (var i in me.atoms) {
+					var atom = me.atoms[i];
+					atom.color = new THREE.Color().setHSV((atom.chain.charCodeAt(0) * 5) % 17 / 17.0, 1, 0.9).getHex();
+				}
+			},
+//			'secondary structure': me.colorByStructure,
+			'B factor': function () {
+				var minB = 1000, maxB = -1000;
+				for (var i in me.atoms) {
+					var atom = me.atoms[i];
+					if (minB > atom.b) minB = atom.b;
+					if (maxB < atom.b) maxB = atom.b;
+				}
+				var mid = (maxB + minB) * 0.5;
+				var range = (maxB - minB) * 0.5;
+				for (var i in me.atoms) {
+					var atom = me.atoms[i];
+					atom.color = atom.b < mid ? new THREE.Color().setHSV(0.667, (mid - atom.b) / range, 1).getHex() : new THREE.Color().setHSV(0, (atom.b - mid) / range, 1).getHex();
+				}
+			},
+			'residue': function () {
+				for (var i in me.atoms) {
+					var atom = me.atoms[i];
+					atom.color = me.residueColors[atom.resn] || me.defaultColor;
+				}
+			},
+			'polarity': function () {
+				for (var i in me.atoms) {
+					var atom = me.atoms[i];
+					atom.color = me.polarityColors[atom.resn] || me.defaultColor;
+				}
+			},
+			'atom': function () {
+				for (var i in me.atoms) {
+					var atom = me.atoms[i];
+					atom.color = me.ElementColors[atom.elem] || me.defaultColor;
+				}
+			},
+		};
+		this.options = {
+			camera: 'perspective',
+			background: 'white',
+			colorBy: 'spectrum',
+			secondaryStructure: 'thick ribbon',
+			primaryStructure: 'none',
+			ligands: 'stick',
+			waters: 'sphere',
+			ions: 'sphere',
+		};
 
 		// UI variables
 		this.cq = new THREE.Quaternion(1, 0, 0, 0);
@@ -787,75 +878,6 @@ var iview = (function () {
 		return ret;
 	};
 
-	iview.prototype.colorByBFactor = function (atomlist) {
-		var minB = 1000, maxB = -1000;
-		for (var i in atomlist) {
-			var atom = this.atoms[atomlist[i]];
-			if (minB > atom.b) minB = atom.b;
-			if (maxB < atom.b) maxB = atom.b;
-		}
-
-		var mid = (maxB + minB) / 2;
-		var range = (maxB - minB) / 2;
-		if (range < 0.01 && range > -0.01) return;
-		for (var i in atomlist) {
-			var atom = this.atoms[atomlist[i]];
-			var color = new THREE.Color(0);
-			if (atom.b < mid)
-				color.setHSV(0.667, (mid - atom.b) / range, 1);
-			else
-				color.setHSV(0, (atom.b - mid) / range, 1);
-			atom.color = color.getHex();
-		}
-	};
-
-	iview.prototype.colorByChain = function (atomlist) {
-		for (var i in atomlist) {
-			var atom = this.atoms[atomlist[i]];
-			atom.color = new THREE.Color().setHSV((atom.chain.charCodeAt(0) * 5) % 17 / 17.0, 1, 0.9).getHex();
-		}
-	};
-
-	iview.prototype.colorByResidue = function (atomlist, residueColors) {
-		for (var i in atomlist) {
-			var atom = this.atoms[atomlist[i]];
-			c = residueColors[atom.resn]
-			if (c != undefined) atom.color = c;
-		}
-	};
-
-	iview.prototype.colorByPolarity = function (atomlist, polar, nonpolar) {
-		var polarResidues = ['ARG', 'HIS', 'LYS', 'ASP', 'GLU', 'SER', 'THR', 'ASN', 'GLN', 'CYS'];
-		var nonPolarResidues = ['GLY', 'PRO', 'ALA', 'VAL', 'LEU', 'ILE', 'MET', 'PHE', 'TYR', 'TRP'];
-		var colorMap = {};
-		for (var i in polarResidues) colorMap[polarResidues[i]] = polar;
-		for (i in nonPolarResidues) colorMap[nonPolarResidues[i]] = nonpolar;
-		this.colorByResidue(atomlist, colorMap);
-	};
-
-	iview.prototype.colorChainbow = function (atomlist) {
-		var cnt = 0;
-		var atom, i;
-		for (i in atomlist) {
-			atom = this.atoms[atomlist[i]];
-			cnt++;
-		}
-
-		var total = cnt;
-		cnt = 0;
-		for (i in atomlist) {
-			atom = this.atoms[atomlist[i]];
-			atom.color = new THREE.Color().setHSV(240.0 / 360 * (1 - cnt++ / total), 1, 0.9).getHex();
-		}
-	};
-
-	iview.prototype.colorByAtom = function (atomlist) {
-		for (var i in atomlist) {
-			var atom = this.atoms[atomlist[i]];
-			atom.color = this.ElementColors[atom.elem] || this.defaultColor;
-		}
-	};
-
 	iview.prototype.rebuildScene = function (options) {
 		var view;
 		if (!this.modelGroup) view = [0, 0, 0, 0, 0, 0, 0, 1];
@@ -880,44 +902,13 @@ var iview = (function () {
 		this.scene.add(ambientLight);
 
 		$.extend(this.options, options);
-		switch (this.options.camera) {
-			case 'perspective':
-				this.camera = this.perspectiveCamera;
-				break;
-			case 'orthographic':
-				this.camera = this.orthographicCamera;
-				break;
-		}
-
-		var bgColor = this.bgColors[this.options.background] | this.options.background;
+		this.camera = this.cameras[this.options.camera];
+		var bgColor = this.backgroundColors[this.options.background] | this.options.background;
 		this.renderer.setClearColorHex(bgColor, 1.0);
 		this.scene.fog = new THREE.Fog(bgColor, 100, 200);
-
-		var all = this.getAllAtoms();
-		switch (this.options.colorBy) {
-			case 'spectrum':
-				this.colorChainbow(all);
-				break;
-			case 'chain':
-				this.colorByChain(all);
-				break;
-			case 'secondary structure':
-//				this.colorByStructure(all);
-				break;
-			case 'B factor':
-				this.colorByBFactor(all);
-				break;
-			case 'residue':
-//				this.colorByResidue(all);
-				break;
-			case 'polarity':
-				this.colorByPolarity(all, 0xcc0000, 0xcccccc);
-				break;
-			case 'atom':
-				this.colorByAtom(all);
-				break;
-		}
+		this.colorBy[this.options.colorBy]();
 		var target = this.modelGroup;
+		var all = this.getAllAtoms();
 		var doNotSmoothen = false; // Don't smoothen beta-sheets in ribbons
 		switch (this.options.secondaryStructure) {
 			case 'thick ribbon':
@@ -1045,7 +1036,6 @@ var iview = (function () {
 		var xsum = ysum = zsum = cnt = 0;
 		for (var i in this.atoms) {
 			var atom = this.atoms[i];
-			cnt++;
 			xsum += atom.x; ysum += atom.y; zsum += atom.z;
 			xmin = (xmin < atom.x) ? xmin : atom.x;
 			ymin = (ymin < atom.y) ? ymin : atom.y;
@@ -1053,19 +1043,23 @@ var iview = (function () {
 			xmax = (xmax > atom.x) ? xmax : atom.x;
 			ymax = (ymax > atom.y) ? ymax : atom.y;
 			zmax = (zmax > atom.z) ? zmax : atom.z;
+			++cnt;
 		}
 		var center = new THREE.Vector3(xsum / cnt, ysum / cnt, zsum / cnt);//(xmin + xmax) / 2, (ymin + ymax) / 2, (zmin + zmax) / 2
 		this.modelGroup.position = center.multiplyScalar(-1);
 		var x = xmax - xmin, y = ymax - ymin, z = zmax - zmin;
 		var maxD = Math.sqrt(x * x + y * y + z * z);
 		if (maxD < 25) maxD = 25;
-
 		this.slabNear = -maxD / 1.9;
 		this.slabFar = maxD / 3;
-
 		this.rotationGroup.position.z = maxD * 0.35 / Math.tan(Math.PI / 180.0 * this.camera.fov / 2) - 150;
 		this.rotationGroup.quaternion = new THREE.Quaternion(1, 0, 0, 0);
 		this.show();
+	};
+
+	iview.prototype.export = function () {
+		this.show();
+		window.open(this.renderer.domElement.toDataURL('image/png'));
 	};
 
 	return iview;
