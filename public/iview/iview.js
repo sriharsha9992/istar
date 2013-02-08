@@ -903,7 +903,7 @@ var iview = (function () {
 
 		$.extend(this.options, options);
 		this.camera = this.cameras[this.options.camera];
-		var bgColor = this.backgroundColors[this.options.background] | this.options.background;
+		var bgColor = this.backgroundColors[this.options.background] || this.options.background;
 		this.renderer.setClearColorHex(bgColor, 1.0);
 		this.scene.fog = new THREE.Fog(bgColor, 100, 200);
 		this.colorBy[this.options.colorBy]();
