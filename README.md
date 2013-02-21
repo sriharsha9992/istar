@@ -110,7 +110,7 @@ Licenses
 --------
 
 * idock and igrep are licensed under [Apache License 2.0].
-* iview is licensed under [GPL 3.0].
+* iview is licensed under [MIT License].
 * Documentation is licensed under [CC BY 3.0].
 
 
@@ -142,6 +142,6 @@ Logo
 [spdy]: https://github.com/indutny/node-spdy
 [MongoDB]: https://github.com/mongodb/mongo
 [Apache License 2.0]: http://www.apache.org/licenses/LICENSE-2.0
-[GPL 3.0]: http://www.gnu.org/licenses/gpl.html
+[MIT License]: http://opensource.org/licenses/MIT
 [CC BY 3.0]: http://creativecommons.org/licenses/by/3.0
 [Jacky Lee]: http://www.cse.cuhk.edu.hk/~hjli
