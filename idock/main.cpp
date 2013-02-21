@@ -169,7 +169,7 @@ int main(int argc, char* argv[])
 			// Sleep for a while.
 			using boost::this_thread::sleep_for;
 			using boost::chrono::seconds;
-			sleep_for(seconds(1));
+			sleep_for(seconds(10));
 			continue;
 		}
 		const auto job = value.Obj();
