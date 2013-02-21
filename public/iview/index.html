@@ -75,7 +75,7 @@
           </div>
         </div>
         <div class="row">
-          <div class="span4">
+          <div class="span3">
             <div class="control-group">
               <label class="control-label">Camera</label>
               <div class="controls">
@@ -85,23 +85,27 @@
                 </div>
               </div>
             </div>
+          </div>
+          <div class="span3">
             <div class="control-group">
               <label class="control-label">Background</label>
               <div class="controls">
                 <div class="btn-group" data-toggle="buttons-radio" id="background">
-                  <button type="button" class="btn btn-info active">white</button>
+                  <button type="button" class="btn btn-info active">black</button>
                   <button type="button" class="btn btn-info">grey</button>
-                  <button type="button" class="btn btn-info">black</button>
+                  <button type="button" class="btn btn-info">white</button>
                 </div>
               </div>
             </div>
+          </div>
+          <div class="span6">
             <div class="control-group">
               <label class="control-label">Color by</label>
               <div class="controls">
                 <div class="btn-group" data-toggle="buttons-radio" id="colorBy">
                   <button type="button" class="btn btn-info active">spectrum</button>
                   <button type="button" class="btn btn-info">chain</button>
-<!--              <button type="button" class="btn btn-info">secondary structure</button>-->
+                  <button type="button" class="btn btn-info">secondary structure</button>
                   <button type="button" class="btn btn-info">B factor</button>
                   <button type="button" class="btn btn-info">residue</button>
                   <button type="button" class="btn btn-info">polarity</button>
@@ -109,73 +113,147 @@
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="span6">
+            <div class="control-group">
+              <label class="control-label">Display primary structure as</label>
+              <div class="controls">
+                <div class="btn-group" data-toggle="buttons-radio" id="primaryStructure">
+                  <button type="button" class="btn btn-info">lines</button>
+                  <button type="button" class="btn btn-info">stick</button>
+                  <button type="button" class="btn btn-info">ball and stick</button>
+                  <button type="button" class="btn btn-info">sphere</button>
+                  <button type="button" class="btn btn-info active">nothing</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="span6">
             <div class="control-group">
               <label class="control-label">Display secondary structure as</label>
               <div class="controls">
                 <div class="btn-group" data-toggle="buttons-radio" id="secondaryStructure">
-                  <button type="button" class="btn btn-info active">thick ribbon</button>
-                  <button type="button" class="btn btn-info">thin ribbon</button>
+                  <button type="button" class="btn btn-info">ribbon</button>
                   <button type="button" class="btn btn-info">strand</button>
-                  <button type="button" class="btn btn-info">cylinder & plate</button>
+                  <button type="button" class="btn btn-info active">cylinder & plate</button>
                   <button type="button" class="btn btn-info">C alpha trace</button>
                   <button type="button" class="btn btn-info">B factor tube</button>
-                  <button type="button" class="btn btn-info">none</button>
+                  <button type="button" class="btn btn-info">nothing</button>
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="span7">
             <div class="control-group">
-              <label class="control-label">Display primary structure as lines</label>
+              <label class="control-label">Display protein surface as</label>
               <div class="controls">
-                <div class="btn-group" data-toggle="buttons-radio" id="primaryStructure">
-                  <button type="button" class="btn btn-info active">residues</button>
-                  <button type="button" class="btn btn-info">sidechains</button>
-                  <button type="button" class="btn btn-info">none</button>
+                <div class="btn-group" data-toggle="buttons-radio" id="surface">
+                  <button type="button" class="btn btn-info">vdw surface</button>
+                  <button type="button" class="btn btn-info">solvent excluded surface</button>
+                  <button type="button" class="btn btn-info">solvent accessible surface</button>
+                  <button type="button" class="btn btn-info">molecular surface</button>
+                  <button type="button" class="btn btn-info active">nothing</button>
                 </div>
               </div>
             </div>
+          </div>
+          <div class="span3">
+            <div class="control-group">
+              <label class="control-label">Surface opacity</label>
+              <div class="controls">
+                <div class="btn-group" data-toggle="buttons-radio" id="opacity">
+                  <button type="button" class="btn btn-info">1.0</button>
+                  <button type="button" class="btn btn-info">0.9</button>
+                  <button type="button" class="btn btn-info active">0.8</button>
+                  <button type="button" class="btn btn-info">0.7</button>
+                  <button type="button" class="btn btn-info">0.6</button>
+                  <button type="button" class="btn btn-info">0.5</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="span2">
+            <div class="control-group">
+              <label class="control-label">Wireframe</label>
+              <div class="controls">
+                <div class="btn-group" data-toggle="buttons-radio" id="wireframe">
+                  <button type="button" class="btn btn-info">yes</button>
+                  <button type="button" class="btn btn-info active">no</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="span4">
             <div class="control-group">
               <label class="control-label">Display ligands as</label>
               <div class="controls">
                 <div class="btn-group" data-toggle="buttons-radio" id="ligands">
-                  <button type="button" class="btn btn-info">lines</button>
+                  <button type="button" class="btn btn-info">line</button>
                   <button type="button" class="btn btn-info active">stick</button>
                   <button type="button" class="btn btn-info">ball and stick</button>
                   <button type="button" class="btn btn-info">sphere</button>
-                  <button type="button" class="btn btn-info">none</button>
+                  <button type="button" class="btn btn-info">nothing</button>
                 </div>
               </div>
             </div>
+          </div>
+          <div class="span2">
             <div class="control-group">
               <label class="control-label">Display waters as</label>
               <div class="controls">
                 <div class="btn-group" data-toggle="buttons-radio" id="waters">
-                  <button type="button" class="btn btn-info active">sphere</button>
-                  <button type="button" class="btn btn-info">none</button>
+                  <button type="button" class="btn btn-info">sphere</button>
+                  <button type="button" class="btn btn-info active">dot</button>
+                  <button type="button" class="btn btn-info">nothing</button>
                 </div>
               </div>
             </div>
+          </div>
+          <div class="span2">
             <div class="control-group">
               <label class="control-label">Display ions as</label>
               <div class="controls">
                 <div class="btn-group" data-toggle="buttons-radio" id="ions">
                   <button type="button" class="btn btn-info active">sphere</button>
-                  <button type="button" class="btn btn-info">none</button>
+                  <button type="button" class="btn btn-info">dot</button>
+                  <button type="button" class="btn btn-info">nothing</button>
                 </div>
               </div>
             </div>
+          </div>
+          <div class="span4">
+            <div class="control-group">
+              <label class="control-label">Effect</label>
+              <div class="controls">
+                <div class="btn-group" data-toggle="buttons-radio" id="effect">
+                  <button type="button" class="btn btn-info">anaglyph</button>
+                  <button type="button" class="btn btn-info">parallax barrier</button>
+                  <button type="button" class="btn btn-info active">none</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="span4">
             <p>iview supports the following keyrings</p>
             <ul>
-              <li>Mouse wheel: zoom in / zoom out</li>
-              <li>Left mouse button: rotate the complex</li>
-              <li>Right mouse button: translate the complex</li>
-              <li>Ctrl + left mouse button: rotate the ligand</li>
-              <li>Ctrl + right mouse button: translate the ligand</li>
+              <li>Left button: rotate the complex</li>
+              <li>Right button: translate the complex</li>
+              <li>Middle button / wheel: zoom in/out the complex</li>
+			  <li>Shift + right button: change slab of the complex</li>
             </ul>
 	        <p>iview supports the following functions</p>
             <ul>
-              <li><a href="#" id="dock">Perform protein-ligand docking</a></li>
-              <li><a href="#" id="resetView">Reset the view</a></li>
-              <li><a href="#" id="export">Export the canvas to png</a></li>
+              <li>Load PDB ID <input class="span1" id="loadPDB"></li>
+              <li><a href="#" id="resetView">Reset the canvas view</a></li>
+              <li><a href="#" id="exportView">Export the canvas to png</a></li>
             </ul>
             <hr>
             <div class="row">
@@ -184,21 +262,10 @@
                 <ul>
                   <li>Atoms: <span id="atoms"></span></li>
                   <li>Heavy atoms: <span id="hatoms"></span></li>
-                  <li>Weight: <span id="mwt"></span></li>
+                  <li>Molecular weight: <span id="mwt"></span></li>
                   <li>Rotatable bonds: <span id="nrb"></span></li>
                   <li>Hbond donors: <span id="hbds"></span></li>
                   <li>Hbond acceptors: <span id="hbas"></span></li>
-                </ul>
-              </div>
-	          <div class="span2">
-                <p>Free energy (kcal/mol)</p>
-                <ul>
-                  <li>Normalized: <span id="eNormalized"></span></li>
-                  <li>Inter+Intra: <span id="eTotal"></span></li>
-                  <li>Inter-ligand: <span id="eInter"></span></li>
-                  <li>Intra-ligand: <span id="eIntra"></span></li>
-                  <li>Efficiency: <span id="efficiency"></span></li>
-                  <li>Flex penalty: <span id="flexPenalty"></span></li>
                 </ul>
               </div>
             </div>
@@ -223,8 +290,11 @@
     <script>window.jQuery || document.write('<script src="/jquery-1.9.1.min.js"><\/script>')</script>
 
     <script src="/bootstrap-button.js"></script>
-    <script src="three55.js"></script>
+    <script src="three.js"></script>
+    <script src="AnaglyphEffect.js"></script>
+    <script src="ParallaxBarrierEffect.js"></script>
     <script src="iview.js"></script>
+    <script src="surface.js"></script>
     <script src="index.js"></script>
 
     <script>
