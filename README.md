@@ -15,10 +15,10 @@ Components
 
 ### Web client
 
-* [Twitter Bootstrap] v2.2.2
+* [Twitter Bootstrap] v2.3.0
 * [Modernizr] v2.6.2
-* [jQuery] v1.9.0
-* [jQuery UI] v1.10.0
+* [jQuery] v1.9.1
+* [jQuery UI] v1.10.1
 
 ### Web server
 
