@@ -26,7 +26,7 @@ Components
 * [mongodb] v1.2.12
 * [express] v3.1.0
 * [validator] v0.4.24
-* [spdy] v1.4.4
+* [spdy] v1.4.5
 
 ### Database
 
