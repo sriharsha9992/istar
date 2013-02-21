@@ -45,6 +45,7 @@ namespace idock
 	typedef boost::random::mt19937 mt19937eng;
 #endif
 
+	const fl energy2pK = static_cast<fl>(-0.73349480509); ///< Conversion coefficient of free energy in kcal/mol to pK unit at T = 298.15K.
 	const fl epsilon = static_cast<fl>(0.00001); ///< Tolerance for equality comparison of two floating point values.
 
 	/// Returns true if the absolute difference between two floating point values is within the constant tolerance.
