@@ -71,6 +71,12 @@ if (cluster.isMaster) {
       app.configure(function() {
         app.use(express.bodyParser());
         app.use(app.router);
+        app.use(function(req, res, next) {
+          if (req.headers['user-agent'] && req.headers['user-agent'].indexOf('MSIE') > -1 && /html?($|\?|#)/.test(req.url)) {
+            res.setHeader('X-UA-Compatible', 'IE=Edge,chrome=1');
+          }
+          next();
+        });
       });
       app.configure('development', function() {
         app.use(express.static(__dirname + '/public'));
