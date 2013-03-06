@@ -92,8 +92,6 @@ if (cluster.isMaster) {
       });
       // Define helper variables and functions
       var validator = require('./validator');
-      var v = new validator.Validator();
-      var f = new validator.Filter();
       var ligands;
       function sync(callback) {
         if (ligands == -1) process.nextTick(function() {
@@ -132,12 +130,14 @@ if (cluster.isMaster) {
       }
       // Get idock jobs
       app.get('/idock/jobs', function(req, res) {
+        var v = new validator.Validator();
         if (v.init(req.query)
          .chk('skip', 'must be a non-negative integer', false).isInt()
          .chk('count', 'must be a non-negative integer', false).isInt()
          .failed()) {
           return res.json(v.err);
         }
+        var f = new validator.Filter();
         if (v.init(f.init(req.query)
          .snt('skip', 0).toInt()
          .snt('count', 0).toInt()
@@ -166,6 +166,7 @@ if (cluster.isMaster) {
       });
       // Post a new idock job
       app.post('/idock/jobs', function(req, res) {
+        var v = new validator.Validator();
         if (v.init(req.body)
          .chk('email', 'must be valid', true).isEmail()
          .chk('receptor', 'must be provided', true).len(1, 10485760).regex(/^(((ATOM  |HETATM).{24}(.{3}\d\.\d{3}){3}.{25}\n){1,9999}TER   .{21}\n){0,9}((ATOM  |HETATM).{24}(.{3}\d\.\d{3}){3}.{25}\n){1,9999}TER   .{21}\n?$/g) // 10MB
@@ -198,6 +199,7 @@ if (cluster.isMaster) {
          .failed()) {
           return res.json(v.err);
         }
+        var f = new validator.Filter();
         if (v.init(f.init(req.body)
          .snt('email').copy()
          .snt('receptor').copy()
@@ -280,6 +282,7 @@ if (cluster.isMaster) {
       // Get the number of ligands satisfying filtering conditions
       app.get('/idock/ligands', function(req, res) {
         // Validate and sanitize user input
+        var v = new validator.Validator();
         if (v.init(req.query)
          .chk('mwt_lb', 'must be a decimal within [55, 566]', true).isDecimal().min(55).max(566)
          .chk('mwt_ub', 'must be a decimal within [55, 566]', true).isDecimal().min(55).max(566)
@@ -302,6 +305,7 @@ if (cluster.isMaster) {
          .failed()) {
           return res.json(v.err);
         }
+        var f = new validator.Filter();
         if (v.init(f.init(req.query)
          .snt('mwt_lb').toFloat()
          .snt('mwt_ub').toFloat()
@@ -344,11 +348,13 @@ if (cluster.isMaster) {
       });
       // Get igrep jobs
       app.get('/igrep/jobs', function(req, res) {
+        var v = new validator.Validator();
         if (v.init(req.query)
          .chk('skip', 'must be a non-negative integer', false).isInt()
          .failed()) {
           return res.json(v.err);
         }
+        var f = new validator.Filter();
         f.init(req.query)
          .snt('skip', 0).toInt();
         igrep.find({}, {
@@ -362,6 +368,7 @@ if (cluster.isMaster) {
       });
       // Post a new igrep job
       app.post('/igrep/jobs', function(req, res) {
+        var v = new validator.Validator();
         if (v.init(req.body)
          .chk('email', 'must be valid', true).isEmail()
          .chk('taxid', 'must be the taxonomy id of one of the 26 genomes', true).isIn(['13616', '9598', '9606', '9601', '10116', '9544', '9483', '10090', '9913', '9823', '9796', '9615', '9986', '7955', '28377', '9103', '59729', '9031', '3847', '9258', '29760', '15368', '7460', '30195', '7425', '7070'])
@@ -369,6 +376,7 @@ if (cluster.isMaster) {
          .failed()) {
           return res.json(v.err);
         }
+        var f = new validator.Filter();
         f.init(req.body)
          .snt('email').copy()
          .snt('taxid').toInt()
