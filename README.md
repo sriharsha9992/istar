@@ -16,7 +16,6 @@ Components
 ### Web client
 
 * [Twitter Bootstrap] v2.3.1
-* [Modernizr] v2.6.2
 * [jQuery] v1.9.1
 * [jQuery UI] v1.10.1
 
@@ -132,7 +131,6 @@ Logo
 [igrep]: http://istar.cse.cuhk.edu.hk/igrep
 [iview]: http://istar.cse.cuhk.edu.hk/iview
 [Twitter Bootstrap]: https://github.com/twitter/bootstrap
-[Modernizr]: https://github.com/Modernizr/Modernizr
 [jQuery]: https://github.com/jquery/jquery
 [jQuery UI]: https://github.com/jquery/jquery-ui
 [node.js]: https://github.com/joyent/node
