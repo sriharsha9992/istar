@@ -21,11 +21,11 @@ Components
 
 ### Web server
 
-* [node.js] v0.8.20
+* [node.js] v0.10.0
 * [mongodb] v1.2.13
 * [express] v3.1.0
 * [validator] v0.4.27
-* [spdy] v1.4.6
+* [spdy] v1.5.0
 
 ### Database
 
