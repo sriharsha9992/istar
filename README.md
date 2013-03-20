@@ -33,21 +33,9 @@ Components
 
 ### Workstations and daemons
 
-* Intel Xeon E5620 @ 2.40 GHz
-* 8GB DDR3 SDRAM
-* Fedora 17 x86_64
-* [idock] daemon v2.1
-
-* Intel Xeon E5620 @ 2.40 GHz
-* 8GB DDR3 SDRAM
-* Fedora 17 x86_64
-* [idock] daemon v2.1
-
-* Intel Xeon W3520 @ 2.66 GHz
-* 8GB DDR3 SDRAM
-* NVIDIA GeForce GTX 285 (1024 MB)
-* Fedora 17 x86_64
-* [igrep] daemon v1.0
+* Intel Xeon E5620 @ 2.40 GHz, 8GB DDR3 SDRAM, Fedora 17 x86_64, [idock] daemon v2.1
+* Intel Xeon E5620 @ 2.40 GHz, 8GB DDR3 SDRAM, Fedora 17 x86_64, [idock] daemon v2.1
+* Intel Xeon W3520 @ 2.66 GHz, 8GB DDR3 SDRAM, NVIDIA GeForce GTX 285 (1024 MB), Fedora 17 x86_64, [igrep] daemon v1.0
 
 
 Supported browsers
@@ -60,8 +48,8 @@ Supported browsers
 * Opera 12+
 
 
-RESTful API for idock
----------------------
+REST API for idock
+------------------
 
 ### Submit a new job via HTTP POST
 
@@ -91,8 +79,8 @@ RESTful API for idock
     http://istar.cse.cuhk.edu.hk/idock/ligands
 
 
-RESTful API for igrep
----------------------
+REST API for igrep
+------------------
 
 ### Submit a new job via HTTP POST
 
@@ -114,7 +102,7 @@ Licenses
 
 
 Author
---------------
+------
 
 [Jacky Lee]
 
