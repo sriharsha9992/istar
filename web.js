@@ -94,7 +94,7 @@ if (cluster.isMaster) {
       var validator = require('./validator');
       var ligands;
       function sync(callback) {
-        if (ligands == -1) process.nextTick(function() {
+        if (ligands == -1) setImmediate(function() {
           sync(callback);
         });
         else callback();
