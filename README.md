@@ -22,14 +22,14 @@ Components
 ### Web server
 
 * [node.js] v0.10.5
-* [mongodb] v1.2.14
+* [mongodb] v1.3.0
 * [express] v3.2.0
 * [validator] v1.1.0
 * [spdy] v1.8.2
 
 ### Database
 
-* [MongoDB] v2.4.1
+* [MongoDB] v2.4.3
 
 ### Workstations and daemons
 
