@@ -657,7 +657,7 @@ int main(int argc, char* argv[])
 				}
 				for (size_t j = num_conformations; j < max_conformations; ++j)
 				{
-					phase2_csv_gz << ",,,,";
+					phase2_csv_gz << ",,,,,";
 				}
 				phase2_csv_gz << ',' << s.property << ",http://zinc.docking.org/substance/" << s.lig_id << ',' << s.supplier << '\n';
 			}
