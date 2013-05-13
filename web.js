@@ -276,7 +276,7 @@ if (cluster.isMaster) {
           }
           f.res.submitted = new Date();
           idock.insert(f.res);
-		  res.end();
+		  res.json({});
         });
       });
       // Get the number of ligands satisfying filtering conditions
@@ -383,7 +383,7 @@ if (cluster.isMaster) {
          .snt('queries').copy()
          .res.submitted = new Date();
         igrep.insert(f.res);
-        res.end();
+        res.json({});
       });
       // Start listening
       var http_port = 3000, spdy_port = 3443;
