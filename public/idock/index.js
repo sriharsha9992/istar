@@ -153,7 +153,10 @@ $(function() {
   });
 
   // Process submission
-  $('#submit').click(function() {
+  var submit = $('#submit');
+  submit.click(function() {
+    // Disable the submit button for a while
+    submit.prop('disabled', true);
     // Hide tooltips
     $('.control-label a').tooltip('hide');
     // Post a new job without client side validation
@@ -187,11 +190,19 @@ $(function() {
       nrb_lb: $('#nrb_lb').text(),
       nrb_ub: $('#nrb_ub').text()
     }, function(res) {
+      var keys = Object.keys(res);
       // If server side validation fails, show the tooltips
-      Object.keys(res).forEach(function(param) {
-        $('#' + param + '_label').tooltip('show');
-      });
-    }, 'json');
+      if (keys.length) {
+        keys.forEach(function(key) {
+          $('#' + key + '_label').tooltip('show');
+        });
+      } else {
+		$('html, body').animate({ scrollTop: pager.offset().top });
+//      window.scrollTo(pager.offset().left, pager.offset().top);
+      }
+    }, 'json').always(function() {
+      submit.prop('disabled', false);
+    });
   });
 
   // Apply accordion to tutorials

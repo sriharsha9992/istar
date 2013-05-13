@@ -2600,7 +2600,10 @@ $(function() {
   tick();
 
   // Process submission
-  $('#submit').click(function() {
+  var submit = $('#submit');
+  submit.click(function() {
+    // Disable the submit button for a while
+    submit.prop('disabled', true);
     // Hide tooltips
     $('.control-label a').tooltip('hide');
     // Post a new job without client side validation
@@ -2609,11 +2612,18 @@ $(function() {
       taxid: $('#taxid').val(),
       queries: $('#queries').val()
     }, function(res) {
+      var keys = Object.keys(res);
       // If server side validation fails, show tooltips
-      Object.keys(res).forEach(function(param) {
-        $('#' + param + '_label').tooltip('show');
-      });
-    }, 'json');
+      if (keys.length) {
+        keys.forEach(function(key) {
+		  $('#' + key + '_label').tooltip('show');
+        });
+      } else {
+        $('html, body').animate({ scrollTop: pager.offset().top });
+	  }
+    }, 'json').always(function() {
+      submit.prop('disabled', false);
+    });
   });
 
   // Construct the accordion section of a genome
