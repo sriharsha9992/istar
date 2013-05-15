@@ -682,7 +682,7 @@ int main(int argc, char* argv[])
 		using boost::posix_time::ptime;
 		using posix_millis = boost::posix_time::milliseconds;
 		using boost::posix_time::to_simple_string;
-		message.setContent("Your idock job submitted on " + to_simple_string(ptime(epoch, posix_millis(compt["submitted"].Date().millis))) + " UTC docking " + lexical_cast<string>(num_ligands) + " ligands with description as \"" + compt["description"].String() + "\" was done on " + to_simple_string(ptime(epoch, posix_millis(millis_since_epoch))) + " UTC. " + lexical_cast<string>(docked) + " ligands were docked and " + lexical_cast<string>(num_hits) + " hits were refined. View result at http://idock.cse.cuhk.edu.hk");
+		message.setContent("Your idock job submitted on " + to_simple_string(ptime(epoch, posix_millis(compt["submitted"].Date().millis))) + " UTC docking " + lexical_cast<string>(num_ligands) + " ligands with description as \"" + compt["description"].String() + "\" was done on " + to_simple_string(ptime(epoch, posix_millis(millis_since_epoch))) + " UTC. " + lexical_cast<string>(docked) + " ligands were docked and " + lexical_cast<string>(num_hits) + " hits were refined. View result at http://istar.cse.cuhk.edu.hk/idock");
 		message.addRecipient(MailRecipient(MailRecipient::PRIMARY_RECIPIENT, email));
 		SMTPClientSession session("137.189.91.190");
 		session.login();
