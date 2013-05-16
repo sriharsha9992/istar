@@ -39,7 +39,7 @@ namespace idock
 			+  (-0.005156) * exp(-sqr((d - 3.0) * 0.5))
 			+  ( 0.840245) * (d > 0 ? 0.0 : d * d)
 			+  (-0.035069) * ((xs_is_hydrophobic(t1) && xs_is_hydrophobic(t2)) ? ((d >= 1.5) ? 0.0 : ((d <= 0.5) ? 1.0 : 1.5 - d)) : 0.0)
-			+  (-0.587439) * ((xs_hbond(t1, t2)) ? ((d >= 0) ? 0.0 : ((d <= -0.7) ? 1 : d * (-1.428571))): 0.0);
+			+  (-0.587439) * ((xs_hbond(t1, t2)) ? ((d >= 0) ? 0.0 : ((d <= -0.7) ? 1 : d * (-1.4285714285714286))): 0.0);
 	}
 
 	void scoring_function::precalculate(const size_t t1, const size_t t2, const vector<fl>& rs)
