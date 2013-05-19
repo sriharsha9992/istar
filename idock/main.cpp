@@ -650,7 +650,7 @@ int main(int argc, char* argv[])
 			phase2_csv_gz.setf(std::ios::fixed, std::ios::floatfield);
 			phase2_csv_gz << std::setprecision(3);
 			phase2_csv_gz << "ZINC ID,Conformations";
-			for (size_t i = 1; i <= max_conformations; ++i) phase2_csv_gz << ",Conformation " << i << " free energy (kcal/mol2),Conformation " << i << " ligand efficiency (kcal/mol),Conformation " << i << " RF-Score (pK),Conformation " << i << " consensus score (pK),Conformation " << i << " hydrogen bonds";
+			for (size_t i = 1; i <= max_conformations; ++i) phase2_csv_gz << ",Conformation " << i << " free energy (kcal/mol),Conformation " << i << " ligand efficiency (kcal/mol),Conformation " << i << " RF-Score (pK),Conformation " << i << " consensus score (pK),Conformation " << i << " hydrogen bonds";
 			phase2_csv_gz << ",Molecular weight (g/mol),Partition coefficient xlogP,Apolar desolvation (kcal/mol),Polar desolvation (kcal/mol),Hydrogen bond donors,Hydrogen bond acceptors,Polar surface area tPSA (A^2),Net charge,Rotatable bonds,SMILES,Substance information,Suppliers\n";
 			for (const auto& s : phase2_summaries)
 			{
