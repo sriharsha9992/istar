@@ -70,7 +70,7 @@ $(function() {
   $('#mwt').slider({
     range: true,
     min: 55,
-    max: 566,
+    max: 567,
     values: [ 400, 450 ]
   });
   $('#logp').slider({
@@ -118,8 +118,8 @@ $(function() {
   $('#nrb').slider({
     range: true,
     min: 0,
-    max: 34,
-    values: [ 3, 6 ]
+    max: 35,
+    values: [ 4, 6 ]
   });
   $('.slider').slider({
     slide: function(event, ui) {

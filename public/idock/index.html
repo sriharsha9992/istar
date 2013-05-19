@@ -81,7 +81,7 @@
             <ul>
               <li>A receptor in PDBQT format. The receptor can contain one or more chains, which should start with ATOM records and end with a TER record. Refer to tutorial 1 on how to prepare a receptor in PDBQT format with MGLTools.</li>
               <li>A search space defined by a center and a size in unit Å. The search space should define a binding site (e.g. enzymatic site or allosteric site) of the receptor in cuboid shape. Refer to tutorial 2 on how to define a binding site with MGLTools, Chimera or PyMOL.</li>
-              <li>A set of ligands to dock. Totally 12,171,187 ligands are collected from <a href="http://zinc.docking.org">ZINC</a>. Filtering conditions on 9 molecular properties (e.g. mwt, logp, hbd, hba, nrb) can be specified as closed intervals. Only the ligands satisfying all the 9 filtering conditions will be docked.</li>
+              <li>A set of ligands to dock. Totally 17,224,424 ligands are collected from <a href="http://zinc.docking.org">ZINC</a>. Filtering conditions on 9 molecular properties (e.g. mwt, logp, hbd, hba, nrb) can be specified as closed intervals. Only the ligands satisfying all the 9 filtering conditions will be docked.</li>
             </ul>
           </div>
         </div>
@@ -166,7 +166,7 @@
             <div class="row">
               <div class="span3">
                 <div class="control-group">
-                  <label class="control-label" for="description"><span class="add-on"><i class="icon-asterisk"></i></span> <a href="#description" title="compulsory" id="description_label">Briefly describe your job</a></label>
+                  <label class="control-label" for="description"><span class="add-on"><i class="icon-asterisk"></i></span> <a href="#description" title="at most 100 characters" id="description_label">Briefly describe your job</a></label>
                   <div class="controls">
                     <div class="input-prepend">
                       <span class="add-on"><i class="icon-book"></i></span><input type="text" id="description" placeholder="HIV RT (PDB 2ZD1)">
@@ -187,7 +187,7 @@
             </div>
             <div class="row">
               <div class="span3">
-                <p>Number of ligands satisfying all the 9 filtering conditions: <span id="ligands">1,107</span></p>
+                <p>Number of ligands satisfying all the 9 filtering conditions: <span id="ligands">1,068</span></p>
               </div>
               <div class="span3">
                 <div class="control-group">
@@ -225,7 +225,7 @@
             <div class="row">
               <div class="span6">
                 <div class="control-group">
-                  <label class="control-label">Rotatable bonds: [<span id="nrb_lb">3</span>, <span id="nrb_ub">6</span>]</label>
+                  <label class="control-label">Rotatable bonds: [<span id="nrb_lb">4</span>, <span id="nrb_ub">6</span>]</label>
                   <div class="controls">
                     <div class="slider" id="nrb"></div>
                   </div>
@@ -307,7 +307,7 @@
         </div>
         <div class="row">
           <div class="span12">
-            <p>12,171,187 ligands are collected from version 2012-04-06 of the  <a href="http://zinc.docking.org/subsets/all-clean">All Clean</a> subset of <a href="http://zinc.docking.org">ZINC</a> and converted into <a href="http://autodock.scripps.edu/faqs-help/faq/what-is-the-format-of-a-pdbqt-file">PDBQT</a> format. We thank Professor John J. Irwin, the developer and maintainer of ZINC, for granting us permission to use ZINC with three conditions:</p>
+            <p>17,224,424 ligands are collected from versions 2012-04-26 and 2013-01-10 of the <a href="http://zinc.docking.org/subsets/all-clean">All Clean</a> subset of <a href="http://zinc.docking.org">ZINC</a> and converted into <a href="http://autodock.scripps.edu/faqs-help/faq/what-is-the-format-of-a-pdbqt-file">PDBQT</a> format. We thank Professor John J. Irwin, the developer and maintainer of ZINC, for granting us permission to use ZINC with three conditions:</p>
             <ul>
               <li>We shall provide links to http://zinc.docking.org/substance/zincid for top hits so that users can seek for the most current purchasing information at ZINC's official web site.</li>
               <li>We shall limit the number of top hits for download to 1000 ligands from a single job.</li>

@@ -4,16 +4,16 @@ var fs = require('fs'),
     cluster = require('cluster');
 if (cluster.isMaster) {
   // Allocate arrays to hold ligand properties
-  var num_ligands = 12171187,
-      mwt = new Array(num_ligands),
-      logp = new Array(num_ligands),
-      ad = new Array(num_ligands),
-      pd = new Array(num_ligands),
-      hbd = new Array(num_ligands),
-      hba = new Array(num_ligands),
-      tpsa = new Array(num_ligands),
-      charge = new Array(num_ligands),
-      nrb = new Array(num_ligands);
+  var num_ligands = 17224424,
+      mwt = new Float32Array(num_ligands),
+      logp = new Float32Array(num_ligands),
+      ad = new Float32Array(num_ligands),
+      pd = new Float32Array(num_ligands),
+      hbd = new Int16Array(num_ligands),
+      hba = new Int16Array(num_ligands),
+      tpsa = new Int16Array(num_ligands),
+      charge = new Int16Array(num_ligands),
+      nrb = new Int16Array(num_ligands);
   // Parse ligand properties
   var prop = 'idock/16_prop.bin.gz';
   console.log('Parsing %s', prop);
@@ -178,8 +178,8 @@ if (cluster.isMaster) {
          .chk('size_z', 'must be an integer within [10, 30]', true).isInt().min(10).max(30)
          .chk('description', 'must be provided', true).len(1, 100)
          .chk('sort', 'must be an integer within [0, 2]', true).isInt().min(0).max(2)
-         .chk('mwt_lb', 'must be a decimal within [55, 566]', false).isDecimal().min(55).max(566)
-         .chk('mwt_ub', 'must be a decimal within [55, 566]', false).isDecimal().min(55).max(566)
+         .chk('mwt_lb', 'must be a decimal within [55, 567]', false).isDecimal().min(55).max(567)
+         .chk('mwt_ub', 'must be a decimal within [55, 567]', false).isDecimal().min(55).max(567)
          .chk('logp_lb', 'must be a decimal within [-6, 12]', false).isDecimal().min(-6).max(12)
          .chk('logp_ub', 'must be a decimal within [-6, 12]', false).isDecimal().min(-6).max(12)
          .chk('ad_lb', 'must be a decimal within [-25, 29]', false).isDecimal().min(-25).max(29)
@@ -194,8 +194,8 @@ if (cluster.isMaster) {
          .chk('tpsa_ub', 'must be an integer within [0, 317]', false).isInt().min(0).max(317)
          .chk('charge_lb', 'must be an integer within [-5, 5]', false).isInt().min(-5).max(5)
          .chk('charge_ub', 'must be an integer within [-5, 5]', false).isInt().min(-5).max(5)
-         .chk('nrb_lb', 'must be an integer within [0, 34]', false).isInt().min(0).max(34)
-         .chk('nrb_ub', 'must be an integer within [0, 34]', false).isInt().min(0).max(34)
+         .chk('nrb_lb', 'must be an integer within [0, 35]', false).isInt().min(0).max(35)
+         .chk('nrb_ub', 'must be an integer within [0, 35]', false).isInt().min(0).max(35)
          .failed()) {
           return res.json(v.err);
         }
@@ -212,23 +212,23 @@ if (cluster.isMaster) {
          .snt('description').xss()
          .snt('sort').toInt()
          .snt('mwt_lb', 400).toFloat()
-         .snt('mwt_ub', 500).toFloat()
+         .snt('mwt_ub', 450).toFloat()
          .snt('logp_lb', 0).toFloat()
-         .snt('logp_ub', 5).toFloat()
+         .snt('logp_ub', 4).toFloat()
          .snt('ad_lb', 0).toFloat()
-         .snt('ad_ub', 12).toFloat()
-         .snt('pd_lb', -50).toFloat()
+         .snt('ad_ub', 5).toFloat()
+         .snt('pd_lb', -20).toFloat()
          .snt('pd_ub', 0).toFloat()
          .snt('hbd_lb', 2).toInt()
          .snt('hbd_ub', 5).toInt()
-         .snt('hba_lb', 2).toInt()
-         .snt('hba_ub', 10).toInt()
-         .snt('tpsa_lb', 20).toInt()
-         .snt('tpsa_ub', 100).toInt()
+         .snt('hba_lb', 4).toInt()
+         .snt('hba_ub', 8).toInt()
+         .snt('tpsa_lb', 60).toInt()
+         .snt('tpsa_ub', 80).toInt()
          .snt('charge_lb', 0).toInt()
          .snt('charge_ub', 0).toInt()
-         .snt('nrb_lb', 2).toInt()
-         .snt('nrb_ub', 8).toInt()
+         .snt('nrb_lb', 4).toInt()
+         .snt('nrb_ub', 6).toInt()
          .res)
          .rng('mwt_lb', 'mwt_ub')
          .rng('logp_lb', 'logp_ub')
@@ -284,8 +284,8 @@ if (cluster.isMaster) {
         // Validate and sanitize user input
         var v = new validator.Validator();
         if (v.init(req.query)
-         .chk('mwt_lb', 'must be a decimal within [55, 566]', true).isDecimal().min(55).max(566)
-         .chk('mwt_ub', 'must be a decimal within [55, 566]', true).isDecimal().min(55).max(566)
+         .chk('mwt_lb', 'must be a decimal within [55, 567]', true).isDecimal().min(55).max(567)
+         .chk('mwt_ub', 'must be a decimal within [55, 567]', true).isDecimal().min(55).max(567)
          .chk('logp_lb', 'must be a decimal within [-6, 12]', true).isDecimal().min(-6).max(12)
          .chk('logp_ub', 'must be a decimal within [-6, 12]', true).isDecimal().min(-6).max(12)
          .chk('ad_lb', 'must be a decimal within [-25, 29]', true).isDecimal().min(-25).max(29)
@@ -300,8 +300,8 @@ if (cluster.isMaster) {
          .chk('tpsa_ub', 'must be an integer within [0, 317]', true).isInt().min(0).max(317)
          .chk('charge_lb', 'must be an integer within [-5, 5]', true).isInt().min(-5).max(5)
          .chk('charge_ub', 'must be an integer within [-5, 5]', true).isInt().min(-5).max(5)
-         .chk('nrb_lb', 'must be an integer within [0, 34]', true).isInt().min(0).max(34)
-         .chk('nrb_ub', 'must be an integer within [0, 34]', true).isInt().min(0).max(34)
+         .chk('nrb_lb', 'must be an integer within [0, 35]', true).isInt().min(0).max(35)
+         .chk('nrb_ub', 'must be an integer within [0, 35]', true).isInt().min(0).max(35)
          .failed()) {
           return res.json(v.err);
         }
