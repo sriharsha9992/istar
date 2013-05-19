@@ -561,7 +561,7 @@ namespace idock
 		return result(e, f, static_cast<vector<vec3>&&>(heavy_atoms), static_cast<vector<vec3>&&>(hydrogens));
 	}
 
-	void ligand::write_models(const path& output_ligand_path, const string& remark, const string& supplier, const ptr_vector<result>& results, const size_t num_conformations, const box& b, const vector<array3d<fl>>& grid_maps)
+	void ligand::write_models(const path& output_ligand_path, const string& property, const string& smiles, const string& supplier, const ptr_vector<result>& results, const size_t num_conformations, const box& b, const vector<array3d<fl>>& grid_maps)
 	{
 		BOOST_ASSERT(num_conformations > 0);
 		BOOST_ASSERT(num_conformations <= results.size());
@@ -578,7 +578,7 @@ namespace idock
 		fos.push(out);
 		fos.setf(ios::fixed, ios::floatfield);
 		fos << setprecision(3);
-		fos << remark << '\n' << supplier << '\n';
+		fos << property << '\n' << smiles << '\n' << supplier << '\n';
 		for (size_t i = 0; i < num_conformations; ++i)
 		{
 			const result& r = results[i];

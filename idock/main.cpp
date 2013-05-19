@@ -252,7 +252,11 @@ int main(int argc, char* argv[])
 			// Obtain ligand ID. ZINC IDs are 8-character long.
 			const auto lig_id = line.substr(11, 8);
 
-			/// Filter out supplier line.
+			// Filter out smiles line.
+			getline(ligands, line);
+			const string smiles = line.substr(11);
+
+			// Filter out supplier line.
 			getline(ligands, line);
 
 			// Parse the ligand.
@@ -321,7 +325,7 @@ int main(int argc, char* argv[])
 				const result& r = phase1_results.front();
 
 				// Dump ligand summaries to the csv file.
-				slice_csv << idx << ',' << lig_id << ',' << (r.f * lig.flexibility_penalty_factor) << ',' << (r.f * lig.num_heavy_atoms_inverse) << ',' << mwt << ',' << logp << ',' << ad << ',' << pd << ',' << hbd << ',' << hba << ',' << tpsa << ',' << charge << ',' << nrb << '\n';
+				slice_csv << idx << ',' << lig_id << ',' << (r.f * lig.flexibility_penalty_factor) << ',' << (r.f * lig.num_heavy_atoms_inverse) << ',' << mwt << ',' << logp << ',' << ad << ',' << pd << ',' << hbd << ',' << hba << ',' << tpsa << ',' << charge << ',' << nrb << ',' << smiles << '\n';
 
 				// Dump the 36 RF-Score features.
 				vector<size_t> features(RF_TYPE_SIZE << 2);
@@ -424,7 +428,7 @@ int main(int argc, char* argv[])
 			phase1_csv_gz.push(phase1_csv);
 			phase1_csv_gz.setf(std::ios::fixed, std::ios::floatfield);
 			phase1_csv_gz << std::setprecision(3);
-			phase1_csv_gz << "ZINC ID,Free energy (kcal/mol),Ligand efficiency (kcal/mol),RF-Score,Consensus score,Molecular weight (g/mol),Partition coefficient xlogP,Apolar desolvation (kcal/mol),Polar desolvation (kcal/mol),Hydrogen bond donors,Hydrogen bond acceptors,Polar surface area tPSA (A^2),Net charge,Rotatable bonds\n";
+			phase1_csv_gz << "ZINC ID,Free energy (kcal/mol),Ligand efficiency (kcal/mol),RF-Score (pK),Consensus score (pK),Molecular weight (g/mol),Partition coefficient xlogP,Apolar desolvation (kcal/mol),Polar desolvation (kcal/mol),Hydrogen bond donors,Hydrogen bond acceptors,Polar surface area tPSA (A^2),Net charge,Rotatable bonds,SMILES\n";
 			for (const auto& s : phase1_summaries)
 			{
 				BOOST_ASSERT(s.energies.size() == 1);
@@ -448,10 +452,11 @@ int main(int argc, char* argv[])
 			headers.read((char*)&header, sizeof(size_t));
 			ligands.seekg(header);
 
-			// Get the remark line and supplier line.
-			string remark, supplier;
-			getline(ligands, remark);   // REMARK     00000007  277.364    2.510    9.000  -14.930   0   4  39   0   8    
-			getline(ligands, supplier); // REMARK     6 | chembl11 | chembl12 | chembl13 | chembl14 | enamine-v | pubchem
+			// Get the remark lines.
+			string property, smiles, supplier;
+			getline(ligands, property); // REMARK     00000007  277.364     2.51        9   -14.93   0   4  39   0   8    
+			getline(ligands, smiles);   // REMARK     CCN(CC)C(=O)COc1ccc(cc1OC)CC=C
+			getline(ligands, supplier); // REMARK     8 | ChEMBL12 | ChEMBL13 | ChEMBL14 | ChEMBL15 | ChemDB | Enamine (Depleted) | PubChem | UORSY
 
 			// Parse the ligand.
 			ligand lig(ligands);
@@ -606,7 +611,7 @@ int main(int argc, char* argv[])
 				if (sort) std::sort(phase2_results.begin(), phase2_results.begin() + num_conformations, sort_results_by);
 
 				// Write models to file.
-				lig.write_models(hits_pdbqt_path, remark, supplier, phase2_results, num_conformations, b, grid_maps);
+				lig.write_models(hits_pdbqt_path, property, smiles, supplier, phase2_results, num_conformations, b, grid_maps);
 
 				// Add to summaries.
 				vector<fl> energies(num_conformations), efficiencies(num_conformations), rfscores(num_conformations);
@@ -645,8 +650,8 @@ int main(int argc, char* argv[])
 			phase2_csv_gz.setf(std::ios::fixed, std::ios::floatfield);
 			phase2_csv_gz << std::setprecision(3);
 			phase2_csv_gz << "ZINC ID,Conformations";
-			for (size_t i = 1; i <= max_conformations; ++i) phase2_csv_gz << ",Conformation " << i << " free energy (kcal/mol2),Conformation " << i << " ligand efficiency (kcal/mol),Conformation " << i << " RF-Score,Conformation " << i << " consensus score,Conformation " << i << " hydrogen bonds";
-			phase2_csv_gz << ",Molecular weight (g/mol),Partition coefficient xlogP,Apolar desolvation (kcal/mol),Polar desolvation (kcal/mol),Hydrogen bond donors,Hydrogen bond acceptors,Polar surface area tPSA (A^2),Net charge,Rotatable bonds,Substance information,Suppliers\n";
+			for (size_t i = 1; i <= max_conformations; ++i) phase2_csv_gz << ",Conformation " << i << " free energy (kcal/mol2),Conformation " << i << " ligand efficiency (kcal/mol),Conformation " << i << " RF-Score (pK),Conformation " << i << " consensus score (pK),Conformation " << i << " hydrogen bonds";
+			phase2_csv_gz << ",Molecular weight (g/mol),Partition coefficient xlogP,Apolar desolvation (kcal/mol),Polar desolvation (kcal/mol),Hydrogen bond donors,Hydrogen bond acceptors,Polar surface area tPSA (A^2),Net charge,Rotatable bonds,SMILES,Substance information,Suppliers\n";
 			for (const auto& s : phase2_summaries)
 			{
 				const size_t num_conformations = s.energies.size();
