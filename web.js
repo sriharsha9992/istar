@@ -176,7 +176,7 @@ if (cluster.isMaster) {
          .chk('size_x', 'must be an integer within [10, 30]', true).isInt().min(10).max(30)
          .chk('size_y', 'must be an integer within [10, 30]', true).isInt().min(10).max(30)
          .chk('size_z', 'must be an integer within [10, 30]', true).isInt().min(10).max(30)
-         .chk('description', 'must be provided', true).len(1, 100)
+         .chk('description', 'must be provided, at most 40 characters', true).len(1, 40)
          .chk('sort', 'must be an integer within [0, 2]', true).isInt().min(0).max(2)
          .chk('mwt_lb', 'must be a decimal within [55, 567]', false).isDecimal().min(55).max(567)
          .chk('mwt_ub', 'must be a decimal within [55, 567]', false).isDecimal().min(55).max(567)
