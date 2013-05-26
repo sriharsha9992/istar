@@ -16,7 +16,7 @@ Components
 ### Web client
 
 * [Twitter Bootstrap] v2.3.2
-* [jQuery] v1.9.1
+* [jQuery] v1.10.0
 * [jQuery UI] v1.10.3
 
 ### Web server
