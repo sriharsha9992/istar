@@ -33,9 +33,9 @@ Components
 
 ### Workstations and daemons
 
-* Intel Xeon E5620 @ 2.40 GHz, 8GB DDR3 SDRAM, Fedora 17 x86_64, [idock] daemon v2.1
-* Intel Xeon E5620 @ 2.40 GHz, 8GB DDR3 SDRAM, Fedora 17 x86_64, [idock] daemon v2.1
-* Intel Xeon W3520 @ 2.66 GHz, 8GB DDR3 SDRAM, NVIDIA GeForce GTX 285 (1024 MB), Fedora 17 x86_64, [igrep] daemon v1.0
+* Intel Xeon E5620 @ 2.40 GHz, 8GB DDR3 SDRAM, Fedora 18 x86_64, [idock] daemon v2.1
+* Intel Xeon E5620 @ 2.40 GHz, 8GB DDR3 SDRAM, Fedora 18 x86_64, [idock] daemon v2.1
+* Intel Xeon W3520 @ 2.66 GHz, 8GB DDR3 SDRAM, NVIDIA GeForce GTX 285 (1024 MB), Fedora 18 x86_64, [igrep] daemon v1.0
 
 
 Supported browsers
