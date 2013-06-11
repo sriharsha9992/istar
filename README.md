@@ -29,7 +29,7 @@ Components
 
 ### Database
 
-* [MongoDB] v2.4.3
+* [MongoDB] v2.4.4
 
 ### Workstations and daemons
 
