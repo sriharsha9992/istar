@@ -21,7 +21,7 @@ Components
 
 ### Web server
 
-* [node.js] v0.10.12
+* [node.js] v0.10.13
 * [mongodb] v1.3.10
 * [express] v3.3.1
 * [validator] v1.2.1
@@ -29,7 +29,7 @@ Components
 
 ### Database
 
-* [MongoDB] v2.4.4
+* [MongoDB] v2.4.5
 
 ### Workstations and daemons
 
