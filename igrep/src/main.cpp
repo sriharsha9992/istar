@@ -226,6 +226,13 @@ public:
 
 int main(int argc, char** argv)
 {
+	// Check the required number of command line arguments.
+	if (argc != 5)
+	{
+		cout << "igrep host user pwd jobs_path" << endl;
+		return 0;
+	}
+
 	// Fetch command line arguments.
 	const auto host = argv[1];
 	const auto user = argv[2];
