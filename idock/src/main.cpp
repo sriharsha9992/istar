@@ -49,6 +49,13 @@ int main(int argc, char* argv[])
 {
 	using boost::array;
 
+	// Check the required number of comand line arguments.
+	if (argc != 5)
+	{
+		cout << "idock host user pwd jobs_path" << endl;
+		return 0;
+	}
+
 	// Fetch command line arguments.
 	const auto host = argv[1];
 	const auto user = argv[2];
