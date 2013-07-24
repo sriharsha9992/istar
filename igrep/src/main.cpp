@@ -16,7 +16,6 @@
 #include <Poco/Net/SMTPClientSession.h>
 
 using namespace std;
-using boost::lexical_cast;
 using boost::filesystem::path;
 
 #define CHARACTER_CARDINALITY 4	/**< One nucleotide is either A, C, G, or T. */
@@ -455,7 +454,7 @@ int main(int argc, char** argv)
 			using boost::posix_time::ptime;
 			using posix_millis = boost::posix_time::milliseconds;
 			using boost::posix_time::to_simple_string;
-			message.setContent("Your igrep job submitted on " + to_simple_string(ptime(epoch, posix_millis(job["submitted"].Date().millis))) + " UTC searching the genome of " + g.name + " for " + lexical_cast<string>(qi) + " patterns was done on " + to_simple_string(ptime(epoch, posix_millis(millis_since_epoch))) + " UTC. View result at http://istar.cse.cuhk.edu.hk/igrep");
+			message.setContent("Your igrep job submitted on " + to_simple_string(ptime(epoch, posix_millis(job["submitted"].Date().millis))) + " UTC searching the genome of " + g.name + " for " + to_string(qi) + " patterns was done on " + to_simple_string(ptime(epoch, posix_millis(millis_since_epoch))) + " UTC. View result at http://istar.cse.cuhk.edu.hk/igrep");
 			message.addRecipient(MailRecipient(MailRecipient::PRIMARY_RECIPIENT, email));
 			SMTPClientSession session("137.189.91.190");
 			session.login();
