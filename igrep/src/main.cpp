@@ -1,8 +1,7 @@
 #include <iostream>
 #include <sstream>
-#include <string>
 #include <vector>
-#include <boost/thread/thread.hpp>
+#include <thread>
 #include <boost/filesystem/operations.hpp>
 #include <boost/filesystem/fstream.hpp>
 #include <boost/iostreams/filtering_stream.hpp>
@@ -16,7 +15,14 @@
 #include <Poco/Net/SMTPClientSession.h>
 
 using namespace std;
-using boost::filesystem::path;
+using namespace std::chrono;
+using namespace boost::filesystem;
+using namespace boost::iostreams;
+using namespace boost::gregorian;
+using namespace boost::posix_time;
+using namespace mongo;
+using namespace bson;
+using namespace Poco::Net;
 
 #define CHARACTER_CARDINALITY 4	/**< One nucleotide is either A, C, G, or T. */
 #define MAX_UNSIGNED_INT	0xffffffffUL	/**< The maximum value of an unsigned int. */
@@ -135,13 +141,10 @@ public:
 		const path genome_path = name;
 		for (const auto& file : files)
 		{
-			using boost::filesystem::ifstream;
-			using boost::iostreams::filtering_istream;
-			using boost::iostreams::gzip_decompressor;
-			ifstream in(genome_path / file);
+			boost::filesystem::ifstream ifs(genome_path / file);
 			filtering_istream fis;
 			fis.push(gzip_decompressor());
-			fis.push(in);
+			fis.push(ifs);
 			while (getline(fis, line))
 			{
 				if (line.front() == '>') // Header line.
@@ -229,7 +232,6 @@ int main(int argc, char** argv)
 	const auto pwd = argv[3];
 	const path jobs_path = argv[4];
 
-	using namespace mongo;
 	DBClientConnection conn;
 	{
 		// Connect to host and authenticate user.
@@ -285,13 +287,11 @@ int main(int argc, char** argv)
 	unsigned int *match_device;	// CUDA global memory pointer pointing to the match array.
 
 	// Initialize epoch
-	using boost::gregorian::date;
 	const auto epoch = date(1970, 1, 1);
 
 	while (true)
 	{
 		// Fetch jobs.
-		using namespace bson;
 		auto cursor = conn.query(collection, QUERY("done" << BSON("$exists" << false)).sort("submitted"), 100); // Each batch processes 100 jobs.
 		while (cursor->more())
 		{
@@ -319,9 +319,8 @@ int main(int argc, char** argv)
 			// Create a job directory, open log and pos files, and write headers.
 			const path job_path = jobs_path / _id.str();
 			create_directory(job_path);
-			using boost::filesystem::ofstream;
-			ofstream log(job_path / "log.csv");
-			ofstream pos(job_path / "pos.csv");
+			boost::filesystem::ofstream log(job_path / "log.csv");
+			boost::filesystem::ofstream pos(job_path / "pos.csv");
 			log << "Query Index,Pattern,Edit Distance,Number of Matches\n";
 			pos << "Query Index,Match Index,File Index,Ending Position\n";
 
@@ -431,10 +430,7 @@ int main(int argc, char** argv)
 			checkCudaErrors(cudaDeviceReset());
 
 			// Update progress.
-			using boost::chrono::system_clock;
-			using boost::chrono::duration_cast;
-			using chrono_millis = boost::chrono::milliseconds;
-			const auto millis_since_epoch = duration_cast<chrono_millis>(system_clock::now().time_since_epoch()).count();
+			const auto millis_since_epoch = duration_cast<std::chrono::milliseconds>(system_clock::now().time_since_epoch()).count();
 			conn.update(collection, BSON("_id" << _id), BSON("$set" << BSON("done" << Date_t(millis_since_epoch))));
 			const auto err = conn.getLastError();
 			if (!err.empty())
@@ -445,16 +441,10 @@ int main(int argc, char** argv)
 			// Send completion notification email.
 			const auto email = job["email"].String();
 			cout << "Sending a completion notification email to " << email << endl;
-			using Poco::Net::MailMessage;
-			using Poco::Net::MailRecipient;
-			using Poco::Net::SMTPClientSession;
 			MailMessage message;
 			message.setSender("igrep <noreply@cse.cuhk.edu.hk>");
 			message.setSubject("Your igrep job has completed");
-			using boost::posix_time::ptime;
-			using posix_millis = boost::posix_time::milliseconds;
-			using boost::posix_time::to_simple_string;
-			message.setContent("Your igrep job submitted on " + to_simple_string(ptime(epoch, posix_millis(job["submitted"].Date().millis))) + " UTC searching the genome of " + g.name + " for " + to_string(qi) + " patterns was done on " + to_simple_string(ptime(epoch, posix_millis(millis_since_epoch))) + " UTC. View result at http://istar.cse.cuhk.edu.hk/igrep");
+			message.setContent("Your igrep job submitted on " + to_simple_string(ptime(epoch, boost::posix_time::milliseconds(job["submitted"].Date().millis))) + " UTC searching the genome of " + g.name + " for " + to_string(qi) + " patterns was done on " + to_simple_string(ptime(epoch, boost::posix_time::milliseconds(millis_since_epoch))) + " UTC. View result at http://istar.cse.cuhk.edu.hk/igrep");
 			message.addRecipient(MailRecipient(MailRecipient::PRIMARY_RECIPIENT, email));
 			SMTPClientSession session("137.189.91.190");
 			session.login();
@@ -463,9 +453,7 @@ int main(int argc, char** argv)
 		}
 
 		// Sleep for a second.
-		using boost::this_thread::sleep_for;
-		using boost::chrono::seconds;
-		sleep_for(seconds(10));
+		this_thread::sleep_for(std::chrono::seconds(10));
 	}
 	return 0;
 }
