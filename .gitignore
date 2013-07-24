@@ -1,7 +1,5 @@
 node_modules
 mongodb
-bin
-obj
 *.log
 *.csv
 .dep.inc
