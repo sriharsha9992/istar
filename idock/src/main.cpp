@@ -16,7 +16,7 @@
 
 */
 
-#include <boost/thread/thread.hpp>
+#include <thread>
 #include <boost/filesystem/operations.hpp>
 #include <boost/filesystem/fstream.hpp>
 #include <boost/iostreams/filtering_stream.hpp>
@@ -27,23 +27,27 @@
 #include <Poco/Net/MailMessage.h>
 #include <Poco/Net/MailRecipient.h>
 #include <Poco/Net/SMTPClientSession.h>
+#include "thread_pool.hpp"
 #include "receptor.hpp"
 #include "ligand.hpp"
-#include "thread_pool.hpp"
 #include "grid_map_task.hpp"
 #include "monte_carlo_task.hpp"
 #include "summary.hpp"
 
+using namespace std;
+using namespace std::chrono;
+using namespace boost::filesystem;
+using namespace boost::iostreams;
+using namespace boost::gregorian;
+using namespace boost::posix_time;
+using namespace mongo;
+using namespace bson;
+using namespace Poco::Net;
+using namespace idock;
+
 int main(int argc, char* argv[])
 {
-	using std::cout;
-	using std::string;
 	using boost::array;
-	using boost::thread;
-	using boost::filesystem::path;
-	using boost::filesystem::ifstream;
-	using boost::filesystem::ofstream;
-	using namespace idock;
 
 	// Fetch command line arguments.
 	const auto host = argv[1];
@@ -51,7 +55,6 @@ int main(int argc, char* argv[])
 	const auto pwd = argv[3];
 	const path jobs_path = argv[4];
 
-	using namespace mongo;
 	DBClientConnection conn;
 	{
 		// Connect to host and authenticate user.
@@ -154,22 +157,19 @@ int main(int argc, char* argv[])
 	ptr_vector<result> phase1_results(1), phase2_results(max_results * phase2_num_mc_tasks);
 
 	// Open files for reading.
-	ifstream headers(headers_path);
-	ifstream ligands(ligands_path);
+	boost::filesystem::ifstream headers(headers_path);
+	boost::filesystem::ifstream ligands(ligands_path);
 
 	while (true)
 	{
 		// Fetch a job in a FCFS manner.
-		using namespace bson;
 		BSONObj info;
 		conn.runCommand("istar", BSON("findandmodify" << "idock" << "query" << BSON("scheduled" << BSON("$lt" << 100)) << "sort" << BSON("submitted" << 1) << "update" << BSON("$inc" << BSON("scheduled" << 1)) << "fields" << jobid_fields), info);
 		const auto value = info["value"];
 		if (value.isNull())
 		{
 			// Sleep for a while.
-			using boost::this_thread::sleep_for;
-			using boost::chrono::seconds;
-			sleep_for(seconds(10));
+			this_thread::sleep_for(std::chrono::seconds(10));
 			continue;
 		}
 		const auto job = value.Obj();
@@ -222,11 +222,11 @@ int main(int argc, char* argv[])
 		const auto start_lig = slices[slice];
 		const auto end_lig = slices[slice + 1];
 
-		ofstream slice_csv(job_path / (slice_key + ".csv"));
+		boost::filesystem::ofstream slice_csv(job_path / (slice_key + ".csv"));
 		slice_csv.setf(std::ios::fixed, std::ios::floatfield);
 		slice_csv << std::setprecision(3);
 		const auto slicef_csv_path = job_path / (slice_key + "F.csv");
-		ofstream slicef_csv(slicef_csv_path);
+		boost::filesystem::ofstream slicef_csv(slicef_csv_path);
 		slicef_csv << "6.6,7.6,8.6,16.6,6.7,7.7,8.7,16.7,6.8,7.8,8.8,16.8,6.16,7.16,8.16,16.16,6.15,7.15,8.15,16.15,6.9,7.9,8.9,16.9,6.17,7.17,8.17,16.17,6.35,7.35,8.35,16.35,6.53,7.53,8.53,16.53\n";
 		headers.seekg(sizeof(size_t) * start_lig);
 		for (auto idx = start_lig; idx < end_lig; ++idx)
@@ -376,8 +376,8 @@ int main(int argc, char* argv[])
 			// Parse slice csv.
 			const auto slice_csv_path = job_path / (lexical_cast<string>(s) + ".csv");
 			const auto slicek_csv_path = job_path / (lexical_cast<string>(s) + "K.csv");
-			ifstream slice_csv(slice_csv_path);
-			ifstream slicek_csv(slicek_csv_path);
+			boost::filesystem::ifstream slice_csv(slice_csv_path);
+			boost::filesystem::ifstream slicek_csv(slicek_csv_path);
 			while (getline(slicek_csv, line))
 			{
 				const auto rfscore = lexical_cast<fl>(line);
@@ -419,10 +419,8 @@ int main(int argc, char* argv[])
 		std::sort(phase1_summaries.begin(), phase1_summaries.end(), sort_summaries_by);
 
 		// Write phase 1 csv.
-		using boost::iostreams::filtering_ostream;
-		using boost::iostreams::gzip_compressor;
 		{
-			ofstream phase1_csv(job_path / "phase1.csv.gz");
+			boost::filesystem::ofstream phase1_csv(job_path / "phase1.csv.gz");
 			filtering_ostream phase1_csv_gz;
 			phase1_csv_gz.push(gzip_compressor());
 			phase1_csv_gz.push(phase1_csv);
@@ -537,7 +535,7 @@ int main(int argc, char* argv[])
 			{
 				const size_t num_lig_hbda = lig.hbda.size();
 				vector<size_t> features(RF_TYPE_SIZE << 2);
-				ofstream f_csv(f_csv_path);
+				boost::filesystem::ofstream f_csv(f_csv_path);
 				f_csv << "6.6,7.6,8.6,16.6,6.7,7.7,8.7,16.7,6.8,7.8,8.8,16.8,6.16,7.16,8.16,16.16,6.15,7.15,8.15,16.15,6.9,7.9,8.9,16.9,6.17,7.17,8.17,16.17,6.35,7.35,8.35,16.35,6.53,7.53,8.53,16.53\n";
 				for (size_t k = 0; k < num_conformations; ++k)
 				{
@@ -598,7 +596,7 @@ int main(int argc, char* argv[])
 				create_child(rscript, vector<string> {"RF-Score.r", f_csv_path.string(), k_csv_path.string()}, boost::process::context()).wait();
 
 				// Parse RF-Score.
-				ifstream k_csv(k_csv_path);
+				boost::filesystem::ifstream k_csv(k_csv_path);
 				for (size_t k = 0; k < num_conformations; ++k)
 				{
 					getline(k_csv, line);
@@ -643,7 +641,7 @@ int main(int argc, char* argv[])
 
 		// Write phase 2 csv.
 		{
-			ofstream phase2_csv(job_path / "phase2.csv.gz");
+			boost::filesystem::ofstream phase2_csv(job_path / "phase2.csv.gz");
 			filtering_ostream phase2_csv_gz;
 			phase2_csv_gz.push(gzip_compressor());
 			phase2_csv_gz.push(phase2_csv);
@@ -669,25 +667,16 @@ int main(int argc, char* argv[])
 		}
 
 		// Set done time.
-		using boost::chrono::system_clock;
-		using boost::chrono::duration_cast;
-		using chrono_millis = boost::chrono::milliseconds;
-		const auto millis_since_epoch = duration_cast<chrono_millis>(system_clock::now().time_since_epoch()).count();
+		const auto millis_since_epoch = duration_cast<std::chrono::milliseconds>(system_clock::now().time_since_epoch()).count();
 		conn.update(collection, BSON("_id" << _id), BSON("$set" << BSON("done" << Date_t(millis_since_epoch))));
 
 		// Send completion notification email.
 		const auto email = compt["email"].String();
 		cout << "Sending a completion notification email to " << email << '\n';
-		using Poco::Net::MailMessage;
-		using Poco::Net::MailRecipient;
-		using Poco::Net::SMTPClientSession;
 		MailMessage message;
 		message.setSender("idock <noreply@cse.cuhk.edu.hk>");
 		message.setSubject("Your idock job has completed");
-		using boost::posix_time::ptime;
-		using posix_millis = boost::posix_time::milliseconds;
-		using boost::posix_time::to_simple_string;
-		message.setContent("Your idock job submitted on " + to_simple_string(ptime(epoch, posix_millis(compt["submitted"].Date().millis))) + " UTC docking " + lexical_cast<string>(num_ligands) + " ligands with description as \"" + compt["description"].String() + "\" was done on " + to_simple_string(ptime(epoch, posix_millis(millis_since_epoch))) + " UTC. " + lexical_cast<string>(docked) + " ligands were docked and " + lexical_cast<string>(num_hits) + " hits were refined. View result at http://istar.cse.cuhk.edu.hk/idock");
+		message.setContent("Your idock job submitted on " + to_simple_string(ptime(epoch, boost::posix_time::milliseconds(compt["submitted"].Date().millis))) + " UTC docking " + lexical_cast<string>(num_ligands) + " ligands with description as \"" + compt["description"].String() + "\" was done on " + to_simple_string(ptime(epoch, boost::posix_time::milliseconds(millis_since_epoch))) + " UTC. " + lexical_cast<string>(docked) + " ligands were docked and " + lexical_cast<string>(num_hits) + " hits were refined. View result at http://istar.cse.cuhk.edu.hk/idock");
 		message.addRecipient(MailRecipient(MailRecipient::PRIMARY_RECIPIENT, email));
 		SMTPClientSession session("137.189.91.190");
 		session.login();
