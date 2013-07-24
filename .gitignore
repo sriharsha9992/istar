@@ -1,9 +1,10 @@
 node_modules
 mongodb
+bin
+obj
 *.log
 *.csv
 .dep.inc
-Makefile
 nbproject
 build
 dist
