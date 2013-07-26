@@ -16,7 +16,6 @@
 
 */
 
-#include <thread>
 #include <boost/filesystem/operations.hpp>
 #include <boost/filesystem/fstream.hpp>
 #include <boost/iostreams/filtering_stream.hpp>
@@ -33,6 +32,7 @@
 #include "grid_map_task.hpp"
 #include "monte_carlo_task.hpp"
 #include "summary.hpp"
+//#include "random_forest.hpp"
 
 using namespace std;
 using namespace std::chrono;
@@ -105,11 +105,7 @@ int main(int argc, char* argv[])
 	box b;
 	receptor rec;
 	size_t num_gm_tasks;
-	ptr_vector<packaged_task<void>> gm_tasks;
 	vector<array3d<fl>> grid_maps(XS_TYPE_SIZE);
-
-	// Initialize a Mersenne Twister random number generator.
-	mt19937eng eng(seed);
 
 	// Initialize a thread pool and create worker threads for later use.
 	thread_pool tp(num_threads);
@@ -127,22 +123,27 @@ int main(int argc, char* argv[])
 		BOOST_ASSERT(rs.back() == scoring_function::Cutoff);
 
 		// Populate the scoring function task container.
-		const size_t num_sf_tasks = ((XS_TYPE_SIZE + 1) * XS_TYPE_SIZE) >> 1;
-		ptr_vector<packaged_task<void>> sf_tasks(num_sf_tasks);
 		for (size_t t1 =  0; t1 < XS_TYPE_SIZE; ++t1)
 		for (size_t t2 = t1; t2 < XS_TYPE_SIZE; ++t2)
 		{
-			sf_tasks.push_back(new packaged_task<void>(bind<void>(&scoring_function::precalculate, boost::ref(sf), t1, t2, boost::cref(rs))));
+			tp.push_back(std::packaged_task<void()>(std::bind(&scoring_function::precalculate, std::ref(sf), t1, t2, std::cref(rs))));
 		}
-		BOOST_ASSERT(sf_tasks.size() == num_sf_tasks);
-
-		// Run the scoring function tasks in parallel asynchronously.
-		tp.run(sf_tasks);
 
 		// Wait until all the scoring function tasks are completed.
 		tp.sync();
 	}
 
+	// Build a random forest of 512 trees in parallel.
+	mt19937eng eng(seed);
+/*
+	forest f(512);
+	for (tree& t : f)
+	{
+		tp.push_back(std::packaged_task<void()>(std::bind(&tree::grow, std::ref(t), 5, rng())));
+	}
+	tp.sync();
+	f.clear();
+*/
 	// Precalculate alpha values for determining step size in BFGS.
 	array<fl, num_alphas> alphas;
 	alphas[0] = 1;
@@ -154,7 +155,6 @@ int main(int argc, char* argv[])
 	// Reserve space for containers.
 	string line;
 	vector<size_t> atom_types_to_populate; atom_types_to_populate.reserve(XS_TYPE_SIZE);
-	ptr_vector<packaged_task<void>> mc_tasks(phase2_num_mc_tasks);
 	ptr_vector<ptr_vector<result>> phase1_result_containers, phase2_result_containers;
 	phase1_result_containers.resize(phase1_num_mc_tasks);
 	phase2_result_containers.resize(phase2_num_mc_tasks);
@@ -214,7 +214,6 @@ int main(int argc, char* argv[])
 
 			// Reserve storage for grid map task container.
 			num_gm_tasks = b.num_probes[0];
-			gm_tasks.reserve(num_gm_tasks);
 
 			// Clear grid maps.
 			grid_maps.clear();
@@ -281,37 +280,28 @@ int main(int argc, char* argv[])
 			}
 			if (atom_types_to_populate.size())
 			{
-				BOOST_ASSERT(gm_tasks.empty());
 				for (size_t x = 0; x < num_gm_tasks; ++x)
 				{
-					gm_tasks.push_back(new packaged_task<void>(bind<void>(grid_map_task, boost::ref(grid_maps), boost::cref(atom_types_to_populate), x, boost::cref(sf), boost::cref(b), boost::cref(rec))));
-				}
-				tp.run(gm_tasks);
-				for (auto& t : gm_tasks)
-				{
-					t.get_future().get();
+					tp.push_back(std::packaged_task<void()>(std::bind(grid_map_task, std::ref(grid_maps), std::cref(atom_types_to_populate), x, std::cref(sf), std::cref(b), std::cref(rec))));
 				}
 				tp.sync();
-				gm_tasks.clear();
 				atom_types_to_populate.clear();
 			}
 
 			// Run Monte Carlo tasks.
-			BOOST_ASSERT(mc_tasks.empty());
 			for (size_t i = 0; i < phase1_num_mc_tasks; ++i)
 			{
 				BOOST_ASSERT(phase1_result_containers[i].empty());
 				BOOST_ASSERT(phase1_result_containers[i].capacity() == 1);
-				mc_tasks.push_back(new packaged_task<void>(bind<void>(monte_carlo_task, boost::ref(phase1_result_containers[i]), boost::cref(lig), eng(), boost::cref(alphas), boost::cref(sf), boost::cref(b), boost::cref(grid_maps))));
+				tp.push_back(std::packaged_task<void()>(std::bind(monte_carlo_task, std::ref(phase1_result_containers[i]), std::cref(lig), eng(), std::cref(alphas), std::cref(sf), std::cref(b), std::cref(grid_maps))));
 			}
-			tp.run(mc_tasks);
+			tp.sync();
 
 			// Merge results from all the tasks into one single result container.
 			BOOST_ASSERT(phase1_results.empty());
 			const fl required_square_error = static_cast<fl>(4 * lig.num_heavy_atoms); // Ligands with RMSD < 2.0 will be clustered into the same cluster.
 			for (size_t i = 0; i < phase1_num_mc_tasks; ++i)
 			{
-				mc_tasks[i].get_future().get();
 				ptr_vector<result>& task_results = phase1_result_containers[i];
 				BOOST_ASSERT(task_results.capacity() == 1);
 				for (auto& task_result : task_results)
@@ -320,10 +310,6 @@ int main(int argc, char* argv[])
 				}
 				task_results.clear();
 			}
-
-			// Block until all the Monte Carlo tasks are completed.
-			tp.sync();
-			mc_tasks.clear();
 
 			// No conformation can be found if the search space is too small.
 			if (phase1_results.size())
@@ -478,36 +464,27 @@ int main(int argc, char* argv[])
 			}
 			if (atom_types_to_populate.size())
 			{
-				BOOST_ASSERT(gm_tasks.empty());
 				for (size_t x = 0; x < num_gm_tasks; ++x)
 				{
-					gm_tasks.push_back(new packaged_task<void>(bind<void>(grid_map_task, boost::ref(grid_maps), boost::cref(atom_types_to_populate), x, boost::cref(sf), boost::cref(b), boost::cref(rec))));
-				}
-				tp.run(gm_tasks);
-				for (auto& t : gm_tasks)
-				{
-					t.get_future().get();
+					tp.push_back(std::packaged_task<void()>(std::bind(grid_map_task, std::ref(grid_maps), std::cref(atom_types_to_populate), x, std::cref(sf), std::cref(b), std::cref(rec))));
 				}
 				tp.sync();
-				gm_tasks.clear();
 				atom_types_to_populate.clear();
 			}
 
 			// Run Monte Carlo tasks.
-			BOOST_ASSERT(mc_tasks.empty());
 			for (size_t i = 0; i < phase2_num_mc_tasks; ++i)
 			{
 				BOOST_ASSERT(phase2_result_containers[i].empty());
-				mc_tasks.push_back(new packaged_task<void>(bind<void>(monte_carlo_task, boost::ref(phase2_result_containers[i]), boost::cref(lig), eng(), boost::cref(alphas), boost::cref(sf), boost::cref(b), boost::cref(grid_maps))));
+				tp.push_back(std::packaged_task<void()>(std::bind(monte_carlo_task, std::ref(phase2_result_containers[i]), std::cref(lig), eng(), std::cref(alphas), std::cref(sf), std::cref(b), std::cref(grid_maps))));
 			}
-			tp.run(mc_tasks);
+			tp.sync();
 
 			// Merge results from all the tasks into one single result container.
 			BOOST_ASSERT(phase2_results.empty());
 			const fl required_square_error = static_cast<fl>(4 * lig.num_heavy_atoms); // Ligands with RMSD < 2.0 will be clustered into the same cluster.
 			for (size_t i = 0; i < phase2_num_mc_tasks; ++i)
 			{
-				mc_tasks[i].get_future().get();
 				ptr_vector<result>& task_results = phase2_result_containers[i];
 				for (auto& task_result : task_results)
 				{
@@ -515,10 +492,6 @@ int main(int argc, char* argv[])
 				}
 				task_results.clear();
 			}
-
-			// Block until all the Monte Carlo tasks are completed.
-			tp.sync();
-			mc_tasks.clear();
 
 			const size_t num_results = std::min<size_t>(phase2_results.size(), max_conformations);
 
