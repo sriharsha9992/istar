@@ -43,7 +43,6 @@ using namespace boost::posix_time;
 using namespace mongo;
 using namespace bson;
 using namespace Poco::Net;
-using namespace idock;
 
 int main(int argc, char* argv[])
 {

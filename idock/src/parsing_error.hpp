@@ -26,19 +26,16 @@
 #include <boost/lexical_cast.hpp>
 #include "common.hpp"
 
-namespace idock
-{
-	using std::domain_error;
-	using boost::filesystem::path;
-	using boost::lexical_cast;
+using std::domain_error;
+using boost::filesystem::path;
+using boost::lexical_cast;
 
-	/// Represents a parsing error.
-	class parsing_error : public domain_error
-	{
-	public:
-		/// Constructs a parsing error.
-		parsing_error(const size_t line, const string& reason) : domain_error("Error parsing on line " + lexical_cast<string>(line) + ": " + reason) {}
-	};
-}
+/// Represents a parsing error.
+class parsing_error : public domain_error
+{
+public:
+	/// Constructs a parsing error.
+	parsing_error(const size_t line, const string& reason) : domain_error("Error parsing on line " + lexical_cast<string>(line) + ": " + reason) {}
+};
 
 #endif

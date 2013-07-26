@@ -22,36 +22,33 @@
 
 #include "common.hpp"
 
-namespace idock
+/// Represents a summary of docking results of a ligand.
+class summary
 {
-	/// Represents a summary of docking results of a ligand.
-	class summary
+public:
+	size_t index;
+	string lig_id;
+	vector<fl> energies;
+	vector<fl> efficiencies;
+	vector<fl> rfscores;
+	vector<fl> consensuses;
+	vector<string> hbonds;
+	string property;
+	string supplier;
+	explicit summary(const size_t index, const string& lig_id, vector<fl>&& energies_, vector<fl>&& efficiencies_, vector<fl>&& rfscores_, vector<string>&& hbonds_, string&& property_, string&& supplier_) : index(index), lig_id(lig_id), energies(static_cast<vector<fl>&&>(energies_)), efficiencies(static_cast<vector<fl>&&>(efficiencies_)), rfscores(static_cast<vector<fl>&&>(rfscores_)), hbonds(static_cast<vector<string>&&>(hbonds_)), property(static_cast<string&&>(property_)), supplier(static_cast<string&&>(supplier_))
 	{
-	public:
-		size_t index;
-		string lig_id;
-		vector<fl> energies;
-		vector<fl> efficiencies;
-		vector<fl> rfscores;
-		vector<fl> consensuses;
-		vector<string> hbonds;
-		string property;
-		string supplier;
-		explicit summary(const size_t index, const string& lig_id, vector<fl>&& energies_, vector<fl>&& efficiencies_, vector<fl>&& rfscores_, vector<string>&& hbonds_, string&& property_, string&& supplier_) : index(index), lig_id(lig_id), energies(static_cast<vector<fl>&&>(energies_)), efficiencies(static_cast<vector<fl>&&>(efficiencies_)), rfscores(static_cast<vector<fl>&&>(rfscores_)), hbonds(static_cast<vector<string>&&>(hbonds_)), property(static_cast<string&&>(property_)), supplier(static_cast<string&&>(supplier_))
+		const auto size = energies.size();
+		consensuses.resize(size);
+		for (size_t i = 0; i < size; ++i)
 		{
-			const auto size = energies.size();
-			consensuses.resize(size);
-			for (size_t i = 0; i < size; ++i)
-			{
-				consensuses[i] = (rfscores[i] + energy2pK * energies[i]) * 0.5;
-			}
+			consensuses[i] = (rfscores[i] + energy2pK * energies[i]) * 0.5;
 		}
+	}
 
-		summary(const summary&) = default;
-		summary(summary&&) = default;
-		summary& operator=(const summary&) = default;
-		summary& operator=(summary&&) = default;
-	};
-}
+	summary(const summary&) = default;
+	summary(summary&&) = default;
+	summary& operator=(const summary&) = default;
+	summary& operator=(summary&&) = default;
+};
 
 #endif
