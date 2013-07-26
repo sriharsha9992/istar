@@ -84,7 +84,6 @@ int main(int argc, char* argv[])
 	const size_t phase2_num_mc_tasks = 128;
 	const size_t max_conformations = 20;
 	const size_t max_results = 20; // Maximum number of results obtained from a single Monte Carlo task.
-	const size_t slices[101] = { 0, 121712, 243424, 365136, 486848, 608560, 730272, 851984, 973696, 1095408, 1217120, 1338832, 1460544, 1582256, 1703968, 1825680, 1947392, 2069104, 2190816, 2312528, 2434240, 2555952, 2677664, 2799376, 2921088, 3042800, 3164512, 3286224, 3407936, 3529648, 3651360, 3773072, 3894784, 4016496, 4138208, 4259920, 4381632, 4503344, 4625056, 4746768, 4868480, 4990192, 5111904, 5233616, 5355328, 5477040, 5598752, 5720464, 5842176, 5963888, 6085600, 6207312, 6329024, 6450736, 6572448, 6694160, 6815872, 6937584, 7059296, 7181008, 7302720, 7424432, 7546144, 7667856, 7789568, 7911280, 8032992, 8154704, 8276416, 8398128, 8519840, 8641552, 8763264, 8884976, 9006688, 9128400, 9250112, 9371824, 9493536, 9615248, 9736960, 9858672, 9980384, 10102096, 10223808, 10345520, 10467232, 10588944, 10710655, 10832366, 10954077, 11075788, 11197499, 11319210, 11440921, 11562632, 11684343, 11806054, 11927765, 12049476, 12171187 };
 	const fl energy_range = 3.0;
 	const fl grid_granularity = 0.08;
 	const auto sort_summaries_by_idockscore = [] (const summary& s1, const summary& s2) -> bool { return s1.energies.front() < s2.energies.front(); };
@@ -93,6 +92,18 @@ int main(int argc, char* argv[])
 	const auto sort_results_by_rfscore = [] (const result& r1, const result& r2) -> bool { return r1.rfscore > r2.rfscore; };
 	const auto sort_results_by_consensus = [] (const result& r1, const result& r2) -> bool { return r1.consensus > r2.consensus; };
 	const auto epoch = boost::gregorian::date(1970, 1, 1);
+
+	// Calculate the slice split points on the fly.
+	const size_t total_ligands = 17224424;
+	const size_t num_slices = 100;
+	const size_t num_ligands_per_slice = total_ligands / num_slices;
+	const size_t spare_ligands = total_ligands - num_ligands_per_slice * num_slices;
+	array<size_t, num_slices + 1> slices;
+	for (size_t i = 0, sum = 0; i <= num_slices; ++i)
+	{
+		slices[i] = sum;
+		sum += num_ligands_per_slice + (i < spare_ligands);
+	}
 
 	// Initialize variables for job caching.
 	OID _id;
