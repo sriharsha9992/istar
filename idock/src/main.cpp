@@ -20,7 +20,6 @@
 #include <boost/filesystem/fstream.hpp>
 #include <boost/iostreams/filtering_stream.hpp>
 #include <boost/iostreams/filter/gzip.hpp>
-#include <boost/process/operations.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include <mongo/client/dbclient.h>
 #include <Poco/Net/MailMessage.h>
@@ -32,7 +31,7 @@
 #include "grid_map_task.hpp"
 #include "monte_carlo_task.hpp"
 #include "summary.hpp"
-//#include "random_forest.hpp"
+#include "random_forest.hpp"
 
 using namespace std;
 using namespace std::chrono;
@@ -78,8 +77,9 @@ int main(int argc, char* argv[])
 	const auto compt_fields = BSON("_id" << 0 << "sort" << 1 << "email" << 1 << "submitted" << 1 << "description" << 1);
 	const path ligands_path = "16_lig.pdbqt";
 	const path headers_path = "16_hdr.bin";
+	const size_t seed = system_clock::now().time_since_epoch().count();
 	const size_t num_threads = thread::hardware_concurrency();
-	const size_t seed = time(0);
+	const size_t num_trees = 512;
 	const size_t phase1_num_mc_tasks = 32;
 	const size_t phase2_num_mc_tasks = 128;
 	const size_t max_conformations = 20;
@@ -87,7 +87,6 @@ int main(int argc, char* argv[])
 	const size_t slices[101] = { 0, 121712, 243424, 365136, 486848, 608560, 730272, 851984, 973696, 1095408, 1217120, 1338832, 1460544, 1582256, 1703968, 1825680, 1947392, 2069104, 2190816, 2312528, 2434240, 2555952, 2677664, 2799376, 2921088, 3042800, 3164512, 3286224, 3407936, 3529648, 3651360, 3773072, 3894784, 4016496, 4138208, 4259920, 4381632, 4503344, 4625056, 4746768, 4868480, 4990192, 5111904, 5233616, 5355328, 5477040, 5598752, 5720464, 5842176, 5963888, 6085600, 6207312, 6329024, 6450736, 6572448, 6694160, 6815872, 6937584, 7059296, 7181008, 7302720, 7424432, 7546144, 7667856, 7789568, 7911280, 8032992, 8154704, 8276416, 8398128, 8519840, 8641552, 8763264, 8884976, 9006688, 9128400, 9250112, 9371824, 9493536, 9615248, 9736960, 9858672, 9980384, 10102096, 10223808, 10345520, 10467232, 10588944, 10710655, 10832366, 10954077, 11075788, 11197499, 11319210, 11440921, 11562632, 11684343, 11806054, 11927765, 12049476, 12171187 };
 	const fl energy_range = 3.0;
 	const fl grid_granularity = 0.08;
-	const auto rscript = boost::process::find_executable_in_path("Rscript");
 	const auto sort_summaries_by_idockscore = [] (const summary& s1, const summary& s2) -> bool { return s1.energies.front() < s2.energies.front(); };
 	const auto sort_summaries_by_rfscore = [] (const summary& s1, const summary& s2) -> bool { return s1.rfscores.front() > s2.rfscores.front(); };
 	const auto sort_summaries_by_consensus = [] (const summary& s1, const summary& s2) -> bool { return s1.consensuses.front() > s2.consensuses.front(); };
@@ -124,7 +123,7 @@ int main(int argc, char* argv[])
 		for (size_t t1 =  0; t1 < XS_TYPE_SIZE; ++t1)
 		for (size_t t2 = t1; t2 < XS_TYPE_SIZE; ++t2)
 		{
-			tp.push_back(packaged_task<void()>(bind(&scoring_function::precalculate, std::ref(sf), t1, t2, cref(rs))));
+			tp.push_back(packaged_task<void()>(bind(&scoring_function::precalculate, ref(sf), t1, t2, cref(rs))));
 		}
 
 		// Wait until all the scoring function tasks are completed.
@@ -132,16 +131,15 @@ int main(int argc, char* argv[])
 	}
 
 	// Build a random forest of 512 trees in parallel.
-	mt19937eng eng(seed);
-/*
-	forest f(512);
+	mt19937eng rng(seed);
+	forest f(num_trees);
 	for (tree& t : f)
 	{
-		tp.push_back(packaged_task<void()>(bind(&tree::grow, std::ref(t), 5, rng())));
+		tp.push_back(packaged_task<void()>(bind(&tree::grow, ref(t), 5, rng())));
 	}
 	tp.sync();
 	f.clear();
-*/
+
 	// Precalculate alpha values for determining step size in BFGS.
 	array<fl, num_alphas> alphas;
 	alphas[0] = 1;
@@ -173,7 +171,7 @@ int main(int argc, char* argv[])
 		if (value.isNull())
 		{
 			// Sleep for a while.
-			this_thread::sleep_for(std::chrono::seconds(10));
+			this_thread::sleep_for(seconds(10));
 			continue;
 		}
 		const auto job = value.Obj();
@@ -226,11 +224,8 @@ int main(int argc, char* argv[])
 		const auto end_lig = slices[slice + 1];
 
 		boost::filesystem::ofstream slice_csv(job_path / (slice_key + ".csv"));
-		slice_csv.setf(std::ios::fixed, std::ios::floatfield);
-		slice_csv << std::setprecision(3);
-		const auto slicef_csv_path = job_path / (slice_key + "F.csv");
-		boost::filesystem::ofstream slicef_csv(slicef_csv_path);
-		slicef_csv << "6.6,7.6,8.6,16.6,6.7,7.7,8.7,16.7,6.8,7.8,8.8,16.8,6.16,7.16,8.16,16.16,6.15,7.15,8.15,16.15,6.9,7.9,8.9,16.9,6.17,7.17,8.17,16.17,6.35,7.35,8.35,16.35,6.53,7.53,8.53,16.53\n";
+		slice_csv.setf(ios::fixed, ios::floatfield);
+		slice_csv << setprecision(3);
 		headers.seekg(sizeof(size_t) * start_lig);
 		for (auto idx = start_lig; idx < end_lig; ++idx)
 		{
@@ -280,7 +275,7 @@ int main(int argc, char* argv[])
 			{
 				for (size_t x = 0; x < num_gm_tasks; ++x)
 				{
-					tp.push_back(packaged_task<void()>(bind(grid_map_task, std::ref(grid_maps), cref(atom_types_to_populate), x, cref(sf), cref(b), cref(rec))));
+					tp.push_back(packaged_task<void()>(bind(grid_map_task, ref(grid_maps), cref(atom_types_to_populate), x, cref(sf), cref(b), cref(rec))));
 				}
 				tp.sync();
 				atom_types_to_populate.clear();
@@ -291,7 +286,7 @@ int main(int argc, char* argv[])
 			{
 				BOOST_ASSERT(phase1_result_containers[i].empty());
 				BOOST_ASSERT(phase1_result_containers[i].capacity() == 1);
-				tp.push_back(packaged_task<void()>(bind(monte_carlo_task, std::ref(phase1_result_containers[i]), cref(lig), eng(), cref(alphas), cref(sf), cref(b), cref(grid_maps))));
+				tp.push_back(packaged_task<void()>(bind(monte_carlo_task, ref(phase1_result_containers[i]), cref(lig), rng(), cref(alphas), cref(sf), cref(b), cref(grid_maps))));
 			}
 			tp.sync();
 
@@ -314,11 +309,9 @@ int main(int argc, char* argv[])
 			{
 				const result& r = phase1_results.front();
 
-				// Dump ligand summaries to the csv file.
-				slice_csv << idx << ',' << lig_id << ',' << (r.f * lig.flexibility_penalty_factor) << ',' << (r.f * lig.num_heavy_atoms_inverse) << ',' << mwt << ',' << logp << ',' << ad << ',' << pd << ',' << hbd << ',' << hba << ',' << tpsa << ',' << charge << ',' << nrb << ',' << smiles << '\n';
-
-				// Dump the 36 RF-Score features.
-				vector<size_t> features(RF_TYPE_SIZE << 2);
+				// Rescore conformations with random forest.
+				array<float, tree::nv> x;
+				x.fill(0);
 				for (size_t i = 0; i < lig.num_heavy_atoms; ++i)
 				{
 					if (lig.heavy_atoms[i].rf == RF_TYPE_SIZE) continue;
@@ -327,15 +320,13 @@ int main(int argc, char* argv[])
 						if (a.rf == RF_TYPE_SIZE) continue;
 						const auto dist_sqr = distance_sqr(r.heavy_atoms[i], a.coordinate);
 						if (dist_sqr >= 144) continue;
-						++features[(lig.heavy_atoms[i].rf << 2) + a.rf];
+						++x[(lig.heavy_atoms[i].rf << 2) + a.rf];
 					}
 				}
-				slicef_csv << features[0];
-				for (size_t i = 1; i < features.size(); ++i)
-				{
-					slicef_csv << ',' << features[i];
-				}
-				slicef_csv << '\n';
+				const float rfscore = f.predict(x);
+
+				// Dump ligand summaries to the csv file.
+				slice_csv << idx << ',' << lig_id << ',' << (r.f * lig.flexibility_penalty_factor) << ',' << (r.f * lig.num_heavy_atoms_inverse) << ',' << rfscore << ',' << mwt << ',' << logp << ',' << ad << ',' << pd << ',' << hbd << ',' << hba << ',' << tpsa << ',' << charge << ',' << nrb << ',' << smiles << '\n';
 
 				// Clear the results of the current ligand.
 				phase1_results.clear();
@@ -345,12 +336,6 @@ int main(int argc, char* argv[])
 			conn.update(collection, BSON("_id" << _id), BSON("$inc" << BSON(slice_key << 1)));
 		}
 		slice_csv.close();
-		slicef_csv.close();
-
-		// Call Rscript RF-Score.r
-		const auto slicek_csv_path = job_path / (slice_key + "K.csv");
-		create_child(rscript, vector<string> {"RF-Score.r", slicef_csv_path.string(), slicek_csv_path.string()}, boost::process::context()).wait();
-		remove(slicef_csv_path);
 
 		// Increment the completed counter.
 		conn.update(collection, BSON("_id" << _id << "$atomic" << 1), BSON("$inc" << BSON("completed" << 1)));
@@ -365,28 +350,23 @@ int main(int argc, char* argv[])
 		{
 			// Parse slice csv.
 			const auto slice_csv_path = job_path / (lexical_cast<string>(s) + ".csv");
-			const auto slicek_csv_path = job_path / (lexical_cast<string>(s) + "K.csv");
 			boost::filesystem::ifstream slice_csv(slice_csv_path);
-			boost::filesystem::ifstream slicek_csv(slicek_csv_path);
-			while (getline(slicek_csv, line))
+			while (getline(slice_csv, line))
 			{
-				const auto rfscore = lexical_cast<fl>(line);
-				getline(slice_csv, line);
 				const auto comma1 = line.find(',', 1);
 				const auto comma2 = comma1 + 9;
 				const auto comma3 = line.find(',', comma2 + 6);
 				const auto comma4 = line.find(',', comma3 + 6);
+				const auto comma5 = line.find(',', comma4 + 6);
 				BOOST_ASSERT(line[comma2] == ',');
 				vector<fl> energies, efficiencies, rfscores;
 				energies.push_back(lexical_cast<fl>(line.substr(comma2 + 1, comma3 - comma2 - 1)));
 				efficiencies.push_back(lexical_cast<fl>(line.substr(comma3 + 1, comma4 - comma3 - 1)));
-				rfscores.push_back(rfscore);
-				phase1_summaries.push_back(new summary(lexical_cast<size_t>(line.substr(0, comma1)), line.substr(comma1 + 1, 8), static_cast<vector<fl>&&>(energies), static_cast<vector<fl>&&>(efficiencies), static_cast<vector<fl>&&>(rfscores), vector<string>(), line.substr(comma4 + 1), string()));
+				rfscores.push_back(lexical_cast<fl>(line.substr(comma4 + 1, comma5 - comma4 - 1)));
+				phase1_summaries.push_back(new summary(lexical_cast<size_t>(line.substr(0, comma1)), line.substr(comma1 + 1, 8), static_cast<vector<fl>&&>(energies), static_cast<vector<fl>&&>(efficiencies), static_cast<vector<fl>&&>(rfscores), vector<string>(), line.substr(comma5 + 1), string()));
 			}
 			slice_csv.close();
-			slicek_csv.close();
 			remove(slice_csv_path);
-			remove(slicek_csv_path);
 		}
 		const auto docked = phase1_summaries.size();
 		BOOST_ASSERT(docked <= num_ligands);
@@ -406,7 +386,7 @@ int main(int argc, char* argv[])
 		const auto sort_results_by = sort == 1 ? sort_results_by_rfscore : sort_results_by_consensus;
 
 		// Sort phase 1 summaries.
-		std::sort(phase1_summaries.begin(), phase1_summaries.end(), sort_summaries_by);
+		sort(phase1_summaries.begin(), phase1_summaries.end(), sort_summaries_by);
 
 		// Write phase 1 csv.
 		{
@@ -414,8 +394,8 @@ int main(int argc, char* argv[])
 			filtering_ostream phase1_csv_gz;
 			phase1_csv_gz.push(gzip_compressor());
 			phase1_csv_gz.push(phase1_csv);
-			phase1_csv_gz.setf(std::ios::fixed, std::ios::floatfield);
-			phase1_csv_gz << std::setprecision(3);
+			phase1_csv_gz.setf(ios::fixed, ios::floatfield);
+			phase1_csv_gz << setprecision(3);
 			phase1_csv_gz << "ZINC ID,Free energy (kcal/mol),Ligand efficiency (kcal/mol),RF-Score (pK),Consensus score (pK),Molecular weight (g/mol),Partition coefficient xlogP,Apolar desolvation (kcal/mol),Polar desolvation (kcal/mol),Hydrogen bond donors,Hydrogen bond acceptors,Polar surface area tPSA (A^2),Net charge,Rotatable bonds,SMILES\n";
 			for (const auto& s : phase1_summaries)
 			{
@@ -427,8 +407,6 @@ int main(int argc, char* argv[])
 		}
 
 		// Perform phase 2.
-		const auto f_csv_path = job_path / "F.csv";
-		const auto k_csv_path = job_path / "K.csv";
 		const auto hits_pdbqt_path = job_path / "hits.pdbqt.gz";
 		ptr_vector<summary> phase2_summaries(num_hits);
 		for (auto idx = 0; idx < num_hits; ++idx)
@@ -464,7 +442,7 @@ int main(int argc, char* argv[])
 			{
 				for (size_t x = 0; x < num_gm_tasks; ++x)
 				{
-					tp.push_back(packaged_task<void()>(bind(grid_map_task, std::ref(grid_maps), cref(atom_types_to_populate), x, cref(sf), cref(b), cref(rec))));
+					tp.push_back(packaged_task<void()>(bind(grid_map_task, ref(grid_maps), cref(atom_types_to_populate), x, cref(sf), cref(b), cref(rec))));
 				}
 				tp.sync();
 				atom_types_to_populate.clear();
@@ -474,7 +452,7 @@ int main(int argc, char* argv[])
 			for (size_t i = 0; i < phase2_num_mc_tasks; ++i)
 			{
 				BOOST_ASSERT(phase2_result_containers[i].empty());
-				tp.push_back(packaged_task<void()>(bind(monte_carlo_task, std::ref(phase2_result_containers[i]), cref(lig), eng(), cref(alphas), cref(sf), cref(b), cref(grid_maps))));
+				tp.push_back(packaged_task<void()>(bind(monte_carlo_task, ref(phase2_result_containers[i]), cref(lig), rng(), cref(alphas), cref(sf), cref(b), cref(grid_maps))));
 			}
 			tp.sync();
 
@@ -491,7 +469,7 @@ int main(int argc, char* argv[])
 				task_results.clear();
 			}
 
-			const size_t num_results = std::min<size_t>(phase2_results.size(), max_conformations);
+			const size_t num_results = min<size_t>(phase2_results.size(), max_conformations);
 
 			// Adjust free energy relative to flexibility, and calculate ligand efficiency.
 			result& best_result = phase2_results.front();
@@ -511,9 +489,6 @@ int main(int argc, char* argv[])
 			if (num_conformations)
 			{
 				const size_t num_lig_hbda = lig.hbda.size();
-				vector<size_t> features(RF_TYPE_SIZE << 2);
-				boost::filesystem::ofstream f_csv(f_csv_path);
-				f_csv << "6.6,7.6,8.6,16.6,6.7,7.7,8.7,16.7,6.8,7.8,8.8,16.8,6.16,7.16,8.16,16.16,6.15,7.15,8.15,16.15,6.9,7.9,8.9,16.9,6.17,7.17,8.17,16.17,6.35,7.35,8.35,16.35,6.53,7.53,8.53,16.53\n";
 				for (size_t k = 0; k < num_conformations; ++k)
 				{
 					result& r = phase2_results[k];
@@ -547,8 +522,9 @@ int main(int argc, char* argv[])
 					}
 					r.hbonds = lexical_cast<string>(num_hbonds) + r.hbonds;
 
-					// Extract RF-Score features
-					for (auto& f : features) f = 0;
+					// Rescore conformations with random forest.
+					array<float, tree::nv> x;
+					x.fill(0);
 					for (size_t i = 0; i < lig.num_heavy_atoms; ++i)
 					{
 						if (lig.heavy_atoms[i].rf == RF_TYPE_SIZE) continue;
@@ -557,33 +533,15 @@ int main(int argc, char* argv[])
 							if (a.rf == RF_TYPE_SIZE) continue;
 							const auto dist_sqr = distance_sqr(r.heavy_atoms[i], a.coordinate);
 							if (dist_sqr >= 144) continue;
-							++features[(lig.heavy_atoms[i].rf << 2) + a.rf];
+							++x[(lig.heavy_atoms[i].rf << 2) + a.rf];
 						}
 					}
-					f_csv << features[0];
-					for (size_t i = 1; i < features.size(); ++i)
-					{
-						f_csv << ',' << features[i];
-					}
-					f_csv << '\n';
-				}
-				f_csv.close();
-
-				// Call Rscript RF-Score.r
-				create_child(rscript, vector<string> {"RF-Score.r", f_csv_path.string(), k_csv_path.string()}, boost::process::context()).wait();
-
-				// Parse RF-Score.
-				boost::filesystem::ifstream k_csv(k_csv_path);
-				for (size_t k = 0; k < num_conformations; ++k)
-				{
-					getline(k_csv, line);
-					auto& r = phase2_results[k];
-					r.rfscore = lexical_cast<fl>(line);
+					r.rfscore = f.predict(x);
 					r.consensus = (r.rfscore + energy2pK * r.e_nd) * 0.5;
 				}
 
 				// Sort results by RF-Score or consensus if necessary.
-				if (sort) std::sort(phase2_results.begin(), phase2_results.begin() + num_conformations, sort_results_by);
+				if (sort) sort(phase2_results.begin(), phase2_results.begin() + num_conformations, sort_results_by);
 
 				// Write models to file.
 				lig.write_models(hits_pdbqt_path, property, smiles, supplier, phase2_results, num_conformations, b, grid_maps);
@@ -609,12 +567,8 @@ int main(int argc, char* argv[])
 			conn.update(collection, BSON("_id" << _id), BSON("$inc" << BSON("refined" << 1)));
 		}
 
-		// Cleanup F.csv and K.csv
-		remove(f_csv_path);
-		remove(k_csv_path);
-
 		// Sort phase 2 summaries.
-		std::sort(phase2_summaries.begin(), phase2_summaries.end(), sort_summaries_by);
+		sort(phase2_summaries.begin(), phase2_summaries.end(), sort_summaries_by);
 
 		// Write phase 2 csv.
 		{
@@ -622,8 +576,8 @@ int main(int argc, char* argv[])
 			filtering_ostream phase2_csv_gz;
 			phase2_csv_gz.push(gzip_compressor());
 			phase2_csv_gz.push(phase2_csv);
-			phase2_csv_gz.setf(std::ios::fixed, std::ios::floatfield);
-			phase2_csv_gz << std::setprecision(3);
+			phase2_csv_gz.setf(ios::fixed, ios::floatfield);
+			phase2_csv_gz << setprecision(3);
 			phase2_csv_gz << "ZINC ID,Conformations";
 			for (size_t i = 1; i <= max_conformations; ++i) phase2_csv_gz << ",Conformation " << i << " free energy (kcal/mol),Conformation " << i << " ligand efficiency (kcal/mol),Conformation " << i << " RF-Score (pK),Conformation " << i << " consensus score (pK),Conformation " << i << " hydrogen bonds";
 			phase2_csv_gz << ",Molecular weight (g/mol),Partition coefficient xlogP,Apolar desolvation (kcal/mol),Polar desolvation (kcal/mol),Hydrogen bond donors,Hydrogen bond acceptors,Polar surface area tPSA (A^2),Net charge,Rotatable bonds,SMILES,Substance information,Suppliers\n";
@@ -644,7 +598,7 @@ int main(int argc, char* argv[])
 		}
 
 		// Set done time.
-		const auto millis_since_epoch = duration_cast<std::chrono::milliseconds>(system_clock::now().time_since_epoch()).count();
+		const auto millis_since_epoch = duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count();
 		conn.update(collection, BSON("_id" << _id), BSON("$set" << BSON("done" << Date_t(millis_since_epoch))));
 
 		// Send completion notification email.
