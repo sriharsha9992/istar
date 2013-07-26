@@ -46,8 +46,6 @@ using namespace Poco::Net;
 
 int main(int argc, char* argv[])
 {
-	using boost::array;
-
 	// Check the required number of comand line arguments.
 	if (argc != 5)
 	{
@@ -126,7 +124,7 @@ int main(int argc, char* argv[])
 		for (size_t t1 =  0; t1 < XS_TYPE_SIZE; ++t1)
 		for (size_t t2 = t1; t2 < XS_TYPE_SIZE; ++t2)
 		{
-			tp.push_back(std::packaged_task<void()>(std::bind(&scoring_function::precalculate, std::ref(sf), t1, t2, std::cref(rs))));
+			tp.push_back(packaged_task<void()>(bind(&scoring_function::precalculate, std::ref(sf), t1, t2, cref(rs))));
 		}
 
 		// Wait until all the scoring function tasks are completed.
@@ -139,7 +137,7 @@ int main(int argc, char* argv[])
 	forest f(512);
 	for (tree& t : f)
 	{
-		tp.push_back(std::packaged_task<void()>(std::bind(&tree::grow, std::ref(t), 5, rng())));
+		tp.push_back(packaged_task<void()>(bind(&tree::grow, std::ref(t), 5, rng())));
 	}
 	tp.sync();
 	f.clear();
@@ -282,7 +280,7 @@ int main(int argc, char* argv[])
 			{
 				for (size_t x = 0; x < num_gm_tasks; ++x)
 				{
-					tp.push_back(std::packaged_task<void()>(std::bind(grid_map_task, std::ref(grid_maps), std::cref(atom_types_to_populate), x, std::cref(sf), std::cref(b), std::cref(rec))));
+					tp.push_back(packaged_task<void()>(bind(grid_map_task, std::ref(grid_maps), cref(atom_types_to_populate), x, cref(sf), cref(b), cref(rec))));
 				}
 				tp.sync();
 				atom_types_to_populate.clear();
@@ -293,7 +291,7 @@ int main(int argc, char* argv[])
 			{
 				BOOST_ASSERT(phase1_result_containers[i].empty());
 				BOOST_ASSERT(phase1_result_containers[i].capacity() == 1);
-				tp.push_back(std::packaged_task<void()>(std::bind(monte_carlo_task, std::ref(phase1_result_containers[i]), std::cref(lig), eng(), std::cref(alphas), std::cref(sf), std::cref(b), std::cref(grid_maps))));
+				tp.push_back(packaged_task<void()>(bind(monte_carlo_task, std::ref(phase1_result_containers[i]), cref(lig), eng(), cref(alphas), cref(sf), cref(b), cref(grid_maps))));
 			}
 			tp.sync();
 
@@ -466,7 +464,7 @@ int main(int argc, char* argv[])
 			{
 				for (size_t x = 0; x < num_gm_tasks; ++x)
 				{
-					tp.push_back(std::packaged_task<void()>(std::bind(grid_map_task, std::ref(grid_maps), std::cref(atom_types_to_populate), x, std::cref(sf), std::cref(b), std::cref(rec))));
+					tp.push_back(packaged_task<void()>(bind(grid_map_task, std::ref(grid_maps), cref(atom_types_to_populate), x, cref(sf), cref(b), cref(rec))));
 				}
 				tp.sync();
 				atom_types_to_populate.clear();
@@ -476,7 +474,7 @@ int main(int argc, char* argv[])
 			for (size_t i = 0; i < phase2_num_mc_tasks; ++i)
 			{
 				BOOST_ASSERT(phase2_result_containers[i].empty());
-				tp.push_back(std::packaged_task<void()>(std::bind(monte_carlo_task, std::ref(phase2_result_containers[i]), std::cref(lig), eng(), std::cref(alphas), std::cref(sf), std::cref(b), std::cref(grid_maps))));
+				tp.push_back(packaged_task<void()>(bind(monte_carlo_task, std::ref(phase2_result_containers[i]), cref(lig), eng(), cref(alphas), cref(sf), cref(b), cref(grid_maps))));
 			}
 			tp.sync();
 

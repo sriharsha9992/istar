@@ -26,7 +26,7 @@
 // (1 4 7)
 // (2 5 8)
 /// Represents a row-major 3x3 matrix for vector transformation.
-class mat3 : private array<fl, 9>
+class mat3 : public array<fl, 9>
 {
 public:
 	/// Constructs an empty 3x3 matrix.
@@ -46,9 +46,9 @@ public:
 		 const fl d10, const fl d11, const fl d12,
 		 const fl d20, const fl d21, const fl d22)
 	{
-		elems[0] = d00; elems[1] = d01; elems[2] = d02;
-		elems[3] = d10; elems[4] = d11; elems[5] = d12;
-		elems[6] = d20; elems[7] = d21; elems[8] = d22;
+		(*this)[0] = d00; (*this)[1] = d01; (*this)[2] = d02;
+		(*this)[3] = d10; (*this)[4] = d11; (*this)[5] = d12;
+		(*this)[6] = d20; (*this)[7] = d21; (*this)[8] = d22;
 	}
 
 	/// Returns the value at index (i, j) where j is the lowest dimension.
@@ -56,7 +56,7 @@ public:
 	{
 		BOOST_ASSERT(i < 3);
 		BOOST_ASSERT(j < 3);
-		return elems[3 * i + j];
+		return (*this)[3 * i + j];
 	}
 
 	/// Transforms a vector by current 3x3 matrix.
@@ -64,9 +64,9 @@ public:
 	{
 		return vec3
 		(
-			elems[0] * v[0] + elems[1] * v[1] + elems[2] * v[2],
-			elems[3] * v[0] + elems[4] * v[1] + elems[5] * v[2],
-			elems[6] * v[0] + elems[7] * v[1] + elems[8] * v[2]
+			(*this)[0] * v[0] + (*this)[1] * v[1] + (*this)[2] * v[2],
+			(*this)[3] * v[0] + (*this)[4] * v[1] + (*this)[5] * v[2],
+			(*this)[6] * v[0] + (*this)[7] * v[1] + (*this)[8] * v[2]
 		);
 	}
 };

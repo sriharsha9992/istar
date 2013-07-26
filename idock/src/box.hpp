@@ -22,8 +22,6 @@
 
 #include "vec3.hpp"
 
-using boost::array;
-
 /// Represents a search space of cubic shape.
 class box
 {

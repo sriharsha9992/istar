@@ -25,7 +25,7 @@
 using boost::filesystem::ifstream;
 using boost::filesystem::ofstream;
 
-ligand::ligand(ifstream& in) : num_active_torsions(0)
+ligand::ligand(boost::filesystem::ifstream& ifs) : num_active_torsions(0)
 {
 	// Initialize necessary variables for constructing a ligand.
 	lines.reserve(200); // A ligand typically consists of <= 200 lines.
@@ -47,7 +47,7 @@ ligand::ligand(ifstream& in) : num_active_torsions(0)
 	line.reserve(79); // According to PDBQT specification, the last item AutoDock atom type locates at 1-based [78, 79].
 
 	// Parse ROOT, ATOM/HETATM, ENDROOT, BRANCH, ENDBRANCH, TORSDOF.
-	while (getline(in, line))
+	while (getline(ifs, line))
 	{
 		++num_lines;
 		if (starts_with(line, "ATOM") || starts_with(line, "HETATM"))

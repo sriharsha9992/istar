@@ -20,11 +20,10 @@
 #ifndef IDOCK_ARRAY3D_HPP
 #define IDOCK_ARRAY3D_HPP
 
+#include <array>
 #include <vector>
 #include <boost/assert.hpp>
-#include <boost/array.hpp>
-
-using boost::array;
+using namespace std;
 
 /// Represents a generic 3D array.
 template<typename T>

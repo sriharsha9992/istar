@@ -83,7 +83,7 @@ public:
 
 	/// Constructs a ligand by parsing a ligand file stream in pdbqt format.
 	/// @exception parsing_error Thrown when an atom type is not recognized or an empty branch is detected.
-	ligand(ifstream& in);
+	ligand(boost::filesystem::ifstream& ifs);
 
 	/// Returns the XScore atom types presented in current ligand.
 	vector<size_t> get_atom_types() const;
