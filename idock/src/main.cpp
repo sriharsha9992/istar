@@ -123,7 +123,7 @@ int main(int argc, char* argv[])
 		for (size_t t1 =  0; t1 < XS_TYPE_SIZE; ++t1)
 		for (size_t t2 = t1; t2 < XS_TYPE_SIZE; ++t2)
 		{
-			tp.push_back(packaged_task<void()>(bind(&scoring_function::precalculate, ref(sf), t1, t2, cref(rs))));
+			tp.push_back(packaged_task<void()>(bind(&scoring_function::precalculate, std::ref(sf), t1, t2, cref(rs))));
 		}
 
 		// Wait until all the scoring function tasks are completed.
@@ -135,7 +135,7 @@ int main(int argc, char* argv[])
 	forest f(num_trees);
 	for (tree& t : f)
 	{
-		tp.push_back(packaged_task<void()>(bind(&tree::grow, ref(t), 5, rng())));
+		tp.push_back(packaged_task<void()>(bind(&tree::grow, std::ref(t), 5, rng())));
 	}
 	tp.sync();
 	f.clear();
@@ -171,7 +171,7 @@ int main(int argc, char* argv[])
 		if (value.isNull())
 		{
 			// Sleep for a while.
-			this_thread::sleep_for(seconds(10));
+			this_thread::sleep_for(chrono::seconds(10));
 			continue;
 		}
 		const auto job = value.Obj();
@@ -275,7 +275,7 @@ int main(int argc, char* argv[])
 			{
 				for (size_t x = 0; x < num_gm_tasks; ++x)
 				{
-					tp.push_back(packaged_task<void()>(bind(grid_map_task, ref(grid_maps), cref(atom_types_to_populate), x, cref(sf), cref(b), cref(rec))));
+					tp.push_back(packaged_task<void()>(bind(grid_map_task, std::ref(grid_maps), cref(atom_types_to_populate), x, cref(sf), cref(b), cref(rec))));
 				}
 				tp.sync();
 				atom_types_to_populate.clear();
@@ -286,7 +286,7 @@ int main(int argc, char* argv[])
 			{
 				BOOST_ASSERT(phase1_result_containers[i].empty());
 				BOOST_ASSERT(phase1_result_containers[i].capacity() == 1);
-				tp.push_back(packaged_task<void()>(bind(monte_carlo_task, ref(phase1_result_containers[i]), cref(lig), rng(), cref(alphas), cref(sf), cref(b), cref(grid_maps))));
+				tp.push_back(packaged_task<void()>(bind(monte_carlo_task, std::ref(phase1_result_containers[i]), cref(lig), rng(), cref(alphas), cref(sf), cref(b), cref(grid_maps))));
 			}
 			tp.sync();
 
@@ -380,10 +380,10 @@ int main(int argc, char* argv[])
 		// Determine ligand sorting criterion.
 		const auto compt_cursor = conn.query(collection, QUERY("_id" << _id), 1, 0, &compt_fields);
 		const auto compt = compt_cursor->next();
-		const auto sort = compt["sort"].Int();
-		BOOST_ASSERT(sort == 0 || sort == 1 || sort == 2);
-		const auto sort_summaries_by = sort == 0 ? sort_summaries_by_idockscore : (sort == 1 ? sort_summaries_by_rfscore : sort_summaries_by_consensus);
-		const auto sort_results_by = sort == 1 ? sort_results_by_rfscore : sort_results_by_consensus;
+		const auto sort_by = compt["sort"].Int();
+		BOOST_ASSERT(sort_by == 0 || sort_by == 1 || sort_by == 2);
+		const auto sort_summaries_by = sort_by == 0 ? sort_summaries_by_idockscore : (sort_by == 1 ? sort_summaries_by_rfscore : sort_summaries_by_consensus);
+		const auto sort_results_by = sort_by == 1 ? sort_results_by_rfscore : sort_results_by_consensus;
 
 		// Sort phase 1 summaries.
 		sort(phase1_summaries.begin(), phase1_summaries.end(), sort_summaries_by);
@@ -442,7 +442,7 @@ int main(int argc, char* argv[])
 			{
 				for (size_t x = 0; x < num_gm_tasks; ++x)
 				{
-					tp.push_back(packaged_task<void()>(bind(grid_map_task, ref(grid_maps), cref(atom_types_to_populate), x, cref(sf), cref(b), cref(rec))));
+					tp.push_back(packaged_task<void()>(bind(grid_map_task, std::ref(grid_maps), cref(atom_types_to_populate), x, cref(sf), cref(b), cref(rec))));
 				}
 				tp.sync();
 				atom_types_to_populate.clear();
@@ -452,7 +452,7 @@ int main(int argc, char* argv[])
 			for (size_t i = 0; i < phase2_num_mc_tasks; ++i)
 			{
 				BOOST_ASSERT(phase2_result_containers[i].empty());
-				tp.push_back(packaged_task<void()>(bind(monte_carlo_task, ref(phase2_result_containers[i]), cref(lig), rng(), cref(alphas), cref(sf), cref(b), cref(grid_maps))));
+				tp.push_back(packaged_task<void()>(bind(monte_carlo_task, std::ref(phase2_result_containers[i]), cref(lig), rng(), cref(alphas), cref(sf), cref(b), cref(grid_maps))));
 			}
 			tp.sync();
 
@@ -541,7 +541,7 @@ int main(int argc, char* argv[])
 				}
 
 				// Sort results by RF-Score or consensus if necessary.
-				if (sort) sort(phase2_results.begin(), phase2_results.begin() + num_conformations, sort_results_by);
+				if (sort_by) sort(phase2_results.begin(), phase2_results.begin() + num_conformations, sort_results_by);
 
 				// Write models to file.
 				lig.write_models(hits_pdbqt_path, property, smiles, supplier, phase2_results, num_conformations, b, grid_maps);
@@ -598,7 +598,7 @@ int main(int argc, char* argv[])
 		}
 
 		// Set done time.
-		const auto millis_since_epoch = duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count();
+		const auto millis_since_epoch = duration_cast<chrono::milliseconds>(system_clock::now().time_since_epoch()).count();
 		conn.update(collection, BSON("_id" << _id), BSON("$set" << BSON("done" << Date_t(millis_since_epoch))));
 
 		// Send completion notification email.
