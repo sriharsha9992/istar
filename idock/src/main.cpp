@@ -481,24 +481,23 @@ int main(int argc, char* argv[])
 			}
 
 			const size_t num_results = min<size_t>(phase2_results.size(), max_conformations);
-
-			// Adjust free energy relative to flexibility, and calculate ligand efficiency.
-			result& best_result = phase2_results.front();
-			const fl best_result_intra_e = best_result.e - best_result.f;
-			for (size_t i = 0; i < num_results; ++i)
+			if (num_results)
 			{
-				auto& r = phase2_results[i];
-				r.e_nd = (r.e - best_result_intra_e) * lig.flexibility_penalty_factor;
-				r.efficiency = r.f * lig.num_heavy_atoms_inverse;
-			}
+				// Adjust free energy relative to flexibility, and calculate ligand efficiency.
+				result& best_result = phase2_results.front();
+				const fl best_result_intra_e = best_result.e - best_result.f;
+				for (size_t i = 0; i < num_results; ++i)
+				{
+					auto& r = phase2_results[i];
+					r.e_nd = (r.e - best_result_intra_e) * lig.flexibility_penalty_factor;
+					r.efficiency = r.f * lig.num_heavy_atoms_inverse;
+				}
 
-			// Determine the number of conformations to output according to user-supplied max_conformations and energy_range.
-			const fl energy_upper_bound = best_result.e_nd + energy_range;
-			size_t num_conformations;
-			for (num_conformations = 1; (num_conformations < num_results) && (phase2_results[num_conformations].e_nd <= energy_upper_bound); ++num_conformations);
+				// Determine the number of conformations to output according to user-supplied max_conformations and energy_range.
+				const fl energy_upper_bound = best_result.e_nd + energy_range;
+				size_t num_conformations;
+				for (num_conformations = 1; (num_conformations < num_results) && (phase2_results[num_conformations].e_nd <= energy_upper_bound); ++num_conformations);
 
-			if (num_conformations)
-			{
 				const size_t num_lig_hbda = lig.hbda.size();
 				for (size_t k = 0; k < num_conformations; ++k)
 				{
@@ -569,10 +568,10 @@ int main(int argc, char* argv[])
 					rfscores[k] = r.rfscore;
 				}
 				phase2_summaries.push_back(new summary(s.index, s.lig_id, static_cast<vector<fl>&&>(energies), static_cast<vector<fl>&&>(efficiencies), static_cast<vector<fl>&&>(rfscores), static_cast<vector<string>&&>(hbonds), string(s.property), supplier.substr(11)));
-			}
 
-			// Clear the results of the current ligand.
-			phase2_results.clear();
+				// Clear the results of the current ligand.
+				phase2_results.clear();
+			}
 
 			// Report progress every ligand.
 			conn.update(collection, BSON("_id" << _id), BSON("$inc" << BSON("refined" << 1)));
