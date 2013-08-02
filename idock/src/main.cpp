@@ -43,6 +43,11 @@ using namespace mongo;
 using namespace bson;
 using namespace Poco::Net;
 
+inline static string now()
+{
+	return to_simple_string(second_clock::local_time()) + " ";
+}
+
 int main(int argc, char* argv[])
 {
 	// Check the required number of comand line arguments.
@@ -61,11 +66,11 @@ int main(int argc, char* argv[])
 	DBClientConnection conn;
 	{
 		// Connect to host and authenticate user.
-		cout << "Connecting to " << host << " and authenticating " << user << endl;
+		cout << now() << "Connecting to " << host << " and authenticating " << user << endl;
 		string errmsg;
 		if ((!conn.connect(host, errmsg)) || (!conn.auth("istar", user, pwd, errmsg)))
 		{
-			cerr << errmsg << endl;
+			cerr << now() << errmsg << endl;
 			return 1;
 		}
 	}
@@ -229,7 +234,7 @@ int main(int argc, char* argv[])
 		const auto slice = job["scheduled"].Int();
 
 		// Perform phase 1.
-		cout << "Executing job " << _id << " phase 1 slice " << slice << endl;
+		cout << now() << "Executing job " << _id << " phase 1 slice " << slice << endl;
 		const auto slice_key = lexical_cast<string>(slice);
 		const auto start_lig = slices[slice];
 		const auto end_lig = slices[slice + 1];
@@ -353,7 +358,7 @@ int main(int argc, char* argv[])
 
 		// If phase 1 is done, transit to phase 2.
 		if (!conn.query(collection, QUERY("_id" << _id << "completed" << 100))->more()) continue;
-		cout << "Executing job " << _id << " phase 2" << endl;
+		cout << now() << "Executing job " << _id << " phase 2" << endl;
 
 		// Combine and delete multiple slice csv's.
 		ptr_vector<summary> phase1_summaries(num_ligands);
@@ -613,7 +618,7 @@ int main(int argc, char* argv[])
 
 		// Send completion notification email.
 		const auto email = compt["email"].String();
-		cout << "Sending a completion notification email to " << email << endl;
+		cout << now() << "Sending a completion notification email to " << email << endl;
 		MailMessage message;
 		message.setSender("idock <noreply@cse.cuhk.edu.hk>");
 		message.setSubject("Your idock job has completed");

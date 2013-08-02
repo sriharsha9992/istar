@@ -24,6 +24,11 @@ using namespace mongo;
 using namespace bson;
 using namespace Poco::Net;
 
+inline static string now()
+{
+	return to_simple_string(second_clock::local_time()) + " ";
+}
+
 #define CHARACTER_CARDINALITY 4	/**< One nucleotide is either A, C, G, or T. */
 #define MAX_UNSIGNED_INT	0xffffffffUL	/**< The maximum value of an unsigned int. */
 #define MAX_UNSIGNED_LONG_LONG	0xffffffffffffffffULL	/**< The maximum value of an unsigned long long. */
@@ -131,7 +136,7 @@ public:
 	{
 		sequence_cumulative_length[0] = 0;
 
-		cout << "Loading the genome of " << name << endl;
+		cout << now() << "Loading the genome of " << name << endl;
 		unsigned int scodon_buffer = 0;	// 16 consecutive characters will be accommodated into one 32-bit unsigned int.
 		unsigned int scodon_index;	// scodon[scodon_index] = scodon_buffer; In CUDA implementation, special codons need to be properly shuffled in order to satisfy coalesced global memory access.
 		int sequence_index = -1;	// Index of the current sequence.
@@ -242,11 +247,11 @@ int main(int argc, char** argv)
 	DBClientConnection conn;
 	{
 		// Connect to host and authenticate user.
-		cout << "Connecting to " << host << " and authenticating " << user << endl;
+		cout << now() << "Connecting to " << host << " and authenticating " << user << endl;
 		string errmsg;
 		if ((!conn.connect(host, errmsg)) || (!conn.auth("istar", user, pwd, errmsg)))
 		{
-			cerr << errmsg << endl;
+			cerr << now() << errmsg << endl;
 			return 1;
 		}
 	}
@@ -304,7 +309,7 @@ int main(int argc, char** argv)
 		{
 			const auto job = cursor->next();
 			const auto _id = job["_id"].OID();
-			cout << "Executing job " << _id.str() << endl;
+			cout << now() << "Executing job " << _id.str() << endl;
 
 			// Obtain the target genome via taxid.
 			const auto taxid = job["taxid"].Int();
@@ -315,7 +320,7 @@ int main(int argc, char** argv)
 			}
 			BOOST_ASSERT(i < genomes.size());
 			const auto& g = genomes[i];
-			cout << "Searching the genome of " << g.name << endl;
+			cout << now() << "Searching the genome of " << g.name << endl;
 
 			// Set up CUDA kernel.
 			checkCudaErrors(cudaMalloc((void**)&scodon_device, sizeof(unsigned int) * g.scodon.size()));
@@ -442,12 +447,12 @@ int main(int argc, char** argv)
 			const auto err = conn.getLastError();
 			if (!err.empty())
 			{
-				cerr << err << endl;
+				cerr << now() << err << endl;
 			}
 
 			// Send completion notification email.
 			const auto email = job["email"].String();
-			cout << "Sending a completion notification email to " << email << endl;
+			cout << now() << "Sending a completion notification email to " << email << endl;
 			MailMessage message;
 			message.setSender("igrep <noreply@cse.cuhk.edu.hk>");
 			message.setSubject("Your igrep job has completed");
