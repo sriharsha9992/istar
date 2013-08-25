@@ -21,15 +21,15 @@ Components
 
 ### Web server
 
-* [node.js] v0.10.15
-* [mongodb] v1.3.17
-* [express] v3.3.4
-* [validator] v1.4.0
-* [spdy] v1.10.1
+* [node.js] v0.10.17
+* [mongodb] v1.3.19
+* [express] v3.3.5
+* [validator] v1.5.0
+* [spdy] v1.10.5
 
 ### Database
 
-* [MongoDB] v2.4.5
+* [MongoDB] v2.4.6
 
 ### Workstations and daemons
 
