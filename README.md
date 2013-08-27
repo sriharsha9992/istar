@@ -96,7 +96,7 @@ REST API for igrep
 Licenses
 --------
 
-* idock and igrep are licensed under [Apache License 2.0].
+* istar, idock and igrep are licensed under [Apache License 2.0].
 * iview is licensed under [MIT License].
 * Documentation is licensed under [CC BY 3.0].
 
