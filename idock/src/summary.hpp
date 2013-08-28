@@ -51,4 +51,10 @@ public:
 	summary& operator=(summary&&) = default;
 };
 
+/// For sorting ptr_vector<summary>.
+inline bool operator<(const summary& a, const summary& b)
+{
+	return a.energies.front() < b.energies.front();
+}
+
 #endif

@@ -79,7 +79,7 @@ int main(int argc, char* argv[])
 	const auto collection = "istar.idock";
 	const auto jobid_fields = BSON("_id" << 1 << "scheduled" << 1);
 	const auto param_fields = BSON("_id" << 0 << "receptor" << 1 << "ligands" << 1 << "center_x" << 1 << "center_y" << 1 << "center_z" << 1 << "size_x" << 1 << "size_y" << 1 << "size_z" << 1 << "mwt_lb" << 1 << "mwt_ub" << 1 << "logp_lb" << 1 << "logp_ub" << 1 << "ad_lb" << 1 << "ad_ub" << 1 << "pd_lb" << 1 << "pd_ub" << 1 << "hbd_lb" << 1 << "hbd_ub" << 1 << "hba_lb" << 1 << "hba_ub" << 1 << "tpsa_lb" << 1 << "tpsa_ub" << 1 << "charge_lb" << 1 << "charge_ub" << 1 << "nrb_lb" << 1 << "nrb_ub" << 1);
-	const auto compt_fields = BSON("_id" << 0 << "sort" << 1 << "email" << 1 << "submitted" << 1 << "description" << 1);
+	const auto compt_fields = BSON("_id" << 0 << "email" << 1 << "submitted" << 1 << "description" << 1);
 	const path ligands_path = "16_lig.pdbqt";
 	const path headers_path = "16_hdr.bin";
 	const size_t seed = system_clock::now().time_since_epoch().count();
@@ -91,11 +91,6 @@ int main(int argc, char* argv[])
 	const size_t max_results = 20; // Maximum number of results obtained from a single Monte Carlo task.
 	const fl energy_range = 3.0;
 	const fl grid_granularity = 0.08;
-	const auto sort_summaries_by_idockscore = [] (const summary& s1, const summary& s2) -> bool { return s1.energies.front() < s2.energies.front(); };
-	const auto sort_summaries_by_rfscore = [] (const summary& s1, const summary& s2) -> bool { return s1.rfscores.front() > s2.rfscores.front(); };
-	const auto sort_summaries_by_consensus = [] (const summary& s1, const summary& s2) -> bool { return s1.consensuses.front() > s2.consensuses.front(); };
-	const auto sort_results_by_rfscore = [] (const result& r1, const result& r2) -> bool { return r1.rfscore > r2.rfscore; };
-	const auto sort_results_by_consensus = [] (const result& r1, const result& r2) -> bool { return r1.consensus > r2.consensus; };
 	const auto epoch = boost::gregorian::date(1970, 1, 1);
 
 	// Calculate the slice split points on the fly.
@@ -393,16 +388,8 @@ int main(int argc, char* argv[])
 			conn.update(collection, BSON("_id" << _id), BSON("$set" << BSON("hits" << num_hits)));
 		}
 
-		// Determine ligand sorting criterion.
-		const auto compt_cursor = conn.query(collection, QUERY("_id" << _id), 1, 0, &compt_fields);
-		const auto compt = compt_cursor->next();
-		const auto sort_by = compt["sort"].Int();
-		BOOST_ASSERT(sort_by == 0 || sort_by == 1 || sort_by == 2);
-		const auto sort_summaries_by = sort_by == 0 ? sort_summaries_by_idockscore : (sort_by == 1 ? sort_summaries_by_rfscore : sort_summaries_by_consensus);
-		const auto sort_results_by = sort_by == 1 ? sort_results_by_rfscore : sort_results_by_consensus;
-
 		// Sort phase 1 summaries.
-		sort(phase1_summaries.begin(), phase1_summaries.end(), sort_summaries_by);
+		phase1_summaries.sort();
 
 		// Write phase 1 csv.
 		{
@@ -555,9 +542,6 @@ int main(int argc, char* argv[])
 					r.consensus = (r.rfscore + energy2pK * r.e_nd) * 0.5;
 				}
 
-				// Sort results by RF-Score or consensus if necessary.
-				if (sort_by) sort(phase2_results.begin(), phase2_results.begin() + num_conformations, sort_results_by);
-
 				// Write models to file.
 				lig.write_models(hits_pdbqt_path, property, smiles, supplier, phase2_results, num_conformations, b, grid_maps);
 
@@ -583,7 +567,7 @@ int main(int argc, char* argv[])
 		}
 
 		// Sort phase 2 summaries.
-		sort(phase2_summaries.begin(), phase2_summaries.end(), sort_summaries_by);
+		phase2_summaries.sort();
 
 		// Write phase 2 csv.
 		{
@@ -617,6 +601,8 @@ int main(int argc, char* argv[])
 		conn.update(collection, BSON("_id" << _id), BSON("$set" << BSON("done" << Date_t(millis_since_epoch))));
 
 		// Send completion notification email.
+		const auto compt_cursor = conn.query(collection, QUERY("_id" << _id), 1, 0, &compt_fields);
+		const auto compt = compt_cursor->next();
 		const auto email = compt["email"].String();
 		cout << now() << "Sending a completion notification email to " << email << endl;
 		MailMessage message;
