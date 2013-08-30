@@ -1,123 +1,109 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="author" content="Jacky Lee">
-    <meta name="description" content="a software-as-a-service platform for bioinformatics and chemoinformatics">
-    <title>istar: a software-as-a-service platform for bioinformatics and chemoinformatics</title>
-
-    <link href="/bootstrap.min.css" rel="stylesheet">
-    <link href="/bootstrap-responsive.min.css" rel="stylesheet">
-    <link href="/index.css" rel="stylesheet">
-
-    <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
-<!--[if lt IE 9]>
-    <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
-<![endif]-->
-
-    <link rel="shortcut icon" href="/favicon.ico">
-    <link rel="apple-touch-icon-precomposed" sizes="144x144" href="/apple-touch-icon-144-precomposed.png">
-    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="/apple-touch-icon-114-precomposed.png">
-    <link rel="apple-touch-icon-precomposed" sizes="72x72" href="/apple-touch-icon-72-precomposed.png">
-    <link rel="apple-touch-icon-precomposed" href="/apple-touch-icon-57-precomposed.png">
-  </head>
-
-  <body>
-
-    <div class="navbar navbar-inverse navbar-static-top">
-      <div class="navbar-inner">
-        <div class="container">
-          <div class="nav-collapse collapse">
-            <ul class="nav">
-              <li class="active">
-                <a href="/"><img src="/logo.png" alt="istar logo">istar: software as a service</a>
-              </li>
-              <li class="divider-vertical"></li>
-              <li>
-                <a href="/idock"><img src="/idock/logo.png" alt="idock logo">idock: protein-ligand docking</a>
-              </li>
-              <li class="divider-vertical"></li>
-              <li>
-                <a href="/igrep"><img src="/igrep/logo.png" alt="igrep logo">igrep: DNA sequence matching</a>
-              </li>
-              <li class="divider-vertical"></li>
-              <li>
-                <a href="/iview"><img src="/iview/logo.png" alt="iview logo">iview: interactive WebGL visualizer</a>
-              </li>
-            </ul>
-          </div>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="author" content="Hongjian Li">
+  <meta name="description" content="a software-as-a-service platform for bioinformatics and chemoinformatics">
+  <title>istar: a software-as-a-service platform for bioinformatics and chemoinformatics</title>
+  <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css">
+  <link rel="stylesheet" href="/index.css">
+  <link rel="shortcut icon" href="/favicon.ico">
+  <link rel="apple-touch-icon-precomposed" sizes="144x144" href="/apple-touch-icon-144-precomposed.png">
+  <link rel="apple-touch-icon-precomposed" sizes="114x114" href="/apple-touch-icon-114-precomposed.png">
+  <link rel="apple-touch-icon-precomposed" sizes="72x72" href="/apple-touch-icon-72-precomposed.png">
+  <link rel="apple-touch-icon-precomposed" href="/apple-touch-icon-57-precomposed.png">
+  <script>
+    var _gaq=[['_setAccount','UA-20604862-1'],['_trackPageview']];
+    (function(d,t){var g=d.createElement(t),s=d.getElementsByTagName(t)[0];
+    g.src=('https:'==location.protocol?'//ssl':'//www')+'.google-analytics.com/ga.js';
+    s.parentNode.insertBefore(g,s)}(document,'script'));
+  </script>
+  <!--[if lt IE 9]>
+  <script src="/html5shiv.js"></script>
+  <script src="/respond.min.js"></script>
+  <![endif]-->
+</head>
+<body>
+  <a class="sr-only" href="#content">Skip navigation</a>
+  <a href="https://github.com/HongjianLi/istar" class="ribbon"></a>
+  <header class="navbar navbar-inverse navbar-static-top" role="banner">
+    <div class="container">
+      <nav class="collapse navbar-collapse" role="navigation">
+        <ul class="nav navbar-nav">
+          <li class="active">
+            <a href="/"><img src="/logo.png" alt="istar logo">istar: software as a service</a>
+          </li>
+          <li>
+            <a href="/idock"><img src="/idock/logo.png" alt="idock logo">idock: protein-ligand docking</a>
+          </li>
+          <li>
+            <a href="/igrep"><img src="/igrep/logo.png" alt="igrep logo">igrep: DNA sequence matching</a>
+          </li>
+          <li>
+            <a href="/iview"><img src="/iview/logo.png" alt="iview logo">iview: interactive WebGL visualizer</a>
+          </li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+  <div class="jumbotron" id="content" role="main">
+    <div class="container">
+      <h1><img src="logo.png" alt="logo" class="logo">istar</h1>
+      <p>a software-as-a-service platform for bioinformatics and chemoinformatics</p>
+    </div>
+  </div>
+  <div class="container">
+    <section>
+      <div class="page-header">
+        <h1>Architecture</h1>
+      </div>
+      <div class="row">
+        <div class="col-md-12">
+          <img src="architecture.png" alt="architecture" class="img-responsive">
         </div>
       </div>
-    </div>
-
-    <a href="https://github.com/HongjianLi/istar" class="ribbon"></a>
-
+    </section>
+    <section>
+      <div class="page-header">
+        <h1>Terms of Use and Privacy Policy</h1>
+      </div>
+      <div class="row">
+        <div class="col-md-12">
+          <p>General use</p>
+          <ul>
+            <li>Services under this site are completely free public services. They run on computers at a public university.</li>
+            <li>We offer no warranty or guarantee about the suitability of any results generated by this facility for any particular purpose.</li>
+            <li>Interpretation of data and results produced by the services under this site is entirely at your own risk.</li>
+            <li>By using this site you agree to all terms and conditions outlined here.</li>
+          </ul>
+          <p>Data submission</p>
+          <ul>
+            <li>By submitting your data, you warrant that you have the right to do so.</li>
+            <li>You indemnify us against any claims arising as a consequence of your submission.</li>
+            <li>Your data may effectively become public as soon as you submit them.</li>
+            <li>We offer no guarantees and accept no liability for disclosure of any files you may submit to our servers.</li>
+            <li>We accept no responsibility for any data submitted to our servers.</li>
+          </ul>
+          <p>Personal identifying information</p>
+          <ul>
+            <li>We may retain your email address for sending you completion notification of your jobs.</li>
+            <li>We may retain your email address for sending you updates and changes on this site.</li>
+            <li>We will not give your email address or any other information about you to anyone, except to government as required by law.</li>
+          </ul>
+          <p>Project data duration</p>
+          <ul>
+            <li>Job results of the services under this site will remain on our servers until storage shortage, but this is entirely at our discretion.</li>
+            <li>We reserve the right to retain data on our servers for illustration or debugging purposes.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+  </div>
+  <footer role="contentinfo">
     <div class="container">
-
-      <header class="hero-unit">
-        <h1><img src="logo.png" class="logo" alt="logo" />istar</h1>
-        <p>a software-as-a-service platform for bioinformatics and chemoinformatics</p>
-      </header>
-
-      <section>
-        <div class="page-header">
-          <h1>Architecture</h1>
-        </div>
-        <div class="row">
-          <div class="span12">
-            <img src="architecture.png" alt="architecture" />
-          </div>
-        </div>
-      </section>
-
-      <section>
-        <div class="page-header">
-          <h1>Terms of Use and Privacy Policy</h1>
-        </div>
-        <div class="row">
-          <div class="span12">
-            <p>General use</p>
-            <ul>
-              <li>Services under this site are completely free public services. They run on computers at a public university.</li>
-              <li>We offer no warranty or guarantee about the suitability of any results generated by this facility for any particular purpose.</li>
-              <li>Interpretation of data and results produced by the services under this site is entirely at your own risk.</li>
-              <li>By using this site you agree to all terms and conditions outlined here.</li>
-            </ul>
-            <p>Data submission</p>
-            <ul>
-              <li>By submitting your data, you warrant that you have the right to do so.</li>
-              <li>You indemnify us against any claims arising as a consequence of your submission.</li>
-              <li>Your data may effectively become public as soon as you submit them.</li>
-              <li>We offer no guarantees and accept no liability for disclosure of any files you may submit to our servers.</li>
-              <li>We accept no responsibility for any data submitted to our servers.</li>
-            </ul>
-            <p>Personal identifying information</p>
-            <ul>
-              <li>We may retain your email address for sending you completion notification of your jobs.</li>
-              <li>We may retain your email address for sending you updates and changes on this site.</li>
-              <li>We will not give your email address or any other information about you to anyone, except to government as required by law.</li>
-            </ul>
-            <p>Project data duration</p>
-            <ul>
-              <li>Job results of the services under this site will remain on our servers until storage shortage, but this is entirely at our discretion.</li>
-              <li>We reserve the right to retain data on our servers for illustration or debugging purposes.</li>
-            </ul>
-          </div>
-        </div>
-      </section>
-
-      <footer>
-        <p><a href="http://www.cuhk.edu.hk"><img src="/cuhk.jpg" alt="CUHK logo"></a>&copy; 2012-2013 Chinese University of Hong Kong. Platform designed by <a href="http://www.cse.cuhk.edu.hk/~hjli">Hongjian Li</a>. Code licensed under <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License 2.0</a>. Documentation licensed under <a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a>.<a href="http://validator.w3.org/check?uri=referer"><img src="/HTML5_Badge_512.png" alt="HTML5 logo"></a></p>
-      </footer>
-
+      <p><a href="http://www.cuhk.edu.hk"><img src="/cuhk.jpg" alt="CUHK logo"></a>&copy; 2012-2013 Chinese University of Hong Kong. Platform designed by <a href="http://www.cse.cuhk.edu.hk/~hjli">Hongjian Li</a>. Code licensed under <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License 2.0</a>. Documentation licensed under <a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a>.<a href="http://validator.w3.org/check?uri=referer"><img src="/HTML5_Badge_512.png" alt="HTML5 logo"></a></p>
     </div>
-
-    <script>
-      var _gaq=[['_setAccount','UA-20604862-1'],['_trackPageview']];
-      (function(d,t){var g=d.createElement(t),s=d.getElementsByTagName(t)[0];
-      g.src=('https:'==location.protocol?'//ssl':'//www')+'.google-analytics.com/ga.js';
-      s.parentNode.insertBefore(g,s)}(document,'script'));
-    </script>
-  </body>
+  </footer>
+</body>
 </html>

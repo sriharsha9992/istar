@@ -1,10 +1,17 @@
-body {
-  font-size: 14px;
-  line-height: 20px;
+.navbar-inverse {
+  background-color: #1b1b1b;
+}
+
+.navbar-static-top {
+  margin-bottom: 0px;
 }
 
 .nav {
+//  padding-left: 20px;
+//  padding-right: 20px;
   font-weight: bold;
+  padding: 0px 0px 0px 0px;
+  margin: 0px 0px 0px 0px;
 }
 
 .nav img {
@@ -22,9 +29,6 @@ body {
   background: url(https://s3.amazonaws.com/github/ribbons/forkme_right_green_007200.png);
   opacity: .7;
   -webkit-transition: opacity .5s linear;
-     -moz-transition: opacity .5s linear;
-      -ms-transition: opacity .5s linear;
-       -o-transition: opacity .5s linear;
           transition: opacity .5s linear;
 }
 
@@ -32,17 +36,24 @@ body {
   opacity: 1;
 }
 
-.hero-unit {
-  padding-top: 10px;
+.jumbotron {
+  padding-top: 0px;
   padding-bottom: 10px;
+  margin-bottom: 0px;
+  text-align: center;
 }
 
-.hero-unit img {
+.jumbotron h1 {
+  font-weight: bold;
+}
+
+.jumbotron img {
   height: 60px;
   padding-right: 8px;
 }
 
-header, footer, h1 {
+.page-header h1 {
+  font-weight: bold;
   text-align: center;
 }
 
@@ -51,29 +62,38 @@ table img {
   padding-right: 16px;
 }
 
-.pagination ul {
-  -webkit-box-shadow: none;
-     -moz-box-shadow: none;
-          box-shadow: none;
+.pagination > li:nth-child(2) > a {
+  border-right-width: 0px;
 }
 
-.pagination input {
+.pagination > li:nth-child(3) > input {
   float: left;
-  padding: 0 14px;
-  width: 40px;
-  height: 28px;
+  width: 80px;
+  height: 34px;
   text-align: center;
-  text-decoration: none;
-  border: 1px solid #ddd;
+  border-radius: 0px;
+}
+
+.pagination > li:nth-child(4) > a {
   border-left-width: 0px;
-  -webkit-border-radius: 0px;
-     -moz-border-radius: 0px;
-          border-radius: 0px;
+  margin-left: 0px;
 }
 
 li img {
   height: 16px;
   padding-right: 8px;
+}
+
+label {
+  font-weight: normal;
+}
+
+.form-control {
+  padding: 6px 6px;
+}
+
+.glyphicon {
+  display: inline;
 }
 
 .ui-accordion .ui-accordion-content a {
@@ -89,14 +109,14 @@ pre {
 }
 
 footer {
-  padding-top: 17px;
-  margin: 18px 0;
+  padding-top: 10px;
+  margin: 10px 0;
   border-top: 1px solid #eeeeee;
+  text-align: center;
 }
 
 footer img {
   width: 20px;
   height: 20px;
-  padding-left: 4px;
-  padding-right: 4px;
+  margin: 0px 4px;
 }

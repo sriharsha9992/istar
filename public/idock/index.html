@@ -1,460 +1,431 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="author" content="Jacky Lee">
-    <meta name="description" content="a multithreaded virtual screening tool for flexible ligand docking">
-    <title>idock: a multithreaded virtual screening tool for flexible ligand docking</title>
-
-    <link href="/bootstrap.min.css" rel="stylesheet">
-    <link href="/bootstrap-responsive.min.css" rel="stylesheet">
-    <link href="/jquery-ui-1.10.3.custom.min.css" rel="stylesheet">
-    <link href="/prettify.css" rel="stylesheet">
-    <link href="/index.css" rel="stylesheet">
-
-    <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
-<!--[if lt IE 9]>
-    <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
-<![endif]-->
-
-    <link rel="shortcut icon" href="/favicon.ico">
-    <link rel="apple-touch-icon-precomposed" sizes="144x144" href="/apple-touch-icon-144-precomposed.png">
-    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="/apple-touch-icon-114-precomposed.png">
-    <link rel="apple-touch-icon-precomposed" sizes="72x72" href="/apple-touch-icon-72-precomposed.png">
-    <link rel="apple-touch-icon-precomposed" href="/apple-touch-icon-57-precomposed.png">
-  </head>
-
-  <body>
-
-    <div class="navbar navbar-inverse navbar-static-top">
-      <div class="navbar-inner">
-        <div class="container">
-          <div class="nav-collapse collapse">
-            <ul class="nav">
-              <li>
-                <a href="/"><img src="/logo.png" alt="istar logo">istar: software as a service</a>
-              </li>
-              <li class="divider-vertical"></li>
-              <li class="active">
-                <a href="/idock"><img src="/idock/logo.png" alt="idock logo">idock: protein-ligand docking</a>
-              </li>
-              <li class="divider-vertical"></li>
-              <li>
-                <a href="/igrep"><img src="/igrep/logo.png" alt="igrep logo">igrep: DNA sequence matching</a>
-              </li>
-              <li class="divider-vertical"></li>
-              <li>
-                <a href="/iview"><img src="/iview/logo.png" alt="iview logo">iview: interactive WebGL visualizer</a>
-              </li>
-            </ul>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="author" content="Hongjian Li">
+  <meta name="description" content="a multithreaded virtual screening tool for flexible ligand docking">
+  <title>idock: a multithreaded virtual screening tool for flexible ligand docking</title>
+  <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css">
+  <link rel="stylesheet" href="/jquery-ui-1.10.3.custom.min.css">
+  <link rel="stylesheet" href="/prettify.css">
+  <link rel="stylesheet" href="/index.css">
+  <link rel="shortcut icon" href="/favicon.ico">
+  <link rel="apple-touch-icon-precomposed" sizes="144x144" href="/apple-touch-icon-144-precomposed.png">
+  <link rel="apple-touch-icon-precomposed" sizes="114x114" href="/apple-touch-icon-114-precomposed.png">
+  <link rel="apple-touch-icon-precomposed" sizes="72x72" href="/apple-touch-icon-72-precomposed.png">
+  <link rel="apple-touch-icon-precomposed" href="/apple-touch-icon-57-precomposed.png">
+  <script>
+    var _gaq=[['_setAccount','UA-20604862-1'],['_trackPageview']];
+    (function(d,t){var g=d.createElement(t),s=d.getElementsByTagName(t)[0];
+    g.src=('https:'==location.protocol?'//ssl':'//www')+'.google-analytics.com/ga.js';
+    s.parentNode.insertBefore(g,s)}(document,'script'));
+  </script>
+  <!--[if lt IE 9]>
+  <script src="/html5shiv.js"></script>
+  <script src="/respond.min.js"></script>
+  <![endif]-->
+</head>
+<body>
+  <a class="sr-only" href="#content">Skip navigation</a>
+  <a href="https://github.com/HongjianLi/istar" class="ribbon"></a>
+  <header class="navbar navbar-inverse navbar-static-top" role="banner">
+    <div class="container">
+      <nav class="collapse navbar-collapse" role="navigation">
+        <ul class="nav navbar-nav">
+          <li>
+            <a href="/"><img src="/logo.png" alt="istar logo">istar: software as a service</a>
+          </li>
+          <li class="active">
+            <a href="/idock"><img src="/idock/logo.png" alt="idock logo">idock: protein-ligand docking</a>
+          </li>
+          <li>
+            <a href="/igrep"><img src="/igrep/logo.png" alt="igrep logo">igrep: DNA sequence matching</a>
+          </li>
+          <li>
+            <a href="/iview"><img src="/iview/logo.png" alt="iview logo">iview: interactive WebGL visualizer</a>
+          </li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+  <div class="jumbotron" id="content" role="main">
+    <div class="container">
+      <h1><img src="logo.png" alt="logo" class="logo">idock</h1>
+      <p>a multithreaded virtual screening tool for flexible ligand docking</p>
+    </div>
+  </div>
+  <div class="container">
+    <section>
+      <div class="page-header">
+        <h1>Jobs</h1>
+      </div>
+      <div class="row">
+        <div class="col-md-12" id="pager">
+        </div>
+      </div>
+    </section>
+    <section>
+      <div class="page-header">
+        <h1>New job</h1>
+      </div>
+      <div class="row">
+        <div class="col-md-12">
+          <p>The input to idock is threefold:</p>
+          <ul>
+            <li>A receptor in PDBQT format. The receptor can contain one or more chains, which should start with ATOM records and end with a TER record. Refer to tutorial 1 on how to prepare a receptor in PDBQT format with MGLTools.</li>
+            <li>A search space defined by a center and a size in unit Å. The search space should define a binding site (e.g. enzymatic site or allosteric site) of the receptor in cuboid shape. Refer to tutorial 2 on how to define a binding site with MGLTools, Chimera or PyMOL.</li>
+            <li>A set of ligands to dock. Totally 17,224,424 ligands are collected from <a href="http://zinc.docking.org">ZINC</a>. Filtering conditions on 9 molecular properties (e.g. mwt, logp, hbd, hba, nrb) can be specified as closed intervals. Only the ligands satisfying all the 9 filtering conditions will be docked.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-6">
+          <p>Our workstations execute <a href="https://github.com/HongjianLi/idock">idock</a> 2.2 and perform two-phase docking:<p>
+          <ul>
+            <li>In phase 1, the selected ligands will be docked in a coarse but fast manner.</li>
+            <li>In phase 2, the top 1000 ligands will be docked again in a fine but slow manner.</li>
+          </ul>
+          <p>As result, you can download:</p>
+          <ul>
+            <li><img src="/excel.png" alt="phase1.csv.gz">phase1.csv.gz: the predicted free energy, RF-Score, and 9 molecular properties of the selected ligands produced in phase 1.</li>
+            <li><img src="/excel.png" alt="phase2.csv.gz">phase2.csv.gz: the predicted free energy, RF-Score, and 9 molecular properties, as well as link to substance information and supplier list of the top 1000 ligands produced in phase 2.</li>
+            <li><img src="/mol.png" alt="hits.pdbqt.gz">hits.pdbqt.gz: the predicted conformations of the top 1000 ligands produced in phase 2.</li>
+          </ul>
+        </div>
+        <div class="col-md-6">
+          <img src="2PhaseDocking.png" alt="2PhaseDocking" class="img-responsive">
+        </div>
+      </div>
+      <div class="row" role="form">
+        <div class="col-md-6">
+          <div class="form-group">
+            <label for="receptor"><a title="must conform to PDBQT specification" id="receptor_label">Receptor in PDBQT</a></label>
+            <textarea class="form-control" id="receptor" rows="33" placeholder="ATOM      1  N   ASN A  21      63.845  98.298   0.035  1.00113.44    -0.066 N"></textarea>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="row">
+            <div class="col-md-2">
+              <div class="form-group">
+                <label for="center_x"><a title="a decimal" id="center_x_label">center_x</a></label>
+                <input class="form-control" id="center_x" placeholder="49.712">
+              </div>
+            </div>
+            <div class="col-md-2">
+              <div class="form-group">
+                <label for="center_y"><a title="a decimal" id="center_y_label">center_y</a></label>
+                <input class="form-control" id="center_y" placeholder="-28.923">
+              </div>
+            </div>
+            <div class="col-md-2">
+              <div class="form-group">
+                <label for="center_z"><a title="a decimal" id="center_z_label">center_z</a></label>
+                <input class="form-control" id="center_z" placeholder="36.824">
+              </div>
+            </div>
+            <div class="col-md-2">
+              <div class="form-group">
+                <label for="size_x"><a title="within [10, 30]" id="size_x_label">size_x</a></label>
+                <input min="10" max="30" class="form-control" id="size_x" placeholder="18">
+              </div>
+            </div>
+            <div class="col-md-2">
+              <div class="form-group">
+                <label for="size_y"><a title="within [10, 30]" id="size_y_label">size_y</a></label>
+                <input min="10" max="30" class="form-control" id="size_y" placeholder="18">
+              </div>
+            </div>
+            <div class="col-md-2">
+              <div class="form-group">
+                <label for="size_z"><a title="within [10, 30]" id="size_z_label">size_z</a></label>
+                <input min="10" max="30" class="form-control" id="size_z" placeholder="20">
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-6">
+              <div class="form-group">
+                <label for="description"><a title="at most 40 characters" id="description_label">Briefly describe your job</a></label>
+                <div class="input-group">
+                  <span class="input-group-addon"><span class="glyphicon glyphicon-book"></span></span>
+                  <input type="text" class="form-control" id="description" placeholder="HIV RT (PDB 2ZD1)">
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="form-group">
+                <label for="email"><a title="compulsory" id="email_label">Email to receive completion notification</a></label>
+                <div class="input-group">
+                  <span class="input-group-addon"><span class="glyphicon glyphicon-envelope"></span></span>
+                  <input type="email" class="form-control" id="email" placeholder="Jacky@cuhk.edu.hk">
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-12">
+              <p>Number of ligands satisfying all the 9 filtering conditions: <span id="ligands">1,068</span></p>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-12">
+              <div class="form-group">
+                <label>Molecular weight (g/mol): [<span id="mwt_lb">400</span>, <span id="mwt_ub">450</span>]</label>
+                <div class="form-control slider" id="mwt"></div>
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-12">
+              <div class="form-group">
+                <label>Partition coefficient xlogP: [<span id="logp_lb">0</span>, <span id="logp_ub">4</span>]</label>
+                <div class="form-control slider" id="logp"></div>
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-12">
+              <div class="form-group">
+                <label>Rotatable bonds: [<span id="nrb_lb">4</span>, <span id="nrb_ub">6</span>]</label>
+                <div class="form-control slider" id="nrb"></div>
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-12">
+              <div class="form-group">
+                <label>Hydrogen bond donors: [<span id="hbd_lb">2</span>, <span id="hbd_ub">5</span>]</label>
+                <div class="form-control slider" id="hbd"></div>
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-12">
+              <div class="form-group">
+                <label>Hydrogen bond acceptors: [<span id="hba_lb">4</span>, <span id="hba_ub">8</span>]</label>
+                <div class="form-control slider" id="hba"></div>
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-12">
+              <div class="form-group">
+                <label>Net charge: [<span id="charge_lb">0</span>, <span id="charge_ub">0</span>]</label>
+                <div class="form-control slider" id="charge"></div>
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-12">
+              <div class="form-group">
+                <label>Apolar desolvation (kcal/mol): [<span id="ad_lb">0</span>, <span id="ad_ub">5</span>]</label>
+                <div class="form-control slider" id="ad"></div>
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-12">
+              <div class="form-group">
+                <label>Polar desolvation (kcal/mol): [<span id="pd_lb">-20</span>, <span id="pd_ub">0</span>]</label>
+                <div class="form-control slider" id="pd"></div>
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-12">
+              <div class="form-group">
+                <label>Polar surface area tPSA (Å<sup>2</sup>): [<span id="tpsa_lb">60</span>, <span id="tpsa_ub">80</span>]</label>
+                <div class="form-control slider" id="tpsa"></div>
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-12">
+              <div class="form-group">
+                <button class="btn btn-primary" id="submit"><span class="glyphicon glyphicon-cloud-upload"></span> Submit</button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
-    </div>
-
-    <a href="https://github.com/HongjianLi/istar" class="ribbon"></a>
-
-    <div class="container">
-
-      <header class="hero-unit">
-        <h1><img src="logo.png" class="logo" alt="logo" />idock</h1>
-        <p>a multithreaded virtual screening tool for flexible ligand docking</p>
-      </header>
-
-      <section>
-        <div class="page-header">
-          <h1>Jobs</h1>
+    </section>
+    <section>
+      <div class="page-header">
+        <h1>ZINC ligands</h1>
+      </div>
+      <div class="row">
+        <div class="col-md-12">
+          <p>17,224,424 ligands are collected from versions 2012-04-26 and 2013-01-10 of the <a href="http://zinc.docking.org/subsets/all-clean">All Clean</a> subset of <a href="http://zinc.docking.org">ZINC</a> and converted into <a href="http://autodock.scripps.edu/faqs-help/faq/what-is-the-format-of-a-pdbqt-file">PDBQT</a> format. We thank Professor John J. Irwin, the developer and maintainer of ZINC, for granting us permission to use ZINC with three conditions:</p>
+          <ul>
+            <li>We shall provide links to http://zinc.docking.org/substance/zincid for top hits so that users can seek for the most current purchasing information at ZINC's official web site.</li>
+            <li>We shall limit the number of top hits for download to 1000 ligands from a single job.</li>
+            <li>We shall update our ligands when ZINC data is updated so that users can benefit from the most current ligand data.</li>
+          </ul>
+          <p>Here are the distributions of 9 molecular properties of the 17 million ligands:</p>
         </div>
-        <div class="row">
-          <div class="span12" id="pager"></div>
+      </div>
+      <div class="row">
+        <div class="col-md-4">
+          <img class="img-responsive" src="mwt.png" alt="Molecular weight (g/mol)">
         </div>
-      </section>
-
-      <section>
-        <div class="page-header">
-          <h1>New job</h1>
+        <div class="col-md-4">
+          <img class="img-responsive" src="logp.png" alt="Partition coefficient xlogP">
         </div>
-        <div class="row">
-          <div class="span12">
-            <p>The input to idock is threefold:</p>
-            <ul>
-              <li>A receptor in PDBQT format. The receptor can contain one or more chains, which should start with ATOM records and end with a TER record. Refer to tutorial 1 on how to prepare a receptor in PDBQT format with MGLTools.</li>
-              <li>A search space defined by a center and a size in unit Å. The search space should define a binding site (e.g. enzymatic site or allosteric site) of the receptor in cuboid shape. Refer to tutorial 2 on how to define a binding site with MGLTools, Chimera or PyMOL.</li>
-              <li>A set of ligands to dock. Totally 17,224,424 ligands are collected from <a href="http://zinc.docking.org">ZINC</a>. Filtering conditions on 9 molecular properties (e.g. mwt, logp, hbd, hba, nrb) can be specified as closed intervals. Only the ligands satisfying all the 9 filtering conditions will be docked.</li>
-            </ul>
-          </div>
+        <div class="col-md-4">
+          <img class="img-responsive" src="ad.png" alt="Apolar desolvation (kcal/mol)">
         </div>
-        <div class="row">
-          <div class="span6">
-            <p>Our workstations execute <a href="https://github.com/HongjianLi/idock">idock</a> 2.2 and perform two-phase docking:<p>
-            <ul>
-              <li>In phase 1, the selected ligands will be docked in a coarse but fast manner.</li>
-              <li>In phase 2, the top 1000 ligands will be docked again in a fine but slow manner.</li>
-            </ul>
-            <p>As result, you can download:</p>
-            <ul>
-              <li><img src="/excel.png" alt="phase1.csv.gz">phase1.csv.gz: the predicted free energy, RF-Score, and 9 molecular properties of the selected ligands produced in phase 1.</li>
-              <li><img src="/excel.png" alt="phase2.csv.gz">phase2.csv.gz: the predicted free energy, RF-Score, and 9 molecular properties, as well as link to substance information and supplier list of the top 1000 ligands produced in phase 2.</li>
-              <li><img src="/mol.png" alt="hits.pdbqt.gz">hits.pdbqt.gz: the predicted conformations of the top 1000 ligands produced in phase 2.</li>
-            </ul>
-          </div>
-          <div class="span6">
-            <img src="2PhaseDocking.png" alt="2PhaseDocking">
-          </div>
+      </div>
+      <div class="row">
+        <div class="col-md-4">
+          <img class="img-responsive" src="pd.png" alt="Polar desolvation (kcal/mol)">
         </div>
-        <div class="row">
-          <div class="span6">
-            <div class="control-group">
-              <label class="control-label" for="receptor"><span class="add-on"><i class="icon-asterisk"></i></span> <a href="#receptor" title="must conform to PDBQT specification" id="receptor_label">Receptor in PDBQT</a></label>
-              <div class="controls">
-                <textarea class="span6" id="receptor" rows="32" placeholder="ATOM      1  N   ASN A  21      63.845  98.298   0.035  1.00113.44    -0.066 N"></textarea>
-              </div>
-            </div>
-          </div>
-          <div class="span6">
-            <div class="row">
-              <div class="span1">
-                <div class="control-group">
-                  <label class="control-label" for="center_x"><span class="add-on"><i class="icon-asterisk"></i></span><a href="#center_x" title="a decimal" id="center_x_label">center_x</a></label>
-                  <div class="controls">
-                    <input type="number" class="span1" id="center_x" placeholder="49.712">
-                  </div>
-                </div>
-              </div>
-              <div class="span1">
-                <div class="control-group">
-                  <label class="control-label" for="center_y"><span class="add-on"><i class="icon-asterisk"></i></span><a href="#center_y" title="a decimal" id="center_y_label">center_y</a></label>
-                  <div class="controls">
-                    <input type="number" class="span1" id="center_y" placeholder="-28.923">
-                  </div>
-                </div>
-              </div>
-              <div class="span1">
-                <div class="control-group">
-                  <label class="control-label" for="center_z"><span class="add-on"><i class="icon-asterisk"></i></span><a href="#center_z" title="a decimal" id="center_z_label">center_z</a></label>
-                  <div class="controls">
-                    <input type="number" class="span1" id="center_z" placeholder="36.824">
-                  </div>
-                </div>
-              </div>
-              <div class="span1">
-                <div class="control-group">
-                  <label class="control-label" for="size_x"><span class="add-on"><i class="icon-asterisk"></i></span> <a href="#size_x" title="within [10, 30]" id="size_x_label">size_x</a></label>
-                  <div class="controls">
-                    <input type="number" min="10" max="30" class="span1" id="size_x" placeholder="18">
-                  </div>
-                </div>
-              </div>
-              <div class="span1">
-                <div class="control-group">
-                  <label class="control-label" for="size_y"><span class="add-on"><i class="icon-asterisk"></i></span> <a href="#size_y" title="within [10, 30]" id="size_y_label">size_y</a></label>
-                  <div class="controls">
-                    <input type="number" min="10" max="30" class="span1" id="size_y" placeholder="18">
-                  </div>
-                </div>
-              </div>
-              <div class="span1">
-                <div class="control-group">
-                  <label class="control-label" for="size_z"><span class="add-on"><i class="icon-asterisk"></i></span> <a href="#size_z" title="within [10, 30]" id="size_z_label">size_z</a></label>
-                  <div class="controls">
-                    <input type="number" min="10" max="30" class="span1" id="size_z" placeholder="20">
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="row">
-              <div class="span3">
-                <div class="control-group">
-                  <label class="control-label" for="description"><span class="add-on"><i class="icon-asterisk"></i></span> <a href="#description" title="at most 40 characters" id="description_label">Briefly describe your job</a></label>
-                  <div class="controls">
-                    <div class="input-prepend">
-                      <span class="add-on"><i class="icon-book"></i></span><input type="text" id="description" placeholder="HIV RT (PDB 2ZD1)">
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div class="span3">
-                <div class="control-group">
-                  <label class="control-label" for="email"><span class="add-on"><i class="icon-asterisk"></i></span> <a href="#email" title="compulsory" id="email_label">Email to receive completion notification</a></label>
-                  <div class="controls">
-                    <div class="input-prepend">
-                      <span class="add-on"><i class="icon-envelope"></i></span><input type="email" id="email" placeholder="Jacky@cuhk.edu.hk">
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="row">
-              <div class="span6">
-                <p>Number of ligands satisfying all the 9 filtering conditions: <span id="ligands">1,068</span></p>
-              </div>
-            </div>
-            <div class="row">
-              <div class="span6">
-                <div class="control-group">
-                  <label class="control-label">Molecular weight (g/mol): [<span id="mwt_lb">400</span>, <span id="mwt_ub">450</span>]</label>
-                  <div class="controls">
-                    <div class="slider" id="mwt"></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="row">
-              <div class="span6">
-                <div class="control-group">
-                  <label class="control-label">Partition coefficient xlogP: [<span id="logp_lb">0</span>, <span id="logp_ub">4</span>]</label>
-                  <div class="controls">
-                    <div class="slider" id="logp"></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="row">
-              <div class="span6">
-                <div class="control-group">
-                  <label class="control-label">Rotatable bonds: [<span id="nrb_lb">4</span>, <span id="nrb_ub">6</span>]</label>
-                  <div class="controls">
-                    <div class="slider" id="nrb"></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="row">
-              <div class="span6">
-                <div class="control-group">
-                  <label class="control-label">Hydrogen bond donors: [<span id="hbd_lb">2</span>, <span id="hbd_ub">5</span>]</label>
-                  <div class="controls">
-                    <div class="slider" id="hbd"></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="row">
-              <div class="span6">
-                <div class="control-group">
-                  <label class="control-label">Hydrogen bond acceptors: [<span id="hba_lb">4</span>, <span id="hba_ub">8</span>]</label>
-                  <div class="controls">
-                    <div class="slider" id="hba"></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="row">
-              <div class="span6">
-                <div class="control-group">
-                  <label class="control-label">Net charge: [<span id="charge_lb">0</span>, <span id="charge_ub">0</span>]</label>
-                  <div class="controls">
-                    <div class="slider" id="charge"></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="row">
-              <div class="span6">
-                <div class="control-group">
-                  <label class="control-label">Apolar desolvation (kcal/mol): [<span id="ad_lb">0</span>, <span id="ad_ub">5</span>]</label>
-                  <div class="controls">
-                    <div class="slider" id="ad"></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="row">
-              <div class="span6">
-                <div class="control-group">
-                  <label class="control-label">Polar desolvation (kcal/mol): [<span id="pd_lb">-20</span>, <span id="pd_ub">0</span>]</label>
-                  <div class="controls">
-                    <div class="slider" id="pd"></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="row">
-              <div class="span6">
-                <div class="control-group">
-                  <label class="control-label">Polar surface area tPSA (Å<sup>2</sup>): [<span id="tpsa_lb">60</span>, <span id="tpsa_ub">80</span>]</label>
-                  <div class="controls">
-                    <div class="slider" id="tpsa"></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="row">
-              <div class="span1">
-                <button class="btn btn-primary" id="submit">Submit</button>
-              </div>
-            </div>
-          </div>
+        <div class="col-md-4">
+          <img class="img-responsive" src="hbd.png" alt="Hydrogen bond donors">
         </div>
-      </section>
-
-      <section>
-        <div class="page-header">
-          <h1>ZINC ligands</h1>
+        <div class="col-md-4">
+          <img class="img-responsive" src="hba.png" alt="Hydrogen bond acceptors">
         </div>
-        <div class="row">
-          <div class="span12">
-            <p>17,224,424 ligands are collected from versions 2012-04-26 and 2013-01-10 of the <a href="http://zinc.docking.org/subsets/all-clean">All Clean</a> subset of <a href="http://zinc.docking.org">ZINC</a> and converted into <a href="http://autodock.scripps.edu/faqs-help/faq/what-is-the-format-of-a-pdbqt-file">PDBQT</a> format. We thank Professor John J. Irwin, the developer and maintainer of ZINC, for granting us permission to use ZINC with three conditions:</p>
-            <ul>
-              <li>We shall provide links to http://zinc.docking.org/substance/zincid for top hits so that users can seek for the most current purchasing information at ZINC's official web site.</li>
-              <li>We shall limit the number of top hits for download to 1000 ligands from a single job.</li>
-              <li>We shall update our ligands when ZINC data is updated so that users can benefit from the most current ligand data.</li>
-            </ul>
-            <p>Here are the distributions of 9 molecular properties of the ligands:</p>
-          </div>
+      </div>
+      <div class="row">
+        <div class="col-md-4">
+          <img class="img-responsive" src="tpsa.png" alt="Polar surface area tPSA (Å<sup>2</sup>)">
         </div>
-        <div class="row">
-          <img class="span4" src="mwt.png" alt="Molecular weight (g/mol)"><img class="span4" src="logp.png" alt="Partition coefficient xlogP"><img class="span4" src="ad.png" alt="Apolar desolvation (kcal/mol)">
+        <div class="col-md-4">
+          <img class="img-responsive" src="charge.png" alt="Net charge">
         </div>
-        <div class="row">
-          <img class="span4" src="pd.png" alt="Polar desolvation (kcal/mol)"><img class="span4" src="hbd.png" alt="Hydrogen bond donors"><img class="span4" src="hba.png" alt="Hydrogen bond acceptors">
+        <div class="col-md-4">
+          <img class="img-responsive" src="nrb.png" alt="Rotatable bonds">
         </div>
-        <div class="row">
-          <img class="span4" src="tpsa.png" alt="Polar surface area tPSA (Å<sup>2</sup>)"><img class="span4" src="charge.png" alt="Net charge"><img class="span4" src="nrb.png" alt="Rotatable bonds">
+      </div>
+    </section>
+    <section>
+      <div class="page-header">
+        <h1>RF-Score</h1>
+      </div>
+      <div class="row">
+        <div class="col-md-12">
+          <p>RF-Score is a machine learning approach to predicting protein–ligand binding affinity. It has been integrated into the idock daemon as an alternative option for rescoring predicted conformations. RF-Score is licensed under <a href="http://creativecommons.org/licenses/by-sa/3.0">CC BY-SA 3.0</a>. We thank <a href="http://www.pedroballester.com">Dr. Pedro J. Ballester</a> for sharing with us the code and documentation of RF-Score.</p>
+          <p>Pedro J. Ballester and John B. O. Mitchell. A machine learning approach to predicting protein-ligand binding affinity with applications to molecular docking. <em>Bioinformatics</em>, 26(9):1169–1175,2010. <a href="http://dx.doi.org/10.1093/bioinformatics/btq112">DOI: 10.1093/bioinformatics/btq112</a></p>
         </div>
-      </section>
-
-      <section>
-        <div class="page-header">
-          <h1>RF-Score</h1>
-        </div>
-        <div class="row">
-          <div class="span12">
-            <p>RF-Score is a machine learning approach to predicting protein–ligand binding affinity. It has been integrated into the idock daemon as an alternative option for rescoring predicted conformations. RF-Score is licensed under <a href="http://creativecommons.org/licenses/by-sa/3.0">CC BY-SA 3.0</a>. We thank <a href="http://www.pedroballester.com">Dr. Pedro J. Ballester</a> for sharing with us the code and documentation of RF-Score.</p>
-            <p>Pedro J. Ballester and John B. O. Mitchell. A machine learning approach to predicting protein-ligand binding affinity with applications to molecular docking. <em>Bioinformatics</em>, 26(9):1169–1175,2010. <a href="http://dx.doi.org/10.1093/bioinformatics/btq112">DOI: 10.1093/bioinformatics/btq112</a></p>
-          </div>
-        </div>
-      </section>
-
-      <section>
-        <div class="page-header">
-          <h1>Tutorials</h1>
-        </div>
-        <div class="row">
-          <div class="span12">
-            <div id="tutorials" >
-              <h3>Tutorial 1: prepare a receptor in PDBQT format with MGLTools</h3>
-              <div>
-                <p>Download a receptor at PDB. Take HIV-1 reverse transcriptase (<a href="http://www.pdb.org/pdb/explore/explore.do?structureId=2ZD1">2ZD1</a>) as an example.</p>
-                <img src="/grey.gif" data-original="pdb.png" alt="PDB 2ZD1">
-                <p>Retain only the "ATOM" or "HETATM" records of necessary chain(s) where the binding site of interest resides. In <code>2ZD1.pdb</code>, the ligand TMC278 binds at the allosteric site, which resides in chain A. Chain A atoms start at line 613 and end at line 5118 with the "TER" record. Save lines 613 - 5118 to a new file <code>2ZD1rec.pdb</code>.</p>
-                <img src="/grey.gif" data-original="2zd1rec.png" alt="2ZD1 receptor chain A">
-                <p>Download MGLTools at <a href="http://mgltools.scripps.edu/downloads">http://mgltools.scripps.edu/downloads</a> and install it.
-                <img src="/grey.gif" data-original="mgltools.png" alt="MGLTools">
-                <p>Use the <code>prepare_receptor4.py</code> script to convert a receptor into PDBQT format.</p>
-                <ul>
-                  <li>The <code>-r 2ZD1rec.pdb</code> option specifies a receptor for input.</li>
-                  <li>The <code>-o 2ZD1rec.pdbqt</code> option specifies a receptor for output.</li>
-                  <li>The <code>-A hydrogens</code> option adds both polar and non-polar hydrogens.</li>
-                  <li>The <code>-U lps_water_deleteAltB</code> option removes lone pairs, water residues, and XX@B atoms.</li>
-                </ul>
-                <p>On Windows</p>
+      </div>
+    </section>
+    <section>
+      <div class="page-header">
+        <h1>Tutorials</h1>
+      </div>
+      <div class="row">
+        <div class="col-md-12">
+          <div id="tutorials">
+            <h3>Tutorial 1: prepare a receptor in PDBQT format with MGLTools</h3>
+            <div>
+              <p>Download a receptor at PDB. Take HIV-1 reverse transcriptase (<a href="http://www.pdb.org/pdb/explore/explore.do?structureId=2ZD1">2ZD1</a>) as an example.</p>
+              <img class="img-responsive" src="/grey.gif" data-original="pdb.png" alt="PDB 2ZD1">
+              <p>Retain only the "ATOM" or "HETATM" records of necessary chain(s) where the binding site of interest resides. In <code>2ZD1.pdb</code>, the ligand TMC278 binds at the allosteric site, which resides in chain A. Chain A atoms start at line 613 and end at line 5118 with the "TER" record. Save lines 613 - 5118 to a new file <code>2ZD1rec.pdb</code>.</p>
+              <img class="img-responsive" src="/grey.gif" data-original="2zd1rec.png" alt="2ZD1 receptor chain A">
+              <p>Download MGLTools at <a href="http://mgltools.scripps.edu/downloads">http://mgltools.scripps.edu/downloads</a> and install it.
+              <img class="img-responsive" src="/grey.gif" data-original="mgltools.png" alt="MGLTools">
+              <p>Use the <code>prepare_receptor4.py</code> script to convert a receptor into PDBQT format.</p>
+              <ul>
+                <li>The <code>-r 2ZD1rec.pdb</code> option specifies a receptor for input.</li>
+                <li>The <code>-o 2ZD1rec.pdbqt</code> option specifies a receptor for output.</li>
+                <li>The <code>-A hydrogens</code> option adds both polar and non-polar hydrogens.</li>
+                <li>The <code>-U lps_water_deleteAltB</code> option removes lone pairs, water residues, and XX@B atoms.</li>
+              </ul>
+              <p>On Windows</p>
 <pre class="prettyprint linenums">
 cd C:\Program Files (x86)\MGLTools-1.5.6
 python Lib\site-packages\AutoDockTools\Utilities24\prepare_receptor4.py -r 2ZD1rec.pdb -o 2ZD1rec.pdbqt -A hydrogens -U lps_waters_deleteAltB
 </pre>
-                <p>On Linux</p>
+              <p>On Linux</p>
 <pre class="prettyprint linenums">
 cd ~/mgltools_x86_64Linux2_1.5.6
 pythonsh MGLToolsPckgs\AutoDockTools\Utilities24\prepare_receptor4.py -r 2ZD1rec.pdb -o 2ZD1rec.pdbqt -A hydrogens -U lps_waters_deleteAltB
 </pre>
-                <p>Copy the content of <code>2ZD1rec.pdbqt</code> and paste it into <a href="#receptor_label">Receptor in PDBQT</a></p>
-              </div>
-              <h3>Tutorial 2: define a binding site with MGLTools, Chimera or PyMOL</h3>
-              <div>
-                <p>A binding site can be defined by:</p>
-                <ul>
-                  <li><a href="#mgltools">MGLTools</a></li>
-                  <li><a href="#chimera">Chimera</a></li>
-                  <li><a href="#pymol">PyMOL</a></li>
-                </ul>
-                <h4 id="mgltools">MGLTools</h4>
-                <p>Save the ligand TMC278 (lines 8533 - 8560) to a new file <code>2ZD1lig.pdb</code>.</p>
-                <img src="/grey.gif" data-original="2zd1lig.png" alt="2ZD1 ligand TMC278">
-                <p>Use the <code>prepare_ligand4.py</code> script to convert a ligand into PDBQT format.</p>
-                <ul>
-                  <li>The <code>-l 2ZD1lig.pdb</code> option specifies a ligand for input.</li>
-                  <li>The <code>-o 2ZD1lig.pdbqt</code> option specifies a ligand for output.</li>
-                  <li>The <code>-A hydrogens</code> option adds both polar and non-polar hydrogens.</li>
-                  <li>The <code>-U ''</code> option removes nothing, i.e. retains lone pairs and non-polar hydrogens.</li>
-                </ul>
-                <p>On Windows</p>
+              <p>Copy the content of <code>2ZD1rec.pdbqt</code> and paste it into <a href="#receptor_label">Receptor in PDBQT</a></p>
+            </div>
+            <h3>Tutorial 2: define a binding site with MGLTools, Chimera or PyMOL</h3>
+            <div>
+              <p>A binding site can be defined by:</p>
+              <ul>
+                <li><a href="#mgltools">MGLTools</a></li>
+                <li><a href="#chimera">Chimera</a></li>
+                <li><a href="#pymol">PyMOL</a></li>
+              </ul>
+              <h4 id="mgltools">MGLTools</h4>
+              <p>Save the ligand TMC278 (lines 8533 - 8560) to a new file <code>2ZD1lig.pdb</code>.</p>
+              <img class="img-responsive" src="/grey.gif" data-original="2zd1lig.png" alt="2ZD1 ligand TMC278">
+              <p>Use the <code>prepare_ligand4.py</code> script to convert a ligand into PDBQT format.</p>
+              <ul>
+                <li>The <code>-l 2ZD1lig.pdb</code> option specifies a ligand for input.</li>
+                <li>The <code>-o 2ZD1lig.pdbqt</code> option specifies a ligand for output.</li>
+                <li>The <code>-A hydrogens</code> option adds both polar and non-polar hydrogens.</li>
+                <li>The <code>-U ''</code> option removes nothing, i.e. retains lone pairs and non-polar hydrogens.</li>
+              </ul>
+              <p>On Windows</p>
 <pre class="prettyprint linenums">
 cd C:\Program Files (x86)\MGLTools-1.5.6
 python Lib\site-packages\AutoDockTools\Utilities24\prepare_ligand4.py -l 2ZD1lig.pdb -o 2ZD1lig.pdbqt -A hydrogens -U ''
 </pre>
-                <p>On Linux</p>
+              <p>On Linux</p>
 <pre class="prettyprint linenums">
 cd ~/mgltools_x86_64Linux2_1.5.6
 pythonsh MGLToolsPckgs\AutoDockTools\Utilities24\prepare_ligand4.py -l 2ZD1lig.pdb -o 2ZD1lig.pdbqt -A hydrogens -U ''
 </pre>
-                <p>Run AutoDockTools, which is a component of MGLTools. From the menu of ADT4.2</p>
-                <ul>
-                  <li>Grid -> Macromolecule -> Open -> <code>2ZD1rec.pdbqt</code>. Ignore all the warnings about charge, because idock ignores charge.</li>
-                  <li>Grid -> Set Map Types -> Open Ligand -> <code>2ZD1lig.pdbqt</code>.</li>
-                  <li>Grid -> Grid Box.</li>
-                </ul>
-                <img src="/grey.gif" data-original="adt.png" alt="AutoDock Tools">
-                <p>The "Grid Options" dialog pops out.</p>
-                <ul>
-                  <li>From the menu, click Center -> Center on ligand.</li>
-                  <li>Scroll "Spacing (angstrom)" from 0.375 to 1.000.</li>
-                  <li>Manually adjust number of points in x-, y-, z- dimension and x y z center, so that the grid box fully covers the ligand.</li>
-                </ul>
-                <p>Paste the corresponding values into <a href="#center_x_label">center_x</a>, <a href="#center_y_label">center_y</a>, <a href="#center_z_label">center_z</a>, <a href="#size_x_label">size_x</a>, <a href="#size_y_label">size_y</a>, <a href="#size_z_label">size_z</a>.</p>
-                <h4 id="chimera">Chimera</h4>
-                <p>Download Chimera at <a href="http://www.cgl.ucsf.edu/chimera/download.html#daily">http://www.cgl.ucsf.edu/chimera/download.html#daily</a> and install it. Note that the AutoDock Vina plugin is only available in daily builds. It is not available in Chimera 1.6.2 or earlier versions.</p>
-                <p>File -> Fetch by ID. By default PDB is chosen. Enter 2ZD1 and click Fetch.</p>
-                <p>Tools -> Surface/Binding Analysis -> AutoDock Vina. Check "Resize search volume using". Use button 2 to manually adjust the grid box.</p>
-                <img src="/grey.gif" data-original="chimera.png" alt="UCSF Chimera">
-                <h4 id="pymol">PyMOL</h4>
-                <p>Download PyMOL at <a href="http://pymol.org">http://pymol.org</a> and install it. An educational version is available at no cost for educational use only.</p>
-                <p>Download the AutoDock plugin at <a href="https://github.com/Pymol-Scripts/Pymol-script-repo/raw/master/plugins/autodock_plugin.py"> https://github.com/Pymol-Scripts/Pymol-script-repo/raw/master/plugins/autodock_plugin.py</a></p>
-                <p>Plugin -> Manage Plugins -> Install... -> Choose autodock_plugin.py. Restart PyMOL. Note that the AutoDock plugin can only be installed by PyMOL 1.2r1. It is not supported by PyMOL 1.3r1 or later versions.</p>
-                <p>Plugin -> PDB Loader Service -> Enter 2ZD1. Plugin -> Autodock/Vina -> Grid Settings. Set Spacing to 1. Manually adjust X-, Y-, Z-points and Grid Center Coordinates.</p>
-                <img src="/grey.gif" data-original="pymol.png" alt="PyMOL">
-              </div>
+              <p>Run AutoDockTools, which is a component of MGLTools. From the menu of ADT4.2</p>
+              <ul>
+                <li>Grid -> Macromolecule -> Open -> <code>2ZD1rec.pdbqt</code>. Ignore all the warnings about charge, because idock ignores charge.</li>
+                <li>Grid -> Set Map Types -> Open Ligand -> <code>2ZD1lig.pdbqt</code>.</li>
+                <li>Grid -> Grid Box.</li>
+              </ul>
+              <img class="img-responsive" src="/grey.gif" data-original="adt.png" alt="AutoDock Tools">
+              <p>The "Grid Options" dialog pops out.</p>
+              <ul>
+                <li>From the menu, click Center -> Center on ligand.</li>
+                <li>Scroll "Spacing (angstrom)" from 0.375 to 1.000.</li>
+                <li>Manually adjust number of points in x-, y-, z- dimension and x y z center, so that the grid box fully covers the ligand.</li>
+              </ul>
+              <p>Paste the corresponding values into <a href="#center_x_label">center_x</a>, <a href="#center_y_label">center_y</a>, <a href="#center_z_label">center_z</a>, <a href="#size_x_label">size_x</a>, <a href="#size_y_label">size_y</a>, <a href="#size_z_label">size_z</a>.</p>
+              <h4 id="chimera">Chimera</h4>
+              <p>Download Chimera at <a href="http://www.cgl.ucsf.edu/chimera/download.html#daily">http://www.cgl.ucsf.edu/chimera/download.html#daily</a> and install it. Note that the AutoDock Vina plugin is only available in daily builds. It is not available in Chimera 1.6.2 or earlier versions.</p>
+              <p>File -> Fetch by ID. By default PDB is chosen. Enter 2ZD1 and click Fetch.</p>
+              <p>Tools -> Surface/Binding Analysis -> AutoDock Vina. Check "Resize search volume using". Use button 2 to manually adjust the grid box.</p>
+              <img class="img-responsive" src="/grey.gif" data-original="chimera.png" alt="UCSF Chimera">
+              <h4 id="pymol">PyMOL</h4>
+              <p>Download PyMOL at <a href="http://pymol.org">http://pymol.org</a> and install it. An educational version is available at no cost for educational use only.</p>
+              <p>Download the AutoDock plugin at <a href="https://github.com/Pymol-Scripts/Pymol-script-repo/raw/master/plugins/autodock_plugin.py"> https://github.com/Pymol-Scripts/Pymol-script-repo/raw/master/plugins/autodock_plugin.py</a></p>
+              <p>Plugin -> Manage Plugins -> Install... -> Choose autodock_plugin.py. Restart PyMOL. Note that the AutoDock plugin can only be installed by PyMOL 1.2r1. It is not supported by PyMOL 1.3r1 or later versions.</p>
+              <p>Plugin -> PDB Loader Service -> Enter 2ZD1. Plugin -> Autodock/Vina -> Grid Settings. Set Spacing to 1. Manually adjust X-, Y-, Z-points and Grid Center Coordinates.</p>
+              <img class="img-responsive" src="/grey.gif" data-original="pymol.png" alt="PyMOL">
             </div>
           </div>
         </div>
-      </section>
-
-      <section>
-        <div class="page-header">
-          <h1>Citation</h1>
+      </div>
+    </section>
+    <section>
+      <div class="page-header">
+        <h1>Citation</h1>
+      </div>
+      <div class="row">
+        <div class="col-md-12">
+          <p>Hongjian Li, Kwong-Sak Leung, and Man-Hon Wong. idock: A Multithreaded Virtual Screening Tool for Flexible Ligand Docking. <em>2012 IEEE Symposium on Computational Intelligence in Bioinformatics and Computational Biology (CIBCB)</em>, pp.77-84, San Diego, United States, 9-12 May 2012. <a href="http://dx.doi.org/10.1109/CIBCB.2012.6217214">DOI: 10.1109/CIBCB.2012.6217214</a></p>
         </div>
-        <div class="row">
-          <div class="span12">
-            <p>Hongjian Li, Kwong-Sak Leung, and Man-Hon Wong. idock: A Multithreaded Virtual Screening Tool for Flexible Ligand Docking. <em>2012 IEEE Symposium on Computational Intelligence in Bioinformatics and Computational Biology (CIBCB)</em>, pp.77-84, San Diego, United States, 9-12 May 2012. <a href="http://dx.doi.org/10.1109/CIBCB.2012.6217214">DOI: 10.1109/CIBCB.2012.6217214</a></p>
-          </div>
-        </div>
-      </section>
-
-      <footer>
-        <p><a href="http://www.cuhk.edu.hk"><img src="/cuhk.jpg" alt="CUHK logo"></a>&copy; 2012-2013 Chinese University of Hong Kong. Platform designed by <a href="http://www.cse.cuhk.edu.hk/~hjli">Hongjian Li</a>. Code licensed under <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License 2.0</a>. Documentation licensed under <a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a>.<a href="http://validator.w3.org/check?uri=referer"><img src="/HTML5_Badge_512.png" alt="HTML5 logo"></a></p>
-      </footer>
-
+      </div>
+    </section>
+  </div>
+  <footer role="contentinfo">
+    <div class="container">
+      <p><a href="http://www.cuhk.edu.hk"><img src="/cuhk.jpg" alt="CUHK logo"></a>&copy; 2012-2013 Chinese University of Hong Kong. Platform designed by <a href="http://www.cse.cuhk.edu.hk/~hjli">Hongjian Li</a>. Code licensed under <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License 2.0</a>. Documentation licensed under <a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a>.<a href="http://validator.w3.org/check?uri=referer"><img src="/HTML5_Badge_512.png" alt="HTML5 logo"></a></p>
     </div>
-
-    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
-    <script>window.jQuery || document.write('<script src="/jquery-1.10.2.min.js"><\/script>')</script>
-
-    <script src="/bootstrap-tooltip.js"></script>
-    <script src="/bootstrap-button.js"></script>
-    <script src="/jquery-ui-1.10.3.custom.min.js"></script>
-    <script src="/jquery.dateFormat-1.0.js"></script>
-    <script src="/jquery.pager.js"></script>
-    <script src="/jquery.lazyload.min.js"></script>
-    <script src="/prettify.js"></script>
-    <script src="/istar.js"></script>
-    <script src="index.js"></script>
-
-    <script>
-      var _gaq=[['_setAccount','UA-20604862-1'],['_trackPageview']];
-      (function(d,t){var g=d.createElement(t),s=d.getElementsByTagName(t)[0];
-      g.src=('https:'==location.protocol?'//ssl':'//www')+'.google-analytics.com/ga.js';
-      s.parentNode.insertBefore(g,s)}(document,'script'));
-    </script>
-  </body>
+  </footer>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+  <script src="/tooltip.js"></script>
+  <script src="/jquery-ui-1.10.3.custom.min.js"></script>
+  <script src="/jquery.dateFormat-1.0.js"></script>
+  <script src="/jquery.pager.js"></script>
+  <script src="/jquery.lazyload.min.js"></script>
+  <script src="/prettify.js"></script>
+  <script src="/istar.js"></script>
+  <script src="index.js"></script>
+</body>
 </html>

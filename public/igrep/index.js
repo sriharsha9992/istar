@@ -2555,7 +2555,7 @@ $(function() {
   $('#taxid').html(options.join(''));
 
   // Initialize tooltips
-  $('.control-label a').tooltip();
+  $('.form-group a').tooltip();
 
   // Initialize pager
   function getGenome(taxid) {
@@ -2605,7 +2605,7 @@ $(function() {
     // Disable the submit button for a while
     submit.prop('disabled', true);
     // Hide tooltips
-    $('.control-label a').tooltip('hide');
+    $('.form-group a').tooltip('hide');
     // Post a new job without client side validation
     $.post('jobs', {
       email: $('#email').val(),

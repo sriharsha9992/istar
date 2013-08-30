@@ -1,7 +1,7 @@
 $(function() {
 
   // Initialize tooltips
-  $('.control-label a').tooltip();
+  $('.form-group a').tooltip();
 
   // Initialize pager
   var pager = $('#pager');
@@ -158,7 +158,7 @@ $(function() {
     // Disable the submit button for a while
     submit.prop('disabled', true);
     // Hide tooltips
-    $('.control-label a').tooltip('hide');
+    $('.form-group a').tooltip('hide');
     // Post a new job without client side validation
     $.post('jobs', {
       receptor: $('#receptor').val(),
