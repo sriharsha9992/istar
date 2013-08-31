@@ -8,7 +8,7 @@
   <title>idock: a multithreaded virtual screening tool for flexible ligand docking</title>
   <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css">
   <link rel="stylesheet" href="/jquery-ui-1.10.3.custom.min.css">
-  <link rel="stylesheet" href="/prettify.css">
+  <link rel="stylesheet" href="/jquery.snippet.min.css">
   <link rel="stylesheet" href="/index.css">
   <link rel="shortcut icon" href="/favicon.ico">
   <link rel="apple-touch-icon-precomposed" sizes="144x144" href="/apple-touch-icon-144-precomposed.png">
@@ -333,12 +333,12 @@
                 <li>The <code>-U lps_water_deleteAltB</code> option removes lone pairs, water residues, and XX@B atoms.</li>
               </ul>
               <p>On Windows</p>
-<pre class="prettyprint linenums">
+<pre class="sh">
 cd C:\Program Files (x86)\MGLTools-1.5.6
 python Lib\site-packages\AutoDockTools\Utilities24\prepare_receptor4.py -r 2ZD1rec.pdb -o 2ZD1rec.pdbqt -A hydrogens -U lps_waters_deleteAltB
 </pre>
               <p>On Linux</p>
-<pre class="prettyprint linenums">
+<pre class="sh">
 cd ~/mgltools_x86_64Linux2_1.5.6
 pythonsh MGLToolsPckgs\AutoDockTools\Utilities24\prepare_receptor4.py -r 2ZD1rec.pdb -o 2ZD1rec.pdbqt -A hydrogens -U lps_waters_deleteAltB
 </pre>
@@ -424,7 +424,8 @@ pythonsh MGLToolsPckgs\AutoDockTools\Utilities24\prepare_ligand4.py -l 2ZD1lig.p
   <script src="/jquery.dateFormat-1.0.js"></script>
   <script src="/jquery.pager.js"></script>
   <script src="/jquery.lazyload.min.js"></script>
-  <script src="/prettify.js"></script>
+  <script src="/jquery.snippet.min.js"></script>
+  <script src="/sh_sh.min.js"></script>
   <script src="/istar.js"></script>
   <script src="index.js"></script>
 </body>

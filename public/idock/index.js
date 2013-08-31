@@ -217,5 +217,8 @@ $(function() {
     event: 'expand'
   });
   // Make code pretty
-  prettyPrint();
+  $("pre.sh").snippet("sh", {
+    style: "typical",
+    menu: false,
+  });
 });
