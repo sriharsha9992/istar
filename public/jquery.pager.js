@@ -18,7 +18,7 @@
       tr_tag += '</tr>';
       var tbody = '';
       for (var i = 0; i < 8; ++i) tbody += tr_tag;
-      this.html('<table class="table table-hover"><thead><tr><th>' + thead.join('</th><th>') + '</th></tr></thead><tbody>' + tbody + '</tbody></table><div class="text-center"><ul class="pagination"><li id="frstpage"><a>&laquo;&laquo;</a></li><li id="prevpage"><a>&laquo;</a></li><li class="form-group"><input type="text" id="whatpage" class="form-control"></li><li id="nextpage"><a>&raquo;</a></li><li id="lastpage"><a>&raquo;&raquo;</a></li></ul></div>');
+      this.html('<div class="table-responsive"><table class="table table-hover"><thead><tr><th>' + thead.join('</th><th>') + '</th></tr></thead><tbody>' + tbody + '</tbody></table></div><div class="text-center"><ul class="pagination"><li id="frstpage"><a>&laquo;&laquo;</a></li><li id="prevpage"><a>&laquo;</a></li><li class="form-group"><input type="text" id="whatpage" class="form-control"></li><li id="nextpage"><a>&raquo;</a></li><li id="lastpage"><a>&raquo;&raquo;</a></li></ul></div>');
       tbody_trs = $('tbody tr', this);
       // Set up pager events.
       frstpage = $('#frstpage', this);
