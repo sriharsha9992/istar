@@ -23,10 +23,10 @@
   position: absolute;
   z-index: 2000;
   top: 0;
-  right: 0;
-  width: 148px;
-  height: 148px;
-  background: url(https://s3.amazonaws.com/github/ribbons/forkme_right_green_007200.png);
+  left: 0;
+  width: 134px;
+  height: 134px;
+  background: url(//s3.amazonaws.com/github/ribbons/forkme_left_green_007200.png);
   opacity: .7;
   -webkit-transition: opacity .5s linear;
           transition: opacity .5s linear;
