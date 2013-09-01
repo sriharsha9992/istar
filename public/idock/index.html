@@ -258,40 +258,48 @@
             <li>We shall limit the number of top hits for download to 1000 ligands from a single job.</li>
             <li>We shall update our ligands when ZINC data is updated so that users can benefit from the most current ligand data.</li>
           </ul>
-          <p>Here are the distributions of 9 molecular properties of the 17 million ligands:</p>
         </div>
       </div>
       <div class="row">
-        <div class="col-md-4">
-          <img class="img-responsive" src="mwt.png" alt="Molecular weight (g/mol)">
-        </div>
-        <div class="col-md-4">
-          <img class="img-responsive" src="logp.png" alt="Partition coefficient xlogP">
-        </div>
-        <div class="col-md-4">
-          <img class="img-responsive" src="ad.png" alt="Apolar desolvation (kcal/mol)">
-        </div>
-      </div>
-      <div class="row">
-        <div class="col-md-4">
-          <img class="img-responsive" src="pd.png" alt="Polar desolvation (kcal/mol)">
-        </div>
-        <div class="col-md-4">
-          <img class="img-responsive" src="hbd.png" alt="Hydrogen bond donors">
-        </div>
-        <div class="col-md-4">
-          <img class="img-responsive" src="hba.png" alt="Hydrogen bond acceptors">
-        </div>
-      </div>
-      <div class="row">
-        <div class="col-md-4">
-          <img class="img-responsive" src="tpsa.png" alt="Polar surface area tPSA (Å<sup>2</sup>)">
-        </div>
-        <div class="col-md-4">
-          <img class="img-responsive" src="charge.png" alt="Net charge">
-        </div>
-        <div class="col-md-4">
-          <img class="img-responsive" src="nrb.png" alt="Rotatable bonds">
+        <div class="col-md-12">
+          <div class="ui-accordion">
+            <h3>Histograms of 9 molecular properties of the 17 million ligands</h3>
+            <div>
+              <div class="row">
+                <div class="col-md-4">
+                  <img class="img-responsive" src="mwt.png" alt="Molecular weight (g/mol)">
+                </div>
+                <div class="col-md-4">
+                  <img class="img-responsive" src="logp.png" alt="Partition coefficient xlogP">
+                </div>
+                <div class="col-md-4">
+                  <img class="img-responsive" src="ad.png" alt="Apolar desolvation (kcal/mol)">
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-md-4">
+                  <img class="img-responsive" src="pd.png" alt="Polar desolvation (kcal/mol)">
+                </div>
+                <div class="col-md-4">
+                  <img class="img-responsive" src="hbd.png" alt="Hydrogen bond donors">
+                </div>
+                <div class="col-md-4">
+                  <img class="img-responsive" src="hba.png" alt="Hydrogen bond acceptors">
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-md-4">
+                  <img class="img-responsive" src="tpsa.png" alt="Polar surface area tPSA (Å<sup>2</sup>)">
+                </div>
+                <div class="col-md-4">
+                  <img class="img-responsive" src="charge.png" alt="Net charge">
+                </div>
+                <div class="col-md-4">
+                  <img class="img-responsive" src="nrb.png" alt="Rotatable bonds">
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -312,7 +320,7 @@
       </div>
       <div class="row">
         <div class="col-md-12">
-          <div id="tutorials">
+          <div class="ui-accordion">
             <h3>Tutorial 1: prepare a receptor in PDBQT format with MGLTools</h3>
             <div>
               <p>Download a receptor at PDB. Take HIV-1 reverse transcriptase (<a href="http://www.pdb.org/pdb/explore/explore.do?structureId=2ZD1">2ZD1</a>) as an example.</p>
