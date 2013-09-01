@@ -205,20 +205,20 @@ $(function() {
   });
 
   // Apply accordion to tutorials
-  $('#tutorials').accordion({
+  $('.ui-accordion').accordion({
     collapsible: true,
     active: false,
-    heightStyle: "content",
+    heightStyle: 'content',
     activate: function(event, ui) {
-      $('#tutorials img').trigger('expand');
+      $('img', this).trigger('expand');
     }
   });
-  $('#tutorials img').lazyload({
+  $('.ui-accordion img').lazyload({
     event: 'expand'
   });
   // Make code pretty
-  $("pre.sh").snippet("sh", {
-    style: "typical",
+  $('pre.sh').snippet('sh', {
+    style: 'typical',
     menu: false,
   });
 });
