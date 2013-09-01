@@ -214,7 +214,8 @@ $(function() {
     }
   });
   $('.ui-accordion img').lazyload({
-    event: 'expand'
+    event: 'expand',
+    effect: 'fadeIn',
   });
   // Make code pretty
   $('pre.sh').snippet('sh', {
