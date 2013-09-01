@@ -7,11 +7,7 @@
 }
 
 .nav {
-//  padding-left: 20px;
-//  padding-right: 20px;
   font-weight: bold;
-  padding: 0px 0px 0px 0px;
-  margin: 0px 0px 0px 0px;
 }
 
 .nav img {
@@ -90,10 +86,6 @@ label {
 
 .form-control {
   padding: 6px 6px;
-}
-
-.glyphicon {
-  display: inline;
 }
 
 .ui-accordion .ui-accordion-content {
