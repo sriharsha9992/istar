@@ -96,6 +96,10 @@ label {
   display: inline;
 }
 
+.ui-accordion .ui-accordion-content {
+  background: none;
+}
+
 .ui-accordion .ui-accordion-content a {
   color: #0088cc;
 }
