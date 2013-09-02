@@ -88,6 +88,10 @@ label {
   padding: 6px 6px;
 }
 
+input[type="file"] {
+  display: inline;
+}
+
 .ui-accordion .ui-accordion-content {
   background: none;
 }

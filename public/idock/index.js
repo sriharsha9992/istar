@@ -66,6 +66,19 @@ $(function() {
   };
   tick();
 
+  // Load receptor locally
+  var receptor_input = $('input[type="file"]');
+  if (!window.FileReader) receptor_input.prop('disabled', true);
+  receptor_input.change(function() {
+    var files = receptor_input.get(0).files;
+    if (!files.length) return;
+    var reader = new FileReader();
+    reader.onload = function () {
+      $('#receptor').val(reader.result);
+    };
+    reader.readAsText(files[0]);
+  });
+
   // Initialize sliders
   $('#mwt').slider({
     range: true,
