@@ -192,9 +192,11 @@ int main(int argc, char* argv[])
 		{
 			_id = job["_id"].OID();
 			job_path = jobs_path / _id.str();
-			BOOST_ASSERT(exists(job_path));
 			receptor_path = job_path / "receptor.pdbqt";
-			BOOST_ASSERT(exists(receptor_path));
+			while (!(exists(job_path) && exists(receptor_path)))
+			{
+				this_thread::sleep_for(chrono::seconds(1));
+			}
 
 			auto param_cursor = conn.query(collection, QUERY("_id" << _id), 1, 0, &param_fields);
 			const auto param = param_cursor->next();
