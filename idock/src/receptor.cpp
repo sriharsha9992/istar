@@ -16,7 +16,7 @@
 
 */
 
-#include <sstream>
+#include <boost/filesystem/fstream.hpp>
 #include <boost/algorithm/string.hpp>
 #include "parsing_error.hpp"
 #include "scoring_function.hpp"
@@ -24,7 +24,7 @@
 
 using std::istringstream;
 
-receptor::receptor(string&& content, const box& b) : partitions(b.num_partitions), hbda_3d(b.num_partitions)
+receptor::receptor(const path& p, const box& b) : partitions(b.num_partitions), hbda_3d(b.num_partitions)
 {
 	// Initialize necessary variables for constructing a receptor.
 	atoms.reserve(5000); // A receptor typically consists of <= 5,000 atoms.
@@ -38,8 +38,7 @@ receptor::receptor(string&& content, const box& b) : partitions(b.num_partitions
 	line.reserve(79); // According to PDBQT specification, the last item AutoDock atom type locates at 1-based [78, 79].
 
 	// Parse ATOM/HETATM.
-	istringstream in(content); // Parsing starts. Open the p stream as late as possible.
-	while (getline(in, line))
+	for (boost::filesystem::ifstream ifs(p); getline(ifs, line);)
 	{
 		++num_lines;
 		if (starts_with(line, "ATOM") || starts_with(line, "HETATM"))

@@ -107,7 +107,7 @@ int main(int argc, char* argv[])
 
 	// Initialize variables for job caching.
 	OID _id;
-	path job_path;
+	path job_path, receptor_path;
 	double mwt_lb, mwt_ub, logp_lb, logp_ub, ad_lb, ad_ub, pd_lb, pd_ub;
 	int num_ligands, hbd_lb, hbd_ub, hba_lb, hba_ub, tpsa_lb, tpsa_ub, charge_lb, charge_ub, nrb_lb, nrb_ub;
 	box b;
@@ -192,12 +192,14 @@ int main(int argc, char* argv[])
 		{
 			_id = job["_id"].OID();
 			job_path = jobs_path / _id.str();
-			if (!exists(job_path)) create_directory(job_path);
+			BOOST_ASSERT(exists(job_path));
+			receptor_path = job_path / "receptor.pdbqt";
+			BOOST_ASSERT(exists(receptor_path));
 
 			auto param_cursor = conn.query(collection, QUERY("_id" << _id), 1, 0, &param_fields);
 			const auto param = param_cursor->next();
 			b = box(vec3(param["center_x"].Number(), param["center_y"].Number(), param["center_z"].Number()), vec3(param["size_x"].Int(), param["size_y"].Int(), param["size_z"].Int()), grid_granularity);
-			rec = receptor(param["receptor"].String(), b);
+			rec = receptor(receptor_path, b);
 
 			num_ligands = param["ligands"].Int();
 			mwt_lb = param["mwt_lb"].Number();

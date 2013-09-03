@@ -33,7 +33,7 @@ public:
 	
 	/// Constructs a receptor by parsing a receptor string in pdbqt format.
 	/// @exception parsing_error Thrown when an atom type is not recognized.
-	explicit receptor(string&& content, const box& b);
+	explicit receptor(const path& p, const box& b);
 
 	vector<atom> atoms; ///< Receptor atoms.
 	array3d<vector<size_t>> partitions; ///< Heavy atoms in partitions.

@@ -59,8 +59,9 @@ if (cluster.isMaster) {
 } else {
   // Connect to MongoDB
   var mongodb = require('mongodb');
-  new mongodb.Db('istar', new mongodb.Server(process.argv[2], 27017), {safe: false}).open(function(err, db) {
+  new mongodb.MongoClient(new mongodb.Server(process.argv[2], 27017), {db: {native_parser: true}}).open(function(err, mongoClient) {
     if (err) throw err;
+    var db = mongoClient.db('istar');
     db.authenticate(process.argv[3], process.argv[4], function(err, authenticated) {
       if (err) throw err;
       var idock = db.collection('idock');
@@ -81,6 +82,7 @@ if (cluster.isMaster) {
       });
       app.configure('development', function() {
         app.use(express.static(__dirname + '/public'));
+        app.use(express.static('/home/hjli/nfs/hjli/istar/public'));
         app.use(express.favicon(__dirname + '/public'));
         app.use(express.errorHandler({ dumpExceptions: true, showStack: true }));
       });
@@ -202,7 +204,6 @@ if (cluster.isMaster) {
         var f = new validator.Filter();
         if (v.init(f.init(req.body)
          .snt('email').copy()
-         .snt('receptor').copy()
          .snt('center_x').toFloat()
          .snt('center_y').toFloat()
          .snt('center_z').toFloat()
@@ -274,8 +275,17 @@ if (cluster.isMaster) {
             f.res[i.toString()] = 0;
           }
           f.res.submitted = new Date();
-          idock.insert(f.res);
-		  res.json({});
+          idock.insert(f.res, {safe: true}, function(err, docs) {
+            if (err) throw err;
+            var dir = '/home/hjli/nfs/hjli/istar/public/idock/jobs/' + docs[0]._id;
+            fs.mkdir(dir, function (err) {
+              if (err) throw err;
+              fs.writeFile(dir + '/receptor.pdbqt', req.body['receptor'], function(err) {
+                if (err) throw err;
+                res.json({});
+              });
+            });
+          });
         });
       });
       // Get the number of ligands satisfying filtering conditions
