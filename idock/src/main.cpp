@@ -16,6 +16,7 @@
 
 */
 
+#include <boost/program_options.hpp>
 #include <boost/filesystem/operations.hpp>
 #include <boost/filesystem/fstream.hpp>
 #include <boost/iostreams/filtering_stream.hpp>
@@ -78,7 +79,7 @@ int main(int argc, char* argv[])
 	// Initialize default values of constant arguments.
 	const auto collection = "istar.idock";
 	const auto jobid_fields = BSON("_id" << 1 << "scheduled" << 1);
-	const auto param_fields = BSON("_id" << 0 << "receptor" << 1 << "ligands" << 1 << "center_x" << 1 << "center_y" << 1 << "center_z" << 1 << "size_x" << 1 << "size_y" << 1 << "size_z" << 1 << "mwt_lb" << 1 << "mwt_ub" << 1 << "logp_lb" << 1 << "logp_ub" << 1 << "ad_lb" << 1 << "ad_ub" << 1 << "pd_lb" << 1 << "pd_ub" << 1 << "hbd_lb" << 1 << "hbd_ub" << 1 << "hba_lb" << 1 << "hba_ub" << 1 << "tpsa_lb" << 1 << "tpsa_ub" << 1 << "charge_lb" << 1 << "charge_ub" << 1 << "nrb_lb" << 1 << "nrb_ub" << 1);
+	const auto param_fields = BSON("_id" << 0 << "receptor" << 1 << "ligands" << 1 << "mwt_lb" << 1 << "mwt_ub" << 1 << "logp_lb" << 1 << "logp_ub" << 1 << "ad_lb" << 1 << "ad_ub" << 1 << "pd_lb" << 1 << "pd_ub" << 1 << "hbd_lb" << 1 << "hbd_ub" << 1 << "hba_lb" << 1 << "hba_ub" << 1 << "tpsa_lb" << 1 << "tpsa_ub" << 1 << "charge_lb" << 1 << "charge_ub" << 1 << "nrb_lb" << 1 << "nrb_ub" << 1);
 	const auto compt_fields = BSON("_id" << 0 << "email" << 1 << "submitted" << 1 << "description" << 1);
 	const path ligands_path = "16_lig.pdbqt";
 	const path headers_path = "16_hdr.bin";
@@ -107,13 +108,26 @@ int main(int argc, char* argv[])
 
 	// Initialize variables for job caching.
 	OID _id;
-	path job_path, receptor_path;
+	path job_path, receptor_path, box_path;
 	double mwt_lb, mwt_ub, logp_lb, logp_ub, ad_lb, ad_ub, pd_lb, pd_ub;
 	int num_ligands, hbd_lb, hbd_ub, hba_lb, hba_ub, tpsa_lb, tpsa_ub, charge_lb, charge_ub, nrb_lb, nrb_ub;
 	box b;
 	receptor rec;
 	size_t num_gm_tasks;
 	vector<array3d<fl>> grid_maps(XS_TYPE_SIZE);
+
+	// Initialize program options.
+	array<double, 3> center, size;
+	using namespace boost::program_options;
+	options_description input_options("input (required)");
+	input_options.add_options()
+		("center_x", value<double>(&center[0])->required())
+		("center_y", value<double>(&center[1])->required())
+		("center_z", value<double>(&center[2])->required())
+		("size_x", value<double>(&size[0])->required())
+		("size_y", value<double>(&size[1])->required())
+		("size_z", value<double>(&size[2])->required())
+		;
 
 	// Initialize a thread pool and create worker threads for later use.
 	thread_pool tp(num_threads);
@@ -190,19 +204,10 @@ int main(int argc, char* argv[])
 		// Refresh cache if it is a new job.
 		if (_id != job["_id"].OID())
 		{
+			// Load job parameters from MongoDB.
 			_id = job["_id"].OID();
-			job_path = jobs_path / _id.str();
-			receptor_path = job_path / "receptor.pdbqt";
-			while (!(exists(job_path) && exists(receptor_path)))
-			{
-				this_thread::sleep_for(chrono::seconds(1));
-			}
-
 			auto param_cursor = conn.query(collection, QUERY("_id" << _id), 1, 0, &param_fields);
 			const auto param = param_cursor->next();
-			b = box(vec3(param["center_x"].Number(), param["center_y"].Number(), param["center_z"].Number()), vec3(param["size_x"].Int(), param["size_y"].Int(), param["size_z"].Int()), grid_granularity);
-			rec = receptor(receptor_path, b);
-
 			num_ligands = param["ligands"].Int();
 			mwt_lb = param["mwt_lb"].Number();
 			mwt_ub = param["mwt_ub"].Number();
@@ -222,6 +227,21 @@ int main(int argc, char* argv[])
 			charge_ub = param["charge_ub"].Int();
 			nrb_lb = param["nrb_lb"].Int();
 			nrb_ub = param["nrb_ub"].Int();
+
+			// Load box and receptor from hard disk.
+			job_path = jobs_path / _id.str();
+			receptor_path = job_path / "receptor.pdbqt";
+			box_path = job_path / "box.conf";
+			while (!(exists(job_path) && exists(receptor_path) && exists(box_path)))
+			{
+				this_thread::sleep_for(chrono::seconds(1));
+			}
+			variables_map vm;
+			boost::filesystem::ifstream box_ifs(box_path);
+			store(parse_config_file(box_ifs, input_options), vm);
+			vm.notify();
+			b = box(vec3(center[0], center[1], center[2]), vec3(size[0], size[1], size[2]), grid_granularity);
+			rec = receptor(receptor_path, b);
 
 			// Reserve storage for grid map task container.
 			num_gm_tasks = b.num_probes[0];

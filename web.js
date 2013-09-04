@@ -204,12 +204,6 @@ if (cluster.isMaster) {
         var f = new validator.Filter();
         if (v.init(f.init(req.body)
          .snt('email').copy()
-         .snt('center_x').toFloat()
-         .snt('center_y').toFloat()
-         .snt('center_z').toFloat()
-         .snt('size_x').toInt()
-         .snt('size_y').toInt()
-         .snt('size_z').toInt()
          .snt('description').xss()
          .snt('mwt_lb', 400).toFloat()
          .snt('mwt_ub', 450).toFloat()
@@ -282,7 +276,12 @@ if (cluster.isMaster) {
               if (err) throw err;
               fs.writeFile(dir + '/receptor.pdbqt', req.body['receptor'], function(err) {
                 if (err) throw err;
-                res.json({});
+                fs.writeFile(dir + '/box.conf', ['center_x', 'center_y', 'center_z', 'size_x', 'size_y', 'size_z'].map(function(key) {
+                  return key + ' = ' + req.body[key] + '\n';
+                }).join(''), function(err) {
+                  if (err) throw err;
+                  res.json({});
+                });
               });
             });
           });
