@@ -280,7 +280,7 @@ int main(int argc, char* argv[])
 			const auto psa = right_cast<int>(line, 65, 67);
 			const auto chg = right_cast<int>(line, 69, 71);
 			const auto nrb = right_cast<int>(line, 73, 75);
-			if (!((mwt_lb <= mwt) && (mwt <= mwt_ub) && (lgp_lb <= logp) && (lgp <= logp_ub) && (ads_lb <= ads) && (ads <= ads_ub) && (pds_lb <= pds) && (pds <= pds_ub) && (hbd_lb <= hbd) && (hbd <= hbd_ub) && (hba_lb <= hba) && (hba <= hba_ub) && (psa_lb <= psa) && (psa <= psa_ub) && (chg_lb <= chg) && (chg <= chg_ub) && (nrb_lb <= nrb) && (nrb <= nrb_ub))) continue;
+			if (!((mwt_lb <= mwt) && (mwt <= mwt_ub) && (lgp_lb <= lgp) && (lgp <= lgp_ub) && (ads_lb <= ads) && (ads <= ads_ub) && (pds_lb <= pds) && (pds <= pds_ub) && (hbd_lb <= hbd) && (hbd <= hbd_ub) && (hba_lb <= hba) && (hba <= hba_ub) && (psa_lb <= psa) && (psa <= psa_ub) && (chg_lb <= chg) && (chg <= chg_ub) && (nrb_lb <= nrb) && (nrb <= nrb_ub))) continue;
 
 			// Obtain ligand ID. ZINC IDs are 8-character long.
 			const auto lig_id = line.substr(11, 8);
