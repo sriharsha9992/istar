@@ -905,7 +905,7 @@ var iview = (function () {
 		this.effect.setSize(this.container.width(), this.container.height());
 	};
 
-	iview.prototype.loadProteinInPDBQT = function (src) {
+	iview.prototype.parseProtein = function (src) {
 		this.protein = [];
 		var lines = src.split('\n');
 		for (var i in lines) {
@@ -988,7 +988,7 @@ var iview = (function () {
 		}
 	};
 
-	iview.prototype.loadLigandInPDBQT = function (src) {
+	iview.prototype.parseLigand = function (src) {
 		this.ligand = [];
 		var lines = src.split('\n'), rotors = [], start;
 		for (var i in lines) {
