@@ -79,7 +79,7 @@ int main(int argc, char* argv[])
 	// Initialize default values of constant arguments.
 	const auto collection = "istar.idock";
 	const auto jobid_fields = BSON("_id" << 1 << "scheduled" << 1);
-	const auto param_fields = BSON("_id" << 0 << "receptor" << 1 << "ligands" << 1 << "mwt_lb" << 1 << "mwt_ub" << 1 << "logp_lb" << 1 << "logp_ub" << 1 << "ad_lb" << 1 << "ad_ub" << 1 << "pd_lb" << 1 << "pd_ub" << 1 << "hbd_lb" << 1 << "hbd_ub" << 1 << "hba_lb" << 1 << "hba_ub" << 1 << "tpsa_lb" << 1 << "tpsa_ub" << 1 << "charge_lb" << 1 << "charge_ub" << 1 << "nrb_lb" << 1 << "nrb_ub" << 1);
+	const auto param_fields = BSON("_id" << 0 << "receptor" << 1 << "ligands" << 1 << "mwt_lb" << 1 << "mwt_ub" << 1 << "lgp_lb" << 1 << "lgp_ub" << 1 << "ads_lb" << 1 << "ads_ub" << 1 << "pds_lb" << 1 << "pds_ub" << 1 << "hbd_lb" << 1 << "hbd_ub" << 1 << "hba_lb" << 1 << "hba_ub" << 1 << "psa_lb" << 1 << "psa_ub" << 1 << "chg_lb" << 1 << "chg_ub" << 1 << "nrb_lb" << 1 << "nrb_ub" << 1);
 	const auto compt_fields = BSON("_id" << 0 << "email" << 1 << "submitted" << 1 << "description" << 1);
 	const path ligands_path = "16_lig.pdbqt";
 	const path headers_path = "16_hdr.bin";
@@ -109,8 +109,8 @@ int main(int argc, char* argv[])
 	// Initialize variables for job caching.
 	OID _id;
 	path job_path, receptor_path, box_path;
-	double mwt_lb, mwt_ub, logp_lb, logp_ub, ad_lb, ad_ub, pd_lb, pd_ub;
-	int num_ligands, hbd_lb, hbd_ub, hba_lb, hba_ub, tpsa_lb, tpsa_ub, charge_lb, charge_ub, nrb_lb, nrb_ub;
+	double mwt_lb, mwt_ub, lgp_lb, lgp_ub, ads_lb, ads_ub, pds_lb, pds_ub;
+	int num_ligands, hbd_lb, hbd_ub, hba_lb, hba_ub, psa_lb, psa_ub, chg_lb, chg_ub, nrb_lb, nrb_ub;
 	box b;
 	receptor rec;
 	size_t num_gm_tasks;
@@ -211,20 +211,20 @@ int main(int argc, char* argv[])
 			num_ligands = param["ligands"].Int();
 			mwt_lb = param["mwt_lb"].Number();
 			mwt_ub = param["mwt_ub"].Number();
-			logp_lb = param["logp_lb"].Number();
-			logp_ub = param["logp_ub"].Number();
-			ad_lb = param["ad_lb"].Number();
-			ad_ub = param["ad_ub"].Number();
-			pd_lb = param["pd_lb"].Number();
-			pd_ub = param["pd_ub"].Number();
+			lgp_lb = param["lgp_lb"].Number();
+			lgp_ub = param["lgp_ub"].Number();
+			ads_lb = param["ads_lb"].Number();
+			ads_ub = param["ads_ub"].Number();
+			pds_lb = param["pds_lb"].Number();
+			pds_ub = param["pds_ub"].Number();
 			hbd_lb = param["hbd_lb"].Int();
 			hbd_ub = param["hbd_ub"].Int();
 			hba_lb = param["hba_lb"].Int();
 			hba_ub = param["hba_ub"].Int();
-			tpsa_lb = param["tpsa_lb"].Int();
-			tpsa_ub = param["tpsa_ub"].Int();
-			charge_lb = param["charge_lb"].Int();
-			charge_ub = param["charge_ub"].Int();
+			psa_lb = param["psa_lb"].Int();
+			psa_ub = param["psa_ub"].Int();
+			chg_lb = param["chg_lb"].Int();
+			chg_ub = param["chg_ub"].Int();
 			nrb_lb = param["nrb_lb"].Int();
 			nrb_ub = param["nrb_ub"].Int();
 
@@ -272,15 +272,15 @@ int main(int argc, char* argv[])
 			// Check if the ligand satisfies the filtering conditions.
 			getline(ligands, line);
 			const auto mwt = right_cast<fl>(line, 21, 28);
-			const auto logp = right_cast<fl>(line, 30, 37);
-			const auto ad = right_cast<fl>(line, 39, 46);
-			const auto pd = right_cast<fl>(line, 48, 55);
+			const auto lgp = right_cast<fl>(line, 30, 37);
+			const auto ads = right_cast<fl>(line, 39, 46);
+			const auto pds = right_cast<fl>(line, 48, 55);
 			const auto hbd = right_cast<int>(line, 57, 59);
 			const auto hba = right_cast<int>(line, 61, 63);
-			const auto tpsa = right_cast<int>(line, 65, 67);
-			const auto charge = right_cast<int>(line, 69, 71);
+			const auto psa = right_cast<int>(line, 65, 67);
+			const auto chg = right_cast<int>(line, 69, 71);
 			const auto nrb = right_cast<int>(line, 73, 75);
-			if (!((mwt_lb <= mwt) && (mwt <= mwt_ub) && (logp_lb <= logp) && (logp <= logp_ub) && (ad_lb <= ad) && (ad <= ad_ub) && (pd_lb <= pd) && (pd <= pd_ub) && (hbd_lb <= hbd) && (hbd <= hbd_ub) && (hba_lb <= hba) && (hba <= hba_ub) && (tpsa_lb <= tpsa) && (tpsa <= tpsa_ub) && (charge_lb <= charge) && (charge <= charge_ub) && (nrb_lb <= nrb) && (nrb <= nrb_ub))) continue;
+			if (!((mwt_lb <= mwt) && (mwt <= mwt_ub) && (lgp_lb <= logp) && (lgp <= logp_ub) && (ads_lb <= ads) && (ads <= ads_ub) && (pds_lb <= pds) && (pds <= pds_ub) && (hbd_lb <= hbd) && (hbd <= hbd_ub) && (hba_lb <= hba) && (hba <= hba_ub) && (psa_lb <= psa) && (psa <= psa_ub) && (chg_lb <= chg) && (chg <= chg_ub) && (nrb_lb <= nrb) && (nrb <= nrb_ub))) continue;
 
 			// Obtain ligand ID. ZINC IDs are 8-character long.
 			const auto lig_id = line.substr(11, 8);
@@ -361,7 +361,7 @@ int main(int argc, char* argv[])
 				const float rfscore = f.predict(x);
 
 				// Dump ligand summaries to the csv file.
-				slice_csv << idx << ',' << lig_id << ',' << (r.f * lig.flexibility_penalty_factor) << ',' << (r.f * lig.num_heavy_atoms_inverse) << ',' << rfscore << ',' << mwt << ',' << logp << ',' << ad << ',' << pd << ',' << hbd << ',' << hba << ',' << tpsa << ',' << charge << ',' << nrb << ',' << smiles << '\n';
+				slice_csv << idx << ',' << lig_id << ',' << (r.f * lig.flexibility_penalty_factor) << ',' << (r.f * lig.num_heavy_atoms_inverse) << ',' << rfscore << ',' << mwt << ',' << lgp << ',' << ads << ',' << pds << ',' << hbd << ',' << hba << ',' << psa << ',' << chg << ',' << nrb << ',' << smiles << '\n';
 
 				// Clear the results of the current ligand.
 				phase1_results.clear();

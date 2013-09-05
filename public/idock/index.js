@@ -86,19 +86,19 @@ $(function() {
 		max: 567,
 		values: [ 400, 450 ]
 	});
-	$('#logp').slider({
+	$('#lgp').slider({
 		range: true,
 		min: -6,
 		max: 12,
 		values: [ 0, 4 ]
 	});
-	$('#ad').slider({
+	$('#ads').slider({
 		range: true,
 		min: -25,
 		max: 29,
 		values: [ 0, 5 ]
 	});
-	$('#pd').slider({
+	$('#pds').slider({
 		range: true,
 		min: -504,
 		max: 1,
@@ -116,13 +116,13 @@ $(function() {
 		max: 18,
 		values: [ 4, 8 ]
 	});
-	$('#tpsa').slider({
+	$('#psa').slider({
 		range: true,
 		min: 0,
 		max: 317,
 		values: [ 60, 80 ]
 	});
-	$('#charge').slider({
+	$('#chg').slider({
 		range: true,
 		min: -5,
 		max: 5,
@@ -143,20 +143,20 @@ $(function() {
 			$.get('ligands', {
 				mwt_lb: $('#mwt_lb').text(),
 				mwt_ub: $('#mwt_ub').text(),
-				logp_lb: $('#logp_lb').text(),
-				logp_ub: $('#logp_ub').text(),
-				ad_lb: $('#ad_lb').text(),
-				ad_ub: $('#ad_ub').text(),
-				pd_lb: $('#pd_lb').text(),
-				pd_ub: $('#pd_ub').text(),
+				lgp_lb: $('#lgp_lb').text(),
+				lgp_ub: $('#lgp_ub').text(),
+				ads_lb: $('#ads_lb').text(),
+				ads_ub: $('#ads_ub').text(),
+				pds_lb: $('#pds_lb').text(),
+				pds_ub: $('#pds_ub').text(),
 				hbd_lb: $('#hbd_lb').text(),
 				hbd_ub: $('#hbd_ub').text(),
 				hba_lb: $('#hba_lb').text(),
 				hba_ub: $('#hba_ub').text(),
-				tpsa_lb: $('#tpsa_lb').text(),
-				tpsa_ub: $('#tpsa_ub').text(),
-				charge_lb: $('#charge_lb').text(),
-				charge_ub: $('#charge_ub').text(),
+				psa_lb: $('#psa_lb').text(),
+				psa_ub: $('#psa_ub').text(),
+				chg_lb: $('#chg_lb').text(),
+				chg_ub: $('#chg_ub').text(),
 				nrb_lb: $('#nrb_lb').text(),
 				nrb_ub: $('#nrb_ub').text()
 			}, function(res) {
@@ -185,20 +185,20 @@ $(function() {
 			email: $('#email').val(),
 			mwt_lb: $('#mwt_lb').text(),
 			mwt_ub: $('#mwt_ub').text(),
-			logp_lb: $('#logp_lb').text(),
-			logp_ub: $('#logp_ub').text(),
-			ad_lb: $('#ad_lb').text(),
-			ad_ub: $('#ad_ub').text(),
-			pd_lb: $('#pd_lb').text(),
-			pd_ub: $('#pd_ub').text(),
+			lgp_lb: $('#lgp_lb').text(),
+			lgp_ub: $('#lgp_ub').text(),
+			ads_lb: $('#ads_lb').text(),
+			ads_ub: $('#ads_ub').text(),
+			pds_lb: $('#pds_lb').text(),
+			pds_ub: $('#pds_ub').text(),
 			hbd_lb: $('#hbd_lb').text(),
 			hbd_ub: $('#hbd_ub').text(),
 			hba_lb: $('#hba_lb').text(),
 			hba_ub: $('#hba_ub').text(),
-			tpsa_lb: $('#tpsa_lb').text(),
-			tpsa_ub: $('#tpsa_ub').text(),
-			charge_lb: $('#charge_lb').text(),
-			charge_ub: $('#charge_ub').text(),
+			psa_lb: $('#psa_lb').text(),
+			psa_ub: $('#psa_ub').text(),
+			chg_lb: $('#chg_lb').text(),
+			chg_ub: $('#chg_ub').text(),
 			nrb_lb: $('#nrb_lb').text(),
 			nrb_ub: $('#nrb_ub').text()
 		}, function(res) {

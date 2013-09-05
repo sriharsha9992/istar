@@ -5,15 +5,15 @@ var fs = require('fs'),
 if (cluster.isMaster) {
 	// Allocate arrays to hold ligand properties
 	var num_ligands = 17224424,
-		   mwt = new Float32Array(num_ligands),
-		  logp = new Float32Array(num_ligands),
-		    ad = new Float32Array(num_ligands),
-		    pd = new Float32Array(num_ligands),
-		   hbd = new Int16Array(num_ligands),
-		   hba = new Int16Array(num_ligands),
-		  tpsa = new Int16Array(num_ligands),
-		charge = new Int16Array(num_ligands),
-		   nrb = new Int16Array(num_ligands);
+		mwt = new Float32Array(num_ligands),
+		lgp = new Float32Array(num_ligands),
+		ads = new Float32Array(num_ligands),
+		pds = new Float32Array(num_ligands),
+		hbd = new Int16Array(num_ligands),
+		hba = new Int16Array(num_ligands),
+		psa = new Int16Array(num_ligands),
+		chg = new Int16Array(num_ligands),
+		nrb = new Int16Array(num_ligands);
 	// Parse ligand properties
 	var prop = 'idock/16_prop.bin.gz';
 	console.log('Parsing %s', prop);
@@ -23,15 +23,15 @@ if (cluster.isMaster) {
 		require('zlib').gunzip(data, function(err, buf) {
 			if (err) throw err;
 			for (i = 0, o = 0; i < num_ligands; ++i, o += 26) {
-				   mwt[i] = buf.readFloatLE(o +	 0);
-				  logp[i] = buf.readFloatLE(o +	 4);
-				    ad[i] = buf.readFloatLE(o +	 8);
-				    pd[i] = buf.readFloatLE(o + 12);
-				   hbd[i] = buf.readInt16LE(o + 16);
-				   hba[i] = buf.readInt16LE(o + 18);
-				  tpsa[i] = buf.readInt16LE(o + 20);
-				charge[i] = buf.readInt16LE(o + 22);
-				   nrb[i] = buf.readInt16LE(o + 24);
+				mwt[i] = buf.readFloatLE(o +  0);
+				lgp[i] = buf.readFloatLE(o +  4);
+				ads[i] = buf.readFloatLE(o +  8);
+				pds[i] = buf.readFloatLE(o + 12);
+				hbd[i] = buf.readInt16LE(o + 16);
+				hba[i] = buf.readInt16LE(o + 18);
+				psa[i] = buf.readInt16LE(o + 20);
+				chg[i] = buf.readInt16LE(o + 22);
+				nrb[i] = buf.readInt16LE(o + 24);
 			}
 			console.log('Parsed %d ligands within %d seconds', num_ligands, Date.now() - start);
 			// Fork worker processes with cluster
@@ -41,7 +41,7 @@ if (cluster.isMaster) {
 				if (m.query == '/idock/ligands') {
 					var ligands = 0;
 					for (var i = 0; i < num_ligands; ++i) {
-						if ((m.mwt_lb <= mwt[i]) && (mwt[i] <= m.mwt_ub) && (m.logp_lb <= logp[i]) && (logp[i] <= m.logp_ub) && (m.ad_lb <= ad[i]) && (ad[i] <= m.ad_ub) && (m.pd_lb <= pd[i]) && (pd[i] <= m.pd_ub) && (m.hbd_lb <= hbd[i]) && (hbd[i] <= m.hbd_ub) && (m.hba_lb <= hba[i]) && (hba[i] <= m.hba_ub) && (m.tpsa_lb <= tpsa[i]) && (tpsa[i] <= m.tpsa_ub) && (m.charge_lb <= charge[i]) && (charge[i] <= m.charge_ub) && (m.nrb_lb <= nrb[i]) && (nrb[i] <= m.nrb_ub)) ++ligands;
+						if ((m.mwt_lb <= mwt[i]) && (mwt[i] <= m.mwt_ub) && (m.lgp_lb <= lgp[i]) && (lgp[i] <= m.lgp_ub) && (m.ads_lb <= ads[i]) && (ads[i] <= m.ads_ub) && (m.pds_lb <= pds[i]) && (pds[i] <= m.pds_ub) && (m.hbd_lb <= hbd[i]) && (hbd[i] <= m.hbd_ub) && (m.hba_lb <= hba[i]) && (hba[i] <= m.hba_ub) && (m.psa_lb <= psa[i]) && (psa[i] <= m.psa_ub) && (m.chg_lb <= chg[i]) && (chg[i] <= m.chg_ub) && (m.nrb_lb <= nrb[i]) && (nrb[i] <= m.nrb_ub)) ++ligands;
 					}
 					this.send({ligands: ligands});
 				}
@@ -181,20 +181,20 @@ if (cluster.isMaster) {
 					.chk('description', 'must be provided, at most 40 characters', true).len(1, 40)
 					.chk('mwt_lb', 'must be a decimal within [55, 567]', false).isDecimal().min(55).max(567)
 					.chk('mwt_ub', 'must be a decimal within [55, 567]', false).isDecimal().min(55).max(567)
-					.chk('logp_lb', 'must be a decimal within [-6, 12]', false).isDecimal().min(-6).max(12)
-					.chk('logp_ub', 'must be a decimal within [-6, 12]', false).isDecimal().min(-6).max(12)
-					.chk('ad_lb', 'must be a decimal within [-25, 29]', false).isDecimal().min(-25).max(29)
-					.chk('ad_ub', 'must be a decimal within [-25, 29]', false).isDecimal().min(-25).max(29)
-					.chk('pd_lb', 'must be a decimal within [-504, 1]', false).isDecimal().min(-504).max(1)
-					.chk('pd_ub', 'must be a decimal within [-504, 1]', false).isDecimal().min(-504).max(1)
+					.chk('lgp_lb', 'must be a decimal within [-6, 12]', false).isDecimal().min(-6).max(12)
+					.chk('lgp_ub', 'must be a decimal within [-6, 12]', false).isDecimal().min(-6).max(12)
+					.chk('ads_lb', 'must be a decimal within [-25, 29]', false).isDecimal().min(-25).max(29)
+					.chk('ads_ub', 'must be a decimal within [-25, 29]', false).isDecimal().min(-25).max(29)
+					.chk('pds_lb', 'must be a decimal within [-504, 1]', false).isDecimal().min(-504).max(1)
+					.chk('pds_ub', 'must be a decimal within [-504, 1]', false).isDecimal().min(-504).max(1)
 					.chk('hbd_lb', 'must be an integer within [0, 20]', false).isInt().min(0).max(20)
 					.chk('hbd_ub', 'must be an integer within [0, 20]', false).isInt().min(0).max(20)
 					.chk('hba_lb', 'must be an integer within [0, 18]', false).isInt().min(0).max(18)
 					.chk('hba_ub', 'must be an integer within [0, 18]', false).isInt().min(0).max(18)
-					.chk('tpsa_lb', 'must be an integer within [0, 317]', false).isInt().min(0).max(317)
-					.chk('tpsa_ub', 'must be an integer within [0, 317]', false).isInt().min(0).max(317)
-					.chk('charge_lb', 'must be an integer within [-5, 5]', false).isInt().min(-5).max(5)
-					.chk('charge_ub', 'must be an integer within [-5, 5]', false).isInt().min(-5).max(5)
+					.chk('psa_lb', 'must be an integer within [0, 317]', false).isInt().min(0).max(317)
+					.chk('psa_ub', 'must be an integer within [0, 317]', false).isInt().min(0).max(317)
+					.chk('chg_lb', 'must be an integer within [-5, 5]', false).isInt().min(-5).max(5)
+					.chk('chg_ub', 'must be an integer within [-5, 5]', false).isInt().min(-5).max(5)
 					.chk('nrb_lb', 'must be an integer within [0, 35]', false).isInt().min(0).max(35)
 					.chk('nrb_ub', 'must be an integer within [0, 35]', false).isInt().min(0).max(35)
 					.failed()) {
@@ -206,31 +206,31 @@ if (cluster.isMaster) {
 					.snt('description').xss()
 					.snt('mwt_lb', 400).toFloat()
 					.snt('mwt_ub', 450).toFloat()
-					.snt('logp_lb', 0).toFloat()
-					.snt('logp_ub', 4).toFloat()
-					.snt('ad_lb', 0).toFloat()
-					.snt('ad_ub', 5).toFloat()
-					.snt('pd_lb', -20).toFloat()
-					.snt('pd_ub', 0).toFloat()
+					.snt('lgp_lb', 0).toFloat()
+					.snt('lgp_ub', 4).toFloat()
+					.snt('ads_lb', 0).toFloat()
+					.snt('ads_ub', 5).toFloat()
+					.snt('pds_lb', -20).toFloat()
+					.snt('pds_ub', 0).toFloat()
 					.snt('hbd_lb', 2).toInt()
 					.snt('hbd_ub', 5).toInt()
 					.snt('hba_lb', 4).toInt()
 					.snt('hba_ub', 8).toInt()
-					.snt('tpsa_lb', 60).toInt()
-					.snt('tpsa_ub', 80).toInt()
-					.snt('charge_lb', 0).toInt()
-					.snt('charge_ub', 0).toInt()
+					.snt('psa_lb', 60).toInt()
+					.snt('psa_ub', 80).toInt()
+					.snt('chg_lb', 0).toInt()
+					.snt('chg_ub', 0).toInt()
 					.snt('nrb_lb', 4).toInt()
 					.snt('nrb_ub', 6).toInt()
 					.res)
 					.rng('mwt_lb', 'mwt_ub')
-					.rng('logp_lb', 'logp_ub')
-					.rng('ad_lb', 'ad_ub')
-					.rng('pd_lb', 'pd_ub')
+					.rng('lgp_lb', 'lgp_ub')
+					.rng('ads_lb', 'ads_ub')
+					.rng('pds_lb', 'pds_ub')
 					.rng('hbd_lb', 'hbd_ub')
 					.rng('hba_lb', 'hba_ub')
-					.rng('tpsa_lb', 'tpsa_ub')
-					.rng('charge_lb', 'charge_ub')
+					.rng('psa_lb', 'psa_ub')
+					.rng('chg_lb', 'chg_ub')
 					.rng('nrb_lb', 'nrb_ub')
 					.failed()) {
 					return res.json(v.err);
@@ -241,20 +241,20 @@ if (cluster.isMaster) {
 					query: '/idock/ligands',
 					mwt_lb: f.res.mwt_lb,
 					mwt_ub: f.res.mwt_ub,
-					logp_lb: f.res.logp_lb,
-					logp_ub: f.res.logp_ub,
-					ad_lb: f.res.ad_lb,
-					ad_ub: f.res.ad_ub,
-					pd_lb: f.res.pd_lb,
-					pd_ub: f.res.pd_ub,
+					lgp_lb: f.res.lgp_lb,
+					lgp_ub: f.res.lgp_ub,
+					ads_lb: f.res.ads_lb,
+					ads_ub: f.res.ads_ub,
+					pds_lb: f.res.pds_lb,
+					pds_ub: f.res.pds_ub,
 					hbd_lb: f.res.hbd_lb,
 					hbd_ub: f.res.hbd_ub,
 					hba_lb: f.res.hba_lb,
 					hba_ub: f.res.hba_ub,
-					tpsa_lb: f.res.tpsa_lb,
-					tpsa_ub: f.res.tpsa_ub,
-					charge_lb: f.res.charge_lb,
-					charge_ub: f.res.charge_ub,
+					psa_lb: f.res.psa_lb,
+					psa_ub: f.res.psa_ub,
+					chg_lb: f.res.chg_lb,
+					chg_ub: f.res.chg_ub,
 					nrb_lb: f.res.nrb_lb,
 					nrb_ub: f.res.nrb_ub
 				});
@@ -293,20 +293,20 @@ if (cluster.isMaster) {
 				if (v.init(req.query)
 					.chk('mwt_lb', 'must be a decimal within [55, 567]', true).isDecimal().min(55).max(567)
 					.chk('mwt_ub', 'must be a decimal within [55, 567]', true).isDecimal().min(55).max(567)
-					.chk('logp_lb', 'must be a decimal within [-6, 12]', true).isDecimal().min(-6).max(12)
-					.chk('logp_ub', 'must be a decimal within [-6, 12]', true).isDecimal().min(-6).max(12)
-					.chk('ad_lb', 'must be a decimal within [-25, 29]', true).isDecimal().min(-25).max(29)
-					.chk('ad_ub', 'must be a decimal within [-25, 29]', true).isDecimal().min(-25).max(29)
-					.chk('pd_lb', 'must be a decimal within [-504, 1]', true).isDecimal().min(-504).max(1)
-					.chk('pd_ub', 'must be a decimal within [-504, 1]', true).isDecimal().min(-504).max(1)
+					.chk('lgp_lb', 'must be a decimal within [-6, 12]', true).isDecimal().min(-6).max(12)
+					.chk('lgp_ub', 'must be a decimal within [-6, 12]', true).isDecimal().min(-6).max(12)
+					.chk('ads_lb', 'must be a decimal within [-25, 29]', true).isDecimal().min(-25).max(29)
+					.chk('ads_ub', 'must be a decimal within [-25, 29]', true).isDecimal().min(-25).max(29)
+					.chk('pds_lb', 'must be a decimal within [-504, 1]', true).isDecimal().min(-504).max(1)
+					.chk('pds_ub', 'must be a decimal within [-504, 1]', true).isDecimal().min(-504).max(1)
 					.chk('hbd_lb', 'must be an integer within [0, 20]', true).isInt().min(0).max(20)
 					.chk('hbd_ub', 'must be an integer within [0, 20]', true).isInt().min(0).max(20)
 					.chk('hba_lb', 'must be an integer within [0, 18]', true).isInt().min(0).max(18)
 					.chk('hba_ub', 'must be an integer within [0, 18]', true).isInt().min(0).max(18)
-					.chk('tpsa_lb', 'must be an integer within [0, 317]', true).isInt().min(0).max(317)
-					.chk('tpsa_ub', 'must be an integer within [0, 317]', true).isInt().min(0).max(317)
-					.chk('charge_lb', 'must be an integer within [-5, 5]', true).isInt().min(-5).max(5)
-					.chk('charge_ub', 'must be an integer within [-5, 5]', true).isInt().min(-5).max(5)
+					.chk('psa_lb', 'must be an integer within [0, 317]', true).isInt().min(0).max(317)
+					.chk('psa_ub', 'must be an integer within [0, 317]', true).isInt().min(0).max(317)
+					.chk('chg_lb', 'must be an integer within [-5, 5]', true).isInt().min(-5).max(5)
+					.chk('chg_ub', 'must be an integer within [-5, 5]', true).isInt().min(-5).max(5)
 					.chk('nrb_lb', 'must be an integer within [0, 35]', true).isInt().min(0).max(35)
 					.chk('nrb_ub', 'must be an integer within [0, 35]', true).isInt().min(0).max(35)
 					.failed()) {
@@ -316,31 +316,31 @@ if (cluster.isMaster) {
 				if (v.init(f.init(req.query)
 					.snt('mwt_lb').toFloat()
 					.snt('mwt_ub').toFloat()
-					.snt('logp_lb').toFloat()
-					.snt('logp_ub').toFloat()
-					.snt('ad_lb').toFloat()
-					.snt('ad_ub').toFloat()
-					.snt('pd_lb').toFloat()
-					.snt('pd_ub').toFloat()
+					.snt('lgp_lb').toFloat()
+					.snt('lgp_ub').toFloat()
+					.snt('ads_lb').toFloat()
+					.snt('ads_ub').toFloat()
+					.snt('pds_lb').toFloat()
+					.snt('pds_ub').toFloat()
 					.snt('hbd_lb').toInt()
 					.snt('hbd_ub').toInt()
 					.snt('hba_lb').toInt()
 					.snt('hba_ub').toInt()
-					.snt('tpsa_lb').toInt()
-					.snt('tpsa_ub').toInt()
-					.snt('charge_lb').toInt()
-					.snt('charge_ub').toInt()
+					.snt('psa_lb').toInt()
+					.snt('psa_ub').toInt()
+					.snt('chg_lb').toInt()
+					.snt('chg_ub').toInt()
 					.snt('nrb_lb').toInt()
 					.snt('nrb_ub').toInt()
 					.res)
 					.rng('mwt_lb', 'mwt_ub')
-					.rng('logp_lb', 'logp_ub')
-					.rng('ad_lb', 'ad_ub')
-					.rng('pd_lb', 'pd_ub')
+					.rng('lgp_lb', 'lgp_ub')
+					.rng('ads_lb', 'ads_ub')
+					.rng('pds_lb', 'pds_ub')
 					.rng('hbd_lb', 'hbd_ub')
 					.rng('hba_lb', 'hba_ub')
-					.rng('tpsa_lb', 'tpsa_ub')
-					.rng('charge_lb', 'charge_ub')
+					.rng('psa_lb', 'psa_ub')
+					.rng('chg_lb', 'chg_ub')
 					.rng('nrb_lb', 'nrb_ub')
 					.failed()) {
 					return res.json(v.err);

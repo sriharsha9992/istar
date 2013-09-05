@@ -79,7 +79,7 @@
           <ul>
             <li>A receptor in PDBQT format. The receptor can contain one or more chains, which should start with ATOM records and end with a TER record. Refer to tutorial 1 on how to prepare a receptor in PDBQT format with MGLTools.</li>
             <li>A search space defined by a center and a size in unit &Aring;. The search space should define a binding site (e.g. enzymatic site or allosteric site) of the receptor in cuboid shape. Refer to tutorial 2 on how to define a binding site with MGLTools, Chimera or PyMOL.</li>
-            <li>A set of ligands to dock. Totally 17,224,424 ligands are collected from <a href="http://zinc.docking.org">ZINC</a>. Filtering conditions on 9 molecular properties (e.g. mwt, logp, hbd, hba, nrb) can be specified as closed intervals. Only the ligands satisfying all the 9 filtering conditions will be docked.</li>
+            <li>A set of ligands to dock. Totally 17,224,424 ligands are collected from <a href="http://zinc.docking.org">ZINC</a>. Filtering conditions on 9 molecular properties (e.g. mwt, hbd, hba, nrb) can be specified as closed intervals. Only the ligands satisfying all the 9 filtering conditions will be docked.</li>
           </ul>
         </div>
       </div>
@@ -183,8 +183,8 @@
           <div class="row">
             <div class="col-md-12">
               <div class="form-group">
-                <label>Partition coefficient xlogP: [<span id="logp_lb">0</span>, <span id="logp_ub">4</span>]</label>
-                <div class="form-control slider" id="logp"></div>
+                <label>Partition coefficient xlogP: [<span id="lgp_lb">0</span>, <span id="lgp_ub">4</span>]</label>
+                <div class="form-control slider" id="lgp"></div>
               </div>
             </div>
           </div>
@@ -215,32 +215,32 @@
           <div class="row">
             <div class="col-md-12">
               <div class="form-group">
-                <label>Net charge: [<span id="charge_lb">0</span>, <span id="charge_ub">0</span>]</label>
-                <div class="form-control slider" id="charge"></div>
+                <label>Net charge: [<span id="chg_lb">0</span>, <span id="chg_ub">0</span>]</label>
+                <div class="form-control slider" id="chg"></div>
               </div>
             </div>
           </div>
           <div class="row">
             <div class="col-md-12">
               <div class="form-group">
-                <label>Apolar desolvation (kcal/mol): [<span id="ad_lb">0</span>, <span id="ad_ub">5</span>]</label>
-                <div class="form-control slider" id="ad"></div>
+                <label>Apolar desolvation (kcal/mol): [<span id="ads_lb">0</span>, <span id="ads_ub">5</span>]</label>
+                <div class="form-control slider" id="ads"></div>
               </div>
             </div>
           </div>
           <div class="row">
             <div class="col-md-12">
               <div class="form-group">
-                <label>Polar desolvation (kcal/mol): [<span id="pd_lb">-20</span>, <span id="pd_ub">0</span>]</label>
-                <div class="form-control slider" id="pd"></div>
+                <label>Polar desolvation (kcal/mol): [<span id="pds_lb">-20</span>, <span id="pds_ub">0</span>]</label>
+                <div class="form-control slider" id="pds"></div>
               </div>
             </div>
           </div>
           <div class="row">
             <div class="col-md-12">
               <div class="form-group">
-                <label>Polar surface area tPSA (&Aring;<sup>2</sup>): [<span id="tpsa_lb">60</span>, <span id="tpsa_ub">80</span>]</label>
-                <div class="form-control slider" id="tpsa"></div>
+                <label>Polar surface area tPSA (&Aring;<sup>2</sup>): [<span id="psa_lb">60</span>, <span id="psa_ub">80</span>]</label>
+                <div class="form-control slider" id="psa"></div>
               </div>
             </div>
           </div>
@@ -278,15 +278,15 @@
                   <img class="img-responsive" src="mwt.png" alt="Molecular weight (g/mol)">
                 </div>
                 <div class="col-md-4">
-                  <img class="img-responsive" src="logp.png" alt="Partition coefficient xlogP">
+                  <img class="img-responsive" src="lgp.png" alt="Partition coefficient xlogP">
                 </div>
                 <div class="col-md-4">
-                  <img class="img-responsive" src="ad.png" alt="Apolar desolvation (kcal/mol)">
+                  <img class="img-responsive" src="ads.png" alt="Apolar desolvation (kcal/mol)">
                 </div>
               </div>
               <div class="row">
                 <div class="col-md-4">
-                  <img class="img-responsive" src="pd.png" alt="Polar desolvation (kcal/mol)">
+                  <img class="img-responsive" src="pds.png" alt="Polar desolvation (kcal/mol)">
                 </div>
                 <div class="col-md-4">
                   <img class="img-responsive" src="hbd.png" alt="Hydrogen bond donors">
@@ -297,10 +297,10 @@
               </div>
               <div class="row">
                 <div class="col-md-4">
-                  <img class="img-responsive" src="tpsa.png" alt="Polar surface area tPSA (&Aring;<sup>2</sup>)">
+                  <img class="img-responsive" src="psa.png" alt="Polar surface area tPSA (&Aring;<sup>2</sup>)">
                 </div>
                 <div class="col-md-4">
-                  <img class="img-responsive" src="charge.png" alt="Net charge">
+                  <img class="img-responsive" src="chg.png" alt="Net charge">
                 </div>
                 <div class="col-md-4">
                   <img class="img-responsive" src="nrb.png" alt="Rotatable bonds">

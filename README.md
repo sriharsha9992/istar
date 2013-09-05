@@ -59,11 +59,11 @@ REST API for idock
     TER    5500      VAL A 552 &
     center_x=1.234&center_y=5.678&center_z=9.012&
     size_x=20&size_y=18&size_z=22&
-    description=Screen drug-like ligands for HIV RT&
+    description=HIV RT (PDB 2ZD1)&
     email=Jacky@cuhk.edu.hk&
-    mwt_lb=400&mwt_ub=500&logp_lb=0&logp_ub=5&nrb_lb=2&nrb_ub=8&
-    hbd_lb=2&hbd_ub=5&hba_lb=2&hba_ub=10&charge_lb=0&charge_ub=0&
-    ad_lb=0&ad_ub=12&pd_lb=-50&pd_ub=0&tpsa_lb=20&tpsa_ub=100'
+    mwt_lb=400&mwt_ub=500&lgp_lb=0&lgp_ub=5&nrb_lb=2&nrb_ub=8&
+    hbd_lb=2&hbd_ub=5&hba_lb=2&hba_ub=10&chg_lb=0&chg_ub=0&
+    ads_lb=0&ads_ub=12&pds_lb=-50&pds_ub=0&psa_lb=20&psa_ub=100'
     http://istar.cse.cuhk.edu.hk/idock/jobs
 
 ### Obtain existing jobs via HTTP GET
@@ -73,9 +73,9 @@ REST API for idock
 ### Count the number of ligands satisfying your custom filtering conditions via HTTP GET
 
     curl -Gd
-    'mwt_lb=400&mwt_ub=500&logp_lb=0&logp_ub=5&nrb_lb=2&nrb_ub=8&
-    hbd_lb=2&hbd_ub=5&hba_lb=2&hba_ub=10&charge_lb=0&charge_ub=0&
-    ad_lb=0&ad_ub=12&pd_lb=-50&pd_ub=0&tpsa_lb=20&tpsa_ub=100'
+    'mwt_lb=400&mwt_ub=500&lgp_lb=0&lgp_ub=5&nrb_lb=2&nrb_ub=8&
+    hbd_lb=2&hbd_ub=5&hba_lb=2&hba_ub=10&chg_lb=0&chg_ub=0&
+    ads_lb=0&ads_ub=12&pds_lb=-50&pds_ub=0&psa_lb=20&psa_ub=100'
     http://istar.cse.cuhk.edu.hk/idock/ligands
 
 
@@ -96,8 +96,7 @@ REST API for igrep
 Licenses
 --------
 
-* istar, idock and igrep are licensed under [Apache License 2.0].
-* iview is licensed under [MIT License].
+* istar, idock, igrep and iview are licensed under [Apache License 2.0].
 * Documentation is licensed under [CC BY 3.0].
 
 
@@ -128,6 +127,5 @@ Logo
 [spdy]: https://github.com/indutny/node-spdy
 [MongoDB]: https://github.com/mongodb/mongo
 [Apache License 2.0]: http://www.apache.org/licenses/LICENSE-2.0
-[MIT License]: http://opensource.org/licenses/MIT
 [CC BY 3.0]: http://creativecommons.org/licenses/by/3.0
 [Jacky Lee]: http://www.cse.cuhk.edu.hk/~hjli
