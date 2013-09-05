@@ -525,7 +525,7 @@ var iview = (function () {
 			'ball and stick': new THREE.Object3D(),
 			'sphere': new THREE.Object3D(),
 		};
-        this.ligandObjects = {
+		this.ligandObjects = {
 			'line': new THREE.Object3D(),
 			'stick': new THREE.Object3D(),
 			'ball and stick': new THREE.Object3D(),
@@ -639,18 +639,18 @@ var iview = (function () {
 	};
 
 	iview.prototype.drawAtomsAsSphere = function (obj, atoms, defaultRadius, forceDefault, scale) {
-	    if (obj.children.length) {
-	        var o = 0;
-	        for (var i in atoms) {
-	            var sphere = obj.children[o++];
-	            sphere.__webglActive = undefined;
-	            sphere.material.color = atoms[i].color;
-	        }
-	    } else {
-	        for (var i in atoms) {
-	            this.drawSphere(obj, atoms[i], defaultRadius, forceDefault, scale);
-	        }
-	    }
+		if (obj.children.length) {
+			var o = 0;
+			for (var i in atoms) {
+				var sphere = obj.children[o++];
+				sphere.__webglActive = undefined;
+				sphere.material.color = atoms[i].color;
+			}
+		} else {
+			for (var i in atoms) {
+				this.drawSphere(obj, atoms[i], defaultRadius, forceDefault, scale);
+			}
+		}
 	};
 
 	iview.prototype.drawCylinder = function (obj, p1, p2, radius, color) {
@@ -664,82 +664,82 @@ var iview = (function () {
 	};
 
 	iview.prototype.drawBondsAsStick = function (obj, atoms, bondR, atomR, scale) {
-	    if (obj.children.length) {
-	        var o = 0;
-	        for (var i in atoms) {
-	            var atom1 = atoms[i];
-	            for (var j in atom1.bonds) {
-	                var atom2 = atoms[atom1.bonds[j]];
-	                if (atom2.serial < atom1.serial) continue;
-	                obj.children[o].__webglActive = undefined;
-	                obj.children[o++].material.color = atom1.color;
-	                obj.children[o].__webglActive = undefined;
-	                obj.children[o++].material.color = atom2.color;
-                }
-	            obj.children[o].__webglActive = undefined;
-	            obj.children[o++].material.color = atom1.color;
-            }
-        } else {
-	        for (var i in atoms) {
-	            var atom1 = atoms[i];
-	            for (var j in atom1.bonds) {
-	                var atom2 = atoms[atom1.bonds[j]];
-	                if (atom2.serial < atom1.serial) continue;
-	                var mp = atom1.coord.clone().add(atom2.coord).multiplyScalar(0.5);
-	                this.drawCylinder(obj, atom1.coord, mp, bondR, atom1.color);
-	                this.drawCylinder(obj, atom2.coord, mp, bondR, atom2.color);
-	            }
-	            this.drawSphere(obj, atom1, atomR, !scale, scale);
-	        }
-	    }
+		if (obj.children.length) {
+			var o = 0;
+			for (var i in atoms) {
+				var atom1 = atoms[i];
+				for (var j in atom1.bonds) {
+					var atom2 = atoms[atom1.bonds[j]];
+					if (atom2.serial < atom1.serial) continue;
+					obj.children[o].__webglActive = undefined;
+					obj.children[o++].material.color = atom1.color;
+					obj.children[o].__webglActive = undefined;
+					obj.children[o++].material.color = atom2.color;
+				}
+				obj.children[o].__webglActive = undefined;
+				obj.children[o++].material.color = atom1.color;
+			}
+		} else {
+			for (var i in atoms) {
+				var atom1 = atoms[i];
+				for (var j in atom1.bonds) {
+					var atom2 = atoms[atom1.bonds[j]];
+					if (atom2.serial < atom1.serial) continue;
+					var mp = atom1.coord.clone().add(atom2.coord).multiplyScalar(0.5);
+					this.drawCylinder(obj, atom1.coord, mp, bondR, atom1.color);
+					this.drawCylinder(obj, atom2.coord, mp, bondR, atom2.color);
+				}
+				this.drawSphere(obj, atom1, atomR, !scale, scale);
+			}
+		}
 	};
 
 	iview.prototype.drawBondsAsLine = function (obj, atoms) {
-	    if (obj.children.length) {
-	        obj.children[0].__webglActive = undefined;
-	        obj.children[0].geometry.colorsNeedUpdate = true;
-	        var colors = obj.children[0].geometry.colors;
-	        var ib = 0, ia = 1;
-	        for (var i in atoms) {
-	            var atom1 = atoms[i];
-	            for (var j in atom1.bonds) {
-	                var atom2 = atoms[atom1.bonds[j]];
-	                if (atom2.serial < atom1.serial) continue;
-	                colors[ib++] = atom1.color;
-	                colors[ib++] = atom1.color;
-	                colors[ib++] = atom2.color;
-	                colors[ib++] = atom2.color;
-	            }
-	            if (atom1.solvent) {
-	                var mesh = obj.children[ia++];
-	                mesh.__webglActive = undefined;
-	                mesh.material.color = atom1.color;
-	            }
-	        }
-	    }
-	    else {
-	        obj.add(new THREE.Line(new THREE.Geometry(), new THREE.LineBasicMaterial({ linewidth: this.lineWidth, vertexColors: true }), THREE.LinePieces));
-	        var geo = obj.children[0].geometry;
-	        for (var i in atoms) {
-	            var atom1 = atoms[i];
-	            for (var j in atom1.bonds) {
-	                var atom2 = atoms[atom1.bonds[j]];
-	                if (atom2.serial < atom1.serial) continue;
-	                var mp = atom1.coord.clone().add(atom2.coord).multiplyScalar(0.5);
-	                geo.vertices.push(atom1.coord);
-	                geo.vertices.push(mp);
-	                geo.vertices.push(atom2.coord);
-	                geo.vertices.push(mp);
-	                geo.colors.push(atom1.color);
-	                geo.colors.push(atom1.color);
-	                geo.colors.push(atom2.color);
-	                geo.colors.push(atom2.color);
-	            }
-	            if (atom1.solvent) {
-	                this.drawSphere(obj, atom1, this.sphereRadius, false, 0.2);
-	            }
-	        }
-	    }
+		if (obj.children.length) {
+			obj.children[0].__webglActive = undefined;
+			obj.children[0].geometry.colorsNeedUpdate = true;
+			var colors = obj.children[0].geometry.colors;
+			var ib = 0, ia = 1;
+			for (var i in atoms) {
+				var atom1 = atoms[i];
+				for (var j in atom1.bonds) {
+					var atom2 = atoms[atom1.bonds[j]];
+					if (atom2.serial < atom1.serial) continue;
+					colors[ib++] = atom1.color;
+					colors[ib++] = atom1.color;
+					colors[ib++] = atom2.color;
+					colors[ib++] = atom2.color;
+				}
+				if (atom1.solvent) {
+					var mesh = obj.children[ia++];
+					mesh.__webglActive = undefined;
+					mesh.material.color = atom1.color;
+				}
+			}
+		}
+		else {
+			obj.add(new THREE.Line(new THREE.Geometry(), new THREE.LineBasicMaterial({ linewidth: this.lineWidth, vertexColors: true }), THREE.LinePieces));
+			var geo = obj.children[0].geometry;
+			for (var i in atoms) {
+				var atom1 = atoms[i];
+				for (var j in atom1.bonds) {
+					var atom2 = atoms[atom1.bonds[j]];
+					if (atom2.serial < atom1.serial) continue;
+					var mp = atom1.coord.clone().add(atom2.coord).multiplyScalar(0.5);
+					geo.vertices.push(atom1.coord);
+					geo.vertices.push(mp);
+					geo.vertices.push(atom2.coord);
+					geo.vertices.push(mp);
+					geo.colors.push(atom1.color);
+					geo.colors.push(atom1.color);
+					geo.colors.push(atom2.color);
+					geo.colors.push(atom2.color);
+				}
+				if (atom1.solvent) {
+					this.drawSphere(obj, atom1, this.sphereRadius, false, 0.2);
+				}
+			}
+		}
 	};
 
 	iview.prototype.drawDashedLine = function (obj, p1, p2, color) {
@@ -843,35 +843,35 @@ var iview = (function () {
 
 		var proteinObj = this.proteinObjects[this.options.protein];
 		switch (this.options.protein) {
-		    case 'line':
-		        this.drawBondsAsLine(proteinObj, this.protein);
+			case 'line':
+				this.drawBondsAsLine(proteinObj, this.protein);
 				break;
 			case 'stick':
-			    this.drawBondsAsStick(proteinObj, this.protein, this.cylinderRadius, this.cylinderRadius);
+				this.drawBondsAsStick(proteinObj, this.protein, this.cylinderRadius, this.cylinderRadius);
 				break;
 			case 'ball and stick':
-			    this.drawBondsAsStick(proteinObj, this.protein, this.cylinderRadius * 0.5, this.cylinderRadius);
+				this.drawBondsAsStick(proteinObj, this.protein, this.cylinderRadius * 0.5, this.cylinderRadius);
 				break;
 			case 'sphere':
-			    this.drawAtomsAsSphere(proteinObj, this.protein, this.sphereRadius);
+				this.drawAtomsAsSphere(proteinObj, this.protein, this.sphereRadius);
 				break;
 		}
 		this.modelGroup.add(proteinObj);
 
 		var ligandObj = this.ligandObjects[this.options.ligand];
 		switch (this.options.ligand) {
-		    case 'line':
-		        this.drawBondsAsLine(ligandObj, this.ligand);
-		        break;
-		    case 'stick':
-		        this.drawBondsAsStick(ligandObj, this.ligand, this.cylinderRadius, this.cylinderRadius);
-		        break;
-		    case 'ball and stick':
-		        this.drawBondsAsStick(ligandObj, this.ligand, this.cylinderRadius * 0.5, this.cylinderRadius);
-		        break;
-		    case 'sphere':
-		        this.drawAtomsAsSphere(ligandObj, this.ligand, this.sphereRadius);
-		        break;
+			case 'line':
+				this.drawBondsAsLine(ligandObj, this.ligand);
+				break;
+			case 'stick':
+				this.drawBondsAsStick(ligandObj, this.ligand, this.cylinderRadius, this.cylinderRadius);
+				break;
+			case 'ball and stick':
+				this.drawBondsAsStick(ligandObj, this.ligand, this.cylinderRadius * 0.5, this.cylinderRadius);
+				break;
+			case 'sphere':
+				this.drawAtomsAsSphere(ligandObj, this.ligand, this.sphereRadius);
+				break;
 		}
 		this.modelGroup.add(ligandObj);
 
@@ -917,8 +917,8 @@ var iview = (function () {
 			if (record == 'ATOM  ' || record == 'HETATM') {
 				if (!(line[16] == ' ' || line[16] == 'A')) continue;
 				var atom = {
-				    het: record[0] == 'H',
-				    serial: parseInt(line.substr(6, 5)),
+					het: record[0] == 'H',
+					serial: parseInt(line.substr(6, 5)),
 					name: line.substr(12, 4).replace(/ /g, ''),
 					resn: line.substr(17, 3),
 					chain: line.substr(21, 1),
@@ -972,22 +972,22 @@ var iview = (function () {
 		}
 		var serials = Object.keys(this.protein), std = serials.length;
 		while (--std >= 0) {
-		    if (!this.protein[serials[std]].het) break;
+			if (!this.protein[serials[std]].het) break;
 		}
 		this.stdAtoms = [];
 		for (var i = 0; i <= std; ++i) {
-		    var serial = serials[i];
-		    var atom = this.protein[serial];
-		    this.stdAtoms[serial] = atom;
+			var serial = serials[i];
+			var atom = this.protein[serial];
+			this.stdAtoms[serial] = atom;
 		}
 		this.hetAtoms = [];
 		for (var i = std + 1; i < serials.length; ++i) {
-		    var serial = serials[i];
-		    var atom = this.protein[serial];
-		    this.hetAtoms[atom.serial] = atom;
-		    if ((this.protein[serial - 1] === undefined || this.protein[serial - 1].resi !== atom.resi) && (this.protein[serial + 1] === undefined || this.protein[serial + 1].resi !== atom.resi)) {
-		        atom.solvent = true;
-		    }
+			var serial = serials[i];
+			var atom = this.protein[serial];
+			this.hetAtoms[atom.serial] = atom;
+			if ((this.protein[serial - 1] === undefined || this.protein[serial - 1].resi !== atom.resi) && (this.protein[serial + 1] === undefined || this.protein[serial + 1].resi !== atom.resi)) {
+				atom.solvent = true;
+			}
 		}
 	};
 
