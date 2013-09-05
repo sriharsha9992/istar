@@ -540,7 +540,7 @@ var iview = (function () {
 		this.options = {
 			camera: 'perspective',
 			background: 'black',
-			colorBy: 'atom',
+			colorProteinBy: 'atom',
 			solvents: 'dot',
 			protein: 'line',
 			surface: 'nothing',
