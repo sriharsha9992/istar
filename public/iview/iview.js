@@ -519,23 +519,11 @@ var iview = (function () {
 			CYS: this.nonpolarColor,
 			TRP: this.nonpolarColor,
 		};
-		this.ssColors = {
-			helix: new THREE.Color(0xFF0080),
-			sheet: new THREE.Color(0xFFC800),
-			 coil: new THREE.Color(0x6080FF),
-		};
 		this.primaryStructureObjects = {
 			'line': new THREE.Object3D(),
 			'stick': new THREE.Object3D(),
 			'ball and stick': new THREE.Object3D(),
 			'sphere': new THREE.Object3D(),
-		};
-		this.secondaryStructureObjects = {
-		    'ribbon': new THREE.Object3D(),
-		    'strand': new THREE.Object3D(),
-		    'cylinder & plate': new THREE.Object3D(),
-		    'C alpha trace': new THREE.Object3D(),
-		    'B factor tube': new THREE.Object3D(),
 		};
         this.ligandObjects = {
 			'line': new THREE.Object3D(),
@@ -555,7 +543,6 @@ var iview = (function () {
 			colorBy: 'atom',
 			solvents: 'dot',
 			primaryStructure: 'line',
-			secondaryStructure: 'nothing',
 			surface: 'nothing',
 			opacity: '0.8',
 			wireframe: 'no',
@@ -756,251 +743,6 @@ var iview = (function () {
 	    }
 	};
 
-	iview.prototype.subdivide = function (points, div) { // Catmull-Rom subdivision
-		if (div == 1) return points;
-		var ret = [], divInv = 1.0 / div, len = points.length;
-		for (var i = -1; i <= len - 3; ++i) {
-			var p0 = points[i == -1 ? 0 : i];
-			var p1 = points[i + 1];
-			var p2 = points[i + 2];
-			var p3 = points[i == len - 3 ? len - 1 : i + 3];
-			var v0 = p2.clone().sub(p0).multiplyScalar(0.5);
-			var v1 = p3.clone().sub(p1).multiplyScalar(0.5);
-			var v2 = p2.clone().sub(p1);
-			for (var j = 0; j < div; ++j) {
-				var t = divInv * j;
-				ret.push(p1.clone().add(v0.clone().multiplyScalar(t)).add((v2.clone().multiplyScalar(3).sub(v0.clone().multiplyScalar(2)).sub(v1)).multiplyScalar(t * t)).add((v2.clone().multiplyScalar(-2).add(v0).add(v1)).multiplyScalar(t * t * t)));
-//				ret.push(new THREE.Vector3(
-//					p1.x + t * v0.x + t * t * (-3 * p1.x + 3 * p2.x - 2 * v0.x - v1.x) + t * t * t * (2 * p1.x - 2 * p2.x + v0.x + v1.x),
-//					p1.y + t * v0.y + t * t * (-3 * p1.y + 3 * p2.y - 2 * v0.y - v1.y) + t * t * t * (2 * p1.y - 2 * p2.y + v0.y + v1.y),
-//					p1.z + t * v0.z + t * t * (-3 * p1.z + 3 * p2.z - 2 * v0.z - v1.z) + t * t * t * (2 * p1.z - 2 * p2.z + v0.z + v1.z)));
-			}
-		}
-		ret.push(points[len - 1]);
-		return ret;
-	};
-
-	iview.prototype.drawCurve = function (obj, _points, colors, linewidth, div) {
-		var points = this.subdivide(_points, div);
-		var geo = new THREE.Geometry();
-		for (var i in points) {
-			geo.vertices.push(points[i]);
-			geo.colors.push(colors[Math.floor(i / div)]);
-		}
-		obj.add(new THREE.Line(geo, new THREE.LineBasicMaterial({ linewidth: linewidth, vertexColors: true }), THREE.LineStrip));
-	};
-
-	iview.prototype.drawCurves = function (obj, atoms) {
-		var points = [], colors = [];
-		var curChain, curResi;
-		for (var i in atoms) {
-			var atom = atoms[i];
-			if (atom.name == 'CA') {
-				if (curChain && (curChain != atom.chain || curResi + 1 != atom.resi)) {
-					this.drawCurve(obj, points, colors, this.curveWidth, 1);
-					points = [];
-					colors = [];
-				}
-				points.push(atom.coord);
-				colors.push(atom.color);
-				curChain = atom.chain;
-				curResi = atom.resi;
-			}
-		}
-		this.drawCurve(obj, points, colors, this.curveWidth, 1);
-	};
-
-	iview.prototype.drawStrip = function (obj, p1, p2, colors, thickness) {
-		p1 = this.subdivide(p1, this.axisDiv);
-		p2 = this.subdivide(p2, this.axisDiv);
-		var geo = new THREE.Geometry(), vs = geo.vertices, fs = geo.faces;
-		if (!thickness) {
-			for (var i = 0, len = p1.length; i < len; ++i) {
-				vs.push(p1[i]); // 2i
-				vs.push(p2[i]); // 2i + 1
-			}
-			for (var i = 1, len = p1.length; i < len; ++i) {
-				fs.push(new THREE.Face4(2 * i, 2 * i + 1, 2 * i - 1, 2 * i - 2, undefined, colors[Math.round((i - 1) / this.axisDiv)]));
-			}
-		} else {
-			var axis, a1v, a2v;
-			for (var i = 0, len = p1.length; i < len; ++i) {
-				vs.push(p1[i]); // 0
-				vs.push(p1[i]); // 1
-				vs.push(p2[i]); // 2
-				vs.push(p2[i]); // 3
-				if (i < len - 1) {
-					axis = p2[i].clone().sub(p1[i]).cross(p1[i + 1].clone().sub(p1[i])).normalize().multiplyScalar(thickness);
-				}
-				vs.push(a1v = p1[i].clone().add(axis)); // 4
-				vs.push(a1v); // 5
-				vs.push(a2v = p2[i].clone().add(axis)); // 6
-				vs.push(a2v); // 7
-			}
-			var faces = [[0, 2, -6, -8], [-4, -2, 6, 4], [7, 3, -5, -1], [-3, -7, 1, 5]];
-			for (var i = 1, len = p1.length; i < len; ++i) {
-				var offset = 8 * i, color = colors[Math.round((i - 1) / this.axisDiv)];
-				for (var j = 0; j < 4; ++j) {
-					fs.push(new THREE.Face4(offset + faces[j][0], offset + faces[j][1], offset + faces[j][2], offset + faces[j][3], undefined, color));
-				}
-			}
-			var vsize = vs.length - 8; // Cap
-			for (var i = 0; i < 4; ++i) {
-				vs.push(vs[i * 2]);
-				vs.push(vs[vsize + i * 2]);
-			};
-			vsize += 8;
-			fs.push(new THREE.Face4(vsize, vsize + 2, vsize + 6, vsize + 4, undefined, fs[0].color));
-			fs.push(new THREE.Face4(vsize + 1, vsize + 5, vsize + 7, vsize + 3, undefined, fs[fs.length - 3].color));
-		}
-		geo.computeFaceNormals();
-		geo.computeVertexNormals(false);
-		var mesh = new THREE.Mesh(geo, new THREE.MeshLambertMaterial({ vertexColors: THREE.FaceColors }));
-		mesh.doubleSided = true;
-		obj.add(mesh);
-	};
-
-	iview.prototype.drawStrand = function (obj, atoms, fill, thickness) {
-		if (!atoms.length) return;
-		var points = []; for (var k = 0; k < this.strandDiv; ++k) points[k] = [];
-		var colors = [], prevCO = null, ss = null;
-		var curChain, curResi, curCA;
-		for (var i in atoms) {
-			var atom = atoms[i];
-			if (atom.name == 'CA') {
-				if (curChain && (curChain != atom.chain || curResi + 1 != atom.resi)) {
-					if (!thickness) {
-						for (var j = 0; j < this.strandDiv; ++j) {
-						    this.drawCurve(obj, points[j], colors, 1, this.axisDiv);
-						}
-					}
-					if (fill) this.drawStrip(obj, points[0], points[this.strandDiv - 1], colors, thickness);
-					points = []; for (var k = 0; k < this.strandDiv; ++k) points[k] = [];
-					colors = [], prevCO = null; ss = null;
-				}
-				curChain = atom.chain;
-				curResi = atom.resi;
-				curCA = atom.coord;
-				ss = atom.ss;
-				colors.push(atom.color);
-			} else if (atom.name == 'O') {
-				var O = atom.coord.clone().sub(curCA).normalize().multiplyScalar(ss == 'coil' ? this.coilWidth : this.helixSheetWidth);
-				if (prevCO != undefined && O.dot(prevCO) < 0) O.negate();
-				prevCO = O;
-				for (var j = 0; j < this.strandDiv; ++j) {
-					var delta = -1 + 2 / (this.strandDiv - 1) * j;
-					points[j].push(curCA.clone().add(prevCO.clone().multiplyScalar(delta)));
-				}
-			}
-		}
-		if (!thickness) {
-			for (var j = 0; j < this.strandDiv; ++j) {
-				this.drawCurve(obj, points[j], colors, 1, this.axisDiv);
-			}
-		}
-		if (fill) this.drawStrip(obj, points[0], points[this.strandDiv - 1], colors, thickness);
-	};
-
-	iview.prototype.drawTube = function (obj, _points, colors, radii) {
-		if (_points.length < 2) return;
-		var tubeDiv = this.tubeDiv, axisDiv = this.axisDiv;
-		var geo = new THREE.Geometry();
-		var points = this.subdivide(_points, axisDiv);
-		var prevAxis1 = new THREE.Vector3(), prevAxis2;
-		for (var i = 0, len = points.length; i < len; ++i) {
-			var idx = (i - 1) / axisDiv;
-			var r = (idx % 1 == 0) ? radii[idx] : radii[floored = Math.floor(idx)] * (fraction = idx - floored) + radii[floored + 1] * (1 - fraction)
-			var axis1, axis2;
-			if (i < len - 1) {
-				var delta = points[i].clone().sub(points[i + 1]);
-				axis1 = new THREE.Vector3(0, -delta.z, delta.y).normalize().multiplyScalar(r);
-				axis2 = delta.clone().cross(axis1).normalize().multiplyScalar(r);
-//				var dir = 1, offset = 0;
-				if (prevAxis1.dot(axis1) < 0) {
-					axis1.negate();
-					axis2.negate();
-//					dir = -1; offset = 2 * Math.PI / axisDiv;
-				}
-				prevAxis1 = axis1;
-				prevAxis2 = axis2;
-			} else {
-				axis1 = prevAxis1;
-				axis2 = prevAxis2;
-			}
-			for (var j = 0; j < tubeDiv; ++j) {
-				var angle = 2 * Math.PI / tubeDiv * j; //* dir  + offset;
-				geo.vertices.push(points[i].clone().add(axis1.clone().multiplyScalar(Math.cos(angle))).add(axis2.clone().multiplyScalar(Math.sin(angle))));
-			}
-		}
-		var offset = 0;
-		for (var i = 0, len = points.length - 1; i < len; ++i) {
-			var color = colors[Math.round((i - 1) / axisDiv)];
-			var reg = 0;
-			var r1 = geo.vertices[offset].clone().sub(geo.vertices[offset + tubeDiv]).lengthSq();
-			var r2 = geo.vertices[offset].clone().sub(geo.vertices[offset + tubeDiv + 1]).lengthSq();
-			if (r1 > r2) { r1 = r2; reg = 1; };
-			for (var j = 0; j < tubeDiv; ++j) {
-				geo.faces.push(new THREE.Face3(offset + j, offset + (j + reg) % tubeDiv + tubeDiv, offset + (j + 1) % tubeDiv, undefined, color));
-				geo.faces.push(new THREE.Face3(offset + (j + 1) % tubeDiv, offset + (j + reg) % tubeDiv + tubeDiv, offset + (j + reg + 1) % tubeDiv + tubeDiv, undefined, color));
-			}
-			offset += tubeDiv;
-		}
-		geo.computeFaceNormals();
-		geo.computeVertexNormals(false);
-		var mesh = new THREE.Mesh(geo, new THREE.MeshLambertMaterial({ vertexColors: THREE.FaceColors }));
-		mesh.doubleSided = true;
-		obj.add(mesh);
-	};
-
-	iview.prototype.drawTubes = function (obj, atoms, radius) {
-		var points = [], colors = [], radii = [];
-		var curChain, curResi;
-		for (var i in atoms) {
-			var atom = atoms[i];
-			if (atom.name == 'CA') {
-				if (curChain != atom.chain || curResi + 1 != atom.resi) {
-				    this.drawTube(obj, points, colors, radii);
-					points = [];
-					colors = [];
-					radii = [];
-				}
-				curChain = atom.chain;
-				curResi = atom.resi;
-				points.push(atom.coord);
-				colors.push(atom.color);
-				radii.push(radius || atom.b > 0 ? atom.b * 0.01 : 0.3);
-			}
-		}
-		this.drawTube(obj, points, colors, radii);
-	};
-
-	iview.prototype.drawCylinderPlate = function (obj, atoms, radius) {
-		var start = null;
-		var curChain, curResi;
-		var tube = [], sheet = [];
-		for (var i in atoms) {
-			var atom = atoms[i];
-			if (atom.ss == 'coil' || atom.ssbegin || atom.ssend) tube[atom.serial] = atom;
-			if (atom.ss == 'sheet') sheet[atom.serial] = atom;
-			if (atom.name == 'CA') {
-				if (atom.ss == 'helix' && atom.ssend) {
-					if (start != null) {
-						this.drawCylinder(obj, start.coord, atom.coord, radius, atom.color);
-					}
-					start = null;
-				}
-				curChain = atom.chain;
-				curResi = atom.resi;
-				if (start == null && atom.ss == 'helix' && atom.ssbegin) start = atom;
-			}
-		}
-		if (start != null) {
-			this.drawCylinder(obj, start.coord, atom.coord, radius, atom.color);
-		}
-		this.drawTubes(obj, tube, 0.3);
-		this.drawStrand(obj, sheet, true, this.thickness * 2);
-	};
-
 	iview.prototype.drawDashedLine = function (obj, p1, p2, color) {
 		var geo = new THREE.Geometry();
 		geo.vertices.push(p1);
@@ -1062,13 +804,6 @@ var iview = (function () {
 					atom.color = this.hetChainColors[atom.chain];
 				}
 				break;
-			case 'secondary structure':
-				for (var i in this.stdAtoms) {
-					var atom = this.stdAtoms[i];
-					atom.color = this.ssColors[atom.ss];
-				}
-				this.colorByElement(this.hetAtoms);
-				break;
 			case 'B factor':
 				if (!this.middB) {
 					var minB = 1000, maxB = -1000;
@@ -1123,26 +858,6 @@ var iview = (function () {
 				break;
 		}
 		this.modelGroup.add(primaryStructureObj);
-
-		var secondaryStructureObj = this.secondaryStructureObjects[this.options.secondaryStructure];
-		switch (this.options.secondaryStructure) {
-			case 'ribbon':
-			    this.drawStrand(secondaryStructureObj, this.stdAtoms, true, this.thickness);
-				break;
-			case 'strand':
-			    this.drawStrand(secondaryStructureObj, this.stdAtoms);
-				break;
-			case 'cylinder & plate':
-			    this.drawCylinderPlate(secondaryStructureObj, this.stdAtoms, 1.6);
-				break;
-			case 'C alpha trace':
-			    this.drawCurves(secondaryStructureObj, this.stdAtoms);
-				break;
-			case 'B factor tube':
-			    this.drawTubes(secondaryStructureObj, this.stdAtoms);
-				break;
-		}
-		this.modelGroup.add(secondaryStructureObj);
 
 		this.options.opacity = parseFloat(this.options.opacity);
 
@@ -1271,10 +986,6 @@ var iview = (function () {
 		    if ((this.protein[serial - 1] === undefined || this.protein[serial - 1].resi !== atom.resi) && (this.protein[serial + 1] === undefined || this.protein[serial + 1].resi !== atom.resi)) {
 		        atom.solvent = true;
 		    }
-		}
-		for (var i in this.stdAtoms) {
-			var atom = this.stdAtoms[i];
-			atom.ss = 'coil';
 		}
 	};
 
