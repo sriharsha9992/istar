@@ -22,8 +22,8 @@ $(function () {
 		})
 	});
 
-	$('#exportView').click(function (e) {
+	$('#exportCanvas').click(function (e) {
 		e.preventDefault();
-		iv.exportView();
+		iv.exportCanvas();
 	})
 });

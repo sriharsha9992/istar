@@ -1085,7 +1085,7 @@ var iview = (function () {
 		this.render();
 	};
 
-	iview.prototype.exportView = function () {
+	iview.prototype.exportCanvas = function () {
 		this.render();
 		window.open(this.renderer.domElement.toDataURL('image/png'));
 	};
