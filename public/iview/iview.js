@@ -905,6 +905,9 @@ var iview = (function () {
 		this.effect.setSize(this.container.width(), this.container.height());
 	};
 
+	iview.prototype.parseBox = function (src) {
+	};
+
 	iview.prototype.parseProtein = function (src) {
 		this.protein = [];
 		var lines = src.split('\n');
