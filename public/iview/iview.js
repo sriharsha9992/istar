@@ -519,7 +519,7 @@ var iview = (function () {
 			CYS: this.nonpolarColor,
 			TRP: this.nonpolarColor,
 		};
-		this.primaryStructureObjects = {
+		this.proteinObjects = {
 			'line': new THREE.Object3D(),
 			'stick': new THREE.Object3D(),
 			'ball and stick': new THREE.Object3D(),
@@ -542,7 +542,7 @@ var iview = (function () {
 			background: 'black',
 			colorBy: 'atom',
 			solvents: 'dot',
-			primaryStructure: 'line',
+			protein: 'line',
 			surface: 'nothing',
 			opacity: '0.8',
 			wireframe: 'no',
@@ -842,22 +842,22 @@ var iview = (function () {
 
 		this.colorByElement(this.ligand);
 
-		var primaryStructureObj = this.primaryStructureObjects[this.options.primaryStructure];
-		switch (this.options.primaryStructure) {
+		var proteinObj = this.proteinObjects[this.options.protein];
+		switch (this.options.protein) {
 		    case 'line':
-		        this.drawBondsAsLine(primaryStructureObj, this.protein);
+		        this.drawBondsAsLine(proteinObj, this.protein);
 				break;
 			case 'stick':
-			    this.drawBondsAsStick(primaryStructureObj, this.protein, this.cylinderRadius, this.cylinderRadius);
+			    this.drawBondsAsStick(proteinObj, this.protein, this.cylinderRadius, this.cylinderRadius);
 				break;
 			case 'ball and stick':
-			    this.drawBondsAsStick(primaryStructureObj, this.protein, this.cylinderRadius * 0.5, this.cylinderRadius);
+			    this.drawBondsAsStick(proteinObj, this.protein, this.cylinderRadius * 0.5, this.cylinderRadius);
 				break;
 			case 'sphere':
-			    this.drawAtomsAsSphere(primaryStructureObj, this.protein, this.sphereRadius);
+			    this.drawAtomsAsSphere(proteinObj, this.protein, this.sphereRadius);
 				break;
 		}
-		this.modelGroup.add(primaryStructureObj);
+		this.modelGroup.add(proteinObj);
 
 		this.options.opacity = parseFloat(this.options.opacity);
 
