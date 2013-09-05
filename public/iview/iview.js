@@ -785,7 +785,7 @@ var iview = (function () {
 		this.renderer.setClearColor(background);
 		this.scene.fog = new THREE.Fog(background, 100, 200);
 
-		switch (this.options.colorBy) {
+		switch (this.options.colorProteinBy) {
 			case 'spectrum':
 				var idx = 0;
 				for (var i in this.stdAtoms) {

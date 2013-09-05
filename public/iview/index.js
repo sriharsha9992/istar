@@ -9,7 +9,7 @@ $(function () {
 	});
 	});
 
-	['camera', 'background', 'colorBy', 'solvents', 'protein', 'surface', 'opacity', 'wireframe', 'ligand', 'effect'].forEach(function (opt) {
+	['camera', 'background', 'effect', 'colorProteinBy', 'protein', 'ligand', 'surface', 'opacity', 'wireframe'].forEach(function (opt) {
 		$('#' + opt).click(function (e) {
 			var options = {};
 			options[opt] = e.target.innerText;
