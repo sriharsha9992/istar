@@ -540,14 +540,13 @@ var iview = (function () {
 		this.options = {
 			camera: 'perspective',
 			background: 'black',
+			effect: 'none',
 			colorProteinBy: 'atom',
-			solvents: 'dot',
 			protein: 'line',
+			ligand: 'stick',
 			surface: 'nothing',
 			opacity: '0.8',
 			wireframe: 'no',
-			ligand: 'stick',
-			effect: 'none',
 		};
 		this.elemMapInPDBQT = {
 			HD: 'H',
@@ -859,6 +858,23 @@ var iview = (function () {
 		}
 		this.modelGroup.add(proteinObj);
 
+		var ligandObj = this.ligandObjects[this.options.ligand];
+		switch (this.options.ligand) {
+		    case 'line':
+		        this.drawBondsAsLine(ligandObj, this.ligand);
+		        break;
+		    case 'stick':
+		        this.drawBondsAsStick(ligandObj, this.ligand, this.cylinderRadius, this.cylinderRadius);
+		        break;
+		    case 'ball and stick':
+		        this.drawBondsAsStick(ligandObj, this.ligand, this.cylinderRadius * 0.5, this.cylinderRadius);
+		        break;
+		    case 'sphere':
+		        this.drawAtomsAsSphere(ligandObj, this.ligand, this.sphereRadius);
+		        break;
+		}
+		this.modelGroup.add(ligandObj);
+
 		this.options.opacity = parseFloat(this.options.opacity);
 
 		switch (this.options.wireframe) {
@@ -884,23 +900,6 @@ var iview = (function () {
 				this.drawSurface(this.stdAtoms, 4, this.options.wireframe, this.options.opacity);
 				break;
 		}
-
-		var ligandObj = this.ligandObjects[this.options.ligand];
-		switch (this.options.ligand) {
-		    case 'line':
-		        this.drawBondsAsLine(ligandObj, this.ligand);
-				break;
-			case 'stick':
-			    this.drawBondsAsStick(ligandObj, this.ligand, this.cylinderRadius, this.cylinderRadius);
-				break;
-			case 'ball and stick':
-			    this.drawBondsAsStick(ligandObj, this.ligand, this.cylinderRadius * 0.5, this.cylinderRadius);
-				break;
-			case 'sphere':
-			    this.drawAtomsAsSphere(ligandObj, this.ligand, this.sphereRadius);
-				break;
-		}
-		this.modelGroup.add(ligandObj);
 
 		this.effect = this.effects[this.options.effect];
 		this.effect.setSize(this.container.width(), this.container.height());
