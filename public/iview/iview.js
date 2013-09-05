@@ -5,7 +5,7 @@ iview is an interactive WebGL visualizer of protein-ligand complex.
 
   Copyright (c) 2012-2013 The Chinese University of Hong Kong
 
-  License: MIT License
+  License: Apache License 2.0
 
 iview is based on GLmol and uses jQuery and Three.js.
 
