@@ -1018,7 +1018,7 @@ var iview = (function () {
 					y: parseInt(line.substr(10, 4)),
 				});
 				start = undefined;
-			}
+			} else if (record == 'ENDMDL') break;
 		}
 		for (var i in rotors) {
 			var r = rotors[i];
