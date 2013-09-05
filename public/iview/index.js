@@ -22,10 +22,8 @@ $(function () {
 		})
 	});
 
-	['resetView', 'exportView'].forEach(function (func) {
-		$('#' + func).click(function (e) {
-			e.preventDefault();
-			iv[func]();
-		})
-	});
+    $('#exportView').click(function (e) {
+		e.preventDefault();
+		iv.exportView();
+	})
 });
