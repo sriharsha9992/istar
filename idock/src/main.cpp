@@ -88,8 +88,8 @@ int main(int argc, char* argv[])
 	const size_t num_trees = 512;
 	const size_t phase1_num_mc_tasks = 32;
 	const size_t phase2_num_mc_tasks = 128;
-	const size_t max_conformations = 20;
-	const size_t max_results = 20; // Maximum number of results obtained from a single Monte Carlo task.
+	const size_t max_conformations = 9;
+	const size_t max_results = 9; // Maximum number of results obtained from a single Monte Carlo task.
 	const fl energy_range = 3.0;
 	const fl grid_granularity = 0.08;
 	const auto epoch = boost::gregorian::date(1970, 1, 1);
