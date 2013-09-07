@@ -914,10 +914,10 @@ var iview = (function () {
 		for (var i in lines) {
 			var line = lines[i];
 			var record = line.substr(0, 6);
-			if (record == 'ATOM  ' || record == 'HETATM') {
-				if (!(line[16] == ' ' || line[16] == 'A')) continue;
+			if (record === 'ATOM  ' || record === 'HETATM') {
+				if (!(line[16] === ' ' || line[16] === 'A')) continue;
 				var atom = {
-					het: record[0] == 'H',
+					het: record[0] === 'H',
 					serial: parseInt(line.substr(6, 5)),
 					name: line.substr(12, 4).replace(/ /g, ''),
 					resn: line.substr(17, 3),
@@ -948,7 +948,7 @@ var iview = (function () {
 							from.bonds.push(to.serial);
 						}
 					}
-					if (from.name == 'C' && atom.name == 'N' && this.hasCovalentBond(from, atom)) {
+					if (from.name === 'C' && atom.name === 'N' && this.hasCovalentBond(from, atom)) {
 						from.bonds.push(atom.serial);
 						atom.bonds.push(from.serial);
 					}
@@ -999,12 +999,12 @@ var iview = (function () {
 			var record = line.substr(0, 6);
 			if (start_ligand)
 			{
-				if (record == 'REMARK') {
+				if (record === 'REMARK') {
 					start_ligand = false;
 				}
 				continue;
 			}
-			if (record == 'ATOM  ' || record == 'HETATM') {
+			if (record === 'ATOM  ' || record === 'HETATM') {
 				var atom = {
 					serial: parseInt(line.substr(6, 5)),
 					coord: new THREE.Vector3(parseFloat(line.substr(30, 8)), parseFloat(line.substr(38, 8)), parseFloat(line.substr(46, 8))),
@@ -1022,13 +1022,13 @@ var iview = (function () {
 					}
 				}
 				this.ligand[atom.serial] = atom;
-			} else if (record == 'BRANCH') {
+			} else if (record === 'BRANCH') {
 				rotors.push({
 					x: parseInt(line.substr( 6, 4)),
 					y: parseInt(line.substr(10, 4)),
 				});
 				start_frame = undefined;
-			} else if (record == 'TORSDO') {
+			} else if (record === 'TORSDO') {
 				start_ligand = true;
 				break;
 			}
