@@ -993,10 +993,17 @@ var iview = (function () {
 
 	iview.prototype.parseLigand = function (src) {
 		this.ligand = [];
-		var lines = src.split('\n'), rotors = [], start;
+		var lines = src.split('\n'), rotors = [], start_ligand = true, start_frame;
 		for (var i in lines) {
 			var line = lines[i];
 			var record = line.substr(0, 6);
+			if (start_ligand)
+			{
+				if (record == 'REMARK') {
+					start_ligand = false;
+				}
+				continue;
+			}
 			if (record == 'ATOM  ' || record == 'HETATM') {
 				var atom = {
 					serial: parseInt(line.substr(6, 5)),
@@ -1006,8 +1013,8 @@ var iview = (function () {
 				};
 				var elem = this.elemMapInPDBQT[atom.elem];
 				if (elem) atom.elem = elem;
-				if (!start) start = atom.serial;
-				for (var j = start; j < atom.serial; ++j) {
+				if (!start_frame) start_frame = atom.serial;
+				for (var j = start_frame; j < atom.serial; ++j) {
 					var a = this.ligand[j];
 					if (a && this.hasCovalentBond(a, atom)) {
 						a.bonds.push(atom.serial);
@@ -1020,8 +1027,11 @@ var iview = (function () {
 					x: parseInt(line.substr( 6, 4)),
 					y: parseInt(line.substr(10, 4)),
 				});
-				start = undefined;
-			} else if (record == 'ENDMDL') break;
+				start_frame = undefined;
+			} else if (record == 'TORSDO') {
+				start_ligand = true;
+				break;
+			}
 		}
 		for (var i in rotors) {
 			var r = rotors[i];
