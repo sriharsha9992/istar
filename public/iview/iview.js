@@ -571,7 +571,7 @@ var iview = (function () {
 				x = ev.originalEvent.targetTouches[0].pageX;
 				y = ev.originalEvent.targetTouches[0].pageY;
 			}
-			if (x == undefined) return;
+			if (x === undefined) return;
 			me.isDragging = true;
 			me.mouseButton = ev.which;
 			me.mouseStartX = x;
@@ -602,7 +602,7 @@ var iview = (function () {
 				x = ev.originalEvent.targetTouches[0].pageX;
 				y = ev.originalEvent.targetTouches[0].pageY;
 			}
-			if (x == undefined) return;
+			if (x === undefined) return;
 			var dx = (x - me.mouseStartX) / me.container.width();
 			var dy = (y - me.mouseStartY) / me.container.height();
 			if (!dx && !dy) return;
@@ -1013,7 +1013,7 @@ var iview = (function () {
 				};
 				var elem = this.elemMapInPDBQT[atom.elem];
 				if (elem) atom.elem = elem;
-				if (!start_frame) start_frame = atom.serial;
+				if (start_frame === undefined) start_frame = atom.serial;
 				for (var j = start_frame; j < atom.serial; ++j) {
 					var a = this.ligand[j];
 					if (a && this.hasCovalentBond(a, atom)) {
