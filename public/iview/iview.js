@@ -931,7 +931,7 @@ var iview = (function () {
 				};
 				var elem = this.elemMapInPDBQT[atom.elem];
 				if (elem) atom.elem = elem;
-//				if (atom.elem === 'H') continue;
+				if (atom.elem === 'H') continue;
 				this.protein[atom.serial] = atom;
 			}
 		}
@@ -1098,6 +1098,49 @@ var iview = (function () {
 	iview.prototype.exportCanvas = function () {
 		this.render();
 		window.open(this.renderer.domElement.toDataURL('image/png'));
+	};
+
+	iview.prototype.drawSurface = function (atoms, type, wireframe, opacity) {
+		if (!this.surfaces[type]) {
+			var ps = new ProteinSurface();
+			ps.initparm(this.getExtent(atoms), (type == 1) ? false : true);
+			ps.fillvoxels(atoms);
+			ps.buildboundary();
+			if (type == 4 || type == 2) ps.fastdistancemap();
+			if (type == 2) { ps.boundingatom(false); ps.fillvoxelswaals(atoms); }
+			ps.marchingcube(type);
+			ps.laplaciansmooth(1);
+			ps.transformVertices();
+			this.surfaces[type] = ps;
+		}
+		var mesh = new THREE.Mesh(this.surfaces[type].getModel(atoms), new THREE.MeshLambertMaterial({
+			vertexColors: THREE.VertexColors,
+			wireframe: wireframe,
+			opacity: opacity,
+			transparent: true,
+		}));
+		mesh.doubleSided = true;
+		this.modelGroup.add(mesh);
+	};
+
+	iview.prototype.getExtent = function (atoms) {
+		var xmin = ymin = zmin = 9999;
+		var xmax = ymax = zmax = -9999;
+		var xsum = ysum = zsum = cnt = 0;
+		for (var i in atoms) {
+			var atom = atoms[i];
+			cnt++;
+			xsum += atom.coord.x;
+			ysum += atom.coord.y;
+			zsum += atom.coord.z;
+			xmin = (xmin < atom.coord.x) ? xmin : atom.coord.x;
+			ymin = (ymin < atom.coord.y) ? ymin : atom.coord.y;
+			zmin = (zmin < atom.coord.z) ? zmin : atom.coord.z;
+			xmax = (xmax > atom.coord.x) ? xmax : atom.coord.x;
+			ymax = (ymax > atom.coord.y) ? ymax : atom.coord.y;
+			zmax = (zmax > atom.coord.z) ? zmax : atom.coord.z;
+		}
+		return [[xmin, ymin, zmin], [xmax, ymax, zmax], [xsum / cnt, ysum / cnt, zsum / cnt]];
 	};
 
 	return iview;
