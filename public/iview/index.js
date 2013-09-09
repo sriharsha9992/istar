@@ -446,35 +446,21 @@ $(function () {
 		CYS: nonpolarColor,
 		TRP: nonpolarColor,
 	};
-	var proteinObjects = {
-		'line': new THREE.Object3D(),
-		'stick': new THREE.Object3D(),
-		'ball and stick': new THREE.Object3D(),
-		'sphere': new THREE.Object3D(),
-	};
-	var ligandObjects = {
-		'line': new THREE.Object3D(),
-		'stick': new THREE.Object3D(),
-		'ball and stick': new THREE.Object3D(),
-		'sphere': new THREE.Object3D(),
-	};
+	var proteinObjects = {}, ligandObjects = {};
+	['line', 'stick', 'ball and stick', 'sphere'].forEach(function(key) {
+		proteinObjects[key] = new THREE.Object3D();
+		ligandObjects[key] = new THREE.Object3D();
+	});
 	var surfaces = {
 		1: undefined,
 		2: undefined,
 		3: undefined,
 		4: undefined,
 	};
-	var options = {
-		camera: 'perspective',
-		background: 'black',
-		effect: 'none',
-		colorProteinBy: 'atom',
-		protein: 'line',
-		ligand: 'stick',
-		surface: 'nothing',
-		opacity: '0.8',
-		wireframe: 'no',
-	};
+	var options = {};
+	['camera', 'background', 'effect', 'colorProteinBy', 'protein', 'ligand', 'surface', 'opacity', 'wireframe'].forEach(function(key) {
+		options[key] = $('#' + key + ' .active')[0].innerText;
+	});
 	var elemMapInPDBQT = {
 		HD: 'H',
 		A : 'C',
@@ -512,31 +498,31 @@ $(function () {
 		cslabNear = slabNear;
 		cslabFar = slabFar;
 	});
-	container.bind('DOMMouseScroll mousewheel', function (ev) { // Zoom
-		ev.preventDefault();
+	container.bind('DOMMouseScroll mousewheel', function (e) { // Zoom
+		e.preventDefault();
 		if (!scene) return;
 		var scaleFactor = (rotationGroup.position.z - CAMERA_Z) * 0.85;
-		if (ev.originalEvent.detail) { // Webkit
-			rotationGroup.position.z += scaleFactor * ev.originalEvent.detail * 0.1;
-		} else if (ev.originalEvent.wheelDelta) { // Firefox
-			rotationGroup.position.z -= scaleFactor * ev.originalEvent.wheelDelta * 0.0025;
+		if (e.originalEvent.detail) { // Webkit
+			rotationGroup.position.z += scaleFactor * e.originalEvent.detail * 0.1;
+		} else if (e.originalEvent.wheelDelta) { // Firefox
+			rotationGroup.position.z -= scaleFactor * e.originalEvent.wheelDelta * 0.0025;
 		}
 		render();
 	});
-	container.bind('mousemove touchmove', function (ev) {
-		ev.preventDefault();
+	container.bind('mousemove touchmove', function (e) {
+		e.preventDefault();
 		if (!scene) return;
 		if (!isDragging) return;
-		var x = ev.pageX, y = ev.pageY;
-		if (ev.originalEvent.targetTouches && ev.originalEvent.targetTouches[0]) {
-			x = ev.originalEvent.targetTouches[0].pageX;
-			y = ev.originalEvent.targetTouches[0].pageY;
+		var x = e.pageX, y = e.pageY;
+		if (e.originalEvent.targetTouches && e.originalEvent.targetTouches[0]) {
+			x = e.originalEvent.targetTouches[0].pageX;
+			y = e.originalEvent.targetTouches[0].pageY;
 		}
 		if (x === undefined) return;
 		var dx = (x - mouseStartX) / container.width();
 		var dy = (y - mouseStartY) / container.height();
 		if (!dx && !dy) return;
-		if (mouseButton == 3 && ev.shiftKey) { // Slab
+		if (mouseButton == 3 && e.shiftKey) { // Slab
 			slabNear = cslabNear + dx * 100;
 			slabFar = cslabFar + dy * 100;
 		} else if (mouseButton == 3) { // Translate
