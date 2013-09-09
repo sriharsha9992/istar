@@ -541,19 +541,19 @@ $(function () {
 		render();
 	});
 
-	hasCovalentBond = function (atom1, atom2) {
+	var hasCovalentBond = function (atom1, atom2) {
 		var r = covalentRadii[atom1.elem] + covalentRadii[atom2.elem];
 		return atom1.coord.distanceToSquared(atom2.coord) < 1.2 * r * r;
 	}
 
-	drawSphere = function (obj, atom, defaultRadius, forceDefault, scale) {
+	var drawSphere = function (obj, atom, defaultRadius, forceDefault, scale) {
 		var sphere = new THREE.Mesh(sphereGeometry, new THREE.MeshLambertMaterial({ color: atom.color }));
 		sphere.scale.x = sphere.scale.y = sphere.scale.z = forceDefault ? defaultRadius : (vdwRadii[atom.elem] || defaultRadius) * (scale ? scale : 1);
 		sphere.position = atom.coord;
 		obj.add(sphere);
 	};
 
-	drawAtomsAsSphere = function (obj, atoms, defaultRadius, forceDefault, scale) {
+	var drawAtomsAsSphere = function (obj, atoms, defaultRadius, forceDefault, scale) {
 		if (obj.children.length) {
 			var o = 0;
 			for (var i in atoms) {
@@ -568,7 +568,7 @@ $(function () {
 		}
 	};
 
-	drawCylinder = function (obj, p1, p2, radius, color) {
+	var drawCylinder = function (obj, p1, p2, radius, color) {
 		var cylinder = new THREE.Mesh(cylinderGeometry, new THREE.MeshLambertMaterial({ color: color }));
 		cylinder.position = p1.clone().add(p2).multiplyScalar(0.5);
 		cylinder.matrixAutoUpdate = false;
@@ -578,7 +578,7 @@ $(function () {
 		obj.add(cylinder);
 	};
 
-	drawBondsAsStick = function (obj, atoms, bondR, atomR, scale) {
+	var drawBondsAsStick = function (obj, atoms, bondR, atomR, scale) {
 		if (obj.children.length) {
 			var o = 0;
 			for (var i in atoms) {
@@ -609,7 +609,7 @@ $(function () {
 		}
 	};
 
-	drawBondsAsLine = function (obj, atoms) {
+	var drawBondsAsLine = function (obj, atoms) {
 		if (obj.children.length) {
 			obj.children[0].__webglActive = undefined;
 			obj.children[0].geometry.colorsNeedUpdate = true;
@@ -657,7 +657,7 @@ $(function () {
 		}
 	};
 
-	drawDashedLine = function (obj, p1, p2, color) {
+	var drawDashedLine = function (obj, p1, p2, color) {
 		var geo = new THREE.Geometry();
 		geo.vertices.push(p1);
 		geo.vertices.push(p2);
@@ -665,14 +665,14 @@ $(function () {
 		obj.add(new THREE.Line(geo, new THREE.LineDashedMaterial({ 'color': color, dashSize: 0.25, gapSize: 0.125 })));
 	};
 
-	colorByElement = function (atoms) {
+	var colorByElement = function (atoms) {
 		for (var i in atoms) {
 			var atom = atoms[i];
 			atom.color = atomColors[atom.elem] || defaultAtomColor;
 		}
 	}
 
-	rebuildScene = function (new_options) {
+	var rebuildScene = function (new_options) {
 		scene = new THREE.Scene();
 
 		var directionalLight = new THREE.DirectionalLight(0xFFFFFF, 1.2);
@@ -820,10 +820,10 @@ $(function () {
 		effect.setSize(container.width(), container.height());
 	};
 
-	parseBox = function (src) {
+	var parseBox = function (src) {
 	};
 
-	parseProtein = function (src) {
+	var parseProtein = function (src) {
 		protein = [];
 		var lines = src.split('\n');
 		for (var i in lines) {
@@ -906,7 +906,7 @@ $(function () {
 		}
 	};
 
-	parseLigand = function (src) {
+	var parseLigand = function (src) {
 		ligand = [];
 		var lines = src.split('\n'), rotors = [], start_ligand = true, start_frame;
 		for (var i in lines) {
@@ -955,7 +955,7 @@ $(function () {
 		}
 	};
 
-	render = function () {
+	var render = function () {
 		var center = rotationGroup.position.z - camera.position.z;
 		if (center < 1) center = 1;
 		camera.near = center + slabNear;
@@ -981,7 +981,7 @@ $(function () {
 		}
 	};
 
-	resetView = function () {
+	var resetView = function () {
 		var xmin = ymin = zmin =  9999;
 		var xmax = ymax = zmax = -9999;
 		for (var i in protein) {
@@ -1010,7 +1010,7 @@ $(function () {
 		render();
 	};
 
-	drawSurface = function (atoms, type, wireframe, opacity) {
+	var drawSurface = function (atoms, type, wireframe, opacity) {
 		if (!surfaces[type]) {
 			var ps = new ProteinSurface();
 			ps.initparm(getExtent(atoms), (type == 1) ? false : true);
@@ -1033,7 +1033,7 @@ $(function () {
 		modelGroup.add(mesh);
 	};
 
-	getExtent = function (atoms) {
+	var getExtent = function (atoms) {
 		var xmin = ymin = zmin = 9999;
 		var xmax = ymax = zmax = -9999;
 		var xsum = ysum = zsum = cnt = 0;
