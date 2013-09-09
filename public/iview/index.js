@@ -1021,7 +1021,7 @@ $(function () {
 	var drawSurface = function (atoms, type, wireframe, opacity) {
 		if (!surfaces[type]) {
 			var ps = new ProteinSurface();
-			ps.initparm(getExtent(atoms), (type == 1) ? false : true);
+			ps.initparm(getExtent(atoms), type >= 1);
 			ps.fillvoxels(atoms);
 			ps.buildboundary();
 			if (type == 4 || type == 2) ps.fastdistancemap();
