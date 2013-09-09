@@ -108,6 +108,14 @@ pre {
   font-size: 14px;
 }
 
+.btn-group {
+  display: inherit;
+}
+
+.btn-group > .btn {
+  float: none;
+}
+
 footer {
   padding-top: 10px;
   margin: 10px 0;
