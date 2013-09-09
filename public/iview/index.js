@@ -802,7 +802,7 @@ $(function () {
 		}
 
 		switch (options.surface) {
-			case 'vdw surface':
+			case 'Van der Waals surface':
 				drawSurface(stdAtoms, 1, options.wireframe, options.opacity);
 				break;
 			case 'solvent excluded surface':
