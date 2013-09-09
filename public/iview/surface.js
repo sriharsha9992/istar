@@ -45,8 +45,6 @@ var ProteinSurface = (function () {
 	};
 
 	this.getModel = function (atoms) {
-		var atomsToShow = new Object();
-		for (var i in atoms) atomsToShow[atoms[i].serial] = true;
 		var v = [], vertices = this.verts;
 		for (i = 0; i < vertnumber; i++) {
 			v.push(new THREE.Vector3(vertices[i].x, vertices[i].y, vertices[i].z));
@@ -58,7 +56,7 @@ var ProteinSurface = (function () {
 		for (var i = 0; i < facenumber; i++) {
 			var f = this.faces[i];
 			var a = vertices[f.a].atomid, b = vertices[f.b].atomid, c = vertices[f.c].atomid;
-			if (!atomsToShow[a] && !atomsToShow[b] && !atomsToShow[c]) continue;
+			if (!atoms[a] && !atoms[b] && !atoms[c]) continue;
 			f.vertexColors = [atoms[a].color, atoms[b].color, atoms[c].color];
 			faces.push(f);
 		}
