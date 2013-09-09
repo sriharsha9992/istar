@@ -823,6 +823,8 @@ $(function () {
 	var parseBox = function (src) {
 	};
 
+	var xmin = ymin = zmin =  9999;
+	var xmax = ymax = zmax = -9999;
 	var parseProtein = function (src) {
 		protein = [];
 		var lines = src.split('\n');
@@ -904,6 +906,15 @@ $(function () {
 				atom.solvent = true;
 			}
 		}
+		for (var i in protein) {
+			var atom = protein[i];
+			if (atom.coord.x < xmin) xmin = atom.coord.x;
+			if (atom.coord.y < ymin) ymin = atom.coord.y;
+			if (atom.coord.z < zmin) zmin = atom.coord.z;
+			if (atom.coord.x > xmax) xmax = atom.coord.x;
+			if (atom.coord.y > ymax) ymax = atom.coord.y;
+			if (atom.coord.z > zmax) zmax = atom.coord.z;
+		}
 	};
 
 	var parseLigand = function (src) {
@@ -953,6 +964,14 @@ $(function () {
 			ligand[r.x].bonds.push(r.y);
 			ligand[r.y].bonds.push(r.x);
 		}
+		var hits = $('#hits');
+		hits.html(['ZINC01234568', 'ZINC01234569', 'ZINC01234566', 'ZINC01234567'].map(function(id) {
+			return '<label class="btn btn-primary"><input type="radio">' + id + '</label>';
+		}).join(''));
+		$(':first', hits).addClass('active');
+		$('> .btn', hits).click(function(e) {
+			alert(e.currentTarget.innerText);
+		});
 	};
 
 	var render = function () {
@@ -982,17 +1001,6 @@ $(function () {
 	};
 
 	var resetView = function () {
-		var xmin = ymin = zmin =  9999;
-		var xmax = ymax = zmax = -9999;
-		for (var i in protein) {
-			var atom = protein[i];
-			if (atom.coord.x < xmin) xmin = atom.coord.x;
-			if (atom.coord.y < ymin) ymin = atom.coord.y;
-			if (atom.coord.z < zmin) zmin = atom.coord.z;
-			if (atom.coord.x > xmax) xmax = atom.coord.x;
-			if (atom.coord.y > ymax) ymax = atom.coord.y;
-			if (atom.coord.z > zmax) zmax = atom.coord.z;
-		}
 		var maxD = new THREE.Vector3(xmax, ymax, zmax).distanceTo(new THREE.Vector3(xmin, ymin, zmin));
 		slabNear = -maxD / 1.9;
 		slabFar = maxD / 3;
@@ -1034,8 +1042,6 @@ $(function () {
 	};
 
 	var getExtent = function (atoms) {
-		var xmin = ymin = zmin = 9999;
-		var xmax = ymax = zmax = -9999;
 		var xsum = ysum = zsum = cnt = 0;
 		for (var i in atoms) {
 			var atom = atoms[i];
@@ -1043,24 +1049,10 @@ $(function () {
 			xsum += atom.coord.x;
 			ysum += atom.coord.y;
 			zsum += atom.coord.z;
-			xmin = (xmin < atom.coord.x) ? xmin : atom.coord.x;
-			ymin = (ymin < atom.coord.y) ? ymin : atom.coord.y;
-			zmin = (zmin < atom.coord.z) ? zmin : atom.coord.z;
-			xmax = (xmax > atom.coord.x) ? xmax : atom.coord.x;
-			ymax = (ymax > atom.coord.y) ? ymax : atom.coord.y;
-			zmax = (zmax > atom.coord.z) ? zmax : atom.coord.z;
 		}
 		return [[xmin, ymin, zmin], [xmax, ymax, zmax], [xsum / cnt, ysum / cnt, zsum / cnt]];
 	};
 
-	var hits = $('#hits');
-	hits.html(['ZINC01234568', 'ZINC01234569', 'ZINC01234566', 'ZINC01234567'].map(function(id) {
-		return '<label class="btn btn-primary"><input type="radio">' + id + '</label>';
-	}).join(''));
-	$(':first', hits).addClass('active');
-	$('> .btn', hits).click(function(e) {
-		alert(e.currentTarget.innerText);
-	});
 	var path = '/idock/jobs/' + location.search.substr(1) + '/';
 	$.get(path + 'box.conf', function (box) {
 		parseBox(box);
