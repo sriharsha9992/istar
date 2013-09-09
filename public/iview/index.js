@@ -844,9 +844,9 @@ $(function () {
 					elem: line.substr(77, 2).replace(/ /g, '').toUpperCase(),
 					bonds: [],
 				};
+				if (atom.elem === 'H') continue;
 				var elem = elemMapInPDBQT[atom.elem];
 				if (elem) atom.elem = elem;
-				if (atom.elem === 'H') continue;
 				protein[atom.serial] = atom;
 			}
 		}
