@@ -391,13 +391,6 @@ $(function () {
 	var sphereRadius = 1.5;
 	var cylinderRadius = 0.4;
 	var lineWidth = 1.5;
-	var curveWidth = 3;
-	var helixSheetWidth = 1.3;
-	var coilWidth = 0.3;
-	var thickness = 0.4;
-	var axisDiv = 5;
-	var strandDiv = 6;
-	var tubeDiv = 8;
 	var fov = 20;
 	var backgroundColors = {
 		black: new THREE.Color(0x000000),
