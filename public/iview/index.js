@@ -8,19 +8,27 @@ $(function () {
 	});
 	var iv = new iview('iview');
 	var path = '/idock/jobs/' + location.search.substr(1) + '/';
-	$.get(path + 'box.conf', function (b) {
-		iv.parseBox(b);
-		$.get(path + 'receptor.pdbqt', function (p) {
-			iv.parseProtein(p);
+	$.get(path + 'box.conf', function (box) {
+		iv.parseBox(box);
+		$.get(path + 'receptor.pdbqt', function (protein) {
+			iv.parseProtein(protein);
 			$.ajax({
 				url: path + 'hits.pdbqt.gz',
 				mimeType: 'application/octet-stream; charset=x-user-defined',
-			}).done(function (data) {
-				var uint = new Uint8Array(data.length);
-				for (var i = 0, j = data.length; i < j; ++i) {
-					uint[i] = data.charCodeAt(i);
+			}).done(function (hits_gz_str) {
+				// Convert hits_gz_str to hits_gz_raw
+				var hits_gz_raw = new Uint8Array(hits_gz_str.length);
+				for (var i = 0, l = hits_gz_str.length; i < l; ++i) {
+					hits_gz_raw[i] = hits_gz_str.charCodeAt(i);
 				}
-				iv.parseLigand(String.fromCharCode.apply(null, new Zlib.Gunzip(uint).decompress()));
+				// Gunzip hits_gz_raw to hits_raw
+				var hits_raw = new Zlib.Gunzip(hits_gz_raw).decompress();
+				// Convert hits_raw to hits_str
+				var hits_str = '';
+				for (var i = 0, l = hits_raw.length; i < l; ++i) {
+					hits_str += String.fromCharCode(hits_raw[i]);
+				}
+				iv.parseLigand(hits_str);
 				iv.rebuildScene();
 				iv.resetView();
 			});
