@@ -841,7 +841,7 @@ $(function () {
 					insc: line.substr(26, 1),
 					coord: new THREE.Vector3(parseFloat(line.substr(30, 8)), parseFloat(line.substr(38, 8)), parseFloat(line.substr(46, 8))),
 					b: parseFloat(line.substr(60, 8)),
-					elem: line.substr(76, 2).replace(/ /g, '').toUpperCase(),
+					elem: line.substr(77, 2).replace(/ /g, '').toUpperCase(),
 					bonds: [],
 				};
 				var elem = elemMapInPDBQT[atom.elem];
