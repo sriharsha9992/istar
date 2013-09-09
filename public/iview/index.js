@@ -1091,7 +1091,6 @@ $(function () {
 	});
 
 	$('#exportCanvas').click(function (e) {
-		e.preventDefault();
 		render();
 		window.open(renderer.domElement.toDataURL('image/png'));
 	})
