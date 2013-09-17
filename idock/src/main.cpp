@@ -160,7 +160,7 @@ int main(int argc, char* argv[])
 	forest f(num_trees);
 	for (tree& t : f)
 	{
-		tp.push_back(packaged_task<void()>(bind(&tree::grow, std::ref(t), 5, rng())));
+		tp.push_back(packaged_task<void()>(bind(&tree::train, std::ref(t), 5, rng())));
 	}
 	tp.sync();
 	f.clear();
@@ -358,7 +358,7 @@ int main(int argc, char* argv[])
 						++x[(lig.heavy_atoms[i].rf << 2) + a.rf];
 					}
 				}
-				const float rfscore = f.predict(x);
+				const float rfscore = f(x);
 
 				// Dump ligand summaries to the csv file.
 				slice_csv << idx << ',' << lig_id << ',' << (r.f * lig.flexibility_penalty_factor) << ',' << (r.f * lig.num_heavy_atoms_inverse) << ',' << rfscore << ',' << mwt << ',' << lgp << ',' << ads << ',' << pds << ',' << hbd << ',' << hba << ',' << psa << ',' << chg << ',' << nrb << ',' << smiles << '\n';
@@ -562,7 +562,7 @@ int main(int argc, char* argv[])
 							++x[(lig.heavy_atoms[i].rf << 2) + a.rf];
 						}
 					}
-					r.rfscore = f.predict(x);
+					r.rfscore = f(x);
 					r.consensus = (r.rfscore + energy2pK * r.e_nd) * 0.5;
 				}
 
