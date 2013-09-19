@@ -157,10 +157,10 @@ int main(int argc, char* argv[])
 
 	// Build a random forest of 512 trees in parallel.
 	mt19937eng rng(seed);
-	forest f(num_trees);
+	forest f(num_trees, rng);
 	for (tree& t : f)
 	{
-		tp.push_back(packaged_task<void()>(bind(&tree::train, std::ref(t), 5, rng())));
+		tp.push_back(packaged_task<void()>(bind(&tree::train, std::ref(t), 5, f.u01_s)));
 	}
 	tp.sync();
 	f.clear();

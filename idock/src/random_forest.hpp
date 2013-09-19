@@ -4,6 +4,9 @@
 
 #include <vector>
 #include <array>
+#include <mutex>
+#include <boost/random.hpp>
+#include "common.hpp"
 using namespace std;
 
 class node
@@ -29,7 +32,7 @@ public:
 	static const size_t nv = 36;
 
 	/// Train an empty tree from bootstrap samples
-	int train(const size_t mtry, const size_t seed);
+	int train(const size_t mtry, const function<float()> u01);
 
 	/// Predict the y value of the given sample x
 	float operator()(const array<float, nv>& x) const;
@@ -45,13 +48,21 @@ private:
 class forest : public vector<tree>
 {
 public:
-	forest(const size_t nt);
+	/// Construct a random forest of empty trees
+	forest(const size_t nt, mt19937eng& rng);
 
 	/// Predict the y value of the given sample x
 	float operator()(const array<float, tree::nv>& x) const;
 
 	/// Clear node samples to save memory
 	void clear();
+
+	/// Get a random value from uniform distribution in [0, 1] in a thread safe manner
+	const function<float()> u01_s;
+private:
+	mt19937eng& rng;
+	boost::random::uniform_real_distribution<float> uniform_01;
+	mutable mutex m;
 };
 
 #endif

@@ -3,18 +3,16 @@
 #include <algorithm>
 #include "random_forest.hpp"
 
-int tree::train(const size_t mtry, const size_t seed)
+int tree::train(const size_t mtry, const function<float()> u01)
 {
 	// Create bootstrap samples with replacement
-	mt19937_64 rng(seed);
-	uniform_real_distribution<float> uniform_01(0, 1);
 	reserve(ns);
 	push_back(node());
 	node& root = front();
 	root.samples.resize(ns);
 	for (size_t& s : root.samples)
 	{
-		s = static_cast<size_t>(uniform_01(rng) * ns);
+		s = static_cast<size_t>(u01() * ns);
 	}
 
 	// Populate nodes
@@ -38,7 +36,7 @@ int tree::train(const size_t mtry, const size_t seed)
 		for (size_t i = 0; i < mtry; ++i)
 		{
 			// Randomly select a variable without replacement
-			const size_t j = static_cast<size_t>(uniform_01(rng) * (nv - i));
+			const size_t j = static_cast<size_t>(u01() * (nv - i));
 			const size_t v = mind[j];
 			mind[j] = mind[nv - i - 1];
 
@@ -104,7 +102,11 @@ void tree::clear()
 	}
 }
 
-forest::forest(const size_t nt) : vector<tree>(nt)
+forest::forest(const size_t nt, mt19937eng& rng) : vector<tree>(nt), rng(rng), uniform_01(0, 1), u01_s([&]()->float
+{
+	unique_lock<mutex> lock(m);
+	return uniform_01(rng);
+})
 {
 }
 
