@@ -381,7 +381,7 @@ $(function () {
 		 perspective: perspectiveCamera,
 		orthographic: orthographicCamera,
 	};
-	var camera = perspectiveCamera;
+	var camera;
 	var slabNear = -50; // relative to the center of rotationGroup
 	var slabFar  = +50;
 
@@ -461,6 +461,20 @@ $(function () {
 	['camera', 'background', 'effect', 'colorProteinBy', 'protein', 'ligand', 'surface', 'opacity', 'wireframe'].forEach(function(key) {
 		options[key] = $('#' + key + ' .active')[0].innerText;
 	});
+	var set = {
+		camera: function () {
+			camera = cameras[options.camera];
+		},
+		background: function () {
+			var backgroundColor = backgroundColors[options.background];
+			renderer.setClearColor(backgroundColor);
+			scene.fog = new THREE.Fog(backgroundColor, 100, 200);
+		},
+		effect: function () {
+			effect = effects[options.effect];
+			effect.setSize(container.width(), container.height());
+		},
+	};
 	var elemMapInPDBQT = {
 		HD: 'H',
 		A : 'C',
@@ -469,9 +483,23 @@ $(function () {
 		SA: 'S',
 	};
 	var isDragging, mouseButton, mouseStartX, mouseStartY, cq, cz, cp, cslabNear, cslabFar;
-	var scene, modelGroup, rotationGroup, options;
+	var options;
 	var protein, ligand, stdAtoms, hetAtoms;
 	var middB, spanB, spanBinv;
+
+	var scene = new THREE.Scene();
+	var directionalLight = new THREE.DirectionalLight(0xFFFFFF, 1.2);
+	directionalLight.position = new THREE.Vector3(0.2, 0.2, -1).normalize();
+	var ambientLight = new THREE.AmbientLight(0x202020);
+	var rotationGroup = new THREE.Object3D();
+	var modelGroup = new THREE.Object3D();
+	rotationGroup.add(modelGroup);
+	scene.add(directionalLight);
+	scene.add(ambientLight);
+	scene.add(rotationGroup);
+	Object.keys(set).forEach(function (key) {
+		set[key]();
+	});
 
 	$('body').bind('mouseup touchend', function (ev) {
 		isDragging = false;
@@ -544,7 +572,7 @@ $(function () {
 	var hasCovalentBond = function (atom1, atom2) {
 		var r = covalentRadii[atom1.elem] + covalentRadii[atom2.elem];
 		return atom1.coord.distanceToSquared(atom2.coord) < 1.2 * r * r;
-	}
+	};
 
 	var drawSphere = function (obj, atom, defaultRadius, forceDefault, scale) {
 		var sphere = new THREE.Mesh(sphereGeometry, new THREE.MeshLambertMaterial({ color: atom.color }));
@@ -670,34 +698,11 @@ $(function () {
 			var atom = atoms[i];
 			atom.color = atomColors[atom.elem] || defaultAtomColor;
 		}
-	}
+	};
 
 	var rebuildScene = function (new_options) {
-		scene = new THREE.Scene();
-
-		var directionalLight = new THREE.DirectionalLight(0xFFFFFF, 1.2);
-		directionalLight.position = new THREE.Vector3(0.2, 0.2, -1).normalize();
-		var ambientLight = new THREE.AmbientLight(0x202020);
-		scene.add(directionalLight);
-		scene.add(ambientLight);
-
-		var mp = modelGroup ? modelGroup.position : new THREE.Vector3();
-		var rz = rotationGroup ? rotationGroup.position.z : 0;
-		var rq = rotationGroup ? rotationGroup.quaternion : new THREE.Quaternion();
-		modelGroup = new THREE.Object3D();
-		modelGroup.position = mp;
-		rotationGroup = new THREE.Object3D();
-		rotationGroup.position.z = rz;
-		rotationGroup.quaternion = rq;
-		rotationGroup.add(modelGroup);
-		scene.add(rotationGroup);
 
 		$.extend(options, new_options);
-		camera = cameras[options.camera];
-
-		var background = backgroundColors[options.background];
-		renderer.setClearColor(background);
-		scene.fog = new THREE.Fog(background, 100, 200);
 
 		switch (options.colorProteinBy) {
 			case 'spectrum':
@@ -815,9 +820,6 @@ $(function () {
 				drawSurface(stdAtoms, 4, options.wireframe, options.opacity);
 				break;
 		}
-
-		effect = effects[options.effect];
-		effect.setSize(container.width(), container.height());
 	};
 
 	var parseBox = function (src) {
@@ -1081,7 +1083,17 @@ $(function () {
 		});
 	});
 
-	['camera', 'background', 'effect', 'colorProteinBy', 'protein', 'ligand', 'surface', 'opacity', 'wireframe'].forEach(function (opt) {
+	['camera', 'background', 'effect'].forEach(function (opt) {
+		$('#' + opt).click(function (e) {
+			var option = {};
+			option[opt] = e.target.innerText;
+			$.extend(options, option);
+			set[opt]();
+			render();
+		});
+	});
+
+	['colorProteinBy', 'protein', 'ligand', 'surface', 'opacity', 'wireframe'].forEach(function (opt) {
 		$('#' + opt).click(function (e) {
 			var options = {};
 			options[opt] = e.target.innerText;
