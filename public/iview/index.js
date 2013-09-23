@@ -450,8 +450,6 @@ $(function () {
 		'none': renderer,
 	};
 	var camera, effect;
-
-	// Default values
 	var proteinObjects = {}, ligandObjects = {};
 	['line', 'stick', 'ball and stick', 'sphere'].forEach(function(key) {
 		proteinObjects[key] = new THREE.Object3D();
@@ -487,17 +485,17 @@ $(function () {
 	var directionalLight = new THREE.DirectionalLight(0xFFFFFF, 1.2);
 	directionalLight.position = new THREE.Vector3(0.2, 0.2, -1).normalize();
 	var ambientLight = new THREE.AmbientLight(0x202020);
-	var rotationGroup = new THREE.Object3D();
-	var modelGroup = new THREE.Object3D();
-	rotationGroup.add(modelGroup);
+	var rot = new THREE.Object3D();
+	var mdl = new THREE.Object3D();
+	rot.add(mdl);
 	scene.add(directionalLight);
 	scene.add(ambientLight);
-	scene.add(rotationGroup);
+	scene.add(rot);
 	Object.keys(set).forEach(function (key) {
 		set[key]();
 	});
 
-	var slabNear = -50; // relative to the center of rotationGroup
+	var slabNear = -50; // relative to the center of rot
 	var slabFar  = +50;
 	var dragging, mouseButton, mouseStartX, mouseStartY, cq, cz, cp, cn, cf;
 	canvas.bind('contextmenu', function (e) {
@@ -518,9 +516,9 @@ $(function () {
 		mouseButton = e.which;
 		mouseStartX = x;
 		mouseStartY = y;
-		cq = rotationGroup.quaternion;
-		cz = rotationGroup.position.z;
-		cp = modelGroup.position.clone();
+		cq = rot.quaternion;
+		cz = rot.position.z;
+		cp = mdl.position.clone();
 		cn = slabNear;
 		cf = slabFar;
 	});
@@ -539,25 +537,25 @@ $(function () {
 			slabNear = cn + dx * 100;
 			slabFar  = cf + dy * 100;
 		} else if (mouseButton == 3) { // Translate
-			var scaleFactor = Math.max((rotationGroup.position.z - CAMERA_Z) * 0.85, 20);
-			modelGroup.position = cp.clone().add(new THREE.Vector3(-dx * scaleFactor, -dy * scaleFactor, 0).applyQuaternion(rotationGroup.quaternion.clone().inverse().normalize()));
+			var scaleFactor = Math.max((rot.position.z - CAMERA_Z) * 0.85, 20);
+			mdl.position = cp.clone().add(new THREE.Vector3(-dx * scaleFactor, -dy * scaleFactor, 0).applyQuaternion(rot.quaternion.clone().inverse().normalize()));
 		} else if (mouseButton == 2) { // Zoom
-			var scaleFactor = Math.max((rotationGroup.position.z - CAMERA_Z) * 0.85, 80);
-			rotationGroup.position.z = cz - dy * scaleFactor;
+			var scaleFactor = Math.max((rot.position.z - CAMERA_Z) * 0.85, 80);
+			rot.position.z = cz - dy * scaleFactor;
 		} else if (mouseButton == 1) { // Rotate
 			var r = Math.sqrt(dx * dx + dy * dy);
 			var rs = Math.sin(r * Math.PI) / r;
-			rotationGroup.quaternion = new THREE.Quaternion(1, 0, 0, 0).multiply(new THREE.Quaternion(Math.cos(r * Math.PI), 0, rs * dx, rs * dy)).multiply(cq);
+			rot.quaternion = new THREE.Quaternion(1, 0, 0, 0).multiply(new THREE.Quaternion(Math.cos(r * Math.PI), 0, rs * dx, rs * dy)).multiply(cq);
 		}
 		render();
 	});
 	canvas.bind('mousewheel', function (e) {
 		e.preventDefault();
-		var scaleFactor = (rotationGroup.position.z - CAMERA_Z) * 0.85;
+		var scaleFactor = (rot.position.z - CAMERA_Z) * 0.85;
 		if (e.originalEvent.detail) { // Webkit
-			rotationGroup.position.z += scaleFactor * e.originalEvent.detail * 0.1;
+			rot.position.z += scaleFactor * e.originalEvent.detail * 0.1;
 		} else if (e.originalEvent.wheelDelta) { // Firefox
-			rotationGroup.position.z -= scaleFactor * e.originalEvent.wheelDelta * 0.0025;
+			rot.position.z -= scaleFactor * e.originalEvent.wheelDelta * 0.0025;
 		}
 		render();
 	});
@@ -769,7 +767,7 @@ $(function () {
 				drawAtomsAsSphere(proteinObj, protein, sphereRadius);
 				break;
 		}
-		modelGroup.add(proteinObj);
+		mdl.add(proteinObj);
 
 		var ligandObj = ligandObjects[options.ligand];
 		switch (options.ligand) {
@@ -786,7 +784,7 @@ $(function () {
 				drawAtomsAsSphere(ligandObj, ligand, sphereRadius);
 				break;
 		}
-		modelGroup.add(ligandObj);
+		mdl.add(ligandObj);
 
 		options.opacity = parseFloat(options.opacity);
 
@@ -970,7 +968,7 @@ $(function () {
 	};
 
 	var render = function () {
-		var center = rotationGroup.position.z - camera.position.z;
+		var center = rot.position.z - camera.position.z;
 		if (center < 1) center = 1;
 		camera.near = center + slabNear;
 		if (camera.near < 1) camera.near = 1;
@@ -999,8 +997,8 @@ $(function () {
 		var maxD = new THREE.Vector3(xmax, ymax, zmax).distanceTo(new THREE.Vector3(xmin, ymin, zmin));
 		slabNear = -maxD / 1.9;
 		slabFar = maxD / 3;
-		rotationGroup.position.z = maxD * 0.08 / Math.tan(Math.PI / 180.0 * camera.fov * 0.5) - 150;
-		rotationGroup.quaternion = new THREE.Quaternion(1, 0, 0, 0);
+		rot.position.z = maxD * 0.08 / Math.tan(Math.PI / 180.0 * camera.fov * 0.5) - 150;
+		rot.quaternion = new THREE.Quaternion(1, 0, 0, 0);
 		var xsum = ysum = zsum = cnt = 0;
 		for (var i in ligand) {
 			var atom = ligand[i];
@@ -1009,7 +1007,7 @@ $(function () {
 			zsum += atom.coord.z;
 			++cnt;
 		}
-		modelGroup.position = new THREE.Vector3(xsum, ysum, zsum).multiplyScalar(-1 / cnt);
+		mdl.position = new THREE.Vector3(xsum, ysum, zsum).multiplyScalar(-1 / cnt);
 		render();
 	};
 
@@ -1033,7 +1031,7 @@ $(function () {
 			transparent: true,
 		}));
 		mesh.doubleSided = true;
-		modelGroup.add(mesh);
+		mdl.add(mesh);
 	};
 
 	var getExtent = function (atoms) {
