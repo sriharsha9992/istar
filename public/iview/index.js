@@ -497,12 +497,12 @@ $(function () {
 
 	var sn = -50;
 	var sf =  50;
-	var dragging, wh, cx, cy, cq, cz, cp, cn, cf;
+	var dg, wh, cx, cy, cq, cz, cp, cn, cf;
 	canvas.bind('contextmenu', function (e) {
 		e.preventDefault();
 	});
 	canvas.bind('mouseup touchend', function (e) {
-		dragging = false;
+		dg = false;
 	});
 	canvas.bind('mousedown touchstart', function (e) {
 		var x = e.pageX;
@@ -512,7 +512,7 @@ $(function () {
 			y = e.originalEvent.targetTouches[0].pageY;
 		}
 		if (x === undefined) return;
-		dragging = true;
+		dg = true;
 		wh = e.which;
 		cx = x;
 		cy = y;
@@ -523,7 +523,7 @@ $(function () {
 		cf = sf;
 	});
 	canvas.bind('mousemove touchmove', function (e) {
-		if (!dragging) return;
+		if (!dg) return;
 		var x = e.pageX;
 		var y = e.pageY;
 		if (e.originalEvent.targetTouches && e.originalEvent.targetTouches[0]) {
