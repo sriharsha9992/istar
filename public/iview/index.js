@@ -427,7 +427,7 @@ $(function () {
 		SA: 'S',
 	};
 
-	var container = $('#iview');
+	var container = $('canvas');
 	var renderer = new THREE.WebGLRenderer({
 		canvas: container.get(0),
 		antialias: true,
