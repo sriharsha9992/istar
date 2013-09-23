@@ -497,7 +497,7 @@ $(function () {
 
 	var sn = -50;
 	var sf =  50;
-	var dragging, mouseButton, mouseStartX, mouseStartY, cq, cz, cp, cn, cf;
+	var dragging, wh, cx, cy, cq, cz, cp, cn, cf;
 	canvas.bind('contextmenu', function (e) {
 		e.preventDefault();
 	});
@@ -513,9 +513,9 @@ $(function () {
 		}
 		if (x === undefined) return;
 		dragging = true;
-		mouseButton = e.which;
-		mouseStartX = x;
-		mouseStartY = y;
+		wh = e.which;
+		cx = x;
+		cy = y;
 		cq = rot.quaternion;
 		cz = rot.position.z;
 		cp = mdl.position.clone();
@@ -531,18 +531,18 @@ $(function () {
 			y = e.originalEvent.targetTouches[0].pageY;
 		}
 		if (x === undefined) return;
-		var dx = (x - mouseStartX) / canvas.width();
-		var dy = (y - mouseStartY) / canvas.height();
-		if (mouseButton == 3 && e.shiftKey) { // Slab
+		var dx = (x - cx) / canvas.width();
+		var dy = (y - cy) / canvas.height();
+		if (wh == 3 && e.shiftKey) { // Slab
 			sn = cn + dx * 100;
 			sf = cf + dy * 100;
-		} else if (mouseButton == 3) { // Translate
+		} else if (wh == 3) { // Translate
 			var scaleFactor = Math.max((rot.position.z - CAMERA_Z) * 0.85, 20);
 			mdl.position = cp.clone().add(new THREE.Vector3(-dx * scaleFactor, -dy * scaleFactor, 0).applyQuaternion(rot.quaternion.clone().inverse().normalize()));
-		} else if (mouseButton == 2) { // Zoom
+		} else if (wh == 2) { // Zoom
 			var scaleFactor = Math.max((rot.position.z - CAMERA_Z) * 0.85, 80);
 			rot.position.z = cz - dy * scaleFactor;
-		} else if (mouseButton == 1) { // Rotate
+		} else if (wh == 1) { // Rotate
 			var r = Math.sqrt(dx * dx + dy * dy);
 			var rs = Math.sin(r * Math.PI) / r;
 			rot.quaternion = new THREE.Quaternion(1, 0, 0, 0).multiply(new THREE.Quaternion(Math.cos(r * Math.PI), 0, rs * dx, rs * dy)).multiply(cq);
