@@ -495,8 +495,8 @@ $(function () {
 		set[key]();
 	});
 
-	var slabNear = -50; // relative to the center of rot
-	var slabFar  = +50;
+	var sn = -50;
+	var sf =  50;
 	var dragging, mouseButton, mouseStartX, mouseStartY, cq, cz, cp, cn, cf;
 	canvas.bind('contextmenu', function (e) {
 		e.preventDefault();
@@ -519,8 +519,8 @@ $(function () {
 		cq = rot.quaternion;
 		cz = rot.position.z;
 		cp = mdl.position.clone();
-		cn = slabNear;
-		cf = slabFar;
+		cn = sn;
+		cf = sf;
 	});
 	canvas.bind('mousemove touchmove', function (e) {
 		if (!dragging) return;
@@ -534,8 +534,8 @@ $(function () {
 		var dx = (x - mouseStartX) / canvas.width();
 		var dy = (y - mouseStartY) / canvas.height();
 		if (mouseButton == 3 && e.shiftKey) { // Slab
-			slabNear = cn + dx * 100;
-			slabFar  = cf + dy * 100;
+			sn = cn + dx * 100;
+			sf = cf + dy * 100;
 		} else if (mouseButton == 3) { // Translate
 			var scaleFactor = Math.max((rot.position.z - CAMERA_Z) * 0.85, 20);
 			mdl.position = cp.clone().add(new THREE.Vector3(-dx * scaleFactor, -dy * scaleFactor, 0).applyQuaternion(rot.quaternion.clone().inverse().normalize()));
@@ -810,6 +810,8 @@ $(function () {
 			case 'molecular surface':
 				drawSurface(stdAtoms, 4, options.wireframe, options.opacity);
 				break;
+			case 'nothing':
+				break;
 		}
 	};
 
@@ -970,9 +972,9 @@ $(function () {
 	var render = function () {
 		var center = rot.position.z - camera.position.z;
 		if (center < 1) center = 1;
-		camera.near = center + slabNear;
+		camera.near = center + sn;
 		if (camera.near < 1) camera.near = 1;
-		camera.far = center + slabFar;
+		camera.far = center + sf;
 		if (camera.near + 1 > camera.far) camera.far = camera.near + 1;
 		if (camera instanceof THREE.PerspectiveCamera) {
 			camera.fov = fov;
@@ -995,8 +997,8 @@ $(function () {
 
 	var resetView = function () {
 		var maxD = new THREE.Vector3(xmax, ymax, zmax).distanceTo(new THREE.Vector3(xmin, ymin, zmin));
-		slabNear = -maxD / 1.9;
-		slabFar = maxD / 3;
+		sn = -maxD / 1.9;
+		sf =  maxD / 3;
 		rot.position.z = maxD * 0.08 / Math.tan(Math.PI / 180.0 * camera.fov * 0.5) - 150;
 		rot.quaternion = new THREE.Quaternion(1, 0, 0, 0);
 		var xsum = ysum = zsum = cnt = 0;
