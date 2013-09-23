@@ -427,9 +427,9 @@ $(function () {
 		SA: 'S',
 	};
 
-	var container = $('canvas');
+	var canvas = $('canvas');
 	var renderer = new THREE.WebGLRenderer({
-		canvas: container.get(0),
+		canvas: canvas.get(0),
 		antialias: true,
 	});
 	var effects = {
@@ -438,7 +438,7 @@ $(function () {
 		'none': renderer,
 	};
 	var effect;
-	var perspectiveCamera = new THREE.PerspectiveCamera(20, container.width() / container.height(), 1, 800);
+	var perspectiveCamera = new THREE.PerspectiveCamera(20, canvas.width() / canvas.height(), 1, 800);
 	perspectiveCamera.position = new THREE.Vector3(0, 0, CAMERA_Z);
 	perspectiveCamera.lookAt(new THREE.Vector3(0, 0, 0));
 	var orthographicCamera = new THREE.OrthographicCamera();
@@ -479,7 +479,7 @@ $(function () {
 		},
 		effect: function () {
 			effect = effects[options.effect];
-			effect.setSize(container.width(), container.height());
+			effect.setSize(canvas.width(), canvas.height());
 		},
 	};
 	var isDragging, mouseButton, mouseStartX, mouseStartY, cq, cz, cp, cslabNear, cslabFar;
@@ -504,10 +504,10 @@ $(function () {
 	$('body').bind('mouseup touchend', function (ev) {
 		isDragging = false;
 	});
-	container.bind('contextmenu', function (ev) {
+	canvas.bind('contextmenu', function (ev) {
 		ev.preventDefault();
 	});
-	container.bind('mousedown touchstart', function (ev) {
+	canvas.bind('mousedown touchstart', function (ev) {
 		ev.preventDefault();
 		if (!scene) return;
 		var x = ev.pageX, y = ev.pageY;
@@ -526,7 +526,7 @@ $(function () {
 		cslabNear = slabNear;
 		cslabFar = slabFar;
 	});
-	container.bind('DOMMouseScroll mousewheel', function (e) { // Zoom
+	canvas.bind('DOMMouseScroll mousewheel', function (e) { // Zoom
 		e.preventDefault();
 		if (!scene) return;
 		var scaleFactor = (rotationGroup.position.z - CAMERA_Z) * 0.85;
@@ -537,7 +537,7 @@ $(function () {
 		}
 		render();
 	});
-	container.bind('mousemove touchmove', function (e) {
+	canvas.bind('mousemove touchmove', function (e) {
 		e.preventDefault();
 		if (!scene) return;
 		if (!isDragging) return;
@@ -547,8 +547,8 @@ $(function () {
 			y = e.originalEvent.targetTouches[0].pageY;
 		}
 		if (x === undefined) return;
-		var dx = (x - mouseStartX) / container.width();
-		var dy = (y - mouseStartY) / container.height();
+		var dx = (x - mouseStartX) / canvas.width();
+		var dy = (y - mouseStartY) / canvas.height();
 		if (!dx && !dy) return;
 		if (mouseButton == 3 && e.shiftKey) { // Slab
 			slabNear = cslabNear + dx * 100;
@@ -988,7 +988,7 @@ $(function () {
 		} else {
 			camera.right = center * Math.tan(Math.PI / 180 * fov);
 			camera.left = -camera.right;
-			camera.top = camera.right / (container.width() / container.height());
+			camera.top = camera.right / (canvas.width() / canvas.height());
 			camera.bottom = -camera.top;
 		}
 		camera.updateProjectionMatrix();
