@@ -428,6 +428,18 @@ $(function () {
 	};
 
 	var canvas = $('canvas');
+	canvas.width('100%');
+	canvas.height('800px');
+	var perspectiveCamera = new THREE.PerspectiveCamera(20, canvas.width() / canvas.height(), 1, 800);
+	perspectiveCamera.position = new THREE.Vector3(0, 0, CAMERA_Z);
+	perspectiveCamera.lookAt(new THREE.Vector3(0, 0, 0));
+	var orthographicCamera = new THREE.OrthographicCamera();
+	orthographicCamera.position = new THREE.Vector3(0, 0, CAMERA_Z);
+	orthographicCamera.lookAt(new THREE.Vector3(0, 0, 0));
+	var cameras = {
+		 perspective:  perspectiveCamera,
+		orthographic: orthographicCamera,
+	};
 	var renderer = new THREE.WebGLRenderer({
 		canvas: canvas.get(0),
 		antialias: true,
@@ -437,26 +449,13 @@ $(function () {
 		'parallax barrier': new THREE.ParallaxBarrierEffect(renderer),
 		'none': renderer,
 	};
-	var effect;
-	var perspectiveCamera = new THREE.PerspectiveCamera(20, canvas.width() / canvas.height(), 1, 800);
-	perspectiveCamera.position = new THREE.Vector3(0, 0, CAMERA_Z);
-	perspectiveCamera.lookAt(new THREE.Vector3(0, 0, 0));
-	var orthographicCamera = new THREE.OrthographicCamera();
-	orthographicCamera.position = new THREE.Vector3(0, 0, CAMERA_Z);
-	orthographicCamera.lookAt(new THREE.Vector3(0, 0, 0));
-	var cameras = {
-		 perspective: perspectiveCamera,
-		orthographic: orthographicCamera,
-	};
-	var camera;
-	var slabNear = -50; // relative to the center of rotationGroup
-	var slabFar  = +50;
+	var camera, effect;
 
 	// Default values
 	var proteinObjects = {}, ligandObjects = {};
 	['line', 'stick', 'ball and stick', 'sphere'].forEach(function(key) {
 		proteinObjects[key] = new THREE.Object3D();
-		ligandObjects[key] = new THREE.Object3D();
+		 ligandObjects[key] = new THREE.Object3D();
 	});
 	var surfaces = {
 		1: undefined,
@@ -482,11 +481,8 @@ $(function () {
 			effect.setSize(canvas.width(), canvas.height());
 		},
 	};
-	var isDragging, mouseButton, mouseStartX, mouseStartY, cq, cz, cp, cslabNear, cslabFar;
-	var options;
 	var protein, ligand, stdAtoms, hetAtoms;
 	var middB, spanB, spanBinv;
-
 	var scene = new THREE.Scene();
 	var directionalLight = new THREE.DirectionalLight(0xFFFFFF, 1.2);
 	directionalLight.position = new THREE.Vector3(0.2, 0.2, -1).normalize();
@@ -501,47 +497,37 @@ $(function () {
 		set[key]();
 	});
 
-	$('body').bind('mouseup touchend', function (ev) {
-		isDragging = false;
+	var slabNear = -50; // relative to the center of rotationGroup
+	var slabFar  = +50;
+	var dragging, mouseButton, mouseStartX, mouseStartY, cq, cz, cp, cn, cf;
+	canvas.bind('contextmenu', function (e) {
+		e.preventDefault();
 	});
-	canvas.bind('contextmenu', function (ev) {
-		ev.preventDefault();
+	canvas.bind('mouseup touchend', function (e) {
+		dragging = false;
 	});
-	canvas.bind('mousedown touchstart', function (ev) {
-		ev.preventDefault();
-		if (!scene) return;
-		var x = ev.pageX, y = ev.pageY;
-		if (ev.originalEvent.targetTouches && ev.originalEvent.targetTouches[0]) {
-			x = ev.originalEvent.targetTouches[0].pageX;
-			y = ev.originalEvent.targetTouches[0].pageY;
+	canvas.bind('mousedown touchstart', function (e) {
+		var x = e.pageX;
+		var y = e.pageY;
+		if (e.originalEvent.targetTouches && e.originalEvent.targetTouches[0]) {
+			x = e.originalEvent.targetTouches[0].pageX;
+			y = e.originalEvent.targetTouches[0].pageY;
 		}
 		if (x === undefined) return;
-		isDragging = true;
-		mouseButton = ev.which;
+		dragging = true;
+		mouseButton = e.which;
 		mouseStartX = x;
 		mouseStartY = y;
 		cq = rotationGroup.quaternion;
 		cz = rotationGroup.position.z;
 		cp = modelGroup.position.clone();
-		cslabNear = slabNear;
-		cslabFar = slabFar;
-	});
-	canvas.bind('DOMMouseScroll mousewheel', function (e) { // Zoom
-		e.preventDefault();
-		if (!scene) return;
-		var scaleFactor = (rotationGroup.position.z - CAMERA_Z) * 0.85;
-		if (e.originalEvent.detail) { // Webkit
-			rotationGroup.position.z += scaleFactor * e.originalEvent.detail * 0.1;
-		} else if (e.originalEvent.wheelDelta) { // Firefox
-			rotationGroup.position.z -= scaleFactor * e.originalEvent.wheelDelta * 0.0025;
-		}
-		render();
+		cn = slabNear;
+		cf = slabFar;
 	});
 	canvas.bind('mousemove touchmove', function (e) {
-		e.preventDefault();
-		if (!scene) return;
-		if (!isDragging) return;
-		var x = e.pageX, y = e.pageY;
+		if (!dragging) return;
+		var x = e.pageX;
+		var y = e.pageY;
 		if (e.originalEvent.targetTouches && e.originalEvent.targetTouches[0]) {
 			x = e.originalEvent.targetTouches[0].pageX;
 			y = e.originalEvent.targetTouches[0].pageY;
@@ -549,22 +535,29 @@ $(function () {
 		if (x === undefined) return;
 		var dx = (x - mouseStartX) / canvas.width();
 		var dy = (y - mouseStartY) / canvas.height();
-		if (!dx && !dy) return;
 		if (mouseButton == 3 && e.shiftKey) { // Slab
-			slabNear = cslabNear + dx * 100;
-			slabFar = cslabFar + dy * 100;
+			slabNear = cn + dx * 100;
+			slabFar  = cf + dy * 100;
 		} else if (mouseButton == 3) { // Translate
-			var scaleFactor = (rotationGroup.position.z - CAMERA_Z) * 0.85;
-			if (scaleFactor < 20) scaleFactor = 20;
+			var scaleFactor = Math.max((rotationGroup.position.z - CAMERA_Z) * 0.85, 20);
 			modelGroup.position = cp.clone().add(new THREE.Vector3(-dx * scaleFactor, -dy * scaleFactor, 0).applyQuaternion(rotationGroup.quaternion.clone().inverse().normalize()));
 		} else if (mouseButton == 2) { // Zoom
-			var scaleFactor = (rotationGroup.position.z - CAMERA_Z) * 0.85;
-			if (scaleFactor < 80) scaleFactor = 80;
+			var scaleFactor = Math.max((rotationGroup.position.z - CAMERA_Z) * 0.85, 80);
 			rotationGroup.position.z = cz - dy * scaleFactor;
 		} else if (mouseButton == 1) { // Rotate
 			var r = Math.sqrt(dx * dx + dy * dy);
 			var rs = Math.sin(r * Math.PI) / r;
 			rotationGroup.quaternion = new THREE.Quaternion(1, 0, 0, 0).multiply(new THREE.Quaternion(Math.cos(r * Math.PI), 0, rs * dx, rs * dy)).multiply(cq);
+		}
+		render();
+	});
+	canvas.bind('mousewheel', function (e) {
+		e.preventDefault();
+		var scaleFactor = (rotationGroup.position.z - CAMERA_Z) * 0.85;
+		if (e.originalEvent.detail) { // Webkit
+			rotationGroup.position.z += scaleFactor * e.originalEvent.detail * 0.1;
+		} else if (e.originalEvent.wheelDelta) { // Firefox
+			rotationGroup.position.z -= scaleFactor * e.originalEvent.wheelDelta * 0.0025;
 		}
 		render();
 	});
