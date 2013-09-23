@@ -1087,11 +1087,11 @@ $(function () {
 			options[opt] = e.target.innerText;
 			rebuildScene(options);
 			render();
-		})
+		});
 	});
 
 	$('#exportCanvas').click(function (e) {
 		render();
 		window.open(renderer.domElement.toDataURL('image/png'));
-	})
+	});
 });
