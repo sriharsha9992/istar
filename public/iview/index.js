@@ -302,111 +302,6 @@ $(function () {
 		FM: new THREE.Color(0xB31FBA),
 	};
 	var defaultAtomColor = new THREE.Color(0xCCCCCC);
-	var residueColors = {
-		ALA: new THREE.Color(0xC8C8C8),
-		ARG: new THREE.Color(0x145AFF),
-		ASN: new THREE.Color(0x00DCDC),
-		ASP: new THREE.Color(0xE60A0A),
-		CYS: new THREE.Color(0xE6E600),
-		GLN: new THREE.Color(0x00DCDC),
-		GLU: new THREE.Color(0xE60A0A),
-		GLY: new THREE.Color(0xEBEBEB),
-		HIS: new THREE.Color(0x8282D2),
-		ILE: new THREE.Color(0x0F820F),
-		LEU: new THREE.Color(0x0F820F),
-		LYS: new THREE.Color(0x145AFF),
-		MET: new THREE.Color(0xE6E600),
-		PHE: new THREE.Color(0x3232AA),
-		PRO: new THREE.Color(0xDC9682),
-		SER: new THREE.Color(0xFA9600),
-		THR: new THREE.Color(0xFA9600),
-		TRP: new THREE.Color(0xB45AB4),
-		TYR: new THREE.Color(0x3232AA),
-		VAL: new THREE.Color(0x0F820F),
-		ASX: new THREE.Color(0xFF69B4),
-		GLX: new THREE.Color(0xFF69B4),
-	};
-	var defaultResidueColor = new THREE.Color(0xBEA06E);
-	var polarColor = new THREE.Color(0xCC0000);
-	var nonpolarColor = new THREE.Color(0x00CCCC);
-	var polarityColors = {
-		ARG: polarColor,
-		HIS: polarColor,
-		LYS: polarColor,
-		ASP: polarColor,
-		GLU: polarColor,
-		SER: polarColor,
-		THR: polarColor,
-		ASN: polarColor,
-		GLN: polarColor,
-		TYR: polarColor,
-		GLY: nonpolarColor,
-		PRO: nonpolarColor,
-		ALA: nonpolarColor,
-		VAL: nonpolarColor,
-		LEU: nonpolarColor,
-		ILE: nonpolarColor,
-		MET: nonpolarColor,
-		PHE: nonpolarColor,
-		CYS: nonpolarColor,
-		TRP: nonpolarColor,
-	};
-	var stdChainColors = {
-		A: new THREE.Color(0xC0D0FF),
-		B: new THREE.Color(0xB0FFB0),
-		C: new THREE.Color(0xFFC0C8),
-		D: new THREE.Color(0xFFFF80),
-		E: new THREE.Color(0xFFC0FF),
-		F: new THREE.Color(0xB0F0F0),
-		G: new THREE.Color(0xFFD070),
-		H: new THREE.Color(0xF08080),
-		I: new THREE.Color(0xF5DEB3),
-		J: new THREE.Color(0x00BFFF),
-		K: new THREE.Color(0xCD5C5C),
-		L: new THREE.Color(0x66CDAA),
-		M: new THREE.Color(0x9ACD32),
-		N: new THREE.Color(0xEE82EE),
-		O: new THREE.Color(0x00CED1),
-		P: new THREE.Color(0x00FF7F),
-		Q: new THREE.Color(0x3CB371),
-		R: new THREE.Color(0x00008B),
-		S: new THREE.Color(0xBDB76B),
-		T: new THREE.Color(0x006400),
-		U: new THREE.Color(0x800000),
-		V: new THREE.Color(0x808000),
-		W: new THREE.Color(0x800080),
-		X: new THREE.Color(0x008080),
-		Y: new THREE.Color(0xB8860B),
-		Z: new THREE.Color(0xB22222),
-	};
-	var hetChainColors = {
-		A: new THREE.Color(0x90A0CF),
-		B: new THREE.Color(0x80CF98),
-		C: new THREE.Color(0xCF90B0),
-		D: new THREE.Color(0xCFCF70),
-		E: new THREE.Color(0xCF90CF),
-		F: new THREE.Color(0x80C0C0),
-		G: new THREE.Color(0xCFA060),
-		H: new THREE.Color(0xC05070),
-		I: new THREE.Color(0xC5AE83),
-		J: new THREE.Color(0x00A7CF),
-		K: new THREE.Color(0xB54C4C),
-		L: new THREE.Color(0x56B592),
-		M: new THREE.Color(0x8AB52A),
-		N: new THREE.Color(0xBE72BE),
-		O: new THREE.Color(0x00B6A1),
-		P: new THREE.Color(0x00CF6F),
-		Q: new THREE.Color(0x349B61),
-		R: new THREE.Color(0x0000BB),
-		S: new THREE.Color(0xA59F5B),
-		T: new THREE.Color(0x009400),
-		U: new THREE.Color(0xB00000),
-		V: new THREE.Color(0xB0B000),
-		W: new THREE.Color(0xB000B0),
-		X: new THREE.Color(0x00B0B0),
-		Y: new THREE.Color(0xE8B613),
-		Z: new THREE.Color(0xC23232),
-	};
 	var backgroundColors = {
 		black: new THREE.Color(0x000000),
 		 grey: new THREE.Color(0xCCCCCC),
@@ -449,7 +344,6 @@ $(function () {
 		'parallax barrier': new THREE.ParallaxBarrierEffect(renderer),
 		'none': renderer,
 	};
-	var camera, effect;
 	var proteinObjects = {}, ligandObjects = {};
 	['line', 'stick', 'ball and stick', 'sphere'].forEach(function(key) {
 		proteinObjects[key] = new THREE.Object3D();
@@ -462,9 +356,10 @@ $(function () {
 		4: undefined,
 	};
 	var options = {};
-	['camera', 'background', 'effect', 'colorProteinBy', 'protein', 'ligand', 'surface', 'opacity', 'wireframe'].forEach(function(key) {
+	['camera', 'background', 'effect', 'protein', 'ligand', 'surface', 'opacity', 'wireframe'].forEach(function(key) {
 		options[key] = $('#' + key + ' .active')[0].innerText;
 	});
+	var camera, effect;
 	var set = {
 		camera: function () {
 			camera = cameras[options.camera];
@@ -480,7 +375,6 @@ $(function () {
 		},
 	};
 	var protein, ligand, stdAtoms, hetAtoms;
-	var middB, spanB, spanBinv;
 	var scene = new THREE.Scene();
 	var directionalLight = new THREE.DirectionalLight(0xFFFFFF, 1.2);
 	directionalLight.position = new THREE.Vector3(0.2, 0.2, -1).normalize();
@@ -573,17 +467,8 @@ $(function () {
 	};
 
 	var drawAtomsAsSphere = function (obj, atoms, defaultRadius, forceDefault, scale) {
-		if (obj.children.length) {
-			var o = 0;
-			for (var i in atoms) {
-				var sphere = obj.children[o++];
-				sphere.__webglActive = undefined;
-				sphere.material.color = atoms[i].color;
-			}
-		} else {
-			for (var i in atoms) {
-				drawSphere(obj, atoms[i], defaultRadius, forceDefault, scale);
-			}
+		for (var i in atoms) {
+			drawSphere(obj, atoms[i], defaultRadius, forceDefault, scale);
 		}
 	};
 
@@ -598,80 +483,39 @@ $(function () {
 	};
 
 	var drawBondsAsStick = function (obj, atoms, bondR, atomR, scale) {
-		if (obj.children.length) {
-			var o = 0;
-			for (var i in atoms) {
-				var atom1 = atoms[i];
-				for (var j in atom1.bonds) {
-					var atom2 = atoms[atom1.bonds[j]];
-					if (atom2.serial < atom1.serial) continue;
-					obj.children[o].__webglActive = undefined;
-					obj.children[o++].material.color = atom1.color;
-					obj.children[o].__webglActive = undefined;
-					obj.children[o++].material.color = atom2.color;
-				}
-				obj.children[o].__webglActive = undefined;
-				obj.children[o++].material.color = atom1.color;
+		for (var i in atoms) {
+			var atom1 = atoms[i];
+			for (var j in atom1.bonds) {
+				var atom2 = atoms[atom1.bonds[j]];
+				if (atom2.serial < atom1.serial) continue;
+				var mp = atom1.coord.clone().add(atom2.coord).multiplyScalar(0.5);
+				drawCylinder(obj, atom1.coord, mp, bondR, atom1.color);
+				drawCylinder(obj, atom2.coord, mp, bondR, atom2.color);
 			}
-		} else {
-			for (var i in atoms) {
-				var atom1 = atoms[i];
-				for (var j in atom1.bonds) {
-					var atom2 = atoms[atom1.bonds[j]];
-					if (atom2.serial < atom1.serial) continue;
-					var mp = atom1.coord.clone().add(atom2.coord).multiplyScalar(0.5);
-					drawCylinder(obj, atom1.coord, mp, bondR, atom1.color);
-					drawCylinder(obj, atom2.coord, mp, bondR, atom2.color);
-				}
-				drawSphere(obj, atom1, atomR, !scale, scale);
-			}
+			drawSphere(obj, atom1, atomR, !scale, scale);
 		}
 	};
 
 	var drawBondsAsLine = function (obj, atoms) {
-		if (obj.children.length) {
-			obj.children[0].__webglActive = undefined;
-			obj.children[0].geometry.colorsNeedUpdate = true;
-			var colors = obj.children[0].geometry.colors;
-			var ib = 0, ia = 1;
-			for (var i in atoms) {
-				var atom1 = atoms[i];
-				for (var j in atom1.bonds) {
-					var atom2 = atoms[atom1.bonds[j]];
-					if (atom2.serial < atom1.serial) continue;
-					colors[ib++] = atom1.color;
-					colors[ib++] = atom1.color;
-					colors[ib++] = atom2.color;
-					colors[ib++] = atom2.color;
-				}
-				if (atom1.solvent) {
-					var mesh = obj.children[ia++];
-					mesh.__webglActive = undefined;
-					mesh.material.color = atom1.color;
-				}
+		obj.add(new THREE.Line(new THREE.Geometry(), new THREE.LineBasicMaterial({ linewidth: lineWidth, vertexColors: true }), THREE.LinePieces));
+		var geo = obj.children[0].geometry;
+		for (var i in atoms) {
+			var atom1 = atoms[i];
+			for (var j in atom1.bonds) {
+				var atom2 = atoms[atom1.bonds[j]];
+				if (atom2.serial < atom1.serial) continue;
+				var mp = atom1.coord.clone().add(atom2.coord).multiplyScalar(0.5);
+				geo.vertices.push(atom1.coord);
+				geo.vertices.push(mp);
+				geo.vertices.push(atom2.coord);
+				geo.vertices.push(mp);
+				geo.colors.push(atom1.color);
+				geo.colors.push(atom1.color);
+				geo.colors.push(atom2.color);
+				geo.colors.push(atom2.color);
 			}
-		}
-		else {
-			obj.add(new THREE.Line(new THREE.Geometry(), new THREE.LineBasicMaterial({ linewidth: lineWidth, vertexColors: true }), THREE.LinePieces));
-			var geo = obj.children[0].geometry;
-			for (var i in atoms) {
-				var atom1 = atoms[i];
-				for (var j in atom1.bonds) {
-					var atom2 = atoms[atom1.bonds[j]];
-					if (atom2.serial < atom1.serial) continue;
-					var mp = atom1.coord.clone().add(atom2.coord).multiplyScalar(0.5);
-					geo.vertices.push(atom1.coord);
-					geo.vertices.push(mp);
-					geo.vertices.push(atom2.coord);
-					geo.vertices.push(mp);
-					geo.colors.push(atom1.color);
-					geo.colors.push(atom1.color);
-					geo.colors.push(atom2.color);
-					geo.colors.push(atom2.color);
-				}
-				if (atom1.solvent) {
-					drawSphere(obj, atom1, sphereRadius, false, 0.2);
-				}
+			if (atom1.solvent) {
+				drawSphere(obj, atom1, sphereRadius, false, 0.2);
 			}
 		}
 	};
@@ -694,63 +538,6 @@ $(function () {
 	var rebuildScene = function (new_options) {
 
 		$.extend(options, new_options);
-
-		switch (options.colorProteinBy) {
-			case 'spectrum':
-				var idx = 0;
-				for (var i in stdAtoms) {
-					var atom = stdAtoms[i];
-					atom.color = new THREE.Color().setHSL(2 / 3 * (1 - idx++ / stdAtoms.length), 1, 0.45);
-				}
-				colorByElement(hetAtoms);
-				break;
-			case 'chain':
-				for (var i in stdAtoms) {
-					var atom = stdAtoms[i];
-					atom.color = stdChainColors[atom.chain];
-				}
-				for (var i in hetAtoms) {
-					var atom = hetAtoms[i];
-					atom.color = hetChainColors[atom.chain];
-				}
-				break;
-			case 'B factor':
-				if (!middB) {
-					var minB = 1000, maxB = -1000;
-					for (var i in protein) {
-						var atom = protein[i];
-						if (minB > atom.b) minB = atom.b;
-						if (maxB < atom.b) maxB = atom.b;
-					}
-					middB = (maxB + minB) * 0.5;
-					spanB = (maxB - minB) * 0.5;
-					spanBinv = 1.0 / spanB;
-				}
-				for (var i in protein) {
-					var atom = protein[i];
-					atom.color = atom.b < middB ? new THREE.Color().setRGB(1 - (s = (middB - atom.b) * spanBinv), 1 - s, 1) : new THREE.Color().setRGB(1, 1 - (s = (atom.b - middB) * spanBinv), 1 - s);
-				}
-				break;
-			case 'residue':
-				for (var i in stdAtoms) {
-					var atom = stdAtoms[i];
-					atom.color = residueColors[atom.resn] || defaultResidueColor;
-				}
-				colorByElement(hetAtoms);
-				break;
-			case 'polarity':
-				for (var i in stdAtoms) {
-					var atom = stdAtoms[i];
-					atom.color = polarityColors[atom.resn] || defaultResidueColor;
-				}
-				colorByElement(hetAtoms);
-				break;
-			case 'atom':
-				colorByElement(protein);
-				break;
-		}
-
-		colorByElement(ligand);
 
 		var proteinObj = proteinObjects[options.protein];
 		switch (options.protein) {
@@ -910,6 +697,7 @@ $(function () {
 			if (atom.coord.y > ymax) ymax = atom.coord.y;
 			if (atom.coord.z > zmax) zmax = atom.coord.z;
 		}
+		colorByElement(protein);
 	};
 
 	var parseLigand = function (src) {
@@ -959,6 +747,7 @@ $(function () {
 			ligand[r.x].bonds.push(r.y);
 			ligand[r.y].bonds.push(r.x);
 		}
+		colorByElement(ligand);
 		var hits = $('#hits');
 		hits.html(['ZINC01234568', 'ZINC01234569', 'ZINC01234566', 'ZINC01234567'].map(function(id) {
 			return '<label class="btn btn-primary"><input type="radio">' + id + '</label>';
@@ -1086,7 +875,7 @@ $(function () {
 		});
 	});
 
-	['colorProteinBy', 'protein', 'ligand', 'surface', 'opacity', 'wireframe'].forEach(function (opt) {
+	['protein', 'ligand', 'surface', 'opacity', 'wireframe'].forEach(function (opt) {
 		$('#' + opt).click(function (e) {
 			var options = {};
 			options[opt] = e.target.innerText;
