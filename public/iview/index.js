@@ -302,6 +302,55 @@ $(function () {
 		FM: new THREE.Color(0xB31FBA),
 	};
 	var defaultAtomColor = new THREE.Color(0xCCCCCC);
+	var residueColors = {
+		ALA: new THREE.Color(0xC8C8C8),
+		ARG: new THREE.Color(0x145AFF),
+		ASN: new THREE.Color(0x00DCDC),
+		ASP: new THREE.Color(0xE60A0A),
+		CYS: new THREE.Color(0xE6E600),
+		GLN: new THREE.Color(0x00DCDC),
+		GLU: new THREE.Color(0xE60A0A),
+		GLY: new THREE.Color(0xEBEBEB),
+		HIS: new THREE.Color(0x8282D2),
+		ILE: new THREE.Color(0x0F820F),
+		LEU: new THREE.Color(0x0F820F),
+		LYS: new THREE.Color(0x145AFF),
+		MET: new THREE.Color(0xE6E600),
+		PHE: new THREE.Color(0x3232AA),
+		PRO: new THREE.Color(0xDC9682),
+		SER: new THREE.Color(0xFA9600),
+		THR: new THREE.Color(0xFA9600),
+		TRP: new THREE.Color(0xB45AB4),
+		TYR: new THREE.Color(0x3232AA),
+		VAL: new THREE.Color(0x0F820F),
+		ASX: new THREE.Color(0xFF69B4),
+		GLX: new THREE.Color(0xFF69B4),
+	};
+	var defaultResidueColor = new THREE.Color(0xBEA06E);
+	var polarColor = new THREE.Color(0xCC0000);
+	var nonpolarColor = new THREE.Color(0x00CCCC);
+	var polarityColors = {
+		ARG: polarColor,
+		HIS: polarColor,
+		LYS: polarColor,
+		ASP: polarColor,
+		GLU: polarColor,
+		SER: polarColor,
+		THR: polarColor,
+		ASN: polarColor,
+		GLN: polarColor,
+		TYR: polarColor,
+		GLY: nonpolarColor,
+		PRO: nonpolarColor,
+		ALA: nonpolarColor,
+		VAL: nonpolarColor,
+		LEU: nonpolarColor,
+		ILE: nonpolarColor,
+		MET: nonpolarColor,
+		PHE: nonpolarColor,
+		CYS: nonpolarColor,
+		TRP: nonpolarColor,
+	};
 	var stdChainColors = {
 		A: new THREE.Color(0xC0D0FF),
 		B: new THREE.Color(0xB0FFB0),
@@ -358,6 +407,26 @@ $(function () {
 		Y: new THREE.Color(0xE8B613),
 		Z: new THREE.Color(0xC23232),
 	};
+	var backgroundColors = {
+		black: new THREE.Color(0x000000),
+		 grey: new THREE.Color(0xCCCCCC),
+		white: new THREE.Color(0xFFFFFF),
+	};
+	var sphereGeometry = new THREE.SphereGeometry(1, 64, 64);
+	var cylinderGeometry = new THREE.CylinderGeometry(1, 1, 1, 64, 1);
+	var sphereRadius = 1.5;
+	var cylinderRadius = 0.4;
+	var lineWidth = 1.5;
+	var fov = 20;
+	var CAMERA_Z = -150;
+	var elemMapInPDBQT = {
+		HD: 'H',
+		A : 'C',
+		NA: 'N',
+		OA: 'O',
+		SA: 'S',
+	};
+
 	var container = $('#iview');
 	var renderer = new THREE.WebGLRenderer({
 		canvas: container.get(0),
@@ -369,8 +438,6 @@ $(function () {
 		'none': renderer,
 	};
 	var effect;
-
-	var CAMERA_Z = -150;
 	var perspectiveCamera = new THREE.PerspectiveCamera(20, container.width() / container.height(), 1, 800);
 	perspectiveCamera.position = new THREE.Vector3(0, 0, CAMERA_Z);
 	perspectiveCamera.lookAt(new THREE.Vector3(0, 0, 0));
@@ -386,66 +453,6 @@ $(function () {
 	var slabFar  = +50;
 
 	// Default values
-	var sphereGeometry = new THREE.SphereGeometry(1, 64, 64);
-	var cylinderGeometry = new THREE.CylinderGeometry(1, 1, 1, 64, 1);
-	var sphereRadius = 1.5;
-	var cylinderRadius = 0.4;
-	var lineWidth = 1.5;
-	var fov = 20;
-	var backgroundColors = {
-		black: new THREE.Color(0x000000),
-		 grey: new THREE.Color(0xCCCCCC),
-		white: new THREE.Color(0xFFFFFF),
-	};
-	var residueColors = {
-		ALA: new THREE.Color(0xC8C8C8),
-		ARG: new THREE.Color(0x145AFF),
-		ASN: new THREE.Color(0x00DCDC),
-		ASP: new THREE.Color(0xE60A0A),
-		CYS: new THREE.Color(0xE6E600),
-		GLN: new THREE.Color(0x00DCDC),
-		GLU: new THREE.Color(0xE60A0A),
-		GLY: new THREE.Color(0xEBEBEB),
-		HIS: new THREE.Color(0x8282D2),
-		ILE: new THREE.Color(0x0F820F),
-		LEU: new THREE.Color(0x0F820F),
-		LYS: new THREE.Color(0x145AFF),
-		MET: new THREE.Color(0xE6E600),
-		PHE: new THREE.Color(0x3232AA),
-		PRO: new THREE.Color(0xDC9682),
-		SER: new THREE.Color(0xFA9600),
-		THR: new THREE.Color(0xFA9600),
-		TRP: new THREE.Color(0xB45AB4),
-		TYR: new THREE.Color(0x3232AA),
-		VAL: new THREE.Color(0x0F820F),
-		ASX: new THREE.Color(0xFF69B4),
-		GLX: new THREE.Color(0xFF69B4),
-	};
-	var defaultResidueColor = new THREE.Color(0xBEA06E);
-	var polarColor = new THREE.Color(0xCC0000);
-	var nonpolarColor = new THREE.Color(0x00CCCC);
-	var polarityColors = {
-		ARG: polarColor,
-		HIS: polarColor,
-		LYS: polarColor,
-		ASP: polarColor,
-		GLU: polarColor,
-		SER: polarColor,
-		THR: polarColor,
-		ASN: polarColor,
-		GLN: polarColor,
-		TYR: polarColor,
-		GLY: nonpolarColor,
-		PRO: nonpolarColor,
-		ALA: nonpolarColor,
-		VAL: nonpolarColor,
-		LEU: nonpolarColor,
-		ILE: nonpolarColor,
-		MET: nonpolarColor,
-		PHE: nonpolarColor,
-		CYS: nonpolarColor,
-		TRP: nonpolarColor,
-	};
 	var proteinObjects = {}, ligandObjects = {};
 	['line', 'stick', 'ball and stick', 'sphere'].forEach(function(key) {
 		proteinObjects[key] = new THREE.Object3D();
@@ -474,13 +481,6 @@ $(function () {
 			effect = effects[options.effect];
 			effect.setSize(container.width(), container.height());
 		},
-	};
-	var elemMapInPDBQT = {
-		HD: 'H',
-		A : 'C',
-		NA: 'N',
-		OA: 'O',
-		SA: 'S',
 	};
 	var isDragging, mouseButton, mouseStartX, mouseStartY, cq, cz, cp, cslabNear, cslabFar;
 	var options;
