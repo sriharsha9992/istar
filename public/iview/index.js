@@ -594,7 +594,7 @@ $(function () {
 				geo.colors.push(atom1.color);
 			}
 			if (atom0.solvent) {
-				obj.add(createSphere(obj, atom0, sphereRadius, false, 0.2));
+				obj.add(createSphere(atom0, sphereRadius, false, 0.2));
 			}
 		}
 		return obj;
