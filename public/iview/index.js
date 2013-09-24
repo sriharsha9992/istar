@@ -600,6 +600,38 @@ $(function () {
 		return obj;
 	};
 
+	var drawBox = function (c000, c100, c010, c110, c001, c101, c011, c111) {
+		var obj = new THREE.Object3D();
+		var geo = new THREE.Geometry();
+		geo.vertices.push(c000);
+		geo.vertices.push(c100);
+		geo.vertices.push(c010);
+		geo.vertices.push(c110);
+		geo.vertices.push(c001);
+		geo.vertices.push(c101);
+		geo.vertices.push(c011);
+		geo.vertices.push(c111);
+		geo.vertices.push(c000);
+		geo.vertices.push(c010);
+		geo.vertices.push(c100);
+		geo.vertices.push(c110);
+		geo.vertices.push(c001);
+		geo.vertices.push(c011);
+		geo.vertices.push(c101);
+		geo.vertices.push(c111);
+		geo.vertices.push(c000);
+		geo.vertices.push(c001);
+		geo.vertices.push(c100);
+		geo.vertices.push(c101);
+		geo.vertices.push(c010);
+		geo.vertices.push(c011);
+		geo.vertices.push(c110);
+		geo.vertices.push(c111);
+		geo.computeLineDistances();
+		obj.add(new THREE.Line(geo, new THREE.LineDashedMaterial({ linewidth: 4, color: defaultBoxColor, dashSize: 0.25, gapSize: 0.125 }), THREE.LinePieces));
+		return obj;
+	};
+
 	var colorByElement = function (atoms) {
 		for (var i in atoms) {
 			var atom = atoms[i];
@@ -691,20 +723,7 @@ $(function () {
 		c101 = ct.clone().add(hf.clone().multiply(new THREE.Vector3( 1, -1,  1)));
 		c011 = ct.clone().add(hf.clone().multiply(new THREE.Vector3(-1,  1,  1)));
 		c111 = ct.clone().add(hf.clone().multiply(new THREE.Vector3( 1,  1,  1)));
-		var obj = new THREE.Object3D();
-		obj.add(createDashedLine(c000, c100, defaultBoxColor));
-		obj.add(createDashedLine(c010, c110, defaultBoxColor));
-		obj.add(createDashedLine(c001, c101, defaultBoxColor));
-		obj.add(createDashedLine(c011, c111, defaultBoxColor));
-		obj.add(createDashedLine(c000, c010, defaultBoxColor));
-		obj.add(createDashedLine(c100, c110, defaultBoxColor));
-		obj.add(createDashedLine(c001, c011, defaultBoxColor));
-		obj.add(createDashedLine(c101, c111, defaultBoxColor));
-		obj.add(createDashedLine(c000, c001, defaultBoxColor));
-		obj.add(createDashedLine(c100, c101, defaultBoxColor));
-		obj.add(createDashedLine(c010, c011, defaultBoxColor));
-		obj.add(createDashedLine(c110, c111, defaultBoxColor));
-		mdl.add(obj);
+		mdl.add(drawBox(c000, c100, c010, c110, c001, c101, c011, c111));
 	};
 
 	var xmin = ymin = zmin =  9999;
