@@ -389,6 +389,11 @@ $(function () {
 	var canvas = $('canvas');
 	canvas.width('100%');
 	canvas.height('800px');
+	var renderer = new THREE.WebGLRenderer({
+		canvas: canvas.get(0),
+		antialias: true,
+	});
+	renderer.setSize(canvas.width(), canvas.height());
 	var perspectiveCamera = new THREE.PerspectiveCamera(20, canvas.width() / canvas.height(), 1, 800);
 	perspectiveCamera.position = new THREE.Vector3(0, 0, camera_z);
 	perspectiveCamera.lookAt(new THREE.Vector3(0, 0, 0));
@@ -399,11 +404,6 @@ $(function () {
 		 perspective:  perspectiveCamera,
 		orthographic: orthographicCamera,
 	};
-	var renderer = new THREE.WebGLRenderer({
-		canvas: canvas.get(0),
-		antialias: true,
-	});
-	renderer.setSize(canvas.width(), canvas.height());
 	var proteinObjects = {}, ligandObjects = {};
 	['line', 'stick', 'ball and stick', 'sphere'].forEach(function(key) {
 		proteinObjects[key] = new THREE.Object3D();
