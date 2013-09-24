@@ -878,6 +878,7 @@ $(function () {
 	var path = '/idock/jobs/' + location.search.substr(1) + '/';
 	$.get(path + 'box.conf', function (box) {
 		parseBox(box);
+		mdl.position = ct.clone().multiplyScalar(-1);
 		$.get(path + 'receptor.pdbqt', function (protein) {
 			parseProtein(protein);
 			var maxD = new THREE.Vector3(xmax, ymax, zmax).distanceTo(new THREE.Vector3(xmin, ymin, zmin));
@@ -902,15 +903,6 @@ $(function () {
 					hits_str += String.fromCharCode(hits_raw[i]);
 				}
 				parseLigand(hits_str);
-				var xsum = ysum = zsum = cnt = 0;
-				for (var i in ligand) {
-					var atom = ligand[i];
-					xsum += atom.coord.x;
-					ysum += atom.coord.y;
-					zsum += atom.coord.z;
-					++cnt;
-				}
-				mdl.position = new THREE.Vector3(xsum, ysum, zsum).multiplyScalar(-1 / cnt);
 				rebuildScene();
 				render();
 			});
