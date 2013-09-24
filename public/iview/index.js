@@ -367,6 +367,7 @@ $(function () {
 	};
 	var defaultAtomColor = new THREE.Color(0xCCCCCC);
 	var defaultBoxColor = new THREE.Color(0x1FF01F);
+	var defaultHBondColor = new THREE.Color(0x94FFFF);
 	var backgroundColors = {
 		black: new THREE.Color(0x000000),
 		 grey: new THREE.Color(0xCCCCCC),
@@ -379,6 +380,7 @@ $(function () {
 	var lineWidth = 1.5;
 	var fov = 20;
 	var camera_z = -150;
+	var hbondCutoffSquared = 3.5 * 3.5;
 	var pdbqt2pdb = {
 		HD: 'H',
 		A : 'C',
@@ -431,7 +433,6 @@ $(function () {
 			scene.fog = new THREE.Fog(backgroundColor, 100, 200);
 		},
 	};
-	var protein, ligand, stdAtoms, hetAtoms;
 	var scene = new THREE.Scene();
 	var directionalLight = new THREE.DirectionalLight(0xFFFFFF, 1.2);
 	directionalLight.position = new THREE.Vector3(0.2, 0.2, -1).normalize();
@@ -516,6 +517,14 @@ $(function () {
 		return atom1.coord.distanceToSquared(atom2.coord) < 1.2 * r * r;
 	};
 
+	var isHBondDonor = function (elqt) {
+		return elqt === 'HD';
+	}
+
+	var isHBondAcceptor = function (elqt) {
+		return elqt === 'NA' || elqt === 'OA' || elqt === 'SA';
+	}
+
 	var drawSphere = function (obj, atom, defaultRadius, forceDefault, scale) {
 		var sphere = new THREE.Mesh(sphereGeometry, new THREE.MeshLambertMaterial({ color: atom.color }));
 		sphere.scale.x = sphere.scale.y = sphere.scale.z = forceDefault ? defaultRadius : (vdwRadii[atom.elem] || defaultRadius) * (scale ? scale : 1);
@@ -592,6 +601,7 @@ $(function () {
 		}
 	};
 
+	var protein, ligand, stdAtoms, hetAtoms, hbondDonors, hbondAcceptors;
 	var rebuildScene = function (new_options) {
 
 		$.extend(options, new_options);
@@ -705,6 +715,7 @@ $(function () {
 					resi: parseInt(line.substr(22, 4)),
 					insc: line.substr(26, 1),
 					coord: new THREE.Vector3(parseFloat(line.substr(30, 8)), parseFloat(line.substr(38, 8)), parseFloat(line.substr(46, 8))),
+					elqt: line.substr(77, 2),
 					elem: line.substr(77, 2).replace(/ /g, '').toUpperCase(),
 					bonds: [],
 				};
@@ -768,14 +779,35 @@ $(function () {
 				atom.solvent = true;
 			}
 		}
-		for (var i in protein) {
-			var atom = protein[i];
+		hbondDonors = [], hbondAcceptors = [];
+		for (var pi in protein) {
+			var atom = protein[pi];
 			if (atom.coord.x < xmin) xmin = atom.coord.x;
 			if (atom.coord.y < ymin) ymin = atom.coord.y;
 			if (atom.coord.z < zmin) zmin = atom.coord.z;
 			if (atom.coord.x > xmax) xmax = atom.coord.x;
 			if (atom.coord.y > ymax) ymax = atom.coord.y;
 			if (atom.coord.z > zmax) zmax = atom.coord.z;
+			if (!isHBondDonor(atom.elqt) && !isHBondAcceptor(atom.elqt)) continue;
+			var r2 = 0;
+			for (var i = 0; i < 3; ++i)
+			{
+				if (atom.coord.getComponent(i) < c000.getComponent(i)) {
+					var d = atom.coord.getComponent(i) - c000.getComponent(i);
+					r2 += d * d;
+				} else if (atom.coord.getComponent(i) > c111.getComponent(i)) {
+					var d = atom.coord.getComponent(i) - c111.getComponent(i);
+					r2 += d * d;
+				}
+			}
+			if (r2 < hbondCutoffSquared)
+			{
+				if (isHBondDonor(atom.elqt)) {
+					hbondDonors[pi] = atom;
+				} else {
+					hbondAcceptors[pi] = atom;
+				}
+			}
 		}
 		colorByElement(protein);
 	};
@@ -797,6 +829,7 @@ $(function () {
 				var atom = {
 					serial: parseInt(line.substr(6, 5)),
 					coord: new THREE.Vector3(parseFloat(line.substr(30, 8)), parseFloat(line.substr(38, 8)), parseFloat(line.substr(46, 8))),
+					elqt: line.substr(77, 2),
 					elem: line.substr(77, 2).replace(/ /g, '').toUpperCase(),
 					bonds: [],
 				};
@@ -828,6 +861,24 @@ $(function () {
 			ligand[r.y].bonds.push(r.x);
 		}
 		colorByElement(ligand);
+		for (var li in ligand) {
+			var la = ligand[li];
+			if (isHBondDonor(la.elqt)) {
+				for (var pi in hbondAcceptors) {
+					var pa = hbondAcceptors[pi];
+					if (la.coord.distanceToSquared(pa.coord) < hbondCutoffSquared) {
+						drawDashedLine(mdl, la.coord, pa.coord, defaultHBondColor);
+					}
+				}
+			} else if (isHBondAcceptor(la.elqt)) {
+				for (var pi in hbondDonors) {
+					var pa = hbondDonors[pi];
+					if (la.coord.distanceToSquared(pa.coord) < hbondCutoffSquared) {
+						drawDashedLine(mdl, la.coord, pa.coord, defaultHBondColor);
+					}
+				}
+			}
+		}
 		var hits = $('#hits');
 		hits.html(['ZINC01234568', 'ZINC01234569', 'ZINC01234566', 'ZINC01234567'].map(function(id) {
 			return '<label class="btn btn-primary"><input type="radio">' + id + '</label>';
