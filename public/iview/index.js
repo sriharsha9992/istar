@@ -526,20 +526,20 @@ $(function () {
 	}
 
 	var createSphere = function (atom, defaultRadius, forceDefault, scale) {
-		var sphere = new THREE.Mesh(sphereGeometry, new THREE.MeshLambertMaterial({ color: atom.color }));
-		sphere.scale.x = sphere.scale.y = sphere.scale.z = forceDefault ? defaultRadius : (vdwRadii[atom.elem] || defaultRadius) * (scale ? scale : 1);
-		sphere.position = atom.coord;
-		return sphere;
+		var mesh = new THREE.Mesh(sphereGeometry, new THREE.MeshLambertMaterial({ color: atom.color }));
+		mesh.scale.x = mesh.scale.y = mesh.scale.z = forceDefault ? defaultRadius : (vdwRadii[atom.elem] || defaultRadius) * (scale ? scale : 1);
+		mesh.position = atom.coord;
+		return mesh;
 	};
 
-	var createCylinder = function (p1, p2, radius, color) {
-		var cylinder = new THREE.Mesh(cylinderGeometry, new THREE.MeshLambertMaterial({ color: color }));
-		cylinder.position = p1.clone().add(p2).multiplyScalar(0.5);
-		cylinder.matrixAutoUpdate = false;
-		cylinder.lookAt(p1);
-		cylinder.updateMatrix();
-		cylinder.matrix.multiply(new THREE.Matrix4().makeScale(radius, radius, p1.distanceTo(p2))).multiply(new THREE.Matrix4().makeRotationX(Math.PI * 0.5));
-		return cylinder;
+	var createCylinder = function (p0, p1, radius, color) {
+		var mesh = new THREE.Mesh(cylinderGeometry, new THREE.MeshLambertMaterial({ color: color }));
+		mesh.position = p0.clone().add(p1).multiplyScalar(0.5);
+		mesh.matrixAutoUpdate = false;
+		mesh.lookAt(p0);
+		mesh.updateMatrix();
+		mesh.matrix.multiply(new THREE.Matrix4().makeScale(radius, radius, p0.distanceTo(p1))).multiply(new THREE.Matrix4().makeRotationX(Math.PI * 0.5));
+		return mesh;
 	};
 
 	var drawAtomsAsSphere = function (atoms, defaultRadius, forceDefault, scale) {
