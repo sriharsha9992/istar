@@ -876,6 +876,11 @@ $(function () {
 		parseBox(box);
 		$.get(path + 'receptor.pdbqt', function (protein) {
 			parseProtein(protein);
+			var maxD = new THREE.Vector3(xmax, ymax, zmax).distanceTo(new THREE.Vector3(xmin, ymin, zmin));
+			sn = -maxD / 1.9;
+			sf =  maxD / 3;
+			rot.position.z = maxD * 0.08 / Math.tan(Math.PI / 180.0 * camera.fov * 0.5) - 150;
+			rot.quaternion = new THREE.Quaternion(1, 0, 0, 0);
 			$.ajax({
 				url: path + 'hits.pdbqt.gz',
 				mimeType: 'application/octet-stream; charset=x-user-defined',
@@ -893,12 +898,6 @@ $(function () {
 					hits_str += String.fromCharCode(hits_raw[i]);
 				}
 				parseLigand(hits_str);
-				rebuildScene();
-				var maxD = new THREE.Vector3(xmax, ymax, zmax).distanceTo(new THREE.Vector3(xmin, ymin, zmin));
-				sn = -maxD / 1.9;
-				sf =  maxD / 3;
-				rot.position.z = maxD * 0.08 / Math.tan(Math.PI / 180.0 * camera.fov * 0.5) - 150;
-				rot.quaternion = new THREE.Quaternion(1, 0, 0, 0);
 				var xsum = ysum = zsum = cnt = 0;
 				for (var i in ligand) {
 					var atom = ligand[i];
@@ -908,6 +907,7 @@ $(function () {
 					++cnt;
 				}
 				mdl.position = new THREE.Vector3(xsum, ysum, zsum).multiplyScalar(-1 / cnt);
+				rebuildScene();
 				render();
 			});
 		});
