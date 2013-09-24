@@ -561,15 +561,15 @@ $(function () {
 	var drawBondsAsStick = function (atoms, bondR, atomR, scale) {
 		var obj = new THREE.Object3D();
 		for (var i in atoms) {
-			var atom1 = atoms[i];
-			for (var j in atom1.bonds) {
-				var atom2 = atoms[atom1.bonds[j]];
-				if (atom2.serial < atom1.serial) continue;
-				var mp = atom1.coord.clone().add(atom2.coord).multiplyScalar(0.5);
+			var atom0 = atoms[i];
+			for (var j in atom0.bonds) {
+				var atom1 = atoms[atom0.bonds[j]];
+				if (atom1.serial < atom0.serial) continue;
+				var mp = atom0.coord.clone().add(atom1.coord).multiplyScalar(0.5);
+				obj.add(createCylinder(atom0.coord, mp, bondR, atom0.color));
 				obj.add(createCylinder(atom1.coord, mp, bondR, atom1.color));
-				obj.add(createCylinder(atom2.coord, mp, bondR, atom2.color));
 			}
-			obj.add(createSphere(atom1, atomR, !scale, scale));
+			obj.add(createSphere(atom0, atomR, !scale, scale));
 		}
 		return obj;
 	};
@@ -579,22 +579,22 @@ $(function () {
 		obj.add(new THREE.Line(new THREE.Geometry(), new THREE.LineBasicMaterial({ linewidth: linewidth, vertexColors: true }), THREE.LinePieces));
 		var geo = obj.children[0].geometry;
 		for (var i in atoms) {
-			var atom1 = atoms[i];
-			for (var j in atom1.bonds) {
-				var atom2 = atoms[atom1.bonds[j]];
-				if (atom2.serial < atom1.serial) continue;
-				var mp = atom1.coord.clone().add(atom2.coord).multiplyScalar(0.5);
+			var atom0 = atoms[i];
+			for (var j in atom0.bonds) {
+				var atom1 = atoms[atom0.bonds[j]];
+				if (atom1.serial < atom0.serial) continue;
+				var mp = atom0.coord.clone().add(atom1.coord).multiplyScalar(0.5);
+				geo.vertices.push(atom0.coord);
+				geo.vertices.push(mp);
 				geo.vertices.push(atom1.coord);
 				geo.vertices.push(mp);
-				geo.vertices.push(atom2.coord);
-				geo.vertices.push(mp);
+				geo.colors.push(atom0.color);
+				geo.colors.push(atom0.color);
 				geo.colors.push(atom1.color);
 				geo.colors.push(atom1.color);
-				geo.colors.push(atom2.color);
-				geo.colors.push(atom2.color);
 			}
-			if (atom1.solvent) {
-				obj.add(createSphere(obj, atom1, sphereRadius, false, 0.2));
+			if (atom0.solvent) {
+				obj.add(createSphere(obj, atom0, sphereRadius, false, 0.2));
 			}
 		}
 		return obj;
