@@ -407,10 +407,12 @@ $(function () {
 		 perspective:  perspectiveCamera,
 		orthographic: orthographicCamera,
 	};
-	var proteinObjects = {}, ligandObjects = {};
-	['line', 'stick', 'ball and stick', 'sphere'].forEach(function(key) {
-		proteinObjects[key] = undefined;
-		 ligandObjects[key] = undefined;
+	var objects = {};
+	['protein', 'ligand'].forEach(function(molecule) {
+		var m = objects[molecule] = {};
+		['line', 'stick', 'ball and stick', 'sphere'].forEach(function(key) {
+			m[key] = undefined;
+		});
 	});
 	var surfaces = {
 		1: undefined,
@@ -639,46 +641,37 @@ $(function () {
 		}
 	};
 
-	var protein, ligand, stdAtoms, hetAtoms, hbondDonors, hbondAcceptors;
+	var molecules = {
+		protein: undefined,
+		 ligand: undefined,
+	};
+	var stdAtoms, hetAtoms, hbondDonors, hbondAcceptors;
+	var refresh = function(molecule) {
+		var m = objects[molecule];
+		if (m[options[molecule]] === undefined) {
+			switch (options[molecule]) {
+				case 'line':
+					m[options[molecule]] = drawBondsAsLine(molecules[molecule]);
+					break;
+				case 'stick':
+					m[options[molecule]] = drawBondsAsStick(molecules[molecule], cylinderRadius, cylinderRadius);
+					break;
+				case 'ball and stick':
+					m[options[molecule]] = drawBondsAsStick(molecules[molecule], cylinderRadius * 0.5, cylinderRadius);
+					break;
+				case 'sphere':
+					m[options[molecule]] = drawAtomsAsSphere(molecules[molecule], sphereRadius);
+					break;
+			}
+		}
+		mdl.add(m[options[molecule]]);
+	};
 	var rebuildScene = function (new_options) {
 
 		$.extend(options, new_options);
 
-		if (proteinObjects[options.protein] === undefined) {
-			switch (options.protein) {
-				case 'line':
-					proteinObjects[options.protein] = drawBondsAsLine(protein);
-					break;
-				case 'stick':
-					proteinObjects[options.protein] = drawBondsAsStick(protein, cylinderRadius, cylinderRadius);
-					break;
-				case 'ball and stick':
-					proteinObjects[options.protein] = drawBondsAsStick(protein, cylinderRadius * 0.5, cylinderRadius);
-					break;
-				case 'sphere':
-					proteinObjects[options.protein] = drawAtomsAsSphere(protein, sphereRadius);
-					break;
-			}
-		}
-		mdl.add(proteinObjects[options.protein]);
-
-		if (ligandObjects[options.ligand] === undefined) {
-			switch (options.ligand) {
-				case 'line':
-					ligandObj = drawBondsAsLine(ligand);
-					break;
-				case 'stick':
-					ligandObjects[options.ligand] = drawBondsAsStick(ligand, cylinderRadius, cylinderRadius);
-					break;
-				case 'ball and stick':
-					ligandObjects[options.ligand] = drawBondsAsStick(ligand, cylinderRadius * 0.5, cylinderRadius);
-					break;
-				case 'sphere':
-					ligandObjects[options.ligand] = drawAtomsAsSphere(ligand, sphereRadius);
-					break;
-			}
-		}
-		mdl.add(ligandObjects[options.ligand]);
+		refresh('protein');
+		refresh('ligand');
 
 		options.opacity = parseFloat(options.opacity);
 
@@ -729,7 +722,7 @@ $(function () {
 	var xmin = ymin = zmin =  9999;
 	var xmax = ymax = zmax = -9999;
 	var parseProtein = function (src) {
-		protein = [];
+		var protein = [];
 		var lines = src.split('\n');
 		for (var i in lines) {
 			var line = lines[i];
@@ -839,10 +832,11 @@ $(function () {
 			}
 		}
 		colorByElement(protein);
+		molecules.protein = protein;
 	};
 
 	var parseLigand = function (src) {
-		ligand = [];
+		var ligand = [];
 		var lines = src.split('\n'), rotors = [], start_ligand = true, start_frame;
 		for (var i in lines) {
 			var line = lines[i];
@@ -918,6 +912,7 @@ $(function () {
 		$('> .btn', hits).click(function(e) {
 			alert(e.currentTarget.innerText);
 		});
+		molecules.ligand = ligand;
 	};
 
 	var render = function () {
