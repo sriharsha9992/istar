@@ -379,7 +379,7 @@ $(function () {
 	var lineWidth = 1.5;
 	var fov = 20;
 	var camera_z = -150;
-	var elemMapInPDBQT = {
+	var pdbqt2pdb = {
 		HD: 'H',
 		A : 'C',
 		NA: 'N',
@@ -711,7 +711,7 @@ $(function () {
 					bonds: [],
 				};
 				if (atom.elem === 'H') continue;
-				var elem = elemMapInPDBQT[atom.elem];
+				var elem = pdbqt2pdb[atom.elem];
 				if (elem) atom.elem = elem;
 				protein[atom.serial] = atom;
 			}
@@ -802,7 +802,7 @@ $(function () {
 					elem: line.substr(77, 2).replace(/ /g, '').toUpperCase(),
 					bonds: [],
 				};
-				var elem = elemMapInPDBQT[atom.elem];
+				var elem = pdbqt2pdb[atom.elem];
 				if (elem) atom.elem = elem;
 				if (start_frame === undefined) start_frame = atom.serial;
 				for (var j = start_frame; j < atom.serial; ++j) {
