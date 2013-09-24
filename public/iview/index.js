@@ -700,6 +700,10 @@ $(function () {
 				var atom = {
 					het: record[0] === 'H',
 					serial: parseInt(line.substr(6, 5)),
+					name: line.substr(12, 4).replace(/ /g, ''),
+					chain: line.substr(21, 1),
+					resi: parseInt(line.substr(22, 4)),
+					insc: line.substr(26, 1),
 					coord: new THREE.Vector3(parseFloat(line.substr(30, 8)), parseFloat(line.substr(38, 8)), parseFloat(line.substr(46, 8))),
 					elem: line.substr(77, 2).replace(/ /g, '').toUpperCase(),
 					bonds: [],
