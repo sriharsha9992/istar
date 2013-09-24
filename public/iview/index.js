@@ -592,12 +592,12 @@ $(function () {
 		return obj;
 	};
 
-	var drawDashedLine = function (obj, p0, p1, color) {
+	var createDashedLine = function (p0, p1, color) {
 		var geo = new THREE.Geometry();
 		geo.vertices.push(p0);
 		geo.vertices.push(p1);
 		geo.computeLineDistances();
-		obj.add(new THREE.Line(geo, new THREE.LineDashedMaterial({ linewidth: 4, 'color': color, dashSize: 0.25, gapSize: 0.125 })));
+		return new THREE.Line(geo, new THREE.LineDashedMaterial({ linewidth: 4, 'color': color, dashSize: 0.25, gapSize: 0.125 }));
 	};
 
 	var colorByElement = function (atoms) {
@@ -691,18 +691,20 @@ $(function () {
 		c101 = ct.clone().add(hf.clone().multiply(new THREE.Vector3( 1, -1,  1)));
 		c011 = ct.clone().add(hf.clone().multiply(new THREE.Vector3(-1,  1,  1)));
 		c111 = ct.clone().add(hf.clone().multiply(new THREE.Vector3( 1,  1,  1)));
-		drawDashedLine(mdl, c000, c100, defaultBoxColor);
-		drawDashedLine(mdl, c010, c110, defaultBoxColor);
-		drawDashedLine(mdl, c001, c101, defaultBoxColor);
-		drawDashedLine(mdl, c011, c111, defaultBoxColor);
-		drawDashedLine(mdl, c000, c010, defaultBoxColor);
-		drawDashedLine(mdl, c100, c110, defaultBoxColor);
-		drawDashedLine(mdl, c001, c011, defaultBoxColor);
-		drawDashedLine(mdl, c101, c111, defaultBoxColor);
-		drawDashedLine(mdl, c000, c001, defaultBoxColor);
-		drawDashedLine(mdl, c100, c101, defaultBoxColor);
-		drawDashedLine(mdl, c010, c011, defaultBoxColor);
-		drawDashedLine(mdl, c110, c111, defaultBoxColor);
+		var obj = new THREE.Object3D();
+		obj.add(createDashedLine(c000, c100, defaultBoxColor));
+		obj.add(createDashedLine(c010, c110, defaultBoxColor));
+		obj.add(createDashedLine(c001, c101, defaultBoxColor));
+		obj.add(createDashedLine(c011, c111, defaultBoxColor));
+		obj.add(createDashedLine(c000, c010, defaultBoxColor));
+		obj.add(createDashedLine(c100, c110, defaultBoxColor));
+		obj.add(createDashedLine(c001, c011, defaultBoxColor));
+		obj.add(createDashedLine(c101, c111, defaultBoxColor));
+		obj.add(createDashedLine(c000, c001, defaultBoxColor));
+		obj.add(createDashedLine(c100, c101, defaultBoxColor));
+		obj.add(createDashedLine(c010, c011, defaultBoxColor));
+		obj.add(createDashedLine(c110, c111, defaultBoxColor));
+		mdl.add(obj);
 	};
 
 	var xmin = ymin = zmin =  9999;
@@ -869,24 +871,26 @@ $(function () {
 			ligand[r.y].bonds.push(r.x);
 		}
 		colorByElement(ligand);
+		var obj = new THREE.Object3D();
 		for (var li in ligand) {
 			var la = ligand[li];
 			if (isHBondDonor(la.elqt)) {
 				for (var pi in hbondAcceptors) {
 					var pa = hbondAcceptors[pi];
 					if (la.coord.distanceToSquared(pa.coord) < hbondCutoffSquared) {
-						drawDashedLine(mdl, la.coord, pa.coord, defaultHBondColor);
+						obj.add(createDashedLine(la.coord, pa.coord, defaultHBondColor));
 					}
 				}
 			} else if (isHBondAcceptor(la.elqt)) {
 				for (var pi in hbondDonors) {
 					var pa = hbondDonors[pi];
 					if (la.coord.distanceToSquared(pa.coord) < hbondCutoffSquared) {
-						drawDashedLine(mdl, la.coord, pa.coord, defaultHBondColor);
+						obj.add(createDashedLine(la.coord, pa.coord, defaultHBondColor));
 					}
 				}
 			}
 		}
+		mdl.add(obj);
 		var hits = $('#hits');
 		hits.html(['ZINC01234568', 'ZINC01234569', 'ZINC01234566', 'ZINC01234567'].map(function(id) {
 			return '<label class="btn btn-primary"><input type="radio">' + id + '</label>';
