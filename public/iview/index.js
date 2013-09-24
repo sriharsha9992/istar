@@ -377,7 +377,7 @@ $(function () {
 	var cylinderGeometry = new THREE.CylinderGeometry(1, 1, 1, 64, 1);
 	var sphereRadius = 1.5;
 	var cylinderRadius = 0.4;
-	var lineWidth = 1.5;
+	var linewidth = 1.5;
 	var fov = 20;
 	var camera_z = -150;
 	var hbondCutoffSquared = 3.5 * 3.5;
@@ -563,7 +563,7 @@ $(function () {
 	};
 
 	var drawBondsAsLine = function (obj, atoms) {
-		obj.add(new THREE.Line(new THREE.Geometry(), new THREE.LineBasicMaterial({ linewidth: lineWidth, vertexColors: true }), THREE.LinePieces));
+		obj.add(new THREE.Line(new THREE.Geometry(), new THREE.LineBasicMaterial({ linewidth: linewidth, vertexColors: true }), THREE.LinePieces));
 		var geo = obj.children[0].geometry;
 		for (var i in atoms) {
 			var atom1 = atoms[i];
