@@ -586,12 +586,12 @@ $(function () {
 		}
 	};
 
-	var drawDashedLine = function (obj, p1, p2, color) {
+	var drawDashedLine = function (obj, p0, p1, color) {
 		var geo = new THREE.Geometry();
+		geo.vertices.push(p0);
 		geo.vertices.push(p1);
-		geo.vertices.push(p2);
 		geo.computeLineDistances();
-		obj.add(new THREE.Line(geo, new THREE.LineDashedMaterial({ 'color': color, dashSize: 0.25, gapSize: 0.125 })));
+		obj.add(new THREE.Line(geo, new THREE.LineDashedMaterial({ linewidth: 4, 'color': color, dashSize: 0.25, gapSize: 0.125 })));
 	};
 
 	var colorByElement = function (atoms) {
