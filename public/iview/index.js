@@ -836,24 +836,6 @@ $(function () {
 		renderer.render(scene, camera);
 	};
 
-	var resetView = function () {
-		var maxD = new THREE.Vector3(xmax, ymax, zmax).distanceTo(new THREE.Vector3(xmin, ymin, zmin));
-		sn = -maxD / 1.9;
-		sf =  maxD / 3;
-		rot.position.z = maxD * 0.08 / Math.tan(Math.PI / 180.0 * camera.fov * 0.5) - 150;
-		rot.quaternion = new THREE.Quaternion(1, 0, 0, 0);
-		var xsum = ysum = zsum = cnt = 0;
-		for (var i in ligand) {
-			var atom = ligand[i];
-			xsum += atom.coord.x;
-			ysum += atom.coord.y;
-			zsum += atom.coord.z;
-			++cnt;
-		}
-		mdl.position = new THREE.Vector3(xsum, ysum, zsum).multiplyScalar(-1 / cnt);
-		render();
-	};
-
 	var drawSurface = function (atoms, type, wireframe, opacity) {
 		if (!surfaces[type]) {
 			var ps = new ProteinSurface();
@@ -912,9 +894,23 @@ $(function () {
 				}
 				parseLigand(hits_str);
 				rebuildScene();
-				resetView();
-			});
-		});
+				var maxD = new THREE.Vector3(xmax, ymax, zmax).distanceTo(new THREE.Vector3(xmin, ymin, zmin));
+				sn = -maxD / 1.9;
+				sf =  maxD / 3;
+				rot.position.z = maxD * 0.08 / Math.tan(Math.PI / 180.0 * camera.fov * 0.5) - 150;
+				rot.quaternion = new THREE.Quaternion(1, 0, 0, 0);
+				var xsum = ysum = zsum = cnt = 0;
+				for (var i in ligand) {
+					var atom = ligand[i];
+					xsum += atom.coord.x;
+					ysum += atom.coord.y;
+					zsum += atom.coord.z;
+					++cnt;
+				}
+				mdl.position = new THREE.Vector3(xsum, ysum, zsum).multiplyScalar(-1 / cnt);
+				render();
+					});
+				});
 	});
 
 	['camera', 'background'].forEach(function (opt) {
