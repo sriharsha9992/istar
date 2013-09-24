@@ -409,8 +409,8 @@ $(function () {
 	};
 	var proteinObjects = {}, ligandObjects = {};
 	['line', 'stick', 'ball and stick', 'sphere'].forEach(function(key) {
-		proteinObjects[key] = new THREE.Object3D();
-		 ligandObjects[key] = new THREE.Object3D();
+		proteinObjects[key] = undefined;
+		 ligandObjects[key] = undefined;
 	});
 	var surfaces = {
 		1: undefined,
@@ -525,44 +525,49 @@ $(function () {
 		return elqt === 'NA' || elqt === 'OA' || elqt === 'SA';
 	}
 
-	var drawSphere = function (obj, atom, defaultRadius, forceDefault, scale) {
+	var createSphere = function (atom, defaultRadius, forceDefault, scale) {
 		var sphere = new THREE.Mesh(sphereGeometry, new THREE.MeshLambertMaterial({ color: atom.color }));
 		sphere.scale.x = sphere.scale.y = sphere.scale.z = forceDefault ? defaultRadius : (vdwRadii[atom.elem] || defaultRadius) * (scale ? scale : 1);
 		sphere.position = atom.coord;
-		obj.add(sphere);
+		return sphere;
 	};
 
-	var drawAtomsAsSphere = function (obj, atoms, defaultRadius, forceDefault, scale) {
-		for (var i in atoms) {
-			drawSphere(obj, atoms[i], defaultRadius, forceDefault, scale);
-		}
-	};
-
-	var drawCylinder = function (obj, p1, p2, radius, color) {
+	var createCylinder = function (p1, p2, radius, color) {
 		var cylinder = new THREE.Mesh(cylinderGeometry, new THREE.MeshLambertMaterial({ color: color }));
 		cylinder.position = p1.clone().add(p2).multiplyScalar(0.5);
 		cylinder.matrixAutoUpdate = false;
 		cylinder.lookAt(p1);
 		cylinder.updateMatrix();
 		cylinder.matrix.multiply(new THREE.Matrix4().makeScale(radius, radius, p1.distanceTo(p2))).multiply(new THREE.Matrix4().makeRotationX(Math.PI * 0.5));
-		obj.add(cylinder);
+		return cylinder;
 	};
 
-	var drawBondsAsStick = function (obj, atoms, bondR, atomR, scale) {
+	var drawAtomsAsSphere = function (atoms, defaultRadius, forceDefault, scale) {
+		var obj = new THREE.Object3D();
+		for (var i in atoms) {
+			obj.add(createSphere(atoms[i], defaultRadius, forceDefault, scale));
+		}
+		return obj;
+	};
+
+	var drawBondsAsStick = function (atoms, bondR, atomR, scale) {
+		var obj = new THREE.Object3D();
 		for (var i in atoms) {
 			var atom1 = atoms[i];
 			for (var j in atom1.bonds) {
 				var atom2 = atoms[atom1.bonds[j]];
 				if (atom2.serial < atom1.serial) continue;
 				var mp = atom1.coord.clone().add(atom2.coord).multiplyScalar(0.5);
-				drawCylinder(obj, atom1.coord, mp, bondR, atom1.color);
-				drawCylinder(obj, atom2.coord, mp, bondR, atom2.color);
+				obj.add(createCylinder(atom1.coord, mp, bondR, atom1.color));
+				obj.add(createCylinder(atom2.coord, mp, bondR, atom2.color));
 			}
-			drawSphere(obj, atom1, atomR, !scale, scale);
+			obj.add(createSphere(atom1, atomR, !scale, scale));
 		}
+		return obj;
 	};
 
-	var drawBondsAsLine = function (obj, atoms) {
+	var drawBondsAsLine = function (atoms) {
+		var obj = new THREE.Object3D();
 		obj.add(new THREE.Line(new THREE.Geometry(), new THREE.LineBasicMaterial({ linewidth: linewidth, vertexColors: true }), THREE.LinePieces));
 		var geo = obj.children[0].geometry;
 		for (var i in atoms) {
@@ -581,9 +586,10 @@ $(function () {
 				geo.colors.push(atom2.color);
 			}
 			if (atom1.solvent) {
-				drawSphere(obj, atom1, sphereRadius, false, 0.2);
+				obj.add(createSphere(obj, atom1, sphereRadius, false, 0.2));
 			}
 		}
+		return obj;
 	};
 
 	var drawDashedLine = function (obj, p0, p1, color) {
@@ -606,39 +612,41 @@ $(function () {
 
 		$.extend(options, new_options);
 
-		var proteinObj = proteinObjects[options.protein];
-		switch (options.protein) {
-			case 'line':
-				drawBondsAsLine(proteinObj, protein);
-				break;
-			case 'stick':
-				drawBondsAsStick(proteinObj, protein, cylinderRadius, cylinderRadius);
-				break;
-			case 'ball and stick':
-				drawBondsAsStick(proteinObj, protein, cylinderRadius * 0.5, cylinderRadius);
-				break;
-			case 'sphere':
-				drawAtomsAsSphere(proteinObj, protein, sphereRadius);
-				break;
+		if (proteinObjects[options.protein] === undefined) {
+			switch (options.protein) {
+				case 'line':
+					proteinObjects[options.protein] = drawBondsAsLine(protein);
+					break;
+				case 'stick':
+					proteinObjects[options.protein] = drawBondsAsStick(protein, cylinderRadius, cylinderRadius);
+					break;
+				case 'ball and stick':
+					proteinObjects[options.protein] = drawBondsAsStick(protein, cylinderRadius * 0.5, cylinderRadius);
+					break;
+				case 'sphere':
+					proteinObjects[options.protein] = drawAtomsAsSphere(protein, sphereRadius);
+					break;
+			}
 		}
-		mdl.add(proteinObj);
+		mdl.add(proteinObjects[options.protein]);
 
-		var ligandObj = ligandObjects[options.ligand];
-		switch (options.ligand) {
-			case 'line':
-				drawBondsAsLine(ligandObj, ligand);
-				break;
-			case 'stick':
-				drawBondsAsStick(ligandObj, ligand, cylinderRadius, cylinderRadius);
-				break;
-			case 'ball and stick':
-				drawBondsAsStick(ligandObj, ligand, cylinderRadius * 0.5, cylinderRadius);
-				break;
-			case 'sphere':
-				drawAtomsAsSphere(ligandObj, ligand, sphereRadius);
-				break;
+		if (ligandObjects[options.ligand] === undefined) {
+			switch (options.ligand) {
+				case 'line':
+					ligandObj = drawBondsAsLine(ligand);
+					break;
+				case 'stick':
+					ligandObjects[options.ligand] = drawBondsAsStick(ligand, cylinderRadius, cylinderRadius);
+					break;
+				case 'ball and stick':
+					ligandObjects[options.ligand] = drawBondsAsStick(ligand, cylinderRadius * 0.5, cylinderRadius);
+					break;
+				case 'sphere':
+					ligandObjects[options.ligand] = drawAtomsAsSphere(ligand, sphereRadius);
+					break;
+			}
 		}
-		mdl.add(ligandObj);
+		mdl.add(ligandObjects[options.ligand]);
 
 		options.opacity = parseFloat(options.opacity);
 
