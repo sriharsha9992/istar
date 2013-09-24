@@ -366,6 +366,7 @@ $(function () {
 		FM: new THREE.Color(0xB31FBA),
 	};
 	var defaultAtomColor = new THREE.Color(0xCCCCCC);
+	var defaultBoxColor = new THREE.Color(0x1FF01F);
 	var backgroundColors = {
 		black: new THREE.Color(0x000000),
 		 grey: new THREE.Color(0xCCCCCC),
@@ -658,11 +659,32 @@ $(function () {
 		}
 	};
 
-	var ct, sz;
+	var ct, sz, c000, c100, c010, c110, c001, c101, c011, c111;
 	var parseBox = function (src) {
 		var lines = src.split('\n');
 		ct = new THREE.Vector3(parseFloat(lines[0].substr(9)), parseFloat(lines[1].substr(9)), parseFloat(lines[2].substr(9)));
 		sz = new THREE.Vector3(parseFloat(lines[3].substr(7)), parseFloat(lines[4].substr(7)), parseFloat(lines[5].substr(7)));
+		var hf = sz.multiplyScalar(0.5);
+		c000 = ct.clone().add(hf.clone().multiply(new THREE.Vector3(-1, -1, -1)));
+		c100 = ct.clone().add(hf.clone().multiply(new THREE.Vector3( 1, -1, -1)));
+		c010 = ct.clone().add(hf.clone().multiply(new THREE.Vector3(-1,  1, -1)));
+		c110 = ct.clone().add(hf.clone().multiply(new THREE.Vector3( 1,  1, -1)));
+		c001 = ct.clone().add(hf.clone().multiply(new THREE.Vector3(-1, -1,  1)));
+		c101 = ct.clone().add(hf.clone().multiply(new THREE.Vector3( 1, -1,  1)));
+		c011 = ct.clone().add(hf.clone().multiply(new THREE.Vector3(-1,  1,  1)));
+		c111 = ct.clone().add(hf.clone().multiply(new THREE.Vector3( 1,  1,  1)));
+		drawDashedLine(mdl, c000, c100, defaultBoxColor);
+		drawDashedLine(mdl, c010, c110, defaultBoxColor);
+		drawDashedLine(mdl, c001, c101, defaultBoxColor);
+		drawDashedLine(mdl, c011, c111, defaultBoxColor);
+		drawDashedLine(mdl, c000, c010, defaultBoxColor);
+		drawDashedLine(mdl, c100, c110, defaultBoxColor);
+		drawDashedLine(mdl, c001, c011, defaultBoxColor);
+		drawDashedLine(mdl, c101, c111, defaultBoxColor);
+		drawDashedLine(mdl, c000, c001, defaultBoxColor);
+		drawDashedLine(mdl, c100, c101, defaultBoxColor);
+		drawDashedLine(mdl, c010, c011, defaultBoxColor);
+		drawDashedLine(mdl, c110, c111, defaultBoxColor);
 	};
 
 	var xmin = ymin = zmin =  9999;
@@ -911,9 +933,7 @@ $(function () {
 
 	['camera', 'background'].forEach(function (opt) {
 		$('#' + opt).click(function (e) {
-			var option = {};
-			option[opt] = e.target.innerText;
-			$.extend(options, option);
+			options[opt] = e.target.innerText;
 			set[opt]();
 			render();
 		});
@@ -921,9 +941,8 @@ $(function () {
 
 	['protein', 'ligand', 'surface', 'opacity', 'wireframe'].forEach(function (opt) {
 		$('#' + opt).click(function (e) {
-			var options = {};
 			options[opt] = e.target.innerText;
-			rebuildScene(options);
+			rebuildScene();
 			render();
 		});
 	});
