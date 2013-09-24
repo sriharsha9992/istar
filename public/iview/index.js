@@ -313,7 +313,7 @@ $(function () {
 	var cylinderRadius = 0.4;
 	var lineWidth = 1.5;
 	var fov = 20;
-	var CAMERA_Z = -150;
+	var camera_z = -150;
 	var elemMapInPDBQT = {
 		HD: 'H',
 		A : 'C',
@@ -326,10 +326,10 @@ $(function () {
 	canvas.width('100%');
 	canvas.height('800px');
 	var perspectiveCamera = new THREE.PerspectiveCamera(20, canvas.width() / canvas.height(), 1, 800);
-	perspectiveCamera.position = new THREE.Vector3(0, 0, CAMERA_Z);
+	perspectiveCamera.position = new THREE.Vector3(0, 0, camera_z);
 	perspectiveCamera.lookAt(new THREE.Vector3(0, 0, 0));
 	var orthographicCamera = new THREE.OrthographicCamera();
-	orthographicCamera.position = new THREE.Vector3(0, 0, CAMERA_Z);
+	orthographicCamera.position = new THREE.Vector3(0, 0, camera_z);
 	orthographicCamera.lookAt(new THREE.Vector3(0, 0, 0));
 	var cameras = {
 		 perspective:  perspectiveCamera,
@@ -423,10 +423,10 @@ $(function () {
 			sn = cn + dx * 100;
 			sf = cf + dy * 100;
 		} else if (wh == 3) { // Translate
-			var scaleFactor = Math.max((rot.position.z - CAMERA_Z) * 0.85, 20);
+			var scaleFactor = Math.max((rot.position.z - camera_z) * 0.85, 20);
 			mdl.position = cp.clone().add(new THREE.Vector3(-dx * scaleFactor, -dy * scaleFactor, 0).applyQuaternion(rot.quaternion.clone().inverse().normalize()));
 		} else if (wh == 2) { // Zoom
-			var scaleFactor = Math.max((rot.position.z - CAMERA_Z) * 0.85, 80);
+			var scaleFactor = Math.max((rot.position.z - camera_z) * 0.85, 80);
 			rot.position.z = cz - dy * scaleFactor;
 		} else if (wh == 1) { // Rotate
 			var r = Math.sqrt(dx * dx + dy * dy);
@@ -437,7 +437,7 @@ $(function () {
 	});
 	canvas.bind('mousewheel', function (e) {
 		e.preventDefault();
-		var scaleFactor = (rot.position.z - CAMERA_Z) * 0.85;
+		var scaleFactor = (rot.position.z - camera_z) * 0.85;
 		if (e.originalEvent.detail) { // Webkit
 			rot.position.z += scaleFactor * e.originalEvent.detail * 0.1;
 		} else if (e.originalEvent.wheelDelta) { // Firefox
