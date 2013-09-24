@@ -339,11 +339,7 @@ $(function () {
 		canvas: canvas.get(0),
 		antialias: true,
 	});
-	var effects = {
-		'anaglyph': new THREE.AnaglyphEffect(renderer),
-		'parallax barrier': new THREE.ParallaxBarrierEffect(renderer),
-		'none': renderer,
-	};
+	renderer.setSize(canvas.width(), canvas.height());
 	var proteinObjects = {}, ligandObjects = {};
 	['line', 'stick', 'ball and stick', 'sphere'].forEach(function(key) {
 		proteinObjects[key] = new THREE.Object3D();
@@ -356,10 +352,10 @@ $(function () {
 		4: undefined,
 	};
 	var options = {};
-	['camera', 'background', 'effect', 'protein', 'ligand', 'surface', 'opacity', 'wireframe'].forEach(function(key) {
+	['camera', 'background', 'protein', 'ligand', 'surface', 'opacity', 'wireframe'].forEach(function(key) {
 		options[key] = $('#' + key + ' .active')[0].innerText;
 	});
-	var camera, effect;
+	var camera;
 	var set = {
 		camera: function () {
 			camera = cameras[options.camera];
@@ -368,10 +364,6 @@ $(function () {
 			var backgroundColor = backgroundColors[options.background];
 			renderer.setClearColor(backgroundColor);
 			scene.fog = new THREE.Fog(backgroundColor, 100, 200);
-		},
-		effect: function () {
-			effect = effects[options.effect];
-			effect.setSize(canvas.width(), canvas.height());
 		},
 	};
 	var protein, ligand, stdAtoms, hetAtoms;
@@ -777,11 +769,7 @@ $(function () {
 		scene.fog.near = camera.near + 0.4 * (camera.far - camera.near);
 //		if (scene.fog.near > center) scene.fog.near = center;
 		scene.fog.far = camera.far;
-		effect.render(scene, camera);
-		if (!effect.init) {
-			effect.render(scene, camera);
-			effect.init = true;
-		}
+		renderer.render(scene, camera);
 	};
 
 	var resetView = function () {
@@ -865,7 +853,7 @@ $(function () {
 		});
 	});
 
-	['camera', 'background', 'effect'].forEach(function (opt) {
+	['camera', 'background'].forEach(function (opt) {
 		$('#' + opt).click(function (e) {
 			var option = {};
 			option[opt] = e.target.innerText;
