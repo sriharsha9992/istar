@@ -909,8 +909,8 @@ $(function () {
 				}
 				mdl.position = new THREE.Vector3(xsum, ysum, zsum).multiplyScalar(-1 / cnt);
 				render();
-					});
-				});
+			});
+		});
 	});
 
 	['camera', 'background'].forEach(function (opt) {
