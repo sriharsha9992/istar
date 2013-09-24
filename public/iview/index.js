@@ -525,6 +525,14 @@ $(function () {
 		return elqt === 'NA' || elqt === 'OA' || elqt === 'SA';
 	}
 
+	var createDashedLine = function (p0, p1, color) {
+		var geo = new THREE.Geometry();
+		geo.vertices.push(p0);
+		geo.vertices.push(p1);
+		geo.computeLineDistances();
+		return new THREE.Line(geo, new THREE.LineDashedMaterial({ linewidth: 4, 'color': color, dashSize: 0.25, gapSize: 0.125 }));
+	};
+
 	var createSphere = function (atom, defaultRadius, forceDefault, scale) {
 		var mesh = new THREE.Mesh(sphereGeometry, new THREE.MeshLambertMaterial({ color: atom.color }));
 		mesh.scale.x = mesh.scale.y = mesh.scale.z = forceDefault ? defaultRadius : (vdwRadii[atom.elem] || defaultRadius) * (scale ? scale : 1);
@@ -590,14 +598,6 @@ $(function () {
 			}
 		}
 		return obj;
-	};
-
-	var createDashedLine = function (p0, p1, color) {
-		var geo = new THREE.Geometry();
-		geo.vertices.push(p0);
-		geo.vertices.push(p1);
-		geo.computeLineDistances();
-		return new THREE.Line(geo, new THREE.LineDashedMaterial({ linewidth: 4, 'color': color, dashSize: 0.25, gapSize: 0.125 }));
 	};
 
 	var colorByElement = function (atoms) {
