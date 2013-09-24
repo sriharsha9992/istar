@@ -658,7 +658,11 @@ $(function () {
 		}
 	};
 
+	var ct, sz;
 	var parseBox = function (src) {
+		var lines = src.split('\n');
+		ct = new THREE.Vector3(parseFloat(lines[0].substr(9)), parseFloat(lines[1].substr(9)), parseFloat(lines[2].substr(9)));
+		sz = new THREE.Vector3(parseFloat(lines[3].substr(7)), parseFloat(lines[4].substr(7)), parseFloat(lines[5].substr(7)));
 	};
 
 	var xmin = ymin = zmin =  9999;

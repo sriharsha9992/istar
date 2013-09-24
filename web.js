@@ -276,7 +276,7 @@ if (cluster.isMaster) {
 							fs.writeFile(dir + '/receptor.pdbqt', req.body['receptor'], function(err) {
 								if (err) throw err;
 								fs.writeFile(dir + '/box.conf', ['center_x', 'center_y', 'center_z', 'size_x', 'size_y', 'size_z'].map(function(key) {
-									return key + ' = ' + req.body[key] + '\n';
+									return key + '=' + req.body[key] + '\n';
 								}).join(''), function(err) {
 									if (err) throw err;
 									res.json({});
