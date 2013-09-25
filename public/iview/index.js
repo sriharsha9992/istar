@@ -1015,7 +1015,16 @@ $(function () {
 		});
 	});
 
-	['protein', 'ligand', 'surface', 'opacity', 'wireframe'].forEach(function (opt) {
+	['protein', 'ligand'].forEach(function (molecule) {
+		$('#' + molecule).click(function (e) {
+			mdl.remove(objects[molecule][options[molecule]]);
+			options[molecule] = e.target.innerText;
+			refresh(molecule);
+			render();
+		});
+	});
+
+	['surface', 'opacity', 'wireframe'].forEach(function (opt) {
 		$('#' + opt).click(function (e) {
 			options[opt] = e.target.innerText;
 			rebuildScene();
