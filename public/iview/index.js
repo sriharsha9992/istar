@@ -520,7 +520,7 @@ $(function () {
 	};
 
 	var isHBondDonor = function (elqt) {
-		return elqt === 'HD';
+		return elqt === 'HD' || elqt === 'Zn' || elqt === 'Fe' || elqt === 'Mg' || elqt === 'Ca' || elqt === 'Mn' || elqt === 'Cu' || elqt === 'Na' || elqt === 'K ' || elqt === 'Hg' || elqt === 'Ni' || elqt === 'Co' || elqt === 'Cd' || elqt === 'As' || elqt === 'Sr' || elqt === 'U ';
 	}
 
 	var isHBondAcceptor = function (elqt) {
