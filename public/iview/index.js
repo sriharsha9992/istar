@@ -670,8 +670,9 @@ $(function () {
 
 		$.extend(options, new_options);
 
-		refresh('protein');
-		refresh('ligand');
+		Object.keys(molecules).forEach(function(m) {
+			refresh(m);
+		});
 
 		options.opacity = parseFloat(options.opacity);
 
