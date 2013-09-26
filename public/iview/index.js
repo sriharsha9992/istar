@@ -421,7 +421,7 @@ $(function () {
 		4: undefined,
 	};
 	var options = {};
-	['camera', 'background', 'protein', 'ligand', 'surface', 'opacity', 'wireframe'].forEach(function(key) {
+	['camera', 'background', 'protein', 'ligand', 'surface'].forEach(function(key) {
 		options[key] = $('#' + key + ' .active')[0].innerText;
 	});
 	var camera;
@@ -674,29 +674,18 @@ $(function () {
 			refresh(m);
 		});
 
-		options.opacity = parseFloat(options.opacity);
-
-		switch (options.wireframe) {
-			case 'yes':
-				options.wireframe = true;
-				break;
-			case 'no':
-				options.wireframe = false;
-				break;
-		}
-
 		switch (options.surface) {
 			case 'Van der Waals surface':
-				drawSurface(stdAtoms, 1, options.wireframe, options.opacity);
+				drawSurface(stdAtoms, 1);
 				break;
 			case 'solvent excluded surface':
-				drawSurface(stdAtoms, 2, options.wireframe, options.opacity);
+				drawSurface(stdAtoms, 2);
 				break;
 			case 'solvent accessible surface':
-				drawSurface(stdAtoms, 3, options.wireframe, options.opacity);
+				drawSurface(stdAtoms, 3);
 				break;
 			case 'molecular surface':
-				drawSurface(stdAtoms, 4, options.wireframe, options.opacity);
+				drawSurface(stdAtoms, 4);
 				break;
 			case 'nothing':
 				break;
@@ -953,9 +942,6 @@ $(function () {
 		}
 		var mesh = new THREE.Mesh(surfaces[type].getModel(atoms), new THREE.MeshLambertMaterial({
 			vertexColors: THREE.VertexColors,
-			wireframe: wireframe,
-			opacity: opacity,
-			transparent: true,
 		}));
 		mesh.doubleSided = true;
 		mdl.add(mesh);
@@ -1024,7 +1010,7 @@ $(function () {
 		});
 	});
 
-	['surface', 'opacity', 'wireframe'].forEach(function (opt) {
+	['surface'].forEach(function (opt) {
 		$('#' + opt).click(function (e) {
 			options[opt] = e.target.innerText;
 			rebuildScene();
