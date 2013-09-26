@@ -666,6 +666,25 @@ $(function () {
 		}
 		mdl.add(m[options[molecule]]);
 	};
+	var drawSurface = function (atoms, type, wireframe, opacity) {
+		if (!surfaces[type]) {
+			var ps = new ProteinSurface();
+			ps.initparm(getExtent(atoms), type >= 1);
+			ps.fillvoxels(atoms);
+			ps.buildboundary();
+			if (type == 4 || type == 2) ps.fastdistancemap();
+			if (type == 2) { ps.boundingatom(false); ps.fillvoxelswaals(atoms); }
+			ps.marchingcube(type);
+			ps.laplaciansmooth(1);
+			ps.transformVertices();
+			surfaces[type] = ps;
+		}
+		var mesh = new THREE.Mesh(surfaces[type].getModel(atoms), new THREE.MeshLambertMaterial({
+			vertexColors: THREE.VertexColors,
+		}));
+		mesh.doubleSided = true;
+		mdl.add(mesh);
+	};
 	var rebuildScene = function (new_options) {
 
 		$.extend(options, new_options);
@@ -925,26 +944,6 @@ $(function () {
 //		if (scene.fog.near > center) scene.fog.near = center;
 		scene.fog.far = camera.far;
 		renderer.render(scene, camera);
-	};
-
-	var drawSurface = function (atoms, type, wireframe, opacity) {
-		if (!surfaces[type]) {
-			var ps = new ProteinSurface();
-			ps.initparm(getExtent(atoms), type >= 1);
-			ps.fillvoxels(atoms);
-			ps.buildboundary();
-			if (type == 4 || type == 2) ps.fastdistancemap();
-			if (type == 2) { ps.boundingatom(false); ps.fillvoxelswaals(atoms); }
-			ps.marchingcube(type);
-			ps.laplaciansmooth(1);
-			ps.transformVertices();
-			surfaces[type] = ps;
-		}
-		var mesh = new THREE.Mesh(surfaces[type].getModel(atoms), new THREE.MeshLambertMaterial({
-			vertexColors: THREE.VertexColors,
-		}));
-		mesh.doubleSided = true;
-		mdl.add(mesh);
 	};
 
 	var getExtent = function (atoms) {
