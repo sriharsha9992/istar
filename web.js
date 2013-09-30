@@ -171,7 +171,7 @@ if (cluster.isMaster) {
 				var v = new validator.Validator();
 				if (v.init(req.body)
 					.chk('email', 'must be valid', true).isEmail()
-					.chk('receptor', 'must be provided', true).len(1, 10485760).regex(/^(((ATOM	|HETATM).{24}(.{3}\d\.\d{3}){3}.{25}\n){1,39999}TER	 .{21,}\n){0,9}((ATOM	|HETATM).{24}(.{3}\d\.\d{3}){3}.{25}\n){1,39999}TER	 .{21,}\n?$/g) // 10MB
+					.chk('receptor', 'must be provided', true).len(1, 10485760).regex(/^(((ATOM  |HETATM).{24}(.{3}\d\.\d{3}){3}.{25}\n){1,39999}TER   .{21,}\n){0,9}((ATOM  |HETATM).{24}(.{3}\d\.\d{3}){3}.{25}\n){1,39999}TER   .{21,}\n?$/g) // 10MB
 					.chk('center_x', 'must be a decimal within [-999, 999]', true).isDecimal().min(-999).max(999)
 					.chk('center_y', 'must be a decimal within [-999, 999]', true).isDecimal().min(-999).max(999)
 					.chk('center_z', 'must be a decimal within [-999, 999]', true).isDecimal().min(-999).max(999)
