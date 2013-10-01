@@ -801,6 +801,7 @@ $(function () {
 		for (var i = 0; i <= std; ++i) {
 			var serial = serials[i];
 			var atom = protein[serial];
+			if (atom.elem === 'H') continue;
 			stdAtoms[serial] = atom;
 		}
 		hetAtoms = {};
