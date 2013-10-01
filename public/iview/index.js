@@ -645,7 +645,7 @@ $(function () {
 		protein: undefined,
 		 ligand: undefined,
 	};
-	var stdAtoms, hetAtoms, hbondDonors, hbondAcceptors;
+	var stdAtoms, hbondDonors, hbondAcceptors;
 	var refresh = function(molecule) {
 		var m = objects[molecule];
 		if (m[options[molecule]] === undefined) {
@@ -804,11 +804,9 @@ $(function () {
 			if (atom.elem === 'H') continue;
 			stdAtoms[serial] = atom;
 		}
-		hetAtoms = {};
 		for (var i = std + 1; i < serials.length; ++i) {
 			var serial = serials[i];
 			var atom = protein[serial];
-			hetAtoms[atom.serial] = atom;
 			if ((protein[serial - 1] === undefined || protein[serial - 1].resi !== atom.resi) && (protein[serial + 1] === undefined || protein[serial + 1].resi !== atom.resi)) {
 				atom.solvent = true;
 			}
