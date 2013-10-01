@@ -645,7 +645,7 @@ $(function () {
 		protein: undefined,
 		 ligand: undefined,
 	};
-	var stdAtoms, hbondDonors, hbondAcceptors;
+	var surface, hbondDonors, hbondAcceptors;
 	var refresh = function(molecule) {
 		var m = objects[molecule];
 		if (m[options[molecule]] === undefined) {
@@ -697,16 +697,16 @@ $(function () {
 
 		switch (options.surface) {
 			case 'Van der Waals surface':
-				drawSurface(stdAtoms, 1);
+				drawSurface(surface, 1);
 				break;
 			case 'solvent excluded surface':
-				drawSurface(stdAtoms, 2);
+				drawSurface(surface, 2);
 				break;
 			case 'solvent accessible surface':
-				drawSurface(stdAtoms, 3);
+				drawSurface(surface, 3);
 				break;
 			case 'molecular surface':
-				drawSurface(stdAtoms, 4);
+				drawSurface(surface, 4);
 				break;
 			case 'nothing':
 				break;
@@ -797,12 +797,12 @@ $(function () {
 		while (--std >= 0) {
 			if (!protein[serials[std]].het) break;
 		}
-		stdAtoms = {};
+		surface = {};
 		for (var i = 0; i <= std; ++i) {
 			var serial = serials[i];
 			var atom = protein[serial];
 			if (atom.elem === 'H') continue;
-			stdAtoms[serial] = atom;
+			surface[serial] = atom;
 		}
 		for (var i = std + 1; i < serials.length; ++i) {
 			var serial = serials[i];
