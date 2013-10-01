@@ -666,7 +666,7 @@ $(function () {
 		}
 		mdl.add(m[options[molecule]]);
 	};
-	var drawSurface = function (atoms, type, wireframe, opacity) {
+	var drawSurface = function (atoms, type) {
 		if (!surfaces[type]) {
 			var ps = new ProteinSurface();
 			ps.initparm(getExtent(atoms), type > 1);
@@ -681,6 +681,8 @@ $(function () {
 		}
 		var mesh = new THREE.Mesh(surfaces[type].getModel(atoms), new THREE.MeshLambertMaterial({
 			vertexColors: THREE.VertexColors,
+			opacity: 0.9,
+			transparent: true,
 		}));
 		mesh.doubleSided = true;
 		mdl.add(mesh);
