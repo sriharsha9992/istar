@@ -527,14 +527,6 @@ $(function () {
 		return elqt === 'NA' || elqt === 'OA' || elqt === 'SA';
 	}
 
-	var createDashedLine = function (p0, p1, color) {
-		var geo = new THREE.Geometry();
-		geo.vertices.push(p0);
-		geo.vertices.push(p1);
-		geo.computeLineDistances();
-		return new THREE.Line(geo, new THREE.LineDashedMaterial({ linewidth: 4, 'color': color, dashSize: 0.25, gapSize: 0.125 }));
-	};
-
 	var createSphere = function (atom, defaultRadius, forceDefault, scale) {
 		var mesh = new THREE.Mesh(sphereGeometry, new THREE.MeshLambertMaterial({ color: atom.color }));
 		mesh.scale.x = mesh.scale.y = mesh.scale.z = forceDefault ? defaultRadius : (vdwRadii[atom.elem] || defaultRadius) * (scale ? scale : 1);
@@ -893,26 +885,29 @@ $(function () {
 			ligand[r.y].bonds.push(r.x);
 		}
 		colorByElement(ligand);
-		var obj = new THREE.Object3D();
+		var geo = new THREE.Geometry();
 		for (var li in ligand) {
 			var la = ligand[li];
 			if (isHBondDonor(la.elqt)) {
 				for (var pi in hbondAcceptors) {
 					var pa = hbondAcceptors[pi];
 					if (la.coord.distanceToSquared(pa.coord) < hbondCutoffSquared) {
-						obj.add(createDashedLine(la.coord, pa.coord, defaultHBondColor));
+						geo.vertices.push(la.coord);
+						geo.vertices.push(pa.coord);
 					}
 				}
 			} else if (isHBondAcceptor(la.elqt)) {
 				for (var pi in hbondDonors) {
 					var pa = hbondDonors[pi];
 					if (la.coord.distanceToSquared(pa.coord) < hbondCutoffSquared) {
-						obj.add(createDashedLine(la.coord, pa.coord, defaultHBondColor));
+						geo.vertices.push(la.coord);
+						geo.vertices.push(pa.coord);
 					}
 				}
 			}
 		}
-		mdl.add(obj);
+		geo.computeLineDistances();
+		mdl.add(new THREE.Line(geo, new THREE.LineDashedMaterial({ linewidth: 4, color: defaultHBondColor, dashSize: 0.25, gapSize: 0.125 }), THREE.LinePieces));
 		var hits = $('#hits');
 		hits.html(['ZINC01234568', 'ZINC01234569', 'ZINC01234566', 'ZINC01234567'].map(function(id) {
 			return '<label class="btn btn-primary"><input type="radio">' + id + '</label>';
