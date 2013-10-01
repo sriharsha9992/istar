@@ -408,10 +408,16 @@ $(function () {
 		orthographic: orthographicCamera,
 	};
 	var objects = {};
-	['protein', 'ligand'].forEach(function(molecule) {
-		var m = objects[molecule] = {};
-		['line', 'stick', 'ball and stick', 'sphere'].forEach(function(key) {
-			m[key] = undefined;
+	['protein', 'ligand'].forEach(function(entity) {
+		var o = objects[entity] = {};
+		['line', 'stick', 'ball and stick', 'sphere'].forEach(function(representation) {
+			o[representation] = undefined;
+		});
+	});
+	['surface'].forEach(function(entity) {
+		var o = objects[entity] = {};
+		['Van der Waals surface', 'solvent excluded surface', 'solvent accessible surface', 'molecular surface', 'nothing'].forEach(function(representation) {
+			o[representation] = undefined;
 		});
 	});
 	var surfaces = {
