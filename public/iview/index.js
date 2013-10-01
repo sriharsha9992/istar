@@ -365,8 +365,8 @@ $(function () {
 		ES: new THREE.Color(0xB31FD4),
 		FM: new THREE.Color(0xB31FBA),
 	};
-	var defaultAtomColor = new THREE.Color(0xCCCCCC);
-	var defaultBoxColor = new THREE.Color(0x1FF01F);
+	var defaultAtomColor  = new THREE.Color(0xCCCCCC);
+	var defaultBoxColor   = new THREE.Color(0x1FF01F);
 	var defaultHBondColor = new THREE.Color(0x94FFFF);
 	var backgroundColors = {
 		black: new THREE.Color(0x000000),
@@ -669,7 +669,7 @@ $(function () {
 	var drawSurface = function (atoms, type, wireframe, opacity) {
 		if (!surfaces[type]) {
 			var ps = new ProteinSurface();
-			ps.initparm(getExtent(atoms), type >= 1);
+			ps.initparm(getExtent(atoms), type > 1);
 			ps.fillvoxels(atoms);
 			ps.buildboundary();
 			if (type == 4 || type == 2) ps.fastdistancemap();
