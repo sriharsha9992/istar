@@ -666,7 +666,7 @@ $(function () {
 		}
 		mdl.add(m[options[molecule]]);
 	};
-	var drawSurface = function (atoms, type) {
+	var createSurface = function (atoms, type) {
 		if (!surfaces[type]) {
 			var ps = new ProteinSurface();
 			ps.initparm(getExtent(atoms), type > 1);
@@ -696,16 +696,16 @@ $(function () {
 
 		switch (options.surface) {
 			case 'Van der Waals surface':
-				drawSurface(surface, 1);
+				createSurface(surface, 1);
 				break;
 			case 'solvent excluded surface':
-				drawSurface(surface, 2);
+				createSurface(surface, 2);
 				break;
 			case 'solvent accessible surface':
-				drawSurface(surface, 3);
+				createSurface(surface, 3);
 				break;
 			case 'molecular surface':
-				drawSurface(surface, 4);
+				createSurface(surface, 4);
 				break;
 			case 'nothing':
 				break;
