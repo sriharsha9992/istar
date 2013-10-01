@@ -552,7 +552,7 @@ $(function () {
 		return mesh;
 	};
 
-	var drawAtomsAsSphere = function (atoms, defaultRadius, forceDefault, scale) {
+	var createSphereRepresentation = function (atoms, defaultRadius, forceDefault, scale) {
 		var obj = new THREE.Object3D();
 		for (var i in atoms) {
 			obj.add(createSphere(atoms[i], defaultRadius, forceDefault, scale));
@@ -560,7 +560,7 @@ $(function () {
 		return obj;
 	};
 
-	var drawBondsAsStick = function (atoms, bondR, atomR, scale) {
+	var createStickRepresentation = function (atoms, bondR, atomR, scale) {
 		var obj = new THREE.Object3D();
 		for (var i in atoms) {
 			var atom0 = atoms[i];
@@ -576,7 +576,7 @@ $(function () {
 		return obj;
 	};
 
-	var drawBondsAsLine = function (atoms) {
+	var createLineRepresentation = function (atoms) {
 		var obj = new THREE.Object3D();
 		obj.add(new THREE.Line(new THREE.Geometry(), new THREE.LineBasicMaterial({ linewidth: linewidth, vertexColors: true }), THREE.LinePieces));
 		var geo = obj.children[0].geometry;
@@ -602,7 +602,7 @@ $(function () {
 		return obj;
 	};
 
-	var drawBox = function (c000, c100, c010, c110, c001, c101, c011, c111) {
+	var createBox = function (c000, c100, c010, c110, c001, c101, c011, c111) {
 		var obj = new THREE.Object3D();
 		var geo = new THREE.Geometry();
 		geo.vertices.push(c000);
@@ -651,16 +651,16 @@ $(function () {
 		if (m[options[molecule]] === undefined) {
 			switch (options[molecule]) {
 				case 'line':
-					m[options[molecule]] = drawBondsAsLine(molecules[molecule]);
+					m[options[molecule]] = createLineRepresentation(molecules[molecule]);
 					break;
 				case 'stick':
-					m[options[molecule]] = drawBondsAsStick(molecules[molecule], cylinderRadius, cylinderRadius);
+					m[options[molecule]] = createStickRepresentation(molecules[molecule], cylinderRadius, cylinderRadius);
 					break;
 				case 'ball and stick':
-					m[options[molecule]] = drawBondsAsStick(molecules[molecule], cylinderRadius * 0.5, cylinderRadius);
+					m[options[molecule]] = createStickRepresentation(molecules[molecule], cylinderRadius * 0.5, cylinderRadius);
 					break;
 				case 'sphere':
-					m[options[molecule]] = drawAtomsAsSphere(molecules[molecule], sphereRadius);
+					m[options[molecule]] = createSphereRepresentation(molecules[molecule], sphereRadius);
 					break;
 			}
 		}
@@ -727,7 +727,7 @@ $(function () {
 		c101 = ct.clone().add(hf.clone().multiply(new THREE.Vector3( 1, -1,  1)));
 		c011 = ct.clone().add(hf.clone().multiply(new THREE.Vector3(-1,  1,  1)));
 		c111 = ct.clone().add(hf.clone().multiply(new THREE.Vector3( 1,  1,  1)));
-		mdl.add(drawBox(c000, c100, c010, c110, c001, c101, c011, c111));
+		mdl.add(createBox(c000, c100, c010, c110, c001, c101, c011, c111));
 	};
 
 	var xmin = ymin = zmin =  9999;
