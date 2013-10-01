@@ -684,7 +684,6 @@ $(function () {
 			opacity: 0.9,
 			transparent: true,
 		}));
-		mesh.doubleSided = true;
 		mdl.add(mesh);
 	};
 	var rebuildScene = function (new_options) {
