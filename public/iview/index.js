@@ -731,7 +731,7 @@ $(function () {
 	var xmin = ymin = zmin =  9999;
 	var xmax = ymax = zmax = -9999;
 	var parseProtein = function (src) {
-		var protein = [];
+		var protein = {};
 		var lines = src.split('\n');
 		for (var i in lines) {
 			var line = lines[i];
@@ -795,13 +795,13 @@ $(function () {
 		while (--std >= 0) {
 			if (!protein[serials[std]].het) break;
 		}
-		stdAtoms = [];
+		stdAtoms = {};
 		for (var i = 0; i <= std; ++i) {
 			var serial = serials[i];
 			var atom = protein[serial];
 			stdAtoms[serial] = atom;
 		}
-		hetAtoms = [];
+		hetAtoms = {};
 		for (var i = std + 1; i < serials.length; ++i) {
 			var serial = serials[i];
 			var atom = protein[serial];
@@ -810,7 +810,7 @@ $(function () {
 				atom.solvent = true;
 			}
 		}
-		hbondDonors = [], hbondAcceptors = [];
+		hbondDonors = {}, hbondAcceptors = {};
 		for (var pi in protein) {
 			var atom = protein[pi];
 			if (atom.coord.x < xmin) xmin = atom.coord.x;
@@ -845,7 +845,7 @@ $(function () {
 	};
 
 	var parseLigand = function (src) {
-		var ligand = [];
+		var ligand = {};
 		var lines = src.split('\n'), rotors = [], start_ligand = true, start_frame;
 		for (var i in lines) {
 			var line = lines[i];
