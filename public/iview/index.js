@@ -984,26 +984,26 @@ $(function () {
 		});
 	});
 
-	['camera', 'background'].forEach(function (opt) {
-		$('#' + opt).click(function (e) {
-			options[opt] = e.target.innerText;
-			update[opt]();
+	['camera', 'background'].forEach(function (option) {
+		$('#' + option).click(function (e) {
+			options[option] = e.target.innerText;
+			update[option]();
 			render();
 		});
 	});
 
-	['protein', 'ligand'].forEach(function (molecule) {
-		$('#' + molecule).click(function (e) {
-			mdl.remove(objects[molecule][options[molecule]]);
-			options[molecule] = e.target.innerText;
-			createMolecule(molecule);
+	['protein', 'ligand'].forEach(function (option) {
+		$('#' + option).click(function (e) {
+			mdl.remove(objects[option][options[option]]);
+			options[option] = e.target.innerText;
+			createMolecule(option);
 			render();
 		});
 	});
 
-	['surface'].forEach(function (opt) {
-		$('#' + opt).click(function (e) {
-			options[opt] = e.target.innerText;
+	['surface'].forEach(function (option) {
+		$('#' + option).click(function (e) {
+			options[option] = e.target.innerText;
 			rebuildScene();
 			render();
 		});
