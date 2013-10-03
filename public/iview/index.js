@@ -414,12 +414,6 @@ $(function () {
 			o[this.innerText] = undefined;
 		});
 	});
-	var surfaces = {
-		1: undefined,
-		2: undefined,
-		3: undefined,
-		4: undefined,
-	};
 	var options = {};
 	['camera', 'background', 'protein', 'ligand', 'surface'].forEach(function(option) {
 		options[option] = $('#' + option + ' .active')[0].innerText;
