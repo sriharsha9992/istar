@@ -1004,6 +1004,7 @@ $(function () {
 
 	['surface'].forEach(function (option) {
 		$('#' + option).click(function (e) {
+			mdl.remove(objects[option][options[option]]);
 			options[option] = e.target.innerText;
 			createSurface();
 			render();
