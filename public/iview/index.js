@@ -978,6 +978,7 @@ $(function () {
 					hits_str += String.fromCharCode(hits_raw[i]);
 				}
 				parseLigand(hits_str);
+			}).always(function() {
 				rebuildScene();
 				render();
 			});
