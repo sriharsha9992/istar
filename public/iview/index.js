@@ -421,8 +421,8 @@ $(function () {
 		4: undefined,
 	};
 	var options = {};
-	['camera', 'background', 'protein', 'ligand', 'surface'].forEach(function(key) {
-		options[key] = $('#' + key + ' .active')[0].innerText;
+	['camera', 'background', 'protein', 'ligand', 'surface'].forEach(function(option) {
+		options[option] = $('#' + option + ' .active')[0].innerText;
 	});
 	var camera;
 	var update = {
@@ -445,8 +445,8 @@ $(function () {
 	scene.add(directionalLight);
 	scene.add(ambientLight);
 	scene.add(rot);
-	Object.keys(update).forEach(function (key) {
-		update[key]();
+	Object.keys(update).forEach(function (option) {
+		update[option]();
 	});
 
 	var sn = -50;
