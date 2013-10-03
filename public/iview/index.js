@@ -675,13 +675,7 @@ $(function () {
 		}
 		mdl.add(surfaces[type]);
 	};
-	var rebuildScene = function (new_options) {
-
-		$.extend(options, new_options);
-
-		Object.keys(entities).forEach(function(m) {
-			createMolecule(m);
-		});
+	var rebuildScene = function () {
 
 		switch (options.surface) {
 			case 'Van der Waals surface':
@@ -979,6 +973,9 @@ $(function () {
 				}
 				parseLigand(hits_str);
 			}).always(function() {
+				Object.keys(entities).forEach(function(m) {
+					createMolecule(m);
+				});
 				rebuildScene();
 				render();
 			});
