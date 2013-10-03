@@ -715,7 +715,6 @@ $(function () {
 		c101 = ct.clone().add(hf.clone().multiply(new THREE.Vector3( 1, -1,  1)));
 		c011 = ct.clone().add(hf.clone().multiply(new THREE.Vector3(-1,  1,  1)));
 		c111 = ct.clone().add(hf.clone().multiply(new THREE.Vector3( 1,  1,  1)));
-		mdl.add(createBox(c000, c100, c010, c110, c001, c101, c011, c111));
 	};
 
 	var xmin = ymin = zmin =  9999;
@@ -954,6 +953,7 @@ $(function () {
 	$.get(path + 'box.conf', function (box) {
 		parseBox(box);
 		mdl.position = ct.clone().multiplyScalar(-1);
+		mdl.add(createBox(c000, c100, c010, c110, c001, c101, c011, c111));
 		$.get(path + 'receptor.pdbqt', function (protein) {
 			parseProtein(protein);
 			var maxD = new THREE.Vector3(xmax, ymax, zmax).distanceTo(new THREE.Vector3(xmin, ymin, zmin));
