@@ -425,7 +425,7 @@ $(function () {
 		options[key] = $('#' + key + ' .active')[0].innerText;
 	});
 	var camera;
-	var set = {
+	var update = {
 		camera: function () {
 			camera = cameras[options.camera];
 		},
@@ -445,8 +445,8 @@ $(function () {
 	scene.add(directionalLight);
 	scene.add(ambientLight);
 	scene.add(rot);
-	Object.keys(set).forEach(function (key) {
-		set[key]();
+	Object.keys(update).forEach(function (key) {
+		update[key]();
 	});
 
 	var sn = -50;
@@ -987,7 +987,7 @@ $(function () {
 	['camera', 'background'].forEach(function (opt) {
 		$('#' + opt).click(function (e) {
 			options[opt] = e.target.innerText;
-			set[opt]();
+			update[opt]();
 			render();
 		});
 	});
