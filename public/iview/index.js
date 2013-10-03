@@ -527,6 +527,36 @@ $(function () {
 		return elqt === 'NA' || elqt === 'OA' || elqt === 'SA';
 	}
 
+	var createBox = function (c000, c100, c010, c110, c001, c101, c011, c111) {
+		var geo = new THREE.Geometry();
+		geo.vertices.push(c000);
+		geo.vertices.push(c100);
+		geo.vertices.push(c010);
+		geo.vertices.push(c110);
+		geo.vertices.push(c001);
+		geo.vertices.push(c101);
+		geo.vertices.push(c011);
+		geo.vertices.push(c111);
+		geo.vertices.push(c000);
+		geo.vertices.push(c010);
+		geo.vertices.push(c100);
+		geo.vertices.push(c110);
+		geo.vertices.push(c001);
+		geo.vertices.push(c011);
+		geo.vertices.push(c101);
+		geo.vertices.push(c111);
+		geo.vertices.push(c000);
+		geo.vertices.push(c001);
+		geo.vertices.push(c100);
+		geo.vertices.push(c101);
+		geo.vertices.push(c010);
+		geo.vertices.push(c011);
+		geo.vertices.push(c110);
+		geo.vertices.push(c111);
+		geo.computeLineDistances();
+		return new THREE.Line(geo, new THREE.LineDashedMaterial({ linewidth: 4, color: defaultBoxColor, dashSize: 0.25, gapSize: 0.125 }), THREE.LinePieces);
+	};
+
 	var createSphere = function (atom, defaultRadius, forceDefault, scale) {
 		var mesh = new THREE.Mesh(sphereGeometry, new THREE.MeshLambertMaterial({ color: atom.color }));
 		mesh.scale.x = mesh.scale.y = mesh.scale.z = forceDefault ? defaultRadius : (vdwRadii[atom.elem] || defaultRadius) * (scale ? scale : 1);
@@ -592,36 +622,6 @@ $(function () {
 			}
 		}
 		return obj;
-	};
-
-	var createBox = function (c000, c100, c010, c110, c001, c101, c011, c111) {
-		var geo = new THREE.Geometry();
-		geo.vertices.push(c000);
-		geo.vertices.push(c100);
-		geo.vertices.push(c010);
-		geo.vertices.push(c110);
-		geo.vertices.push(c001);
-		geo.vertices.push(c101);
-		geo.vertices.push(c011);
-		geo.vertices.push(c111);
-		geo.vertices.push(c000);
-		geo.vertices.push(c010);
-		geo.vertices.push(c100);
-		geo.vertices.push(c110);
-		geo.vertices.push(c001);
-		geo.vertices.push(c011);
-		geo.vertices.push(c101);
-		geo.vertices.push(c111);
-		geo.vertices.push(c000);
-		geo.vertices.push(c001);
-		geo.vertices.push(c100);
-		geo.vertices.push(c101);
-		geo.vertices.push(c010);
-		geo.vertices.push(c011);
-		geo.vertices.push(c110);
-		geo.vertices.push(c111);
-		geo.computeLineDistances();
-		return new THREE.Line(geo, new THREE.LineDashedMaterial({ linewidth: 4, color: defaultBoxColor, dashSize: 0.25, gapSize: 0.125 }), THREE.LinePieces);
 	};
 
 	var colorByElement = function (atoms) {
