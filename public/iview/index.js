@@ -624,6 +624,23 @@ $(function () {
 		return obj;
 	};
 
+	var createSurfaceRepresentation = function (atoms, type) {
+		var ps = new ProteinSurface();
+		ps.initparm(getExtent(atoms), type > 1);
+		ps.fillvoxels(atoms);
+		ps.buildboundary();
+		if (type == 4 || type == 2) ps.fastdistancemap();
+		if (type == 2) { ps.boundingatom(false); ps.fillvoxelswaals(atoms); }
+		ps.marchingcube(type);
+		ps.laplaciansmooth(1);
+		ps.transformVertices();
+		return new THREE.Mesh(ps.getModel(atoms), new THREE.MeshLambertMaterial({
+			vertexColors: THREE.VertexColors,
+			opacity: 0.9,
+			transparent: true,
+		}));
+	};
+
 	var colorByElement = function (atoms) {
 		for (var i in atoms) {
 			var atom = atoms[i];
@@ -656,43 +673,29 @@ $(function () {
 		}
 		mdl.add(m[options[molecule]]);
 	};
-	var createSurface = function (atoms, type) {
-		if (surfaces[type] === undefined) {
-			var ps = new ProteinSurface();
-			ps.initparm(getExtent(atoms), type > 1);
-			ps.fillvoxels(atoms);
-			ps.buildboundary();
-			if (type == 4 || type == 2) ps.fastdistancemap();
-			if (type == 2) { ps.boundingatom(false); ps.fillvoxelswaals(atoms); }
-			ps.marchingcube(type);
-			ps.laplaciansmooth(1);
-			ps.transformVertices();
-			surfaces[type] = new THREE.Mesh(ps.getModel(atoms), new THREE.MeshLambertMaterial({
-				vertexColors: THREE.VertexColors,
-				opacity: 0.9,
-				transparent: true,
-			}));
-		}
-		mdl.add(surfaces[type]);
-	};
-	var rebuildScene = function () {
 
-		switch (options.surface) {
-			case 'Van der Waals surface':
-				createSurface(surface, 1);
-				break;
-			case 'solvent excluded surface':
-				createSurface(surface, 2);
-				break;
-			case 'solvent accessible surface':
-				createSurface(surface, 3);
-				break;
-			case 'molecular surface':
-				createSurface(surface, 4);
-				break;
-			case 'nothing':
-				break;
+	var createSurface = function () {
+		var m = objects['surface'];
+		if (m[options['surface']] === undefined) {
+			switch (options['surface']) {
+				case 'Van der Waals surface':
+					m[options['surface']] = createSurfaceRepresentation(surface, 1);
+					break;
+				case 'solvent excluded surface':
+					m[options['surface']] = createSurfaceRepresentation(surface, 2);
+					break;
+				case 'solvent accessible surface':
+					m[options['surface']] = createSurfaceRepresentation(surface, 3);
+					break;
+				case 'molecular surface':
+					m[options['surface']] = createSurfaceRepresentation(surface, 4);
+					break;
+				case 'nothing':
+					m[options['surface']] = null;
+					break;
+			}
 		}
+		mdl.add(m[options['surface']]);
 	};
 
 	var ct, sz, c000, c100, c010, c110, c001, c101, c011, c111;
@@ -976,7 +979,7 @@ $(function () {
 				Object.keys(entities).forEach(function(m) {
 					createMolecule(m);
 				});
-				rebuildScene();
+				createSurface();
 				render();
 			});
 		});
@@ -1002,7 +1005,7 @@ $(function () {
 	['surface'].forEach(function (option) {
 		$('#' + option).click(function (e) {
 			options[option] = e.target.innerText;
-			rebuildScene();
+			createSurface();
 			render();
 		});
 	});
