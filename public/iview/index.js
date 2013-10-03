@@ -636,7 +636,7 @@ $(function () {
 		 ligand: undefined,
 	};
 	var surface, hbondDonors, hbondAcceptors;
-	var refresh = function(molecule) {
+	var createMolecule = function(molecule) {
 		var m = objects[molecule];
 		if (m[options[molecule]] === undefined) {
 			switch (options[molecule]) {
@@ -680,7 +680,7 @@ $(function () {
 		$.extend(options, new_options);
 
 		Object.keys(entities).forEach(function(m) {
-			refresh(m);
+			createMolecule(m);
 		});
 
 		switch (options.surface) {
@@ -996,7 +996,7 @@ $(function () {
 		$('#' + molecule).click(function (e) {
 			mdl.remove(objects[molecule][options[molecule]]);
 			options[molecule] = e.target.innerText;
-			refresh(molecule);
+			createMolecule(molecule);
 			render();
 		});
 	});
