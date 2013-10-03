@@ -691,7 +691,7 @@ $(function () {
 					m[options['surface']] = createSurfaceRepresentation(surface, 4);
 					break;
 				case 'nothing':
-					m[options['surface']] = null;
+					m[options['surface']] = undefined;
 					break;
 			}
 		}
