@@ -595,7 +595,6 @@ $(function () {
 	};
 
 	var createBox = function (c000, c100, c010, c110, c001, c101, c011, c111) {
-		var obj = new THREE.Object3D();
 		var geo = new THREE.Geometry();
 		geo.vertices.push(c000);
 		geo.vertices.push(c100);
@@ -622,8 +621,7 @@ $(function () {
 		geo.vertices.push(c110);
 		geo.vertices.push(c111);
 		geo.computeLineDistances();
-		obj.add(new THREE.Line(geo, new THREE.LineDashedMaterial({ linewidth: 4, color: defaultBoxColor, dashSize: 0.25, gapSize: 0.125 }), THREE.LinePieces));
-		return obj;
+		return new THREE.Line(geo, new THREE.LineDashedMaterial({ linewidth: 4, color: defaultBoxColor, dashSize: 0.25, gapSize: 0.125 }), THREE.LinePieces);
 	};
 
 	var colorByElement = function (atoms) {
