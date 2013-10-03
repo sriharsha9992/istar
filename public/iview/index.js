@@ -657,7 +657,7 @@ $(function () {
 		mdl.add(m[options[molecule]]);
 	};
 	var createSurface = function (atoms, type) {
-		if (!surfaces[type]) {
+		if (surfaces[type] === undefined) {
 			var ps = new ProteinSurface();
 			ps.initparm(getExtent(atoms), type > 1);
 			ps.fillvoxels(atoms);
@@ -667,14 +667,13 @@ $(function () {
 			ps.marchingcube(type);
 			ps.laplaciansmooth(1);
 			ps.transformVertices();
-			surfaces[type] = ps;
+			surfaces[type] = new THREE.Mesh(ps.getModel(atoms), new THREE.MeshLambertMaterial({
+				vertexColors: THREE.VertexColors,
+				opacity: 0.9,
+				transparent: true,
+			}));
 		}
-		var mesh = new THREE.Mesh(surfaces[type].getModel(atoms), new THREE.MeshLambertMaterial({
-			vertexColors: THREE.VertexColors,
-			opacity: 0.9,
-			transparent: true,
-		}));
-		mdl.add(mesh);
+		mdl.add(surfaces[type]);
 	};
 	var rebuildScene = function (new_options) {
 
