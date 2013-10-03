@@ -953,7 +953,7 @@ $(function () {
 		return [[xmin, ymin, zmin], [xmax, ymax, zmax], [xsum / cnt, ysum / cnt, zsum / cnt]];
 	};
 
-	var path = '/idock/jobs/' + location.search.substr(1) + '/';
+	var path = '/idock/jobs/' + (location.search.length ? location.search.substr(1) : '522849e9ae0713945d000001') + '/';
 	$.get(path + 'box.conf', function (box) {
 		parseBox(box);
 		mdl.position = ct.clone().multiplyScalar(-1);
