@@ -631,7 +631,7 @@ $(function () {
 		}
 	};
 
-	var molecules = {
+	var entities = {
 		protein: undefined,
 		 ligand: undefined,
 	};
@@ -641,16 +641,16 @@ $(function () {
 		if (m[options[molecule]] === undefined) {
 			switch (options[molecule]) {
 				case 'line':
-					m[options[molecule]] = createLineRepresentation(molecules[molecule]);
+					m[options[molecule]] = createLineRepresentation(entities[molecule]);
 					break;
 				case 'stick':
-					m[options[molecule]] = createStickRepresentation(molecules[molecule], cylinderRadius, cylinderRadius);
+					m[options[molecule]] = createStickRepresentation(entities[molecule], cylinderRadius, cylinderRadius);
 					break;
 				case 'ball and stick':
-					m[options[molecule]] = createStickRepresentation(molecules[molecule], cylinderRadius * 0.5, cylinderRadius);
+					m[options[molecule]] = createStickRepresentation(entities[molecule], cylinderRadius * 0.5, cylinderRadius);
 					break;
 				case 'sphere':
-					m[options[molecule]] = createSphereRepresentation(molecules[molecule], sphereRadius);
+					m[options[molecule]] = createSphereRepresentation(entities[molecule], sphereRadius);
 					break;
 			}
 		}
@@ -679,7 +679,7 @@ $(function () {
 
 		$.extend(options, new_options);
 
-		Object.keys(molecules).forEach(function(m) {
+		Object.keys(entities).forEach(function(m) {
 			refresh(m);
 		});
 
@@ -830,7 +830,7 @@ $(function () {
 			}
 		}
 		colorByElement(protein);
-		molecules.protein = protein;
+		entities.protein = protein;
 	};
 
 	var parseLigand = function (src) {
@@ -913,7 +913,7 @@ $(function () {
 		$('> .btn', hits).click(function(e) {
 			alert(e.currentTarget.innerText);
 		});
-		molecules.ligand = ligand;
+		entities.ligand = ligand;
 	};
 
 	var render = function () {
