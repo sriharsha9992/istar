@@ -429,13 +429,13 @@ $(function () {
 			scene.fog = new THREE.Fog(backgroundColor, 100, 200);
 		},
 		protein: function () {
-			createMolecule('protein');
+			updateMolecule('protein');
 		},
 		ligand: function () {
-			createMolecule('ligand');
+			updateMolecule('ligand');
 		},
 		surface: function () {
-			createSurface();
+			updateSurface();
 		},
 	};
 	var scene = new THREE.Scene();
@@ -653,7 +653,7 @@ $(function () {
 		 ligand: undefined,
 	};
 	var surface, hbondDonors, hbondAcceptors;
-	var createMolecule = function(molecule) {
+	var updateMolecule = function(molecule) {
 		var m = objects[molecule];
 		if (m[options[molecule]] === undefined) {
 			switch (options[molecule]) {
@@ -674,7 +674,7 @@ $(function () {
 		mdl.add(m[options[molecule]]);
 	};
 
-	var createSurface = function () {
+	var updateSurface = function () {
 		var m = objects['surface'];
 		if (m[options['surface']] === undefined) {
 			switch (options['surface']) {
