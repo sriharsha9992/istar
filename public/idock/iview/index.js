@@ -380,9 +380,7 @@ $(function () {
 	var cylinderGeometry = new THREE.CylinderGeometry(1, 1, 1, 64, 1);
 	var sphereRadius = 1.5;
 	var cylinderRadius = 0.4;
-	var linewidth = 1.5;
 	var fov = 20;
-	var camera_z = -150;
 	var hbondCutoffSquared = 3.5 * 3.5;
 	var pdbqt2pdb = {
 		HD: 'H',
@@ -413,7 +411,7 @@ $(function () {
 	scene.add(rot);
 	scene.fog = new THREE.Fog(defaultBackgroundColor, 100, 200);
 	var camera = new THREE.PerspectiveCamera(20, canvas.width() / canvas.height(), 1, 800);
-	camera.position = new THREE.Vector3(0, 0, camera_z);
+	camera.position = new THREE.Vector3(0, 0, -150);
 	camera.lookAt(new THREE.Vector3(0, 0, 0));
 	var entities = {
 		protein: undefined,
@@ -482,10 +480,10 @@ $(function () {
 			sn = cn + dx * 100;
 			sf = cf + dy * 100;
 		} else if (wh == 3) { // Translate
-			var scaleFactor = Math.max((rot.position.z - camera_z) * 0.85, 20);
+			var scaleFactor = Math.max((rot.position.z - camera.position.z) * 0.85, 20);
 			mdl.position = cp.clone().add(new THREE.Vector3(-dx * scaleFactor, -dy * scaleFactor, 0).applyQuaternion(rot.quaternion.clone().inverse().normalize()));
 		} else if (wh == 2) { // Zoom
-			var scaleFactor = Math.max((rot.position.z - camera_z) * 0.85, 80);
+			var scaleFactor = Math.max((rot.position.z - camera.position.z) * 0.85, 80);
 			rot.position.z = cz - dy * scaleFactor;
 		} else if (wh == 1) { // Rotate
 			var r = Math.sqrt(dx * dx + dy * dy);
@@ -496,7 +494,7 @@ $(function () {
 	});
 	canvas.bind('mousewheel', function (e) {
 		e.preventDefault();
-		var scaleFactor = (rot.position.z - camera_z) * 0.85;
+		var scaleFactor = (rot.position.z - camera.position.z) * 0.85;
 		if (e.originalEvent.detail) { // Webkit
 			rot.position.z += scaleFactor * e.originalEvent.detail * 0.1;
 		} else if (e.originalEvent.wheelDelta) { // Firefox
@@ -796,7 +794,7 @@ $(function () {
 
 	var createLineRepresentation = function (atoms) {
 		var obj = new THREE.Object3D();
-		obj.add(new THREE.Line(new THREE.Geometry(), new THREE.LineBasicMaterial({ linewidth: linewidth, vertexColors: true }), THREE.LinePieces));
+		obj.add(new THREE.Line(new THREE.Geometry(), new THREE.LineBasicMaterial({ linewidth: 1.5, vertexColors: true }), THREE.LinePieces));
 		var geo = obj.children[0].geometry;
 		for (var i in atoms) {
 			var atom0 = atoms[i];
