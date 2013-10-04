@@ -698,7 +698,7 @@ $(function () {
 
 	var xmin = ymin = zmin =  9999;
 	var xmax = ymax = zmax = -9999;
-	var hbondDonors, hbondAcceptors;
+	var proteinHBondDonors, proteinHBondAcceptors;
 	var parseProtein = function (src) {
 		var protein = entities.protein = {}, lastStdSerial;
 		var lines = src.split('\n');
@@ -773,7 +773,7 @@ $(function () {
 				}
 			}
 		}
-		hbondDonors = {}, hbondAcceptors = {};
+		proteinHBondDonors = {}, proteinHBondAcceptors = {};
 		for (var pi in protein) {
 			var atom = protein[pi];
 			if (atom.coord.x < xmin) xmin = atom.coord.x;
@@ -797,9 +797,9 @@ $(function () {
 			if (r2 < hbondCutoffSquared)
 			{
 				if (isHBondDonor(atom.elqt)) {
-					hbondDonors[pi] = atom;
+					proteinHBondDonors[pi] = atom;
 				} else {
-					hbondAcceptors[pi] = atom;
+					proteinHBondAcceptors[pi] = atom;
 				}
 			}
 		}
@@ -858,16 +858,16 @@ $(function () {
 		for (var li in ligand) {
 			var la = ligand[li];
 			if (isHBondDonor(la.elqt)) {
-				for (var pi in hbondAcceptors) {
-					var pa = hbondAcceptors[pi];
+				for (var pi in proteinHBondAcceptors) {
+					var pa = proteinHBondAcceptors[pi];
 					if (la.coord.distanceToSquared(pa.coord) < hbondCutoffSquared) {
 						geo.vertices.push(la.coord);
 						geo.vertices.push(pa.coord);
 					}
 				}
 			} else if (isHBondAcceptor(la.elqt)) {
-				for (var pi in hbondDonors) {
-					var pa = hbondDonors[pi];
+				for (var pi in proteinHBondDonors) {
+					var pa = proteinHBondDonors[pi];
 					if (la.coord.distanceToSquared(pa.coord) < hbondCutoffSquared) {
 						geo.vertices.push(la.coord);
 						geo.vertices.push(pa.coord);
