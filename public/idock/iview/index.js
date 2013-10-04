@@ -991,9 +991,4 @@ console.log(location.search);
 			render();
 		});
 	});
-
-	$('#exportCanvas').click(function (e) {
-		render();
-		window.open(renderer.domElement.toDataURL('image/png'));
-	});
 });
