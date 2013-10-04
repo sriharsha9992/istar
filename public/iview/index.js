@@ -986,20 +986,11 @@ $(function () {
 		});
 	});
 
-	['protein', 'ligand'].forEach(function (option) {
+	['protein', 'ligand', 'surface'].forEach(function (option) {
 		$('#' + option).click(function (e) {
 			mdl.remove(objects[option][options[option]]);
 			options[option] = e.target.innerText;
-			createMolecule(option);
-			render();
-		});
-	});
-
-	['surface'].forEach(function (option) {
-		$('#' + option).click(function (e) {
-			mdl.remove(objects[option][options[option]]);
-			options[option] = e.target.innerText;
-			createSurface();
+			update[option]();
 			render();
 		});
 	});
