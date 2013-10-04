@@ -663,7 +663,7 @@ $(function () {
 				case 'stick':
 					m[options[molecule]] = createStickRepresentation(entities[molecule], cylinderRadius, cylinderRadius);
 					break;
-				case 'ball and stick':
+				case 'ball & stick':
 					m[options[molecule]] = createStickRepresentation(entities[molecule], cylinderRadius * 0.5, cylinderRadius);
 					break;
 				case 'sphere':
