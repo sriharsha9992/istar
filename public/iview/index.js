@@ -646,14 +646,6 @@ $(function () {
 		}));
 	};
 
-	var colorByElement = function (atoms) {
-		for (var i in atoms) {
-			var atom = atoms[i];
-			atom.color = atomColors[atom.elem] || defaultAtomColor;
-		}
-	};
-
-	var hbondDonors, hbondAcceptors;
 	var updateMolecule = function (entity) {
 		var m = objects[entity];
 		if (m[options[entity]] === undefined) {
@@ -699,6 +691,13 @@ $(function () {
 		mdl.add(m[options[entity]]);
 	};
 
+	var colorByElement = function (atoms) {
+		for (var i in atoms) {
+			var atom = atoms[i];
+			atom.color = atomColors[atom.elem] || defaultAtomColor;
+		}
+	};
+
 	var ct, sz, c000, c100, c010, c110, c001, c101, c011, c111;
 	var parseBox = function (src) {
 		var lines = src.split('\n');
@@ -717,6 +716,7 @@ $(function () {
 
 	var xmin = ymin = zmin =  9999;
 	var xmax = ymax = zmax = -9999;
+	var hbondDonors, hbondAcceptors;
 	var parseProtein = function (src) {
 		var protein = entities.protein = {}, lastStdSerial;
 		var lines = src.split('\n');
