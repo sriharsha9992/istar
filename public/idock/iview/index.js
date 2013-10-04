@@ -762,20 +762,18 @@ $(function () {
 			}
 		}
 		var surface = entities.surface = {};
+		proteinHBondDonors = {}, proteinHBondAcceptors = {};
 		for (var serial in protein) {
 			var atom = protein[serial];
 			if (serial <= lastStdSerial) {
-				if (atom.elem === 'H') continue;
-				surface[serial] = atom;
+				if (atom.elem !== 'H') {
+					surface[serial] = atom;
+				}
 			} else {
 				if ((protein[serial - 1] === undefined || protein[serial - 1].resi !== atom.resi) && (protein[serial + 1] === undefined || protein[serial + 1].resi !== atom.resi)) {
 					atom.solvent = true;
 				}
 			}
-		}
-		proteinHBondDonors = {}, proteinHBondAcceptors = {};
-		for (var pi in protein) {
-			var atom = protein[pi];
 			if (atom.coord.x < xmin) xmin = atom.coord.x;
 			if (atom.coord.y < ymin) ymin = atom.coord.y;
 			if (atom.coord.z < zmin) zmin = atom.coord.z;
@@ -797,9 +795,9 @@ $(function () {
 			if (r2 < hbondCutoffSquared)
 			{
 				if (isHBondDonor(atom.elqt)) {
-					proteinHBondDonors[pi] = atom;
+					proteinHBondDonors[serial] = atom;
 				} else {
-					proteinHBondAcceptors[pi] = atom;
+					proteinHBondAcceptors[serial] = atom;
 				}
 			}
 		}
