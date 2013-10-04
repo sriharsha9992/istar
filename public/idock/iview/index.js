@@ -401,6 +401,17 @@ $(function () {
 	});
 	renderer.setSize(canvas.width(), canvas.height());
 	renderer.setClearColor(defaultBackgroundColor);
+	var scene = new THREE.Scene();
+	var directionalLight = new THREE.DirectionalLight(0xFFFFFF, 1.2);
+	directionalLight.position = new THREE.Vector3(0.2, 0.2, -1).normalize();
+	var ambientLight = new THREE.AmbientLight(0x202020);
+	var rot = new THREE.Object3D();
+	var mdl = new THREE.Object3D();
+	rot.add(mdl);
+	scene.add(directionalLight);
+	scene.add(ambientLight);
+	scene.add(rot);
+	scene.fog = new THREE.Fog(defaultBackgroundColor, 100, 200);
 	var camera = new THREE.PerspectiveCamera(20, canvas.width() / canvas.height(), 1, 800);
 	camera.position = new THREE.Vector3(0, 0, camera_z);
 	camera.lookAt(new THREE.Vector3(0, 0, 0));
@@ -431,17 +442,6 @@ $(function () {
 			updateSurface('surface');
 		},
 	};
-	var scene = new THREE.Scene();
-	var directionalLight = new THREE.DirectionalLight(0xFFFFFF, 1.2);
-	directionalLight.position = new THREE.Vector3(0.2, 0.2, -1).normalize();
-	var ambientLight = new THREE.AmbientLight(0x202020);
-	var rot = new THREE.Object3D();
-	var mdl = new THREE.Object3D();
-	rot.add(mdl);
-	scene.add(directionalLight);
-	scene.add(ambientLight);
-	scene.add(rot);
-	scene.fog = new THREE.Fog(defaultBackgroundColor, 100, 200);
 
 	var sn;
 	var sf;
