@@ -773,7 +773,7 @@ $(function () {
 		return obj;
 	};
 
-	var createStickRepresentation = function (atoms, bondR, atomR, scale) {
+	var createStickRepresentation = function (atoms, atomR, bondR, scale) {
 		var obj = new THREE.Object3D();
 		for (var i in atoms) {
 			var atom0 = atoms[i];
@@ -843,7 +843,7 @@ $(function () {
 					m[options[entity]] = createStickRepresentation(entities[entity], cylinderRadius, cylinderRadius);
 					break;
 				case 'ball & stick':
-					m[options[entity]] = createStickRepresentation(entities[entity], cylinderRadius * 0.5, cylinderRadius);
+					m[options[entity]] = createStickRepresentation(entities[entity], cylinderRadius, cylinderRadius * 0.5);
 					break;
 				case 'sphere':
 					m[options[entity]] = createSphereRepresentation(entities[entity]);
