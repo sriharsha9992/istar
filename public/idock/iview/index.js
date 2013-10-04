@@ -380,7 +380,6 @@ $(function () {
 	var cylinderGeometry = new THREE.CylinderGeometry(1, 1, 1, 64, 1);
 	var sphereRadius = 1.5;
 	var cylinderRadius = 0.4;
-	var fov = 20;
 	var hbondCutoffSquared = 3.5 * 3.5;
 	var pdbqt2pdb = {
 		HD: 'H',
@@ -438,9 +437,7 @@ $(function () {
 		},
 	};
 
-	var sn;
-	var sf;
-	var dg, wh, cx, cy, cq, cz, cp, cn, cf;
+	var dg, wh, cx, cy, cq, cz, cp, cn, cf, sn, sf;
 	canvas.bind('contextmenu', function (e) {
 		e.preventDefault();
 	});
@@ -915,7 +912,7 @@ $(function () {
 			var maxD = new THREE.Vector3(xmax, ymax, zmax).distanceTo(new THREE.Vector3(xmin, ymin, zmin));
 			sn = -maxD / 2;
 			sf =  maxD / 4;
-			rot.position.z = maxD * 0.08 / Math.tan(Math.PI / 180.0 * fov * 0.5) - 150;
+			rot.position.z = maxD * 0.08 / Math.tan(Math.PI / 180.0 * 10) - 150;
 			rot.quaternion = new THREE.Quaternion(1, 0, 0, 0);
 			$.ajax({
 				url: path + 'hits.pdbqt.gz',
