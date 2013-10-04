@@ -404,16 +404,9 @@ $(function () {
 		antialias: true,
 	});
 	renderer.setSize(canvas.width(), canvas.height());
-	var perspectiveCamera = new THREE.PerspectiveCamera(20, canvas.width() / canvas.height(), 1, 800);
-	perspectiveCamera.position = new THREE.Vector3(0, 0, camera_z);
-	perspectiveCamera.lookAt(new THREE.Vector3(0, 0, 0));
-	var orthographicCamera = new THREE.OrthographicCamera();
-	orthographicCamera.position = new THREE.Vector3(0, 0, camera_z);
-	orthographicCamera.lookAt(new THREE.Vector3(0, 0, 0));
-	var cameras = {
-		 perspective:  perspectiveCamera,
-		orthographic: orthographicCamera,
-	};
+	var camera = new THREE.PerspectiveCamera(20, canvas.width() / canvas.height(), 1, 800);
+	camera.position = new THREE.Vector3(0, 0, camera_z);
+	camera.lookAt(new THREE.Vector3(0, 0, 0));
 	var entities = {
 		protein: undefined,
 		 ligand: undefined,
@@ -427,14 +420,10 @@ $(function () {
 		});
 	});
 	var options = {};
-	['camera', 'background', 'protein', 'ligand', 'surface'].forEach(function(option) {
+	['background', 'protein', 'ligand', 'surface'].forEach(function(option) {
 		options[option] = $('#' + option + ' .active')[0].innerText;
 	});
-	var camera;
 	var update = {
-		camera: function () {
-			camera = cameras[options.camera];
-		},
 		background: function () {
 			var backgroundColor = backgroundColors[options.background];
 			renderer.setClearColor(backgroundColor);
@@ -912,12 +901,6 @@ $(function () {
 		if (camera.near < 1) camera.near = 1;
 		camera.far = center + sf;
 		if (camera.near + 1 > camera.far) camera.far = camera.near + 1;
-		if (camera === orthographicCamera) {
-			camera.right = center * Math.tan(Math.PI / 180 * fov);
-			camera.left = -camera.right;
-			camera.top = camera.right / (canvas.width() / canvas.height());
-			camera.bottom = -camera.top;
-		}
 		camera.updateProjectionMatrix();
 		scene.fog.near = camera.near + 0.4 * (camera.far - camera.near);
 //		if (scene.fog.near > center) scene.fog.near = center;
@@ -975,7 +958,7 @@ console.log(location.search);
 		});
 	});
 
-	['camera', 'background'].forEach(function (option) {
+	['background'].forEach(function (option) {
 		$('#' + option).click(function (e) {
 			options[option] = e.target.innerText;
 			update[option]();
