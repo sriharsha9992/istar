@@ -450,8 +450,8 @@ $(function () {
 	scene.add(ambientLight);
 	scene.add(rot);
 
-	var sn = -50;
-	var sf =  50;
+	var sn;
+	var sf;
 	var dg, wh, cx, cy, cq, cz, cp, cn, cf;
 	canvas.bind('contextmenu', function (e) {
 		e.preventDefault();
@@ -919,7 +919,7 @@ $(function () {
 		}
 		return [[xmin, ymin, zmin], [xmax, ymax, zmax], [xsum / cnt, ysum / cnt, zsum / cnt]];
 	};
-console.log(location.search);
+
 	var path = '/idock/jobs/' + (location.search.length ? location.search.substr(1) : '522849e9ae0713945d000001') + '/';
 	$.get(path + 'box.conf', function (box) {
 		parseBox(box);
@@ -928,8 +928,8 @@ console.log(location.search);
 		$.get(path + 'receptor.pdbqt', function (protein) {
 			parseProtein(protein);
 			var maxD = new THREE.Vector3(xmax, ymax, zmax).distanceTo(new THREE.Vector3(xmin, ymin, zmin));
-			sn = -maxD / 1.9;
-			sf =  maxD / 3;
+			sn = -maxD / 2;
+			sf =  maxD / 4;
 			rot.position.z = maxD * 0.08 / Math.tan(Math.PI / 180.0 * fov * 0.5) - 150;
 			rot.quaternion = new THREE.Quaternion(1, 0, 0, 0);
 			$.ajax({
