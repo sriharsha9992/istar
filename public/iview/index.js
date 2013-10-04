@@ -912,8 +912,7 @@ $(function () {
 		if (camera.near < 1) camera.near = 1;
 		camera.far = center + sf;
 		if (camera.near + 1 > camera.far) camera.far = camera.near + 1;
-		if (camera instanceof THREE.PerspectiveCamera) {
-		} else {
+		if (camera === orthographicCamera) {
 			camera.right = center * Math.tan(Math.PI / 180 * fov);
 			camera.left = -camera.right;
 			camera.top = camera.right / (canvas.width() / canvas.height());
