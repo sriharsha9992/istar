@@ -435,7 +435,7 @@ $(function () {
 			updateMolecule('ligand');
 		},
 		surface: function () {
-			updateSurface();
+			updateSurface('surface');
 		},
 	};
 	var scene = new THREE.Scene();
@@ -653,49 +653,49 @@ $(function () {
 		 ligand: undefined,
 	};
 	var surface, hbondDonors, hbondAcceptors;
-	var updateMolecule = function(molecule) {
-		var m = objects[molecule];
-		if (m[options[molecule]] === undefined) {
-			switch (options[molecule]) {
+	var updateMolecule = function (entity) {
+		var m = objects[entity];
+		if (m[options[entity]] === undefined) {
+			switch (options[entity]) {
 				case 'line':
-					m[options[molecule]] = createLineRepresentation(entities[molecule]);
+					m[options[entity]] = createLineRepresentation(entities[entity]);
 					break;
 				case 'stick':
-					m[options[molecule]] = createStickRepresentation(entities[molecule], cylinderRadius, cylinderRadius);
+					m[options[entity]] = createStickRepresentation(entities[entity], cylinderRadius, cylinderRadius);
 					break;
 				case 'ball & stick':
-					m[options[molecule]] = createStickRepresentation(entities[molecule], cylinderRadius * 0.5, cylinderRadius);
+					m[options[entity]] = createStickRepresentation(entities[entity], cylinderRadius * 0.5, cylinderRadius);
 					break;
 				case 'sphere':
-					m[options[molecule]] = createSphereRepresentation(entities[molecule], sphereRadius);
+					m[options[entity]] = createSphereRepresentation(entities[entity], sphereRadius);
 					break;
 			}
 		}
-		mdl.add(m[options[molecule]]);
+		mdl.add(m[options[entity]]);
 	};
 
-	var updateSurface = function () {
-		var m = objects['surface'];
-		if (m[options['surface']] === undefined) {
-			switch (options['surface']) {
+	var updateSurface = function (entity) {
+		var m = objects[entity];
+		if (m[options[entity]] === undefined) {
+			switch (options[entity]) {
 				case 'Van der Waals surface':
-					m[options['surface']] = createSurfaceRepresentation(surface, 1);
+					m[options[entity]] = createSurfaceRepresentation(surface, 1);
 					break;
 				case 'solvent excluded surface':
-					m[options['surface']] = createSurfaceRepresentation(surface, 2);
+					m[options[entity]] = createSurfaceRepresentation(surface, 2);
 					break;
 				case 'solvent accessible surface':
-					m[options['surface']] = createSurfaceRepresentation(surface, 3);
+					m[options[entity]] = createSurfaceRepresentation(surface, 3);
 					break;
 				case 'molecular surface':
-					m[options['surface']] = createSurfaceRepresentation(surface, 4);
+					m[options[entity]] = createSurfaceRepresentation(surface, 4);
 					break;
 				case 'nothing':
-					m[options['surface']] = undefined;
+					m[options[entity]] = undefined;
 					break;
 			}
 		}
-		mdl.add(m[options['surface']]);
+		mdl.add(m[options[entity]]);
 	};
 
 	var ct, sz, c000, c100, c010, c110, c001, c101, c011, c111;
