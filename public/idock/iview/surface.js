@@ -16,60 +16,6 @@ by Euclidean Distance Transform. PLoS ONE 4(12): e8140.
 
 */
 
-iview.prototype.drawSurface = function (atomlist, type, wireframe, opacity) {
-	var atomsToShow = this.removeSolvents(atomlist);
-	if (!this.surfaces[type]) {
-		var extent = this.getExtent(atomsToShow);
-		var ps = new ProteinSurface();
-		ps.initparm(extent, (type == 1) ? false : true);
-		ps.fillvoxels(this.atoms, atomsToShow);
-		ps.buildboundary();
-		if (type == 4 || type == 2) ps.fastdistancemap();
-		if (type == 2) { ps.boundingatom(false); ps.fillvoxelswaals(this.atoms, atomsToShow); }
-		ps.marchingcube(type);
-		ps.laplaciansmooth(1);
-		ps.transformVertices();
-		this.surfaces[type] = ps;
-	}
-	var mesh = new THREE.Mesh(this.surfaces[type].getModel(this.atoms, atomsToShow), new THREE.MeshLambertMaterial({
-		vertexColors: THREE.VertexColors,
-		wireframe: wireframe,
-		opacity: opacity,
-		transparent: true,
-	}));
-	mesh.doubleSided = true;
-	this.modelGroup.add(mesh);
-};
-
-iview.prototype.removeSolvents = function (atomlist) {
-	var ret = [];
-	for (var i in atomlist) {
-		var atom = this.atoms[atomlist[i]];
-		if (atom.resn != 'HOH') ret.push(atom.serial);
-	}
-	return ret;
-};
-
-iview.prototype.getExtent = function (atomlist) {
-	var xmin = ymin = zmin = 9999;
-	var xmax = ymax = zmax = -9999;
-	var xsum = ysum = zsum = cnt = 0;
-	for (var i in atomlist) {
-		var atom = this.atoms[atomlist[i]];
-		cnt++;
-		xsum += atom.x;
-		ysum += atom.y;
-		zsum += atom.z;
-		xmin = (xmin < atom.x) ? xmin : atom.x;
-		ymin = (ymin < atom.y) ? ymin : atom.y;
-		zmin = (zmin < atom.z) ? zmin : atom.z;
-		xmax = (xmax > atom.x) ? xmax : atom.x;
-		ymax = (ymax > atom.y) ? ymax : atom.y;
-		zmax = (zmax > atom.z) ? zmax : atom.z;
-	}
-	return [[xmin, ymin, zmin], [xmax, ymax, zmax], [xsum / cnt, ysum / cnt, zsum / cnt]];
-};
-
 var ProteinSurface = (function () {
 	var ptranx, ptrany, ptranz;
 	var boxLength = 128;
@@ -91,31 +37,27 @@ var ProteinSurface = (function () {
 
 	this.transformVertices = function () {
 		var vertices = this.verts;
-		for (var i = 0; i < vertnumber; i++) {
+		for (var i = 0; i < vertnumber; ++i) {
 			vertices[i].x = vertices[i].x / scaleFactor - ptranx;
 			vertices[i].y = vertices[i].y / scaleFactor - ptrany;
 			vertices[i].z = vertices[i].z / scaleFactor - ptranz;
 		}
 	};
 
-	this.getModel = function (atoms, atomlist) {
-		var atomsToShow = new Object();
-		for (var i = 0, lim = atomlist.length; i < lim; i++) atomsToShow[atomlist[i]] = true;
+	this.getModel = function (atoms) {
 		var v = [], vertices = this.verts;
-		for (i = 0; i < vertnumber; i++) {
+		for (i = 0; i < vertnumber; ++i) {
 			v.push(new THREE.Vector3(vertices[i].x, vertices[i].y, vertices[i].z));
 		}
 		var geo = new THREE.Geometry();
 		var faces = [];
 		geo.faces = faces;
 		geo.vertices = v;
-		for (var i = 0; i < facenumber; i++) {
+		for (var i = 0; i < facenumber; ++i) {
 			var f = this.faces[i];
 			var a = vertices[f.a].atomid, b = vertices[f.b].atomid, c = vertices[f.c].atomid;
-			if (!atomsToShow[a] && !atomsToShow[b] && !atomsToShow[c]) continue;
-			f.vertexColors = [new THREE.Color(atoms[a].color),
-							  new THREE.Color(atoms[b].color),
-							  new THREE.Color(atoms[c].color)];
+			if (!atoms[a] && !atoms[b] && !atoms[c]) continue;
+			f.vertexColors = [atoms[a].color, atoms[b].color, atoms[c].color];
 			faces.push(f);
 		}
 		geo.computeFaceNormals();
@@ -123,17 +65,16 @@ var ProteinSurface = (function () {
 		return geo;
 	};
 
-
 	this.laplaciansmooth = function (numiter) {
 		var tps = new Array(vertnumber);
-		for (var i = 0; i < vertnumber; i++) tps[i] = { x: 0, y: 0, z: 0 };
+		for (var i = 0; i < vertnumber; ++i) tps[i] = { x: 0, y: 0, z: 0 };
 		var vertdeg = new Array(20);
 		var flagvert;
-		for (var i = 0; i < 20; i++) vertdeg[i] = new Array(vertnumber);
-		for (var i = 0; i < vertnumber; i++) vertdeg[0][i] = 0;
-		for (var i = 0; i < facenumber; i++) {
+		for (var i = 0; i < 20; ++i) vertdeg[i] = new Array(vertnumber);
+		for (var i = 0; i < vertnumber; ++i) vertdeg[0][i] = 0;
+		for (var i = 0; i < facenumber; ++i) {
 			flagvert = true;
-			for (var j = 0; j < vertdeg[0][faces[i].a]; j++) {
+			for (var j = 0; j < vertdeg[0][faces[i].a]; ++j) {
 				if (faces[i].b == vertdeg[j + 1][faces[i].a]) {
 					flagvert = false;
 					break;
@@ -144,7 +85,7 @@ var ProteinSurface = (function () {
 				vertdeg[vertdeg[0][faces[i].a]][faces[i].a] = faces[i].b;
 			}
 			flagvert = true;
-			for (var j = 0; j < vertdeg[0][faces[i].a]; j++) {
+			for (var j = 0; j < vertdeg[0][faces[i].a]; ++j) {
 				if (faces[i].c == vertdeg[j + 1][faces[i].a]) {
 					flagvert = false;
 					break;
@@ -156,7 +97,7 @@ var ProteinSurface = (function () {
 			}
 			//b
 			flagvert = true;
-			for (j = 0; j < vertdeg[0][faces[i].b]; j++) {
+			for (j = 0; j < vertdeg[0][faces[i].b]; ++j) {
 				if (faces[i].a == vertdeg[j + 1][faces[i].b]) {
 					flagvert = false;
 					break;
@@ -167,7 +108,7 @@ var ProteinSurface = (function () {
 				vertdeg[vertdeg[0][faces[i].b]][faces[i].b] = faces[i].a;
 			}
 			flagvert = true;
-			for (j = 0 ; j < vertdeg[0][faces[i].b]; j++) {
+			for (j = 0 ; j < vertdeg[0][faces[i].b]; ++j) {
 				if (faces[i].c == vertdeg[j + 1][faces[i].b]) {
 					flagvert = false;
 					break;
@@ -179,7 +120,7 @@ var ProteinSurface = (function () {
 			}
 			//c
 			flagvert = true;
-			for (j = 0; j < vertdeg[0][faces[i].c]; j++) {
+			for (j = 0; j < vertdeg[0][faces[i].c]; ++j) {
 				if (faces[i].a == vertdeg[j + 1][faces[i].c]) {
 					flagvert = false;
 					break;
@@ -190,7 +131,7 @@ var ProteinSurface = (function () {
 				vertdeg[vertdeg[0][faces[i].c]][faces[i].c] = faces[i].a;
 			}
 			flagvert = true;
-			for (j = 0; j < vertdeg[0][faces[i].c]; j++) {
+			for (j = 0; j < vertdeg[0][faces[i].c]; ++j) {
 				if (faces[i].b == vertdeg[j + 1][faces[i].c]) {
 					flagvert = false;
 					break;
@@ -206,8 +147,8 @@ var ProteinSurface = (function () {
 		var wt2 = 0.50;
 		var ssign;
 		var outwt = 0.75 / (scaleFactor + 3.5); //area-preserving
-		for (var k = 0; k < numiter; k++) {
-			for (var i = 0; i < vertnumber; i++) {
+		for (var k = 0; k < numiter; ++k) {
+			for (var i = 0; i < vertnumber; ++i) {
 				if (vertdeg[0][i] < 3) {
 					tps[i].x = verts[i].x;
 					tps[i].y = verts[i].y;
@@ -216,7 +157,7 @@ var ProteinSurface = (function () {
 					tps[i].x = 0;
 					tps[i].y = 0;
 					tps[i].z = 0;
-					for (j = 0; j < vertdeg[0][i]; j++) {
+					for (j = 0; j < vertdeg[0][i]; ++j) {
 						tps[i].x += verts[vertdeg[j + 1][i]].x;
 						tps[i].y += verts[vertdeg[j + 1][i]].y;
 						tps[i].z += verts[vertdeg[j + 1][i]].z;
@@ -231,7 +172,7 @@ var ProteinSurface = (function () {
 					tps[i].x = 0;
 					tps[i].y = 0;
 					tps[i].z = 0;
-					for (var j = 0; j < vertdeg[0][i]; j++) {
+					for (var j = 0; j < vertdeg[0][i]; ++j) {
 						tps[i].x += verts[vertdeg[j + 1][i]].x;
 						tps[i].y += verts[vertdeg[j + 1][i]].y;
 						tps[i].z += verts[vertdeg[j + 1][i]].z;
@@ -244,13 +185,13 @@ var ProteinSurface = (function () {
 					tps[i].z /= wt + vertdeg[0][i];
 				}
 			}
-			for (var i = 0; i < vertnumber; i++) {
+			for (var i = 0; i < vertnumber; ++i) {
 				verts[i].x = tps[i].x;
 				verts[i].y = tps[i].y;
 				verts[i].z = tps[i].z;
 			}
 			/*	computenorm();
-				for (var i = 0; i < vertnumber; i++) {
+				for (var i = 0; i < vertnumber; ++i) {
 					   if (verts[i].inout) ssign = 1;
 					   else ssign = -1;
 					   verts[i].x += ssign * outwt * verts[i].pn.x;
@@ -313,7 +254,7 @@ var ProteinSurface = (function () {
 		var txz, tdept, sradius, idx;
 		flagradius = btype;
 
-		for (var i = 0; i < 13; i++) {
+		for (var i = 0; i < 13; ++i) {
 			if (!btype) tradius[i] = rasrad[i] * scaleFactor + 0.5;
 			else tradius[i] = (rasrad[i] + probeRadius) * scaleFactor + 0.5;
 
@@ -321,8 +262,8 @@ var ProteinSurface = (function () {
 			widxz[i] = Math.floor(tradius[i]) + 1;
 			depty[i] = new Array(widxz[i] * widxz[i]);
 			indx = 0;
-			for (j = 0; j < widxz[i]; j++) {
-				for (k = 0; k < widxz[i]; k++) {
+			for (j = 0; j < widxz[i]; ++j) {
+				for (k = 0; k < widxz[i]; ++k) {
 					txz = j * j + k * k;
 					if (txz > sradius) depty[i][indx] = -1; // outside
 					else {
@@ -335,21 +276,20 @@ var ProteinSurface = (function () {
 		}
 	}
 
-	this.fillvoxels = function (atoms, atomlist) { //(int seqinit,int seqterm,bool atomtype,atom* proseq,bool bcolor)
-		for (var i = 0, lim = vp.length; i < lim; i++) {
+	this.fillvoxels = function (atoms) { //(int seqinit,int seqterm,bool atomtype,atom* proseq,bool bcolor)
+		for (var i = 0, lim = vp.length; i < lim; ++i) {
 			vp[i] = { inout: false, isdone: false, isbound: false, distance: -1, atomid: -1 };
 		}
 
-		for (i in atomlist) {
-			atom = atoms[atomlist[i]]; if (atom.het) continue;
-			this.fillAtom(atom, atoms);
+		for (i in atoms) {
+			this.fillAtom(atoms[i], atoms);
 		}
 
-		for (i = 0, lim = vp.length; i < lim; i++)
+		for (i = 0, lim = vp.length; i < lim; ++i)
 			if (vp[i].inout) vp[i].isdone = true;
 
 		this.vp = vp;
-		for (var i = 0, lim = vp.length; i < lim; i++) {
+		for (var i = 0, lim = vp.length; i < lim; ++i) {
 			if (vp[i].inout) vp[i].isdone = true;
 		}
 	};
@@ -373,16 +313,16 @@ var ProteinSurface = (function () {
 
 	this.fillAtom = function (atom, atoms) {
 		var cx, cy, cz, ox, oy, oz;
-		cx = Math.floor(0.5 + scaleFactor * (atom.x + ptranx));
-		cy = Math.floor(0.5 + scaleFactor * (atom.y + ptrany));
-		cz = Math.floor(0.5 + scaleFactor * (atom.z + ptranz));
+		cx = Math.floor(0.5 + scaleFactor * (atom.coord.x + ptranx));
+		cy = Math.floor(0.5 + scaleFactor * (atom.coord.y + ptrany));
+		cz = Math.floor(0.5 + scaleFactor * (atom.coord.z + ptranz));
 
 		var at = this.getAtomType(atom);
 		var nind = 0;
 		var cnt = 0;
 
-		for (i = 0; i < widxz[at]; i++) {
-			for (j = 0; j < widxz[at]; j++) {
+		for (i = 0; i < widxz[at]; ++i) {
+			for (j = 0; j < widxz[at]; ++j) {
 				if (depty[at][nind] != -1) {
 					for (ii = -1; ii < 2; ii++) {
 						for (jj = -1; jj < 2; jj++) {
@@ -390,7 +330,7 @@ var ProteinSurface = (function () {
 								if (ii != 0 && jj != 0 && kk != 0) {
 									mi = ii * i;
 									mk = kk * j;
-									for (k = 0; k <= depty[at][nind]; k++) {
+									for (k = 0; k <= depty[at][nind]; ++k) {
 										mj = k * jj;
 										si = cx + mi;
 										sj = cy + mj;
@@ -405,9 +345,9 @@ var ProteinSurface = (function () {
 												vpSISJSK.atomid = atom.serial;
 											} else if (vpSISJSK.inout) {
 												var atom2 = atoms[vpSISJSK.atomid];
-												ox = Math.floor(0.5 + scaleFactor * (atom2.x + ptranx));
-												oy = Math.floor(0.5 + scaleFactor * (atom2.y + ptrany));
-												oz = Math.floor(0.5 + scaleFactor * (atom2.z + ptranz));
+												ox = Math.floor(0.5 + scaleFactor * (atom2.coord.x + ptranx));
+												oy = Math.floor(0.5 + scaleFactor * (atom2.coord.y + ptrany));
+												oz = Math.floor(0.5 + scaleFactor * (atom2.coord.z + ptranz));
 												if (mi * mi + mj * mj + mk * mk < ox * ox + oy * oy + oz * oz)
 													vpSISJSK.atomid = atom.serial;
 											}
@@ -423,26 +363,24 @@ var ProteinSurface = (function () {
 		}//i
 	};
 
-	this.fillvoxelswaals = function (atoms, atomlist) {
-		for (var i = 0, lim = vp.length; i < lim; i++) vp[i].isdone = false;
+	this.fillvoxelswaals = function (atoms) {
+		for (var i = 0, lim = vp.length; i < lim; ++i) vp[i].isdone = false;
 
-		for (i in atomlist) {
-			atom = atoms[atomlist[i]]; if (atom.het) continue;
-
-			this.fillAtomWaals(atom, atoms);
+		for (i in atoms) {
+			this.fillAtomWaals(atoms[i], atoms);
 		}
 	};
 
 	this.fillAtomWaals = function (atom, atoms) {
 		var cx, cy, cz, ox, oy, oz, nind = 0;
-		cx = Math.floor(0.5 + scaleFactor * (atom.x + ptranx));
-		cy = Math.floor(0.5 + scaleFactor * (atom.y + ptrany));
-		cz = Math.floor(0.5 + scaleFactor * (atom.z + ptranz));
+		cx = Math.floor(0.5 + scaleFactor * (atom.coord.x + ptranx));
+		cy = Math.floor(0.5 + scaleFactor * (atom.coord.y + ptrany));
+		cz = Math.floor(0.5 + scaleFactor * (atom.coord.z + ptranz));
 
 		var at = this.getAtomType(atom);
 
-		for (i = 0; i < widxz[at]; i++) {
-			for (j = 0; j < widxz[at]; j++) {
+		for (i = 0; i < widxz[at]; ++i) {
+			for (j = 0; j < widxz[at]; ++j) {
 				if (depty[at][nind] != -1) {
 					for (ii = -1; ii < 2; ii++) {
 						for (jj = -1; jj < 2; jj++) {
@@ -450,7 +388,7 @@ var ProteinSurface = (function () {
 								if (ii != 0 && jj != 0 && kk != 0) {
 									mi = ii * i;
 									mk = kk * j;
-									for (k = 0; k <= depty[at][nind]; k++) {
+									for (k = 0; k <= depty[at][nind]; ++k) {
 										mj = k * jj;
 										si = cx + mi;
 										sj = cy + mj;
@@ -467,9 +405,9 @@ var ProteinSurface = (function () {
 											}
 											else if (vpSISJSK.isdone) {
 												var atom2 = atoms[vpSISJSK.atomid];
-												ox = Math.floor(0.5 + scaleFactor * (atom2.x + ptranx));
-												oy = Math.floor(0.5 + scaleFactor * (atom2.y + ptrany));
-												oz = Math.floor(0.5 + scaleFactor * (atom2.z + ptranz));
+												ox = Math.floor(0.5 + scaleFactor * (atom2.coord.x + ptranx));
+												oy = Math.floor(0.5 + scaleFactor * (atom2.coord.y + ptrany));
+												oz = Math.floor(0.5 + scaleFactor * (atom2.coord.z + ptranz));
 												if (mi * mi + mj * mj + mk * mk < ox * ox + oy * oy + oz * oz)
 													vpSISJSK.atomid = atom.serial;
 											}
@@ -488,9 +426,9 @@ var ProteinSurface = (function () {
 
 	this.buildboundary = function () {
 		vp = this.vp;
-		for (i = 0; i < pLength; i++) {
-			for (j = 0; j < pHeight; j++) {
-				for (k = 0; k < pWidth; k++) {
+		for (i = 0; i < pLength; ++i) {
+			for (j = 0; j < pHeight; ++j) {
+				for (k = 0; k < pWidth; ++k) {
 					var vpIJK = vp[i * pWidth * pHeight + k * pHeight + j];
 					if (vpIJK.inout) {
 						var flagbound = false;
@@ -519,19 +457,19 @@ var ProteinSurface = (function () {
 		totalinnervox = 0;
 
 		var boundPoint = new Array(pLength);
-		for (var i = 0; i < pLength; i++) {
+		for (var i = 0; i < pLength; ++i) {
 			var a = new Array(pWidth);
-			for (var j = 0; j < pWidth; j++) {
+			for (var j = 0; j < pWidth; ++j) {
 				var b = new Array(pHeight);
-				for (var k = 0; k < pHeight; k++) b[k] = { ix: 0, iy: 0, iz: 0 };
+				for (var k = 0; k < pHeight; ++k) b[k] = { ix: 0, iy: 0, iz: 0 };
 				a[j] = b;
 			}
 			boundPoint[i] = a;
 		}
 
-		for (i = 0; i < pLength; i++) {
-			for (j = 0; j < pWidth; j++) {
-				for (k = 0; k < pHeight; k++) {
+		for (i = 0; i < pLength; ++i) {
+			for (j = 0; j < pWidth; ++j) {
+				for (k = 0; k < pHeight; ++k) {
 					var vpIJK = vp[i * pWidth * pHeight + j * pHeight + k];
 					vpIJK.isdone = false;
 					if (vpIJK.inout) {
@@ -554,9 +492,9 @@ var ProteinSurface = (function () {
 		outarray = new Array();
 		var positin = 0, positout = 0;
 
-		for (i = 0; i < pLength; i++) {
-			for (j = 0; j < pWidth; j++) {
-				for (k = 0; k < pHeight; k++) {
+		for (i = 0; i < pLength; ++i) {
+			for (j = 0; j < pWidth; ++j) {
+				for (k = 0; k < pHeight; ++k) {
 					var vpIJK = vp[i * pWidth * pHeight + j * pHeight + k];
 					if (vpIJK.isbound) {
 						inarray.push({ ix: i, iy: j, iz: k });
@@ -571,7 +509,7 @@ var ProteinSurface = (function () {
 			positout = this.fastoneshell(positin, boundPoint);
 			positin = 0;
 			inarray = [];
-			for (i = 0; i < positout; i++) {
+			for (i = 0; i < positout; ++i) {
 				var vptmp = vp[pWidth * pHeight * outarray[i].ix + pHeight * outarray[i].iy + outarray[i].iz];
 				vptmp.isbound = false;
 				if (vptmp.distance <= 1.02 * cutRadis) {
@@ -586,9 +524,9 @@ var ProteinSurface = (function () {
 
 		var cutsf = scaleFactor - 0.5;
 		if (cutsf < 0) cutsf = 0;
-		for (i = 0; i < pLength; i++) {
-			for (j = 0; j < pWidth; j++) {
-				for (k = 0; k < pHeight; k++) {
+		for (i = 0; i < pLength; ++i) {
+			for (j = 0; j < pWidth; ++j) {
+				for (k = 0; k < pHeight; ++k) {
 					var vpIJK = vp[i * pWidth * pHeight + j * pHeight + k];
 					vpIJK.isbound = false;
 					//ses solid
@@ -615,12 +553,12 @@ var ProteinSurface = (function () {
 		outarray = [];
 
 		tnv = { ix: -1, iy: -1, iz: -1 };
-		for (var i = 0; i < number; i++) {
+		for (var i = 0; i < number; ++i) {
 			tx = inarray[i].ix;
 			ty = inarray[i].iy;
 			tz = inarray[i].iz;
 
-			for (var j = 0; j < 6; j++) {
+			for (var j = 0; j < 6; ++j) {
 				tnv.ix = tx + nb[j][0];
 				tnv.iy = ty + nb[j][1];
 				tnv.iz = tz + nb[j][2];
@@ -665,11 +603,11 @@ var ProteinSurface = (function () {
 			}
 		}
 
-		for (i = 0; i < number; i++) {
+		for (i = 0; i < number; ++i) {
 			tx = inarray[i].ix;
 			ty = inarray[i].iy;
 			tz = inarray[i].iz;
-			for (j = 6; j < 18; j++) {
+			for (j = 6; j < 18; ++j) {
 				tnv.ix = tx + nb[j][0];
 				tnv.iy = ty + nb[j][1];
 				tnv.iz = tz + nb[j][2];
@@ -714,11 +652,11 @@ var ProteinSurface = (function () {
 			}
 		}
 
-		for (i = 0; i < number; i++) {
+		for (i = 0; i < number; ++i) {
 			tx = inarray[i].ix;
 			ty = inarray[i].iy;
 			tz = inarray[i].iz;
-			for (j = 18; j < 26; j++) {
+			for (j = 18; j < 26; ++j) {
 				tnv.ix = tx + nb[j][0];
 				tnv.iy = ty + nb[j][1];
 				tnv.iz = tz + nb[j][2];
@@ -766,7 +704,7 @@ var ProteinSurface = (function () {
 	};
 
 	this.marchingcubeinit = function (stype) {
-		for (var i = 0, lim = vp.length; i < lim; i++) {
+		for (var i = 0, lim = vp.length; i < lim; ++i) {
 			if (stype == 3) {// vdw
 				vp[i].isbound = false;
 			} else if (stype == 4) { // ses
@@ -785,28 +723,28 @@ var ProteinSurface = (function () {
 	this.marchingcube = function (stype) {
 		this.marchingcubeinit(stype);
 		var vertseq = new Array(pLength);
-		for (var i = 0; i < pLength; i++) {
+		for (var i = 0; i < pLength; ++i) {
 			var a = new Array(pWidth);
-			for (var j = 0; j < pWidth; j++) {
+			for (var j = 0; j < pWidth; ++j) {
 				var b = new Array(pHeight);
-				for (var k = 0; k < pHeight; k++) b[k] = -1;
+				for (var k = 0; k < pHeight; ++k) b[k] = -1;
 				a[j] = b;
 			}
 			vertseq[i] = a;
 		}
 		vertnumber = 0, facenumber = 0;
 		verts = new Array();//(4 * (pHeight * pLength + pWidth * pLength + pHeight * pWidth)); // CHECK: Is this enough?
-		//   for (var i = 0, lim = verts.length; i < lim; i++) verts[i] = new THREE.Vector3(0, 0, 0);
+		//   for (var i = 0, lim = verts.length; i < lim; ++i) verts[i] = new THREE.Vector3(0, 0, 0);
 		faces = new Array();//12 * (pHeight * pLength + pWidth * pLength + pHeight * pWidth)); // CHECK! 4
-		// for (var i = 0, lim = faces.length; i < lim; i++) faces[i] = new THREE.Face3(0, 0, 0);	
+		// for (var i = 0, lim = faces.length; i < lim; ++i) faces[i] = new THREE.Face3(0, 0, 0);	
 
 		var sumtype, ii, jj, kk;
-		var tp = new Array(6); for (var i = 0; i < 6; i++) tp[i] = new Array(3);
+		var tp = new Array(6); for (var i = 0; i < 6; ++i) tp[i] = new Array(3);
 
 		//face1
-		for (i = 0; i < 1; i++) {
-			for (j = 0; j < pWidth - 1; j++) {
-				for (k = 0; k < pHeight - 1; k++) {
+		for (i = 0; i < 1; ++i) {
+			for (j = 0; j < pWidth - 1; ++j) {
+				for (k = 0; k < pHeight - 1; ++k) {
 					var vp000 = vp[pWidth * pHeight * i + pHeight * j + k].isdone,
 							vp001 = vp[pWidth * pHeight * i + pHeight * j + k + 1].isdone,
 							vp010 = vp[pWidth * pHeight * i + pHeight * (j + 1) + k].isdone,
@@ -868,9 +806,9 @@ var ProteinSurface = (function () {
 			}
 		}
 		//face3
-		for (i = 0; i < pLength - 1; i++) {
-			for (j = 0; j < 1; j++) {
-				for (k = 0; k < pHeight - 1; k++) {
+		for (i = 0; i < pLength - 1; ++i) {
+			for (j = 0; j < 1; ++j) {
+				for (k = 0; k < pHeight - 1; ++k) {
 					var vp000 = vp[pWidth * pHeight * i + pHeight * j + k].isdone,
 							vp001 = vp[pWidth * pHeight * i + pHeight * j + k + 1].isdone,
 							vp100 = vp[pWidth * pHeight * (i + 1) + pHeight * j + k].isdone,
@@ -928,9 +866,9 @@ var ProteinSurface = (function () {
 			}
 		}
 		//face5
-		for (i = 0; i < pLength - 1; i++) {
-			for (j = 0; j < pWidth - 1; j++) {
-				for (k = 0; k < 1; k++) {
+		for (i = 0; i < pLength - 1; ++i) {
+			for (j = 0; j < pWidth - 1; ++j) {
+				for (k = 0; k < 1; ++k) {
 					var vp000 = vp[pWidth * pHeight * i + pHeight * j + k].isdone,
 							vp010 = vp[pWidth * pHeight * i + pHeight * (j + 1) + k].isdone,
 							vp100 = vp[pWidth * pHeight * (i + 1) + pHeight * j + k].isdone,
@@ -988,9 +926,9 @@ var ProteinSurface = (function () {
 			}
 		}
 		//face2
-		for (i = pLength - 1; i < pLength; i++) {
-			for (j = 0; j < pWidth - 1; j++) {
-				for (k = 0; k < pHeight - 1; k++) {
+		for (i = pLength - 1; i < pLength; ++i) {
+			for (j = 0; j < pWidth - 1; ++j) {
+				for (k = 0; k < pHeight - 1; ++k) {
 					var vp000 = vp[pWidth * pHeight * i + pHeight * j + k].isdone,
 							vp001 = vp[pWidth * pHeight * i + pHeight * j + k + 1].isdone,
 							vp010 = vp[pWidth * pHeight * i + pHeight * (j + 1) + k].isdone,
@@ -1053,9 +991,9 @@ var ProteinSurface = (function () {
 			}
 		}
 		//face4
-		for (i = 0; i < pLength - 1; i++) {
-			for (j = pWidth - 1; j < pWidth; j++) {
-				for (k = 0; k < pHeight - 1; k++) {
+		for (i = 0; i < pLength - 1; ++i) {
+			for (j = pWidth - 1; j < pWidth; ++j) {
+				for (k = 0; k < pHeight - 1; ++k) {
 					var vp000 = vp[pWidth * pHeight * i + pHeight * j + k].isdone,
 							vp001 = vp[pWidth * pHeight * i + pHeight * j + k + 1].isdone,
 							vp100 = vp[pWidth * pHeight * (i + 1) + pHeight * j + k].isdone,
@@ -1117,9 +1055,9 @@ var ProteinSurface = (function () {
 			}
 		}
 		//face6
-		for (i = 0; i < pLength - 1; i++) {
-			for (j = 0; j < pWidth - 1; j++) {
-				for (k = pHeight - 1; k < pHeight; k++) {
+		for (i = 0; i < pLength - 1; ++i) {
+			for (j = 0; j < pWidth - 1; ++j) {
+				for (k = pHeight - 1; k < pHeight; ++k) {
 					var vp000 = vp[pWidth * pHeight * i + pHeight * j + k].isdone,
 							vp010 = vp[pWidth * pHeight * i + pHeight * (j + 1) + k].isdone,
 							vp100 = vp[pWidth * pHeight * (i + 1) + pHeight * j + k].isdone,
@@ -1180,9 +1118,9 @@ var ProteinSurface = (function () {
 				}
 			}
 		}
-		for (i = 0; i < pLength - 1; i++) {
-			for (j = 0; j < pWidth - 1; j++) {
-				for (k = 0; k < pHeight - 1; k++) {
+		for (i = 0; i < pLength - 1; ++i) {
+			for (j = 0; j < pWidth - 1; ++j) {
+				for (k = 0; k < pHeight - 1; ++k) {
 					var vp000 = vp[pWidth * pHeight * i + pHeight * j + k].isdone,
 					vp001 = vp[pWidth * pHeight * i + pHeight * j + k + 1].isdone,
 					vp010 = vp[pWidth * pHeight * i + pHeight * (j + 1) + k].isdone,
@@ -2670,7 +2608,7 @@ var ProteinSurface = (function () {
 		}//i
 		this.faces = faces;
 		this.verts = verts;
-		for (i = 0; i < vertnumber; i++) {
+		for (i = 0; i < vertnumber; ++i) {
 			verts[i].atomid = vp[verts[i].x * pWidth * pHeight + pHeight * verts[i].y + verts[i].z].atomid;
 		}
 	};
