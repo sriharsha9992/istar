@@ -651,8 +651,9 @@ $(function () {
 	var entities = {
 		protein: undefined,
 		 ligand: undefined,
+		surface: undefined,
 	};
-	var surface, hbondDonors, hbondAcceptors;
+	var hbondDonors, hbondAcceptors;
 	var updateMolecule = function (entity) {
 		var m = objects[entity];
 		if (m[options[entity]] === undefined) {
@@ -679,16 +680,16 @@ $(function () {
 		if (m[options[entity]] === undefined) {
 			switch (options[entity]) {
 				case 'Van der Waals surface':
-					m[options[entity]] = createSurfaceRepresentation(surface, 1);
+					m[options[entity]] = createSurfaceRepresentation(entities[entity], 1);
 					break;
 				case 'solvent excluded surface':
-					m[options[entity]] = createSurfaceRepresentation(surface, 2);
+					m[options[entity]] = createSurfaceRepresentation(entities[entity], 2);
 					break;
 				case 'solvent accessible surface':
-					m[options[entity]] = createSurfaceRepresentation(surface, 3);
+					m[options[entity]] = createSurfaceRepresentation(entities[entity], 3);
 					break;
 				case 'molecular surface':
-					m[options[entity]] = createSurfaceRepresentation(surface, 4);
+					m[options[entity]] = createSurfaceRepresentation(entities[entity], 4);
 					break;
 				case 'nothing':
 					m[options[entity]] = undefined;
@@ -777,7 +778,7 @@ $(function () {
 				}
 			}
 		}
-		surface = {};
+		var surface = {};
 		for (var serial in protein) {
 			var atom = protein[serial];
 			if (serial <= lastStdSerial) {
@@ -789,6 +790,7 @@ $(function () {
 				}
 			}
 		}
+		entities.surface = surface;
 		hbondDonors = {}, hbondAcceptors = {};
 		for (var pi in protein) {
 			var atom = protein[pi];
