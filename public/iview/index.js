@@ -718,7 +718,7 @@ $(function () {
 	var xmin = ymin = zmin =  9999;
 	var xmax = ymax = zmax = -9999;
 	var parseProtein = function (src) {
-		var protein = {}, lastStdSerial;
+		var protein = entities.protein = {}, lastStdSerial;
 		var lines = src.split('\n');
 		for (var i in lines) {
 			var line = lines[i];
@@ -778,7 +778,7 @@ $(function () {
 				}
 			}
 		}
-		var surface = {};
+		var surface = entities.surface = {};
 		for (var serial in protein) {
 			var atom = protein[serial];
 			if (serial <= lastStdSerial) {
@@ -790,7 +790,6 @@ $(function () {
 				}
 			}
 		}
-		entities.surface = surface;
 		hbondDonors = {}, hbondAcceptors = {};
 		for (var pi in protein) {
 			var atom = protein[pi];
@@ -822,11 +821,10 @@ $(function () {
 			}
 		}
 		colorByElement(protein);
-		entities.protein = protein;
 	};
 
 	var parseLigand = function (src) {
-		var ligand = {};
+		var ligand = entities.ligand = {};
 		var lines = src.split('\n'), rotors = [], start_ligand = true, start_frame;
 		for (var i in lines) {
 			var line = lines[i];
@@ -905,7 +903,6 @@ $(function () {
 		$('> .btn', hits).click(function(e) {
 			alert(e.currentTarget.innerText);
 		});
-		entities.ligand = ligand;
 	};
 
 	var render = function () {
