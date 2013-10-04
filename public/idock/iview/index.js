@@ -420,16 +420,13 @@ $(function () {
 		 ligand: undefined,
 		surface: undefined,
 	};
-	var objects = {};
+	var options = {}, objects = {};
 	Object.keys(entities).forEach(function(entity) {
+		options[entity] = $('#' + entity + ' .active')[0].innerText;
 		var o = objects[entity] = {};
 		$('#' + entity + ' label').each(function() {
 			o[entity.innerText] = undefined;
 		});
-	});
-	var options = {};
-	['protein', 'ligand', 'surface'].forEach(function(option) {
-		options[option] = $('#' + option + ' .active')[0].innerText;
 	});
 	var update = {
 		protein: function () {
