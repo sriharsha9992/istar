@@ -407,11 +407,16 @@ $(function () {
 		 perspective:  perspectiveCamera,
 		orthographic: orthographicCamera,
 	};
+	var entities = {
+		protein: undefined,
+		 ligand: undefined,
+		surface: undefined,
+	};
 	var objects = {};
-	$.each(['protein', 'ligand', 'surface'], function() {
-		var o = objects[this] = {};
-		$('#' + this + ' label').each(function() {
-			o[this.innerText] = undefined;
+	Object.keys(entities).forEach(function(entity) {
+		var o = objects[entity] = {};
+		$('#' + entity + ' label').each(function() {
+			o[entity.innerText] = undefined;
 		});
 	});
 	var options = {};
@@ -648,11 +653,6 @@ $(function () {
 		}
 	};
 
-	var entities = {
-		protein: undefined,
-		 ligand: undefined,
-		surface: undefined,
-	};
 	var hbondDonors, hbondAcceptors;
 	var updateMolecule = function (entity) {
 		var m = objects[entity];
