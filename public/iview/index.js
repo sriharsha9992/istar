@@ -711,7 +711,7 @@ $(function () {
 	var xmin = ymin = zmin =  9999;
 	var xmax = ymax = zmax = -9999;
 	var parseProtein = function (src) {
-		var protein = {};
+		var protein = {}, lastStdSerial;
 		var lines = src.split('\n');
 		for (var i in lines) {
 			var line = lines[i];
@@ -719,7 +719,6 @@ $(function () {
 			if (record === 'ATOM  ' || record === 'HETATM') {
 				if (!(line[16] === ' ' || line[16] === 'A')) continue;
 				var atom = {
-					het: record[0] === 'H',
 					serial: parseInt(line.substr(6, 5)),
 					name: line.substr(12, 4).replace(/ /g, ''),
 					chain: line.substr(21, 1),
@@ -734,6 +733,7 @@ $(function () {
 				var elem = pdbqt2pdb[atom.elem];
 				if (elem) atom.elem = elem;
 				protein[atom.serial] = atom;
+				if (record[0] !== 'H') lastStdSerial = atom.serial;
 			}
 		}
 		var curChain, curResi, curInsc, curResAtoms = [];
@@ -771,22 +771,16 @@ $(function () {
 				}
 			}
 		}
-		var serials = Object.keys(protein), std = serials.length;
-		while (--std >= 0) {
-			if (!protein[serials[std]].het) break;
-		}
 		surface = {};
-		for (var i = 0; i <= std; ++i) {
-			var serial = serials[i];
+		for (var serial in protein) {
 			var atom = protein[serial];
-			if (atom.elem === 'H') continue;
-			surface[serial] = atom;
-		}
-		for (var i = std + 1; i < serials.length; ++i) {
-			var serial = serials[i];
-			var atom = protein[serial];
-			if ((protein[serial - 1] === undefined || protein[serial - 1].resi !== atom.resi) && (protein[serial + 1] === undefined || protein[serial + 1].resi !== atom.resi)) {
-				atom.solvent = true;
+			if (serial <= lastStdSerial) {
+				if (atom.elem === 'H') continue;
+				surface[serial] = atom;
+			} else {
+				if ((protein[serial - 1] === undefined || protein[serial - 1].resi !== atom.resi) && (protein[serial + 1] === undefined || protein[serial + 1].resi !== atom.resi)) {
+					atom.solvent = true;
+				}
 			}
 		}
 		hbondDonors = {}, hbondAcceptors = {};
