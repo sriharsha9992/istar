@@ -375,11 +375,7 @@ $(function () {
 	var defaultAtomColor  = new THREE.Color(0xCCCCCC);
 	var defaultBoxColor   = new THREE.Color(0x1FF01F);
 	var defaultHBondColor = new THREE.Color(0x94FFFF);
-	var backgroundColors = {
-		black: new THREE.Color(0x000000),
-		 grey: new THREE.Color(0xCCCCCC),
-		white: new THREE.Color(0xFFFFFF),
-	};
+	var defaultBackgroundColor = new THREE.Color(0x000000);
 	var sphereGeometry = new THREE.SphereGeometry(1, 64, 64);
 	var cylinderGeometry = new THREE.CylinderGeometry(1, 1, 1, 64, 1);
 	var sphereRadius = 1.5;
@@ -404,6 +400,7 @@ $(function () {
 		antialias: true,
 	});
 	renderer.setSize(canvas.width(), canvas.height());
+	renderer.setClearColor(defaultBackgroundColor);
 	var camera = new THREE.PerspectiveCamera(20, canvas.width() / canvas.height(), 1, 800);
 	camera.position = new THREE.Vector3(0, 0, camera_z);
 	camera.lookAt(new THREE.Vector3(0, 0, 0));
@@ -420,15 +417,10 @@ $(function () {
 		});
 	});
 	var options = {};
-	['background', 'protein', 'ligand', 'surface'].forEach(function(option) {
+	['protein', 'ligand', 'surface'].forEach(function(option) {
 		options[option] = $('#' + option + ' .active')[0].innerText;
 	});
 	var update = {
-		background: function () {
-			var backgroundColor = backgroundColors[options.background];
-			renderer.setClearColor(backgroundColor);
-			scene.fog = new THREE.Fog(backgroundColor, 100, 200);
-		},
 		protein: function () {
 			updateMolecule('protein');
 		},
@@ -449,6 +441,7 @@ $(function () {
 	scene.add(directionalLight);
 	scene.add(ambientLight);
 	scene.add(rot);
+	scene.fog = new THREE.Fog(defaultBackgroundColor, 100, 200);
 
 	var sn;
 	var sf;
@@ -954,14 +947,6 @@ $(function () {
 				});
 				render();
 			});
-		});
-	});
-
-	['background'].forEach(function (option) {
-		$('#' + option).click(function (e) {
-			options[option] = e.target.innerText;
-			update[option]();
-			render();
 		});
 	});
 
