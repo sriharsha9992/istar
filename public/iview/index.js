@@ -428,6 +428,15 @@ $(function () {
 			renderer.setClearColor(backgroundColor);
 			scene.fog = new THREE.Fog(backgroundColor, 100, 200);
 		},
+		protein: function () {
+			createMolecule('protein');
+		},
+		ligand: function () {
+			createMolecule('ligand');
+		},
+		surface: function () {
+			createSurface();
+		},
 	};
 	var scene = new THREE.Scene();
 	var directionalLight = new THREE.DirectionalLight(0xFFFFFF, 1.2);
@@ -439,9 +448,6 @@ $(function () {
 	scene.add(directionalLight);
 	scene.add(ambientLight);
 	scene.add(rot);
-	Object.keys(update).forEach(function (option) {
-		update[option]();
-	});
 
 	var sn = -50;
 	var sf =  50;
@@ -944,7 +950,7 @@ $(function () {
 			var maxD = new THREE.Vector3(xmax, ymax, zmax).distanceTo(new THREE.Vector3(xmin, ymin, zmin));
 			sn = -maxD / 1.9;
 			sf =  maxD / 3;
-			rot.position.z = maxD * 0.08 / Math.tan(Math.PI / 180.0 * camera.fov * 0.5) - 150;
+			rot.position.z = maxD * 0.08 / Math.tan(Math.PI / 180.0 * fov * 0.5) - 150;
 			rot.quaternion = new THREE.Quaternion(1, 0, 0, 0);
 			$.ajax({
 				url: path + 'hits.pdbqt.gz',
@@ -964,10 +970,9 @@ $(function () {
 				}
 				parseLigand(hits_str);
 			}).always(function() {
-				Object.keys(entities).forEach(function(m) {
-					createMolecule(m);
+				Object.keys(update).forEach(function (option) {
+					update[option]();
 				});
-				createSurface();
 				render();
 			});
 		});
