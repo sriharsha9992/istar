@@ -691,13 +691,6 @@ $(function () {
 		mdl.add(m[options[entity]]);
 	};
 
-	var colorByElement = function (atoms) {
-		for (var i in atoms) {
-			var atom = atoms[i];
-			atom.color = atomColors[atom.elem] || defaultAtomColor;
-		}
-	};
-
 	var ct, sz, c000, c100, c010, c110, c001, c101, c011, c111;
 	var parseBox = function (src) {
 		var lines = src.split('\n');
@@ -739,6 +732,7 @@ $(function () {
 				if (atom.elem === 'H') continue;
 				var elem = pdbqt2pdb[atom.elem];
 				if (elem) atom.elem = elem;
+				atom.color = atomColors[atom.elem] || defaultAtomColor;
 				protein[atom.serial] = atom;
 				if (record[0] !== 'H') lastStdSerial = atom.serial;
 			}
@@ -820,7 +814,6 @@ $(function () {
 				}
 			}
 		}
-		colorByElement(protein);
 	};
 
 	var parseLigand = function (src) {
@@ -846,6 +839,7 @@ $(function () {
 				};
 				var elem = pdbqt2pdb[atom.elem];
 				if (elem) atom.elem = elem;
+				atom.color = atomColors[atom.elem] || defaultAtomColor;
 				if (start_frame === undefined) start_frame = atom.serial;
 				for (var j = start_frame; j < atom.serial; ++j) {
 					var a = ligand[j];
@@ -871,7 +865,6 @@ $(function () {
 			ligand[r.x].bonds.push(r.y);
 			ligand[r.y].bonds.push(r.x);
 		}
-		colorByElement(ligand);
 		var geo = new THREE.Geometry();
 		for (var li in ligand) {
 			var la = ligand[li];
