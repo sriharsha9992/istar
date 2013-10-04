@@ -773,7 +773,7 @@ $(function () {
 		return obj;
 	};
 
-	var createStickRepresentation = function (atoms, atomR, bondR, scale) {
+	var createStickRepresentation = function (atoms, atomR, bondR) {
 		var obj = new THREE.Object3D();
 		for (var i in atoms) {
 			var atom0 = atoms[i];
@@ -784,7 +784,7 @@ $(function () {
 				obj.add(createCylinder(atom0.coord, mp, bondR, atom0.color));
 				obj.add(createCylinder(atom1.coord, mp, bondR, atom1.color));
 			}
-			obj.add(createSphere(atom0, atomR, !scale, scale));
+			obj.add(createSphere(atom0, atomR, true));
 		}
 		return obj;
 	};
