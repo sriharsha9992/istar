@@ -379,7 +379,7 @@ $(function () {
 	var sphereGeometry = new THREE.SphereGeometry(1, 64, 64);
 	var cylinderGeometry = new THREE.CylinderGeometry(1, 1, 1, 64, 1);
 	var sphereRadius = 1.5;
-	var cylinderRadius = 0.4;
+	var cylinderRadius = 0.3;
 	var hbondCutoffSquared = 3.5 * 3.5;
 	var pdbqt2pdb = {
 		HD: 'H',
@@ -791,7 +791,7 @@ $(function () {
 
 	var createLineRepresentation = function (atoms) {
 		var obj = new THREE.Object3D();
-		obj.add(new THREE.Line(new THREE.Geometry(), new THREE.LineBasicMaterial({ linewidth: 1.5, vertexColors: true }), THREE.LinePieces));
+		obj.add(new THREE.Line(new THREE.Geometry(), new THREE.LineBasicMaterial({ linewidth: 2, vertexColors: true }), THREE.LinePieces));
 		var geo = obj.children[0].geometry;
 		for (var i in atoms) {
 			var atom0 = atoms[i];
