@@ -765,10 +765,10 @@ $(function () {
 		return mesh;
 	};
 
-	var createSphereRepresentation = function (atoms, defaultRadius, forceDefault, scale) {
+	var createSphereRepresentation = function (atoms) {
 		var obj = new THREE.Object3D();
 		for (var i in atoms) {
-			obj.add(createSphere(atoms[i], defaultRadius, forceDefault, scale));
+			obj.add(createSphere(atoms[i], sphereRadius));
 		}
 		return obj;
 	};
@@ -846,7 +846,7 @@ $(function () {
 					m[options[entity]] = createStickRepresentation(entities[entity], cylinderRadius * 0.5, cylinderRadius);
 					break;
 				case 'sphere':
-					m[options[entity]] = createSphereRepresentation(entities[entity], sphereRadius);
+					m[options[entity]] = createSphereRepresentation(entities[entity]);
 					break;
 			}
 		}
