@@ -508,178 +508,6 @@ $(function () {
 		render();
 	});
 
-	var hasCovalentBond = function (atom1, atom2) {
-		var r = covalentRadii[atom1.elem] + covalentRadii[atom2.elem];
-		return atom1.coord.distanceToSquared(atom2.coord) < 1.2 * r * r;
-	};
-
-	var isHBondDonor = function (elqt) {
-		return elqt === 'HD' || elqt === 'Zn' || elqt === 'Fe' || elqt === 'Mg' || elqt === 'Ca' || elqt === 'Mn' || elqt === 'Cu' || elqt === 'Na' || elqt === 'K ' || elqt === 'Hg' || elqt === 'Ni' || elqt === 'Co' || elqt === 'Cd' || elqt === 'As' || elqt === 'Sr' || elqt === 'U ';
-	}
-
-	var isHBondAcceptor = function (elqt) {
-		return elqt === 'NA' || elqt === 'OA' || elqt === 'SA';
-	}
-
-	var createBox = function (c000, c100, c010, c110, c001, c101, c011, c111) {
-		var geo = new THREE.Geometry();
-		geo.vertices.push(c000);
-		geo.vertices.push(c100);
-		geo.vertices.push(c010);
-		geo.vertices.push(c110);
-		geo.vertices.push(c001);
-		geo.vertices.push(c101);
-		geo.vertices.push(c011);
-		geo.vertices.push(c111);
-		geo.vertices.push(c000);
-		geo.vertices.push(c010);
-		geo.vertices.push(c100);
-		geo.vertices.push(c110);
-		geo.vertices.push(c001);
-		geo.vertices.push(c011);
-		geo.vertices.push(c101);
-		geo.vertices.push(c111);
-		geo.vertices.push(c000);
-		geo.vertices.push(c001);
-		geo.vertices.push(c100);
-		geo.vertices.push(c101);
-		geo.vertices.push(c010);
-		geo.vertices.push(c011);
-		geo.vertices.push(c110);
-		geo.vertices.push(c111);
-		geo.computeLineDistances();
-		return new THREE.Line(geo, new THREE.LineDashedMaterial({ linewidth: 4, color: defaultBoxColor, dashSize: 0.25, gapSize: 0.125 }), THREE.LinePieces);
-	};
-
-	var createSphere = function (atom, defaultRadius, forceDefault, scale) {
-		var mesh = new THREE.Mesh(sphereGeometry, new THREE.MeshLambertMaterial({ color: atom.color }));
-		mesh.scale.x = mesh.scale.y = mesh.scale.z = forceDefault ? defaultRadius : (vdwRadii[atom.elem] || defaultRadius) * (scale ? scale : 1);
-		mesh.position = atom.coord;
-		return mesh;
-	};
-
-	var createCylinder = function (p0, p1, radius, color) {
-		var mesh = new THREE.Mesh(cylinderGeometry, new THREE.MeshLambertMaterial({ color: color }));
-		mesh.position = p0.clone().add(p1).multiplyScalar(0.5);
-		mesh.matrixAutoUpdate = false;
-		mesh.lookAt(p0);
-		mesh.updateMatrix();
-		mesh.matrix.multiply(new THREE.Matrix4().makeScale(radius, radius, p0.distanceTo(p1))).multiply(new THREE.Matrix4().makeRotationX(Math.PI * 0.5));
-		return mesh;
-	};
-
-	var createSphereRepresentation = function (atoms, defaultRadius, forceDefault, scale) {
-		var obj = new THREE.Object3D();
-		for (var i in atoms) {
-			obj.add(createSphere(atoms[i], defaultRadius, forceDefault, scale));
-		}
-		return obj;
-	};
-
-	var createStickRepresentation = function (atoms, bondR, atomR, scale) {
-		var obj = new THREE.Object3D();
-		for (var i in atoms) {
-			var atom0 = atoms[i];
-			for (var j in atom0.bonds) {
-				var atom1 = atoms[atom0.bonds[j]];
-				if (atom1.serial < atom0.serial) continue;
-				var mp = atom0.coord.clone().add(atom1.coord).multiplyScalar(0.5);
-				obj.add(createCylinder(atom0.coord, mp, bondR, atom0.color));
-				obj.add(createCylinder(atom1.coord, mp, bondR, atom1.color));
-			}
-			obj.add(createSphere(atom0, atomR, !scale, scale));
-		}
-		return obj;
-	};
-
-	var createLineRepresentation = function (atoms) {
-		var obj = new THREE.Object3D();
-		obj.add(new THREE.Line(new THREE.Geometry(), new THREE.LineBasicMaterial({ linewidth: linewidth, vertexColors: true }), THREE.LinePieces));
-		var geo = obj.children[0].geometry;
-		for (var i in atoms) {
-			var atom0 = atoms[i];
-			for (var j in atom0.bonds) {
-				var atom1 = atoms[atom0.bonds[j]];
-				if (atom1.serial < atom0.serial) continue;
-				var mp = atom0.coord.clone().add(atom1.coord).multiplyScalar(0.5);
-				geo.vertices.push(atom0.coord);
-				geo.vertices.push(mp);
-				geo.vertices.push(atom1.coord);
-				geo.vertices.push(mp);
-				geo.colors.push(atom0.color);
-				geo.colors.push(atom0.color);
-				geo.colors.push(atom1.color);
-				geo.colors.push(atom1.color);
-			}
-			if (atom0.solvent) {
-				obj.add(createSphere(atom0, sphereRadius, false, 0.2));
-			}
-		}
-		return obj;
-	};
-
-	var createSurfaceRepresentation = function (atoms, type) {
-		var ps = new ProteinSurface();
-		ps.initparm(getExtent(atoms), type > 1);
-		ps.fillvoxels(atoms);
-		ps.buildboundary();
-		if (type == 4 || type == 2) ps.fastdistancemap();
-		if (type == 2) { ps.boundingatom(false); ps.fillvoxelswaals(atoms); }
-		ps.marchingcube(type);
-		ps.laplaciansmooth(1);
-		ps.transformVertices();
-		return new THREE.Mesh(ps.getModel(atoms), new THREE.MeshLambertMaterial({
-			vertexColors: THREE.VertexColors,
-			opacity: 0.9,
-			transparent: true,
-		}));
-	};
-
-	var updateMolecule = function (entity) {
-		var m = objects[entity];
-		if (m[options[entity]] === undefined) {
-			switch (options[entity]) {
-				case 'line':
-					m[options[entity]] = createLineRepresentation(entities[entity]);
-					break;
-				case 'stick':
-					m[options[entity]] = createStickRepresentation(entities[entity], cylinderRadius, cylinderRadius);
-					break;
-				case 'ball & stick':
-					m[options[entity]] = createStickRepresentation(entities[entity], cylinderRadius * 0.5, cylinderRadius);
-					break;
-				case 'sphere':
-					m[options[entity]] = createSphereRepresentation(entities[entity], sphereRadius);
-					break;
-			}
-		}
-		mdl.add(m[options[entity]]);
-	};
-
-	var updateSurface = function (entity) {
-		var m = objects[entity];
-		if (m[options[entity]] === undefined) {
-			switch (options[entity]) {
-				case 'Van der Waals surface':
-					m[options[entity]] = createSurfaceRepresentation(entities[entity], 1);
-					break;
-				case 'solvent excluded surface':
-					m[options[entity]] = createSurfaceRepresentation(entities[entity], 2);
-					break;
-				case 'solvent accessible surface':
-					m[options[entity]] = createSurfaceRepresentation(entities[entity], 3);
-					break;
-				case 'molecular surface':
-					m[options[entity]] = createSurfaceRepresentation(entities[entity], 4);
-					break;
-				case 'nothing':
-					m[options[entity]] = undefined;
-					break;
-			}
-		}
-		mdl.add(m[options[entity]]);
-	};
-
 	var ct, sz, c000, c100, c010, c110, c001, c101, c011, c111;
 	var parseBox = function (src) {
 		var lines = src.split('\n');
@@ -696,9 +524,22 @@ $(function () {
 		c111 = ct.clone().add(hf.clone().multiply(new THREE.Vector3( 1,  1,  1)));
 	};
 
+	var hasCovalentBond = function (atom1, atom2) {
+		var r = covalentRadii[atom1.elem] + covalentRadii[atom2.elem];
+		return atom1.coord.distanceToSquared(atom2.coord) < 1.2 * r * r;
+	};
+
+	var isHBondDonor = function (elqt) {
+		return elqt === 'HD' || elqt === 'Zn' || elqt === 'Fe' || elqt === 'Mg' || elqt === 'Ca' || elqt === 'Mn' || elqt === 'Cu' || elqt === 'Na' || elqt === 'K ' || elqt === 'Hg' || elqt === 'Ni' || elqt === 'Co' || elqt === 'Cd' || elqt === 'As' || elqt === 'Sr' || elqt === 'U ';
+	}
+
+	var isHBondAcceptor = function (elqt) {
+		return elqt === 'NA' || elqt === 'OA' || elqt === 'SA';
+	}
+
+	var proteinHBondDonors, proteinHBondAcceptors;
 	var xmin = ymin = zmin =  9999;
 	var xmax = ymax = zmax = -9999;
-	var proteinHBondDonors, proteinHBondAcceptors;
 	var parseProtein = function (src) {
 		var protein = entities.protein = {}, lastStdSerial;
 		var lines = src.split('\n');
@@ -885,6 +726,165 @@ $(function () {
 		});
 	};
 
+	var createBox = function () {
+		var geo = new THREE.Geometry();
+		geo.vertices.push(c000);
+		geo.vertices.push(c100);
+		geo.vertices.push(c010);
+		geo.vertices.push(c110);
+		geo.vertices.push(c001);
+		geo.vertices.push(c101);
+		geo.vertices.push(c011);
+		geo.vertices.push(c111);
+		geo.vertices.push(c000);
+		geo.vertices.push(c010);
+		geo.vertices.push(c100);
+		geo.vertices.push(c110);
+		geo.vertices.push(c001);
+		geo.vertices.push(c011);
+		geo.vertices.push(c101);
+		geo.vertices.push(c111);
+		geo.vertices.push(c000);
+		geo.vertices.push(c001);
+		geo.vertices.push(c100);
+		geo.vertices.push(c101);
+		geo.vertices.push(c010);
+		geo.vertices.push(c011);
+		geo.vertices.push(c110);
+		geo.vertices.push(c111);
+		geo.computeLineDistances();
+		return new THREE.Line(geo, new THREE.LineDashedMaterial({ linewidth: 4, color: defaultBoxColor, dashSize: 0.25, gapSize: 0.125 }), THREE.LinePieces);
+	};
+
+	var createSphere = function (atom, defaultRadius, forceDefault, scale) {
+		var mesh = new THREE.Mesh(sphereGeometry, new THREE.MeshLambertMaterial({ color: atom.color }));
+		mesh.scale.x = mesh.scale.y = mesh.scale.z = forceDefault ? defaultRadius : (vdwRadii[atom.elem] || defaultRadius) * (scale ? scale : 1);
+		mesh.position = atom.coord;
+		return mesh;
+	};
+
+	var createCylinder = function (p0, p1, radius, color) {
+		var mesh = new THREE.Mesh(cylinderGeometry, new THREE.MeshLambertMaterial({ color: color }));
+		mesh.position = p0.clone().add(p1).multiplyScalar(0.5);
+		mesh.matrixAutoUpdate = false;
+		mesh.lookAt(p0);
+		mesh.updateMatrix();
+		mesh.matrix.multiply(new THREE.Matrix4().makeScale(radius, radius, p0.distanceTo(p1))).multiply(new THREE.Matrix4().makeRotationX(Math.PI * 0.5));
+		return mesh;
+	};
+
+	var createSphereRepresentation = function (atoms, defaultRadius, forceDefault, scale) {
+		var obj = new THREE.Object3D();
+		for (var i in atoms) {
+			obj.add(createSphere(atoms[i], defaultRadius, forceDefault, scale));
+		}
+		return obj;
+	};
+
+	var createStickRepresentation = function (atoms, bondR, atomR, scale) {
+		var obj = new THREE.Object3D();
+		for (var i in atoms) {
+			var atom0 = atoms[i];
+			for (var j in atom0.bonds) {
+				var atom1 = atoms[atom0.bonds[j]];
+				if (atom1.serial < atom0.serial) continue;
+				var mp = atom0.coord.clone().add(atom1.coord).multiplyScalar(0.5);
+				obj.add(createCylinder(atom0.coord, mp, bondR, atom0.color));
+				obj.add(createCylinder(atom1.coord, mp, bondR, atom1.color));
+			}
+			obj.add(createSphere(atom0, atomR, !scale, scale));
+		}
+		return obj;
+	};
+
+	var createLineRepresentation = function (atoms) {
+		var obj = new THREE.Object3D();
+		obj.add(new THREE.Line(new THREE.Geometry(), new THREE.LineBasicMaterial({ linewidth: linewidth, vertexColors: true }), THREE.LinePieces));
+		var geo = obj.children[0].geometry;
+		for (var i in atoms) {
+			var atom0 = atoms[i];
+			for (var j in atom0.bonds) {
+				var atom1 = atoms[atom0.bonds[j]];
+				if (atom1.serial < atom0.serial) continue;
+				var mp = atom0.coord.clone().add(atom1.coord).multiplyScalar(0.5);
+				geo.vertices.push(atom0.coord);
+				geo.vertices.push(mp);
+				geo.vertices.push(atom1.coord);
+				geo.vertices.push(mp);
+				geo.colors.push(atom0.color);
+				geo.colors.push(atom0.color);
+				geo.colors.push(atom1.color);
+				geo.colors.push(atom1.color);
+			}
+			if (atom0.solvent) {
+				obj.add(createSphere(atom0, sphereRadius, false, 0.2));
+			}
+		}
+		return obj;
+	};
+
+	var createSurfaceRepresentation = function (atoms, type) {
+		var ps = new ProteinSurface();
+		ps.initparm(getExtent(atoms), type > 1);
+		ps.fillvoxels(atoms);
+		ps.buildboundary();
+		if (type == 4 || type == 2) ps.fastdistancemap();
+		if (type == 2) { ps.boundingatom(false); ps.fillvoxelswaals(atoms); }
+		ps.marchingcube(type);
+		ps.laplaciansmooth(1);
+		ps.transformVertices();
+		return new THREE.Mesh(ps.getModel(atoms), new THREE.MeshLambertMaterial({
+			vertexColors: THREE.VertexColors,
+			opacity: 0.9,
+			transparent: true,
+		}));
+	};
+
+	var updateMolecule = function (entity) {
+		var m = objects[entity];
+		if (m[options[entity]] === undefined) {
+			switch (options[entity]) {
+				case 'line':
+					m[options[entity]] = createLineRepresentation(entities[entity]);
+					break;
+				case 'stick':
+					m[options[entity]] = createStickRepresentation(entities[entity], cylinderRadius, cylinderRadius);
+					break;
+				case 'ball & stick':
+					m[options[entity]] = createStickRepresentation(entities[entity], cylinderRadius * 0.5, cylinderRadius);
+					break;
+				case 'sphere':
+					m[options[entity]] = createSphereRepresentation(entities[entity], sphereRadius);
+					break;
+			}
+		}
+		mdl.add(m[options[entity]]);
+	};
+
+	var updateSurface = function (entity) {
+		var m = objects[entity];
+		if (m[options[entity]] === undefined) {
+			switch (options[entity]) {
+				case 'Van der Waals surface':
+					m[options[entity]] = createSurfaceRepresentation(entities[entity], 1);
+					break;
+				case 'solvent excluded surface':
+					m[options[entity]] = createSurfaceRepresentation(entities[entity], 2);
+					break;
+				case 'solvent accessible surface':
+					m[options[entity]] = createSurfaceRepresentation(entities[entity], 3);
+					break;
+				case 'molecular surface':
+					m[options[entity]] = createSurfaceRepresentation(entities[entity], 4);
+					break;
+				case 'nothing':
+					m[options[entity]] = undefined;
+					break;
+			}
+		}
+		mdl.add(m[options[entity]]);
+	};
+
 	var render = function () {
 		var center = rot.position.z - camera.position.z;
 		if (center < 1) center = 1;
@@ -914,7 +914,7 @@ $(function () {
 	$.get(path + 'box.conf', function (box) {
 		parseBox(box);
 		mdl.position = ct.clone().multiplyScalar(-1);
-		mdl.add(createBox(c000, c100, c010, c110, c001, c101, c011, c111));
+		mdl.add(createBox());
 		$.get(path + 'receptor.pdbqt', function (protein) {
 			parseProtein(protein);
 			var maxD = new THREE.Vector3(xmax, ymax, zmax).distanceTo(new THREE.Vector3(xmin, ymin, zmin));
