@@ -903,7 +903,6 @@ $(function () {
 		if (camera.near + 1 > camera.far) camera.far = camera.near + 1;
 		camera.updateProjectionMatrix();
 		scene.fog.near = camera.near + 0.4 * (camera.far - camera.near);
-//		if (scene.fog.near > center) scene.fog.near = center;
 		scene.fog.far = camera.far;
 		renderer.render(scene, camera);
 	};
