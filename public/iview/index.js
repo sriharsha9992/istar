@@ -914,7 +914,6 @@ $(function () {
 		camera.far = center + sf;
 		if (camera.near + 1 > camera.far) camera.far = camera.near + 1;
 		if (camera instanceof THREE.PerspectiveCamera) {
-			camera.fov = fov;
 		} else {
 			camera.right = center * Math.tan(Math.PI / 180 * fov);
 			camera.left = -camera.right;
