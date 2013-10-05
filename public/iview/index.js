@@ -1,6 +1,6 @@
 $(function () {
 	var iv = new iview('iview');
-	$.get('http://www.pdb.org/pdb/files/4MBS.pdb', function (src) {
+	$.get('http://www.pdb.org/pdb/files/3KFN.pdb', function (src) {
 		iv.loadPDB(src);
 	});
 	$('#loadPDB').change(function () {
