@@ -324,9 +324,9 @@ var ProteinSurface = (function () {
 		for (i = 0; i < widxz[at]; ++i) {
 			for (j = 0; j < widxz[at]; ++j) {
 				if (depty[at][nind] != -1) {
-					for (ii = -1; ii < 2; ii++) {
-						for (jj = -1; jj < 2; jj++) {
-							for (kk = -1; kk < 2; kk++) {
+					for (ii = -1; ii < 2; ++ii) {
+						for (jj = -1; jj < 2; ++jj) {
+							for (kk = -1; kk < 2; ++kk) {
 								if (ii != 0 && jj != 0 && kk != 0) {
 									mi = ii * i;
 									mk = kk * j;
@@ -382,9 +382,9 @@ var ProteinSurface = (function () {
 		for (i = 0; i < widxz[at]; ++i) {
 			for (j = 0; j < widxz[at]; ++j) {
 				if (depty[at][nind] != -1) {
-					for (ii = -1; ii < 2; ii++) {
-						for (jj = -1; jj < 2; jj++) {
-							for (kk = -1; kk < 2; kk++) {
+					for (ii = -1; ii < 2; ++ii) {
+						for (jj = -1; jj < 2; ++jj) {
+							for (kk = -1; kk < 2; ++kk) {
 								if (ii != 0 && jj != 0 && kk != 0) {
 									mi = ii * i;
 									mk = kk * j;
@@ -759,7 +759,7 @@ var ProteinSurface = (function () {
 						tp[1][0] = i; tp[1][1] = j + 1; tp[1][2] = k;
 						tp[2][0] = i; tp[2][1] = j + 1; tp[2][2] = k + 1;
 						tp[3][0] = i; tp[3][1] = j; tp[3][2] = k + 1;
-						for (ii = 0; ii < 4; ii++) {
+						for (ii = 0; ii < 4; ++ii) {
 							if (vertseq[tp[ii][0]][tp[ii][1]][tp[ii][2]] == -1) {
 								vertseq[tp[ii][0]][tp[ii][1]][tp[ii][2]] = vertnumber;
 								verts.push(new THREE.Vector3(tp[ii][0], tp[ii][1], tp[ii][2]));
@@ -792,7 +792,7 @@ var ProteinSurface = (function () {
 							tp[1][0] = i; tp[1][1] = j; tp[1][2] = k;
 							tp[2][0] = i; tp[2][1] = j + 1; tp[2][2] = k;
 						}
-						for (ii = 0; ii < 3; ii++) {
+						for (ii = 0; ii < 3; ++ii) {
 							if (vertseq[tp[ii][0]][tp[ii][1]][tp[ii][2]] == -1) {
 								vertseq[tp[ii][0]][tp[ii][1]][tp[ii][2]] = vertnumber;
 								verts.push(new THREE.Vector3(tp[ii][0], tp[ii][1], tp[ii][2]));
@@ -819,7 +819,7 @@ var ProteinSurface = (function () {
 						tp[1][0] = i + 1; tp[1][1] = j; tp[1][2] = k;
 						tp[2][0] = i + 1; tp[2][1] = j; tp[2][2] = k + 1;
 						tp[3][0] = i; tp[3][1] = j; tp[3][2] = k + 1;
-						for (ii = 0; ii < 4; ii++) {
+						for (ii = 0; ii < 4; ++ii) {
 							if (vertseq[tp[ii][0]][tp[ii][1]][tp[ii][2]] == -1) {
 								vertseq[tp[ii][0]][tp[ii][1]][tp[ii][2]] = vertnumber;
 								verts.push(new THREE.Vector3(tp[ii][0], tp[ii][1], tp[ii][2]));
@@ -852,7 +852,7 @@ var ProteinSurface = (function () {
 							tp[1][0] = i; tp[1][1] = j; tp[1][2] = k;
 							tp[2][0] = i + 1; tp[2][1] = j; tp[2][2] = k;
 						}
-						for (ii = 0; ii < 3; ii++) {
+						for (ii = 0; ii < 3; ++ii) {
 							if (vertseq[tp[ii][0]][tp[ii][1]][tp[ii][2]] == -1) {
 								vertseq[tp[ii][0]][tp[ii][1]][tp[ii][2]] = vertnumber;
 								verts.push(new THREE.Vector3(tp[ii][0], tp[ii][1], tp[ii][2]));
@@ -879,7 +879,7 @@ var ProteinSurface = (function () {
 						tp[1][0] = i + 1; tp[1][1] = j; tp[1][2] = k;
 						tp[2][0] = i + 1; tp[2][1] = j + 1; tp[2][2] = k;
 						tp[3][0] = i; tp[3][1] = j + 1; tp[3][2] = k;
-						for (ii = 0; ii < 4; ii++) {
+						for (ii = 0; ii < 4; ++ii) {
 							if (vertseq[tp[ii][0]][tp[ii][1]][tp[ii][2]] == -1) {
 								vertseq[tp[ii][0]][tp[ii][1]][tp[ii][2]] = vertnumber;
 								verts.push(new THREE.Vector3(tp[ii][0], tp[ii][1], tp[ii][2]));
@@ -912,7 +912,7 @@ var ProteinSurface = (function () {
 							tp[1][0] = i; tp[1][1] = j; tp[1][2] = k;
 							tp[2][0] = i + 1; tp[2][1] = j; tp[2][2] = k;
 						}
-						for (ii = 0; ii < 3; ii++) {
+						for (ii = 0; ii < 3; ++ii) {
 							if (vertseq[tp[ii][0]][tp[ii][1]][tp[ii][2]] == -1) {
 								vertseq[tp[ii][0]][tp[ii][1]][tp[ii][2]] = vertnumber;
 								verts.push(new THREE.Vector3(tp[ii][0], tp[ii][1], tp[ii][2]));
@@ -940,7 +940,7 @@ var ProteinSurface = (function () {
 						tp[1][0] = i; tp[1][1] = j + 1; tp[1][2] = k;
 						tp[2][0] = i; tp[2][1] = j + 1; tp[2][2] = k + 1;
 						tp[3][0] = i; tp[3][1] = j; tp[3][2] = k + 1;
-						for (ii = 0; ii < 4; ii++) {
+						for (ii = 0; ii < 4; ++ii) {
 							if (vertseq[tp[ii][0]][tp[ii][1]][tp[ii][2]] == -1) {
 								vertseq[tp[ii][0]][tp[ii][1]][tp[ii][2]] = vertnumber;
 								verts.push(new THREE.Vector3(tp[ii][0], tp[ii][1], tp[ii][2]));
@@ -976,7 +976,7 @@ var ProteinSurface = (function () {
 							tp[1][0] = i; tp[1][1] = j; tp[1][2] = k;
 							tp[2][0] = i; tp[2][1] = j + 1; tp[2][2] = k;
 						}
-						for (ii = 0; ii < 3; ii++) {
+						for (ii = 0; ii < 3; ++ii) {
 							if (vertseq[tp[ii][0]][tp[ii][1]][tp[ii][2]] == -1) {
 								vertseq[tp[ii][0]][tp[ii][1]][tp[ii][2]] = vertnumber;
 								verts.push(new THREE.Vector3(tp[ii][0], tp[ii][1], tp[ii][2]));
@@ -1004,7 +1004,7 @@ var ProteinSurface = (function () {
 						tp[1][0] = i + 1; tp[1][1] = j; tp[1][2] = k;
 						tp[2][0] = i + 1; tp[2][1] = j; tp[2][2] = k + 1;
 						tp[3][0] = i; tp[3][1] = j; tp[3][2] = k + 1;
-						for (ii = 0; ii < 4; ii++) {
+						for (ii = 0; ii < 4; ++ii) {
 							if (vertseq[tp[ii][0]][tp[ii][1]][tp[ii][2]] == -1) {
 								vertseq[tp[ii][0]][tp[ii][1]][tp[ii][2]] = vertnumber;
 								verts.push(new THREE.Vector3(tp[ii][0], tp[ii][1], tp[ii][2]));
@@ -1040,7 +1040,7 @@ var ProteinSurface = (function () {
 							tp[1][0] = i; tp[1][1] = j; tp[1][2] = k;
 							tp[2][0] = i + 1; tp[2][1] = j; tp[2][2] = k;
 						}
-						for (ii = 0; ii < 3; ii++) {
+						for (ii = 0; ii < 3; ++ii) {
 							if (vertseq[tp[ii][0]][tp[ii][1]][tp[ii][2]] == -1) {
 								vertseq[tp[ii][0]][tp[ii][1]][tp[ii][2]] = vertnumber;
 								verts.push(new THREE.Vector3(tp[ii][0], tp[ii][1], tp[ii][2]));
@@ -1069,7 +1069,7 @@ var ProteinSurface = (function () {
 						tp[1][0] = i + 1; tp[1][1] = j; tp[1][2] = k;
 						tp[2][0] = i + 1; tp[2][1] = j + 1; tp[2][2] = k;
 						tp[3][0] = i; tp[3][1] = j + 1; tp[3][2] = k;
-						for (ii = 0; ii < 4; ii++) {
+						for (ii = 0; ii < 4; ++ii) {
 							if (vertseq[tp[ii][0]][tp[ii][1]][tp[ii][2]] == -1) {
 								vertseq[tp[ii][0]][tp[ii][1]][tp[ii][2]] = vertnumber;
 								verts.push(new THREE.Vector3(tp[ii][0], tp[ii][1], tp[ii][2]));
@@ -1105,7 +1105,7 @@ var ProteinSurface = (function () {
 							tp[1][0] = i; tp[1][1] = j; tp[1][2] = k;
 							tp[2][0] = i + 1; tp[2][1] = j; tp[2][2] = k;
 						}
-						for (ii = 0; ii < 3; ii++) {
+						for (ii = 0; ii < 3; ++ii) {
 							if (vertseq[tp[ii][0]][tp[ii][1]][tp[ii][2]] == -1) {
 								vertseq[tp[ii][0]][tp[ii][1]][tp[ii][2]] = vertnumber;
 								verts.push(new THREE.Vector3(tp[ii][0], tp[ii][1], tp[ii][2]));
@@ -1132,9 +1132,9 @@ var ProteinSurface = (function () {
 
 
 					var sumtype = 0;
-					for (ii = 0; ii < 2; ii++) {
-						for (jj = 0; jj < 2; jj++) {
-							for (kk = 0; kk < 2; kk++) {
+					for (ii = 0; ii < 2; ++ii) {
+						for (jj = 0; jj < 2; ++jj) {
+							for (kk = 0; kk < 2; ++kk) {
 								if (vp[pWidth * pHeight * (i + ii) + pHeight * (j + jj) + k + kk].isdone) sumtype++;
 							}
 						}
@@ -1285,7 +1285,7 @@ var ProteinSurface = (function () {
 								tp[1][0] = i; tp[1][1] = j + 1; tp[1][2] = k;
 								tp[2][0] = i; tp[2][1] = j + 1; tp[2][2] = k + 1;
 							}//64
-							for (ii = 0; ii < 3; ii++) {
+							for (ii = 0; ii < 3; ++ii) {
 								if (vertseq[tp[ii][0]][tp[ii][1]][tp[ii][2]] == -1) {
 									vertseq[tp[ii][0]][tp[ii][1]][tp[ii][2]] = vertnumber;
 									verts.push(new THREE.Vector3(tp[ii][0], tp[ii][1], tp[ii][2]));
@@ -1351,7 +1351,7 @@ var ProteinSurface = (function () {
 								tp[2][0] = i; tp[2][1] = j + 1; tp[2][2] = k + 1;
 								tp[3][0] = i; tp[3][1] = j; tp[3][2] = k + 1;
 							}
-							for (ii = 0; ii < 4; ii++) {
+							for (ii = 0; ii < 4; ++ii) {
 								if (vertseq[tp[ii][0]][tp[ii][1]][tp[ii][2]] == -1) {
 									vertseq[tp[ii][0]][tp[ii][1]][tp[ii][2]] = vertnumber;
 									verts.push(new THREE.Vector3(tp[ii][0], tp[ii][1], tp[ii][2]));
@@ -1508,7 +1508,7 @@ var ProteinSurface = (function () {
 								tp[1][0] = i; tp[1][1] = j + 1; tp[1][2] = k;
 								tp[2][0] = i; tp[2][1] = j + 1; tp[2][2] = k + 1;
 							}//64
-							for (ii = 0; ii < 3; ii++) {
+							for (ii = 0; ii < 3; ++ii) {
 								if (vertseq[tp[ii][0]][tp[ii][1]][tp[ii][2]] == -1) {
 									vertseq[tp[ii][0]][tp[ii][1]][tp[ii][2]] = vertnumber;
 									verts.push(new THREE.Vector3(tp[ii][0], tp[ii][1], tp[ii][2]));
@@ -1583,7 +1583,7 @@ var ProteinSurface = (function () {
 								tp[2][0] = i; tp[2][1] = j + 1; tp[2][2] = k + 1;
 								tp[1][0] = i + 1; tp[1][1] = j; tp[1][2] = k + 1;
 							}//8
-							for (ii = 0; ii < 3; ii++) {
+							for (ii = 0; ii < 3; ++ii) {
 								if (vertseq[tp[ii][0]][tp[ii][1]][tp[ii][2]] == -1) {
 									vertseq[tp[ii][0]][tp[ii][1]][tp[ii][2]] = vertnumber;
 									verts.push(new THREE.Vector3(tp[ii][0], tp[ii][1], tp[ii][2]));
@@ -1701,7 +1701,7 @@ var ProteinSurface = (function () {
 								tp[2][0] = i + 1; tp[2][1] = j + 1; tp[2][2] = k + 1;
 								tp[3][0] = i; tp[3][1] = j + 1; tp[3][2] = k + 1;
 							}//12
-							for (ii = 0; ii < 4; ii++) {
+							for (ii = 0; ii < 4; ++ii) {
 								if (vertseq[tp[ii][0]][tp[ii][1]][tp[ii][2]] == -1) {
 									vertseq[tp[ii][0]][tp[ii][1]][tp[ii][2]] = vertnumber;
 									verts.push(new THREE.Vector3(tp[ii][0], tp[ii][1], tp[ii][2]));
@@ -1821,7 +1821,7 @@ var ProteinSurface = (function () {
 								tp[2][0] = i + 1; tp[2][1] = j + 1; tp[2][2] = k + 1;
 								tp[3][0] = i; tp[3][1] = j + 1; tp[3][2] = k;
 							}//12
-							for (ii = 0; ii < 4; ii++) {
+							for (ii = 0; ii < 4; ++ii) {
 								if (vertseq[tp[ii][0]][tp[ii][1]][tp[ii][2]] == -1) {
 									vertseq[tp[ii][0]][tp[ii][1]][tp[ii][2]] = vertnumber;
 									verts.push(new THREE.Vector3(tp[ii][0], tp[ii][1], tp[ii][2]));
@@ -1883,7 +1883,7 @@ var ProteinSurface = (function () {
 								tp[2][0] = i; tp[2][1] = j + 1; tp[2][2] = k + 1;
 								tp[1][0] = i + 1; tp[1][1] = j; tp[1][2] = k + 1;
 							}//8
-							for (ii = 0; ii < 3; ii++) {
+							for (ii = 0; ii < 3; ++ii) {
 								if (vertseq[tp[ii][0]][tp[ii][1]][tp[ii][2]] == -1) {
 									vertseq[tp[ii][0]][tp[ii][1]][tp[ii][2]] = vertnumber;
 									verts.push(new THREE.Vector3(tp[ii][0], tp[ii][1], tp[ii][2]));
@@ -2061,7 +2061,7 @@ var ProteinSurface = (function () {
 								tp[0][0] = i + 1; tp[0][1] = j + 1; tp[0][2] = k + 1;
 								tp[3][0] = i; tp[3][1] = j; tp[3][2] = k + 1;
 							}//64
-							for (ii = 0; ii < 4; ii++) {
+							for (ii = 0; ii < 4; ++ii) {
 								if (vertseq[tp[ii][0]][tp[ii][1]][tp[ii][2]] == -1) {
 									vertseq[tp[ii][0]][tp[ii][1]][tp[ii][2]] = vertnumber;
 									verts.push(new THREE.Vector3(tp[ii][0], tp[ii][1], tp[ii][2]));
@@ -2173,7 +2173,7 @@ var ProteinSurface = (function () {
 								tp[3][0] = i + 1; tp[3][1] = j + 1; tp[3][2] = k + 1;
 								tp[4][0] = i + 1; tp[4][1] = j; tp[4][2] = k;
 							}//12
-							for (ii = 0; ii < 5; ii++) {
+							for (ii = 0; ii < 5; ++ii) {
 								if (vertseq[tp[ii][0]][tp[ii][1]][tp[ii][2]] == -1) {
 									vertseq[tp[ii][0]][tp[ii][1]][tp[ii][2]] = vertnumber;
 									verts.push(new THREE.Vector3(tp[ii][0], tp[ii][1], tp[ii][2]));
@@ -2288,7 +2288,7 @@ var ProteinSurface = (function () {
 								tp[3][0] = i + 1; tp[3][1] = j + 1; tp[3][2] = k + 1;
 								tp[4][0] = i + 1; tp[4][1] = j; tp[4][2] = k + 1;
 							}//12
-							for (ii = 0; ii < 5; ii++) {
+							for (ii = 0; ii < 5; ++ii) {
 								if (vertseq[tp[ii][0]][tp[ii][1]][tp[ii][2]] == -1) {
 									vertseq[tp[ii][0]][tp[ii][1]][tp[ii][2]] = vertnumber;
 									verts.push(new THREE.Vector3(tp[ii][0], tp[ii][1], tp[ii][2]));
@@ -2390,7 +2390,7 @@ var ProteinSurface = (function () {
 								tp[2][0] = i; tp[2][1] = j; tp[2][2] = k;
 								tp[1][0] = i + 1; tp[1][1] = j + 1; tp[1][2] = k;
 							}//12
-							for (ii = 0; ii < 4; ii++) {
+							for (ii = 0; ii < 4; ++ii) {
 								if (vertseq[tp[ii][0]][tp[ii][1]][tp[ii][2]] == -1) {
 									vertseq[tp[ii][0]][tp[ii][1]][tp[ii][2]] = vertnumber;
 									verts.push(new THREE.Vector3(tp[ii][0], tp[ii][1], tp[ii][2]));
@@ -2439,7 +2439,7 @@ var ProteinSurface = (function () {
 								tp[4][0] = i + 1; tp[4][1] = j; tp[4][2] = k;
 								tp[5][0] = i; tp[5][1] = j + 1; tp[5][2] = k;
 							}//4
-							for (ii = 0; ii < 6; ii++) {
+							for (ii = 0; ii < 6; ++ii) {
 								if (vertseq[tp[ii][0]][tp[ii][1]][tp[ii][2]] == -1) {
 									vertseq[tp[ii][0]][tp[ii][1]][tp[ii][2]] = vertnumber;
 									verts.push(new THREE.Vector3(tp[ii][0], tp[ii][1], tp[ii][2]));
@@ -2536,7 +2536,7 @@ var ProteinSurface = (function () {
 								tp[1][0] = i; tp[1][1] = j + 1; tp[1][2] = k + 1;
 								tp[3][0] = i + 1; tp[3][1] = j; tp[3][2] = k + 1;
 							}//12
-							for (ii = 0; ii < 4; ii++) {
+							for (ii = 0; ii < 4; ++ii) {
 								if (vertseq[tp[ii][0]][tp[ii][1]][tp[ii][2]] == -1) {
 									vertseq[tp[ii][0]][tp[ii][1]][tp[ii][2]] = vertnumber;
 									verts.push(new THREE.Vector3(tp[ii][0], tp[ii][1], tp[ii][2]));
@@ -2592,7 +2592,7 @@ var ProteinSurface = (function () {
 							tp[1][0] = i + 1; tp[1][1] = j + 1; tp[1][2] = k + 1;
 							tp[2][0] = i; tp[2][1] = j + 1; tp[2][2] = k;
 						}//8
-						for (ii = 0; ii < 3; ii++) {
+						for (ii = 0; ii < 3; ++ii) {
 							if (vertseq[tp[ii][0]][tp[ii][1]][tp[ii][2]] == -1) {
 								vertseq[tp[ii][0]][tp[ii][1]][tp[ii][2]] = vertnumber;
 								verts.push(new THREE.Vector3(tp[ii][0], tp[ii][1], tp[ii][2]));
