@@ -792,7 +792,7 @@ var iview = (function () {
 		}
 	};
 
-	iview.prototype.createLineRepresentation = function (atomlist, linewidth) {
+	iview.prototype.createLineRepresentation = function (atomlist) {
 		var geo = new THREE.Geometry();
 		for (var i in atomlist) {
 			var atom0 = this.atoms[atomlist[i]];
@@ -810,7 +810,7 @@ var iview = (function () {
 				geo.colors.push(atom1.color);
 			}
 		}
-		this.mdl.add(new THREE.Line(geo, new THREE.LineBasicMaterial({ linewidth: linewidth, vertexColors: true }), THREE.LinePieces));
+		this.mdl.add(new THREE.Line(geo, new THREE.LineBasicMaterial({ linewidth: this.linewidth, vertexColors: true }), THREE.LinePieces));
 	};
 
 	iview.prototype.subdivide = function (_points, DIV) { // Catmull-Rom subdivision
@@ -864,7 +864,7 @@ var iview = (function () {
 		div = div || 5;
 		for (var i in atomlist) {
 			var atom = this.atoms[atomlist[i]];
-			if ((atom.name == atomName) && !atom.het) {
+			if (atom.name == atomName && !atom.het) {
 				if (currentChain != atom.chain || currentResi + 1 != atom.resi) {
 					this.createCurveSub(points, curveWidth, colors, div);
 					points = [];
@@ -880,7 +880,7 @@ var iview = (function () {
 	};
 
 	iview.prototype.createStrip = function (p1, p2, colors, div, thickness) {
-		if ((p1.length) < 2) return;
+		if (p1.length < 2) return;
 		div = div || this.axisDIV;
 		p1 = this.subdivide(p1, div);
 		p2 = this.subdivide(p2, div);
@@ -1163,7 +1163,7 @@ var iview = (function () {
 
 		switch (this.options.primaryStructure) {
 			case 'lines':
-				this.createLineRepresentation(this.peptides, this.linewidth);
+				this.createLineRepresentation(this.peptides);
 				break;
 			case 'stick':
 				this.createStickRepresentation(this.peptides, this.cylinderRadius, this.cylinderRadius);
