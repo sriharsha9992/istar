@@ -812,13 +812,10 @@ var iview = (function () {
 	};
 
 	iview.prototype.createStickRepresentation = function (atomlist, atomR, bondR, scale) {
-		var nAtoms = atomlist.length;
-		for (var _i = 0; _i < nAtoms; ++_i) {
-			var i = atomlist[_i];
-			var atom0 = this.atoms[i];
-			for (var _j = 0; _j < atom0.bonds.length; ++_j) {
-				var j = atom0.bonds[_j];
-				var atom1 = this.atoms[j];
+		for (var i in atomlist) {
+			var atom0 = this.atoms[atomlist[i]];
+			for (var j in atom0.bonds) {
+				var atom1 = this.atoms[atom0.bonds[j]];
 				if (atom1.serial < atom0.serial) continue;
 				var mp = atom0.coord.clone().add(atom1.coord).multiplyScalar(0.5);
 				this.createCylinder(atom0.coord, mp, bondR, atom0.color);
@@ -830,13 +827,10 @@ var iview = (function () {
 
 	iview.prototype.createLineRepresentation = function (atomlist, linewidth) {
 		var geo = new THREE.Geometry();
-		var nAtoms = atomlist.length;
-		for (var _i = 0; _i < nAtoms; ++_i) {
-			var i = atomlist[_i];
-			var atom0 = this.atoms[i];
-			for (var _j = 0; _j < atom0.bonds.length; ++_j) {
-				var j = atom0.bonds[_j];
-				var atom1 = this.atoms[j];
+		for (var i in atomlist) {
+			var atom0 = this.atoms[atomlist[i]];
+			for (var j in atom0.bonds) {
+				var atom1 = this.atoms[atom0.bonds[j]];
 				if (atom1.serial < atom0.serial) continue;
 				var mp = atom0.coord.clone().add(atom1.coord).multiplyScalar(0.5);
 				geo.vertices.push(atom0.coord);
