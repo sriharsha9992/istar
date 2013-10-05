@@ -673,7 +673,7 @@ var iview = (function () {
 		cylinder.matrixAutoUpdate = false;
 		cylinder.lookAt(p1);
 		cylinder.updateMatrix();
-		cylinder.matrix.multiply(new THREE.Matrix4().makeScale(radius, radius, p1.distanceTo(p2)).rotateX(Math.PI * 0.5));
+		cylinder.matrix.multiply(new THREE.Matrix4().makeScale(radius, radius, p1.distanceTo(p2))).multiply(new THREE.Matrix4().makeRotationX(Math.PI * 0.5));
 		this.modelGroup.add(cylinder);
 	};
 
@@ -1001,7 +1001,6 @@ var iview = (function () {
 		this.modelGroup = new THREE.Object3D();
 		this.modelGroup.position = mp;
 		this.rotationGroup = new THREE.Object3D();
-		this.rotationGroup.useQuaternion = true;
 		this.rotationGroup.position.z = rz;
 		this.rotationGroup.quaternion = rq;
 		this.rotationGroup.add(this.modelGroup);
@@ -1011,7 +1010,7 @@ var iview = (function () {
 		this.camera = this.cameras[this.options.camera];
 
 		var background = this.backgroundColors[this.options.background];
-		this.renderer.setClearColorHex(background);
+		this.renderer.setClearColor(background);
 		this.scene.fog = new THREE.Fog(background, 100, 200);
 
 		switch (this.options.colorBy) {
