@@ -619,7 +619,7 @@ var iview = (function () {
 	}
 
 	iview.prototype.loadPDB = function (src) {
-		var helices = [], sheets = [];
+		var helices = [], sheets = [], lastStdSerial;
 		this.atoms = {};
 		var lines = src.split('\n');
 		for (var i in lines) {
@@ -657,8 +657,7 @@ var iview = (function () {
 					bonds: [],
 					ss: 'coil',
 				};
-			} else if (record === 'TER   ') {
-				this.lastTER = parseInt(line.substr(6, 5));
+				if (record[0] !== 'H') lastStdSerial = serial;
 			} else if (record === 'CONECT') {
 				var from = parseInt(line.substr(6, 5));
 				for (var j = 0; j < 4; ++j) {
@@ -729,7 +728,7 @@ var iview = (function () {
 		this.ions = [];
 		for (var i in this.atoms) {
 			var atom = this.atoms[i];
-			if (atom.serial < this.lastTER) {
+			if (atom.serial < lastStdSerial) {
 				this.peptides.push(atom.serial);
 			} else {
 				if (atom.bonds.length) {
