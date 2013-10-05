@@ -1293,9 +1293,7 @@ var iview = (function () {
 		if (this.camera.near < 1) this.camera.near = 1;
 		this.camera.far = center + this.slabFar;
 		if (this.camera.near + 1 > this.camera.far) this.camera.far = this.camera.near + 1;
-		if (this.camera instanceof THREE.PerspectiveCamera) {
-			this.camera.fov = this.fov;
-		} else {
+		if (this.camera === this.orthographicCamera ){
 			this.camera.right = center * Math.tan(Math.PI / 180 * this.fov);
 			this.camera.left = -this.camera.right;
 			this.camera.top = this.camera.right / (this.container.width() / this.container.height());
