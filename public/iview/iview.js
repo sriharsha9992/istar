@@ -614,6 +614,147 @@ var iview = (function () {
 		});
 	}
 
+	iview.prototype.hasCovalentBond = function (atom1, atom2) {
+		var r = this.covalentRadii[atom1.elem] + this.covalentRadii[atom2.elem];
+		return atom1.coord.distanceToSquared(atom2.coord) < 1.2 * r * r;
+	}
+
+	iview.prototype.loadPDB = function (src) {
+		var helices = [], sheets = [];
+		this.atoms = [];
+		var lines = src.split('\n');
+		for (var i in lines) {
+			var line = lines[i];
+			var record = line.substr(0, 6);
+			if (record == 'HELIX ') {
+				helices.push({
+					chain: line.substr(19, 1),
+					initialResidue: parseInt(line.substr(21, 4)),
+					initialInscode: line.substr(25, 1),
+					terminalResidue: parseInt(line.substr(33, 4)),
+					terminalInscode: line.substr(37, 1),
+				});
+			} else if (record == 'SHEET ') {
+				sheets.push({
+					chain: line.substr(21, 1),
+					initialResidue: parseInt(line.substr(22, 4)),
+					initialInscode: line.substr(26, 1),
+					terminalResidue: parseInt(line.substr(33, 4)),
+					terminalInscode: line.substr(37, 1),
+				});
+			} else if (record == 'ATOM  ' || record == 'HETATM') {
+				if (!(line[16] == ' ' || line[16] == 'A')) continue;
+				var serial = parseInt(line.substr(6, 5));
+				this.atoms[serial] = {
+					het: record[0] == 'H',
+					serial: serial,
+					name: line.substr(12, 4).replace(/ /g, ''),
+					resn: line.substr(17, 3),
+					chain: line.substr(21, 1),
+					resi: parseInt(line.substr(22, 4)),
+					insc: line.substr(26, 1),
+					coord: new THREE.Vector3(parseFloat(line.substr(30, 8)), parseFloat(line.substr(38, 8)), parseFloat(line.substr(46, 8))),
+					b: parseFloat(line.substr(60, 8)),
+					elem: line.substr(76, 2).replace(/ /g, ''),
+					bonds: [],
+					ss: 'coil',
+				};
+			} else if (record == 'TER   ') {
+				this.lastTER = parseInt(line.substr(6, 5));
+			} else if (record == 'CONECT') {
+				var from = parseInt(line.substr(6, 5));
+				for (var j = 0; j < 4; ++j) {
+					var to = parseInt(line.substr([11, 16, 21, 26][j], 5));
+					if (isNaN(to)) continue;
+					this.atoms[from].bonds.push(to);
+				}
+			}
+		}
+		for (var i in this.atoms) {
+			var atom = this.atoms[i];
+			for (var j in helices) {
+				var helix = helices[j];
+				if (atom.chain == helix.chain && (atom.resi > helix.initialResidue || (atom.resi == helix.initialResidue && atom.insc >= helix.initialInscode)) && (atom.resi < helix.terminalResidue || (atom.resi == helix.terminalResidue && atom.insc <= helix.terminalInscode))) {
+					atom.ss = 'helix';
+					if (atom.resi == helix.initialResidue && atom.insc == helix.initialInscode) atom.ssbegin = true;
+					if (atom.resi == helix.terminalResidue && atom.insc == helix.terminalInscode) atom.ssend = true;
+				}
+			}
+			for (var j in sheets) {
+				var sheet = sheets[j];
+				if (atom.chain == sheet.chain && (atom.resi > sheet.initialResidue || (atom.resi == sheet.initialResidue && atom.insc >= sheet.initialInscode)) && (atom.resi < sheet.terminalResidue || (atom.resi == sheet.terminalResidue && atom.insc <= sheet.terminalInscode))) {
+					atom.ss = 'sheet';
+					if (atom.resi == sheet.initialResidue && atom.insc == sheet.initialInscode) atom.ssbegin = true;
+					if (atom.resi == sheet.terminalResidue && atom.insc == sheet.terminalInscode) atom.ssend = true;
+				}
+			}
+		}
+		var curChain, curResi, curInsc, curResAtoms = [];
+		for (var i in this.atoms) {
+			var atom = this.atoms[i];
+			if (atom.het) continue;
+			if (!(curChain == atom.chain && curResi == atom.resi && curInsc == atom.insc)) {
+				for (var j in curResAtoms) {
+					var from = this.atoms[curResAtoms[j]];
+					for (var k in curResAtoms) {
+						if (j == k) continue;
+						var to = this.atoms[curResAtoms[k]];
+						if (this.hasCovalentBond(from, to)) {
+							from.bonds.push(to.serial);
+						}
+					}
+					if (from.name == 'C' && atom.name == 'N' && this.hasCovalentBond(from, atom)) {
+						from.bonds.push(atom.serial);
+						atom.bonds.push(from.serial);
+					}
+				}
+				curChain = atom.chain;
+				curResi = atom.resi;
+				curInsc = atom.insc;
+				curResAtoms.length = 0;
+			}
+			curResAtoms.push(atom.serial);
+		}
+		for (var j in curResAtoms) {
+			var from = this.atoms[curResAtoms[j]];
+			for (var k in curResAtoms) {
+				if (j == k) continue;
+				var to = this.atoms[curResAtoms[k]];
+				if (this.hasCovalentBond(from, to)) {
+					from.bonds.push(to.serial);
+				}
+			}
+		}
+		this.peptides = [];
+		this.ligands = [];
+		this.waters = [];
+		this.ions = [];
+		for (var i in this.atoms) {
+			var atom = this.atoms[i];
+			if (atom.serial < this.lastTER) {
+				this.peptides.push(atom.serial);
+			} else {
+				if (atom.bonds.length) {
+					this.ligands.push(atom.serial);
+				} else {
+					if (atom.resn == 'HOH') {
+						this.waters.push(atom.serial);
+					} else {
+						this.ions.push(atom.serial);
+					}
+				}
+			}
+		}
+		this.surfaces = {
+			1: undefined,
+			2: undefined,
+			3: undefined,
+			4: undefined,
+		};
+		this.rebuildScene();
+		this.resetView();
+	};
+
 	iview.prototype.subdivide = function (_points, DIV) { // Catmull-Rom subdivision
 		var ret = [];
 		var points = new Array(); // Smoothing test
@@ -1143,147 +1284,6 @@ var iview = (function () {
 
 		this.effect = this.effects[this.options.effect];
 		this.effect.setSize(this.container.width(), this.container.height());
-	};
-
-	iview.prototype.hasCovalentBond = function (atom1, atom2) {
-		var r = this.covalentRadii[atom1.elem] + this.covalentRadii[atom2.elem];
-		return atom1.coord.distanceToSquared(atom2.coord) < 1.2 * r * r;
-	}
-
-	iview.prototype.loadPDB = function (src) {
-		var helices = [], sheets = [];
-		this.atoms = [];
-		var lines = src.split('\n');
-		for (var i in lines) {
-			var line = lines[i];
-			var record = line.substr(0, 6);
-			if (record == 'HELIX ') {
-				helices.push({
-					chain: line.substr(19, 1),
-					initialResidue: parseInt(line.substr(21, 4)),
-					initialInscode: line.substr(25, 1),
-					terminalResidue: parseInt(line.substr(33, 4)),
-					terminalInscode: line.substr(37, 1),
-				});
-			} else if (record == 'SHEET ') {
-				sheets.push({
-					chain: line.substr(21, 1),
-					initialResidue: parseInt(line.substr(22, 4)),
-					initialInscode: line.substr(26, 1),
-					terminalResidue: parseInt(line.substr(33, 4)),
-					terminalInscode: line.substr(37, 1),
-				});
-			} else if (record == 'ATOM  ' || record == 'HETATM') {
-				if (!(line[16] == ' ' || line[16] == 'A')) continue;
-				var serial = parseInt(line.substr(6, 5));
-				this.atoms[serial] = {
-					het: record[0] == 'H',
-					serial: serial,
-					name: line.substr(12, 4).replace(/ /g, ''),
-					resn: line.substr(17, 3),
-					chain: line.substr(21, 1),
-					resi: parseInt(line.substr(22, 4)),
-					insc: line.substr(26, 1),
-					coord: new THREE.Vector3(parseFloat(line.substr(30, 8)), parseFloat(line.substr(38, 8)), parseFloat(line.substr(46, 8))),
-					b: parseFloat(line.substr(60, 8)),
-					elem: line.substr(76, 2).replace(/ /g, ''),
-					bonds: [],
-					ss: 'coil',
-				};
-			} else if (record == 'TER   ') {
-				this.lastTER = parseInt(line.substr(6, 5));
-			} else if (record == 'CONECT') {
-				var from = parseInt(line.substr(6, 5));
-				for (var j = 0; j < 4; ++j) {
-					var to = parseInt(line.substr([11, 16, 21, 26][j], 5));
-					if (isNaN(to)) continue;
-					this.atoms[from].bonds.push(to);
-				}
-			}
-		}
-		for (var i in this.atoms) {
-			var atom = this.atoms[i];
-			for (var j in helices) {
-				var helix = helices[j];
-				if (atom.chain == helix.chain && (atom.resi > helix.initialResidue || (atom.resi == helix.initialResidue && atom.insc >= helix.initialInscode)) && (atom.resi < helix.terminalResidue || (atom.resi == helix.terminalResidue && atom.insc <= helix.terminalInscode))) {
-					atom.ss = 'helix';
-					if (atom.resi == helix.initialResidue && atom.insc == helix.initialInscode) atom.ssbegin = true;
-					if (atom.resi == helix.terminalResidue && atom.insc == helix.terminalInscode) atom.ssend = true;
-				}
-			}
-			for (var j in sheets) {
-				var sheet = sheets[j];
-				if (atom.chain == sheet.chain && (atom.resi > sheet.initialResidue || (atom.resi == sheet.initialResidue && atom.insc >= sheet.initialInscode)) && (atom.resi < sheet.terminalResidue || (atom.resi == sheet.terminalResidue && atom.insc <= sheet.terminalInscode))) {
-					atom.ss = 'sheet';
-					if (atom.resi == sheet.initialResidue && atom.insc == sheet.initialInscode) atom.ssbegin = true;
-					if (atom.resi == sheet.terminalResidue && atom.insc == sheet.terminalInscode) atom.ssend = true;
-				}
-			}
-		}
-		var curChain, curResi, curInsc, curResAtoms = [];
-		for (var i in this.atoms) {
-			var atom = this.atoms[i];
-			if (atom.het) continue;
-			if (!(curChain == atom.chain && curResi == atom.resi && curInsc == atom.insc)) {
-				for (var j in curResAtoms) {
-					var from = this.atoms[curResAtoms[j]];
-					for (var k in curResAtoms) {
-						if (j == k) continue;
-						var to = this.atoms[curResAtoms[k]];
-						if (this.hasCovalentBond(from, to)) {
-							from.bonds.push(to.serial);
-						}
-					}
-					if (from.name == 'C' && atom.name == 'N' && this.hasCovalentBond(from, atom)) {
-						from.bonds.push(atom.serial);
-						atom.bonds.push(from.serial);
-					}
-				}
-				curChain = atom.chain;
-				curResi = atom.resi;
-				curInsc = atom.insc;
-				curResAtoms.length = 0;
-			}
-			curResAtoms.push(atom.serial);
-		}
-		for (var j in curResAtoms) {
-			var from = this.atoms[curResAtoms[j]];
-			for (var k in curResAtoms) {
-				if (j == k) continue;
-				var to = this.atoms[curResAtoms[k]];
-				if (this.hasCovalentBond(from, to)) {
-					from.bonds.push(to.serial);
-				}
-			}
-		}
-		this.peptides = [];
-		this.ligands = [];
-		this.waters = [];
-		this.ions = [];
-		for (var i in this.atoms) {
-			var atom = this.atoms[i];
-			if (atom.serial < this.lastTER) {
-				this.peptides.push(atom.serial);
-			} else {
-				if (atom.bonds.length) {
-					this.ligands.push(atom.serial);
-				} else {
-					if (atom.resn == 'HOH') {
-						this.waters.push(atom.serial);
-					} else {
-						this.ions.push(atom.serial);
-					}
-				}
-			}
-		}
-		this.surfaces = {
-			1: undefined,
-			2: undefined,
-			3: undefined,
-			4: undefined,
-		};
-		this.rebuildScene();
-		this.resetView();
 	};
 
 	iview.prototype.render = function () {
