@@ -434,12 +434,12 @@ var iview = (function () {
 			'none': this.renderer,
 		};
 
-		this.CAMERA_Z = -150;
+		this.camera_z = -150;
 		this.perspectiveCamera = new THREE.PerspectiveCamera(20, this.container.width() / this.container.height(), 1, 800);
-		this.perspectiveCamera.position = new THREE.Vector3(0, 0, this.CAMERA_Z);
+		this.perspectiveCamera.position = new THREE.Vector3(0, 0, this.camera_z);
 		this.perspectiveCamera.lookAt(new THREE.Vector3(0, 0, 0));
 		this.orthographicCamera = new THREE.OrthographicCamera();
-		this.orthographicCamera.position = new THREE.Vector3(0, 0, this.CAMERA_Z);
+		this.orthographicCamera.position = new THREE.Vector3(0, 0, this.camera_z);
 		this.orthographicCamera.lookAt(new THREE.Vector3(0, 0, 0));
 		this.cameras = {
 			 perspective: this.perspectiveCamera,
@@ -447,7 +447,7 @@ var iview = (function () {
 		};
 		this.camera = this.perspectiveCamera;
 
-		this.slabNear = -50; // relative to the center of rotationGroup
+		this.slabNear = -50; // relative to the center of rot
 		this.slabFar  = +50;
 
 		// Default values
@@ -455,7 +455,7 @@ var iview = (function () {
 		this.cylinderGeometry = new THREE.CylinderGeometry(1, 1, 1, 32, 1);
 		this.sphereRadius = 1.5;
 		this.cylinderRadius = 0.4;
-		this.lineWidth = 1.5;
+		this.linewidth = 1.5;
 		this.curveWidth = 3;
 		this.helixSheetWidth = 1.3;
 		this.coilWidth = 0.3;
@@ -561,20 +561,20 @@ var iview = (function () {
 			me.mouseButton = ev.which;
 			me.mouseStartX = x;
 			me.mouseStartY = y;
-			me.cq = me.rotationGroup.quaternion;
-			me.cz = me.rotationGroup.position.z;
-			me.cp = me.modelGroup.position.clone();
+			me.cq = me.rot.quaternion;
+			me.cz = me.rot.position.z;
+			me.cp = me.mdl.position.clone();
 			me.cslabNear = me.slabNear;
 			me.cslabFar = me.slabFar;
 		});
 		this.container.bind('DOMMouseScroll mousewheel', function (ev) { // Zoom
 			ev.preventDefault();
 			if (!me.scene) return;
-			var scaleFactor = (me.rotationGroup.position.z - me.CAMERA_Z) * 0.85;
+			var scaleFactor = (me.rot.position.z - me.camera_z) * 0.85;
 			if (ev.originalEvent.detail) { // Webkit
-				me.rotationGroup.position.z += scaleFactor * ev.originalEvent.detail * 0.1;
+				me.rot.position.z += scaleFactor * ev.originalEvent.detail * 0.1;
 			} else if (ev.originalEvent.wheelDelta) { // Firefox
-				me.rotationGroup.position.z -= scaleFactor * ev.originalEvent.wheelDelta * 0.0025;
+				me.rot.position.z -= scaleFactor * ev.originalEvent.wheelDelta * 0.0025;
 			}
 			me.render();
 		});
@@ -597,17 +597,17 @@ var iview = (function () {
 					me.slabNear = me.cslabNear + dx * 100;
 					me.slabFar = me.cslabFar + dy * 100;
 				} else if (me.mouseButton == 3) { // Translate
-					var scaleFactor = (me.rotationGroup.position.z - me.CAMERA_Z) * 0.85;
+					var scaleFactor = (me.rot.position.z - me.camera_z) * 0.85;
 					if (scaleFactor < 20) scaleFactor = 20;
-					me.modelGroup.position = me.cp.clone().add(new THREE.Vector3(-dx * scaleFactor, -dy * scaleFactor, 0).applyQuaternion(me.rotationGroup.quaternion.clone().inverse().normalize()));
+					me.mdl.position = me.cp.clone().add(new THREE.Vector3(-dx * scaleFactor, -dy * scaleFactor, 0).applyQuaternion(me.rot.quaternion.clone().inverse().normalize()));
 				} else if (me.mouseButton == 2) { // Zoom
-					var scaleFactor = (me.rotationGroup.position.z - me.CAMERA_Z) * 0.85;
+					var scaleFactor = (me.rot.position.z - me.camera_z) * 0.85;
 					if (scaleFactor < 80) scaleFactor = 80;
-					me.rotationGroup.position.z = me.cz - dy * scaleFactor;
+					me.rot.position.z = me.cz - dy * scaleFactor;
 				} else if (me.mouseButton == 1) { // Rotate
 					var r = Math.sqrt(dx * dx + dy * dy);
 					var rs = Math.sin(r * Math.PI) / r;
-					me.rotationGroup.quaternion = new THREE.Quaternion(1, 0, 0, 0).multiply(new THREE.Quaternion(Math.cos(r * Math.PI), 0, rs * dx, rs * dy)).multiply(me.cq);
+					me.rot.quaternion = new THREE.Quaternion(1, 0, 0, 0).multiply(new THREE.Quaternion(Math.cos(r * Math.PI), 0, rs * dx, rs * dy)).multiply(me.cq);
 				}
 			}
 			me.render();
@@ -658,7 +658,7 @@ var iview = (function () {
 		sphere.position.x = atom.x;
 		sphere.position.y = atom.y;
 		sphere.position.z = atom.z;
-		this.modelGroup.add(sphere);
+		this.mdl.add(sphere);
 	};
 
 	iview.prototype.drawAtomsAsSphere = function (atomlist, defaultRadius, forceDefault, scale) {
@@ -674,7 +674,7 @@ var iview = (function () {
 		cylinder.lookAt(p1);
 		cylinder.updateMatrix();
 		cylinder.matrix.multiply(new THREE.Matrix4().makeScale(radius, radius, p1.distanceTo(p2))).multiply(new THREE.Matrix4().makeRotationX(Math.PI * 0.5));
-		this.modelGroup.add(cylinder);
+		this.mdl.add(cylinder);
 	};
 
 	iview.prototype.drawBondAsStickSub = function (atom1, atom2, bondR) {
@@ -719,7 +719,7 @@ var iview = (function () {
 		geo.vertices.push(p2); geo.colors.push(c2); geo.vertices.push(mp); geo.colors.push(c2);
 	};
 
-	iview.prototype.drawBondsAsLine = function (atomlist, lineWidth) {
+	iview.prototype.drawBondsAsLine = function (atomlist, linewidth) {
 		var geo = new THREE.Geometry();
 		var nAtoms = atomlist.length;
 		for (var _i = 0; _i < nAtoms; _i++) {
@@ -739,7 +739,7 @@ var iview = (function () {
 				this.drawBondsAsLineSub(geo, atom1, atom2);
 			}
 		}
-		this.modelGroup.add(new THREE.Line(geo, new THREE.LineBasicMaterial({ linewidth: lineWidth, vertexColors: true }), THREE.LinePieces));
+		this.mdl.add(new THREE.Line(geo, new THREE.LineBasicMaterial({ linewidth: linewidth, vertexColors: true }), THREE.LinePieces));
 	};
 
 	iview.prototype.drawSmoothCurve = function (_points, width, colors, div) {
@@ -751,7 +751,7 @@ var iview = (function () {
 			geo.vertices.push(points[i]);
 			geo.colors.push(new THREE.Color(colors[(i == 0) ? 0 : Math.round((i - 1) / div)]));
 		}
-		this.modelGroup.add(new THREE.Line(geo, new THREE.LineBasicMaterial({ linewidth: width, vertexColors: true }), THREE.LineStrip));
+		this.mdl.add(new THREE.Line(geo, new THREE.LineBasicMaterial({ linewidth: width, vertexColors: true }), THREE.LineStrip));
 	};
 
 	iview.prototype.drawMainchainCurve = function (atomlist, curveWidth, atomName, div) {
@@ -825,7 +825,7 @@ var iview = (function () {
 		geo.computeVertexNormals(false);
 		var mesh = new THREE.Mesh(geo, new THREE.MeshLambertMaterial({ vertexColors: THREE.FaceColors }));
 		mesh.doubleSided = true;
-		this.modelGroup.add(mesh);
+		this.mdl.add(mesh);
 	};
 
 	iview.prototype.drawStrand = function (atomlist, num, div, fill, coilWidth, helixSheetWidth, doNotSmoothen, thickness) {
@@ -932,7 +932,7 @@ var iview = (function () {
 		geo.computeVertexNormals(false);
 		var mesh = new THREE.Mesh(geo, new THREE.MeshLambertMaterial({ vertexColors: THREE.FaceColors }));
 		mesh.doubleSided = true;
-		this.modelGroup.add(mesh);
+		this.mdl.add(mesh);
 	};
 
 	iview.prototype.drawMainchainTube = function (atomlist, atomName, radius) {
@@ -983,36 +983,31 @@ var iview = (function () {
 		geo.vertices.push(p1);
 		geo.vertices.push(p2);
 		geo.computeLineDistances();
-		this.modelGroup.add(new THREE.Line(geo, new THREE.LineDashedMaterial({ 'color': color, dashSize: 0.5, gapSize: 0.25 })));
+		this.mdl.add(new THREE.Line(geo, new THREE.LineDashedMaterial({ 'color': color, dashSize: 0.5, gapSize: 0.25 })));
 	};
 
 	iview.prototype.rebuildScene = function (options) {
 		this.scene = new THREE.Scene();
-
 		var directionalLight = new THREE.DirectionalLight(0xFFFFFF, 1.2);
 		directionalLight.position = new THREE.Vector3(0.2, 0.2, -1).normalize();
 		var ambientLight = new THREE.AmbientLight(0x202020);
 		this.scene.add(directionalLight);
 		this.scene.add(ambientLight);
-
-		var mp = this.modelGroup ? this.modelGroup.position : new THREE.Vector3();
-		var rz = this.rotationGroup ? this.rotationGroup.position.z : 0;
-		var rq = this.rotationGroup ? this.rotationGroup.quaternion : new THREE.Quaternion();
-		this.modelGroup = new THREE.Object3D();
-		this.modelGroup.position = mp;
-		this.rotationGroup = new THREE.Object3D();
-		this.rotationGroup.position.z = rz;
-		this.rotationGroup.quaternion = rq;
-		this.rotationGroup.add(this.modelGroup);
-		this.scene.add(this.rotationGroup);
-
+		var mp = this.mdl ? this.mdl.position : new THREE.Vector3();
+		var rz = this.rot ? this.rot.position.z : 0;
+		var rq = this.rot ? this.rot.quaternion : new THREE.Quaternion();
+		this.mdl = new THREE.Object3D();
+		this.mdl.position = mp;
+		this.rot = new THREE.Object3D();
+		this.rot.position.z = rz;
+		this.rot.quaternion = rq;
+		this.rot.add(this.mdl);
+		this.scene.add(this.rot);
 		$.extend(this.options, options);
 		this.camera = this.cameras[this.options.camera];
-
 		var background = this.backgroundColors[this.options.background];
 		this.renderer.setClearColor(background);
 		this.scene.fog = new THREE.Fog(background, 100, 200);
-
 		switch (this.options.colorBy) {
 			case 'spectrum':
 				var idx = 0;
@@ -1072,7 +1067,7 @@ var iview = (function () {
 
 		switch (this.options.primaryStructure) {
 			case 'lines':
-				this.drawBondsAsLine(this.peptides, this.lineWidth);
+				this.drawBondsAsLine(this.peptides, this.linewidth);
 				break;
 			case 'stick':
 				this.drawBondsAsStick(this.peptides, this.cylinderRadius, this.cylinderRadius);
@@ -1275,14 +1270,12 @@ var iview = (function () {
 				}
 			}
 		}
-//		this.all = [];
 		this.peptides = [];
 		this.ligands = [];
 		this.waters = [];
 		this.ions = [];
 		for (var i in this.atoms) {
 			var atom = this.atoms[i];
-//			this.all.push(atom.serial);
 			if (atom.serial < this.lastTER) {
 				this.peptides.push(atom.serial);
 			} else {
@@ -1308,7 +1301,7 @@ var iview = (function () {
 	};
 
 	iview.prototype.render = function () {
-		var center = this.rotationGroup.position.z - this.camera.position.z;
+		var center = this.rot.position.z - this.camera.position.z;
 		if (center < 1) center = 1;
 		this.camera.near = center + this.slabNear;
 		if (this.camera.near < 1) this.camera.near = 1;
@@ -1350,13 +1343,13 @@ var iview = (function () {
 			zmax = (zmax > atom.z) ? zmax : atom.z;
 			++cnt;
 		}
-		this.modelGroup.position = new THREE.Vector3(xsum / cnt, ysum / cnt, zsum / cnt).multiplyScalar(-1);
+		this.mdl.position = new THREE.Vector3(xsum / cnt, ysum / cnt, zsum / cnt).multiplyScalar(-1);
 		var maxD = new THREE.Vector3(xmax, ymax, zmax).distanceTo(new THREE.Vector3(xmin, ymin, zmin));
 		if (maxD < 25) maxD = 25;
-		this.slabNear = -maxD / 1.9;
-		this.slabFar = maxD / 3;
-		this.rotationGroup.position.z = maxD * 0.35 / Math.tan(Math.PI / 180.0 * this.camera.fov * 0.5) - 150;
-		this.rotationGroup.quaternion = new THREE.Quaternion(1, 0, 0, 0);
+		this.slabNear = -maxD / 2;
+		this.slabFar = maxD / 4;
+		this.rot.position.z = maxD * 0.35 / Math.tan(Math.PI / 180.0 * this.camera.fov * 0.5) - 150;
+		this.rot.quaternion = new THREE.Quaternion(1, 0, 0, 0);
 		this.render();
 	};
 
@@ -1387,7 +1380,7 @@ var iview = (function () {
 			transparent: true,
 		}));
 		mesh.doubleSided = true;
-		this.modelGroup.add(mesh);
+		this.mdl.add(mesh);
 	};
 
 	iview.prototype.removeSolvents = function (atomlist) {
