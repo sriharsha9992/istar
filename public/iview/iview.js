@@ -789,20 +789,20 @@ var iview = (function () {
 	};
 
 	iview.prototype.createSphere = function (atom, defaultRadius, forceDefault, scale) {
-		var sphere = new THREE.Mesh(this.sphereGeometry, new THREE.MeshLambertMaterial({ color: atom.color }));
-		sphere.scale.x = sphere.scale.y = sphere.scale.z = forceDefault ? defaultRadius : (this.vdwRadii[atom.elem] || defaultRadius) * (scale ? scale : 1);
-		sphere.position = atom.coord;
-		this.mdl.add(sphere);
+		var mesh = new THREE.Mesh(this.meshGeometry, new THREE.MeshLambertMaterial({ color: atom.color }));
+		mesh.scale.x = mesh.scale.y = mesh.scale.z = forceDefault ? defaultRadius : (this.vdwRadii[atom.elem] || defaultRadius) * (scale ? scale : 1);
+		mesh.position = atom.coord;
+		this.mdl.add(mesh);
 	};
 
 	iview.prototype.createCylinder = function (p1, p2, radius, color) {
-		var cylinder = new THREE.Mesh(this.cylinderGeometry, new THREE.MeshLambertMaterial({ color: color }));
-		cylinder.position = p1.clone().add(p2).multiplyScalar(0.5);
-		cylinder.matrixAutoUpdate = false;
-		cylinder.lookAt(p1);
-		cylinder.updateMatrix();
-		cylinder.matrix.multiply(new THREE.Matrix4().makeScale(radius, radius, p1.distanceTo(p2))).multiply(new THREE.Matrix4().makeRotationX(Math.PI * 0.5));
-		this.mdl.add(cylinder);
+		var mesh = new THREE.Mesh(this.meshGeometry, new THREE.MeshLambertMaterial({ color: color }));
+		mesh.position = p1.clone().add(p2).multiplyScalar(0.5);
+		mesh.matrixAutoUpdate = false;
+		mesh.lookAt(p1);
+		mesh.updateMatrix();
+		mesh.matrix.multiply(new THREE.Matrix4().makeScale(radius, radius, p1.distanceTo(p2))).multiply(new THREE.Matrix4().makeRotationX(Math.PI * 0.5));
+		this.mdl.add(mesh);
 	};
 
 	iview.prototype.createSphereRepresentation = function (atomlist, defaultRadius, forceDefault, scale) {
