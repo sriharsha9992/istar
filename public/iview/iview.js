@@ -1086,9 +1086,9 @@ var iview = (function () {
 			ps.marchingcube(type);
 			ps.laplaciansmooth(1);
 			ps.transformVertices();
-			this.surfaces[type] = ps.getModel(this.atoms, atomlist);
+			this.surfaces[type] = ps;
 		}
-		var mesh = new THREE.Mesh(this.surfaces[type], new THREE.MeshLambertMaterial({
+		var mesh = new THREE.Mesh(this.surfaces[type].getModel(this.atoms, atomlist), new THREE.MeshLambertMaterial({
 			vertexColors: THREE.VertexColors,
 			wireframe: wireframe,
 			opacity: opacity,
