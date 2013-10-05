@@ -681,7 +681,7 @@ var iview = (function () {
 		this.drawCylinder(atom2.coord, mp, bondR, atom2.color);
 	};
 
-	iview.prototype.drawBondsAsStick = function (atomlist, bondR, atomR, scale) {
+	iview.prototype.drawBondsAsStick = function (atomlist, atomR, bondR, scale) {
 		var nAtoms = atomlist.length;
 		for (var _i = 0; _i < nAtoms; _i++) {
 			var i = atomlist[_i];
@@ -1069,7 +1069,7 @@ var iview = (function () {
 				this.drawBondsAsStick(this.peptides, this.cylinderRadius, this.cylinderRadius);
 				break;
 			case 'ball & stick':
-				this.drawBondsAsStick(this.peptides, this.cylinderRadius * 0.5, this.cylinderRadius, 0.3);
+				this.drawBondsAsStick(this.peptides, this.cylinderRadius, this.cylinderRadius * 0.5, 0.3);
 				break;
 			case 'sphere':
 				this.drawAtomsAsSphere(this.peptides, this.sphereRadius);
@@ -1129,7 +1129,7 @@ var iview = (function () {
 				this.drawBondsAsStick(this.ligands, this.cylinderRadius, this.cylinderRadius);
 				break;
 			case 'ball & stick':
-				this.drawBondsAsStick(this.ligands, this.cylinderRadius * 0.5, this.cylinderRadius, 0.3);
+				this.drawBondsAsStick(this.ligands, this.cylinderRadius, this.cylinderRadius * 0.5, 0.3);
 				break;
 			case 'sphere':
 				this.drawAtomsAsSphere(this.ligands, this.sphereRadius);
