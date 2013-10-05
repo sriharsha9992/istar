@@ -1347,7 +1347,7 @@ var iview = (function () {
 		if (!this.surfaces[type]) {
 			var extent = this.getExtent(atomsToShow);
 			var ps = new ProteinSurface();
-			ps.initparm(extent, (type == 1) ? false : true);
+			ps.initparm(extent, type > 1);
 			ps.fillvoxels(this.atoms, atomsToShow);
 			ps.buildboundary();
 			if (type == 4 || type == 2) ps.fastdistancemap();
