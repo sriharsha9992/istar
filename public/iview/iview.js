@@ -626,7 +626,7 @@ var iview = (function () {
 		for (var i in lines) {
 			var line = lines[i];
 			var record = line.substr(0, 6);
-			if (record == 'HELIX ') {
+			if (record === 'HELIX ') {
 				helices.push({
 					chain: line.substr(19, 1),
 					initialResidue: parseInt(line.substr(21, 4)),
@@ -634,7 +634,7 @@ var iview = (function () {
 					terminalResidue: parseInt(line.substr(33, 4)),
 					terminalInscode: line.substr(37, 1),
 				});
-			} else if (record == 'SHEET ') {
+			} else if (record === 'SHEET ') {
 				sheets.push({
 					chain: line.substr(21, 1),
 					initialResidue: parseInt(line.substr(22, 4)),
@@ -642,11 +642,11 @@ var iview = (function () {
 					terminalResidue: parseInt(line.substr(33, 4)),
 					terminalInscode: line.substr(37, 1),
 				});
-			} else if (record == 'ATOM  ' || record == 'HETATM') {
-				if (!(line[16] == ' ' || line[16] == 'A')) continue;
+			} else if (record === 'ATOM  ' || record === 'HETATM') {
+				if (!(line[16] === ' ' || line[16] === 'A')) continue;
 				var serial = parseInt(line.substr(6, 5));
 				this.atoms[serial] = {
-					het: record[0] == 'H',
+					het: record[0] === 'H',
 					serial: serial,
 					name: line.substr(12, 4).replace(/ /g, ''),
 					resn: line.substr(17, 3),
@@ -659,9 +659,9 @@ var iview = (function () {
 					bonds: [],
 					ss: 'coil',
 				};
-			} else if (record == 'TER   ') {
+			} else if (record === 'TER   ') {
 				this.lastTER = parseInt(line.substr(6, 5));
-			} else if (record == 'CONECT') {
+			} else if (record === 'CONECT') {
 				var from = parseInt(line.substr(6, 5));
 				for (var j = 0; j < 4; ++j) {
 					var to = parseInt(line.substr([11, 16, 21, 26][j], 5));
@@ -703,7 +703,7 @@ var iview = (function () {
 							from.bonds.push(to.serial);
 						}
 					}
-					if (from.name == 'C' && atom.name == 'N' && this.hasCovalentBond(from, atom)) {
+					if (from.name === 'C' && atom.name === 'N' && this.hasCovalentBond(from, atom)) {
 						from.bonds.push(atom.serial);
 						atom.bonds.push(from.serial);
 					}
@@ -737,7 +737,7 @@ var iview = (function () {
 				if (atom.bonds.length) {
 					this.ligands.push(atom.serial);
 				} else {
-					if (atom.resn == 'HOH') {
+					if (atom.resn === 'HOH') {
 						this.waters.push(atom.serial);
 					} else {
 						this.ions.push(atom.serial);
@@ -972,8 +972,8 @@ var iview = (function () {
 		var prevCO = null, ss = null, ssborder = false;
 		for (var i in atomlist) {
 			var atom = this.atoms[atomlist[i]];
-			if ((atom.name == 'O' || atom.name == 'CA') && !atom.het) {
-				if (atom.name == 'CA') {
+			if ((atom.name === 'O' || atom.name === 'CA') && !atom.het) {
+				if (atom.name === 'CA') {
 					if (currentChain != atom.chain || currentResi + 1 != atom.resi) {
 						for (var j = 0; !thickness && j < num; ++j)
 							this.createCurveSub(points[j], 1, colors, div);
@@ -991,13 +991,13 @@ var iview = (function () {
 					var O = atom.coord.clone();
 					O.sub(currentCA);
 					O.normalize(); // can be omitted for performance
-					O.multiplyScalar(ss == 'coil' ? coilWidth : helixSheetWidth);
+					O.multiplyScalar(ss === 'coil' ? coilWidth : helixSheetWidth);
 					if (prevCO != undefined && O.dot(prevCO) < 0) O.negate();
 					prevCO = O;
 					for (var j = 0; j < num; j++) {
 						var delta = -1 + 2 / (num - 1) * j;
 						var v = new THREE.Vector3(currentCA.x + prevCO.x * delta, currentCA.y + prevCO.y * delta, currentCA.z + prevCO.z * delta);
-						if (!doNotSmoothen && ss == 'sheet') v.smoothen = true;
+						if (!doNotSmoothen && ss === 'sheet') v.smoothen = true;
 						points[j].push(v);
 					}
 				}
@@ -1095,15 +1095,15 @@ var iview = (function () {
 			var atom = this.atoms[atomlist[i]];
 			if (atom.het) continue;
 			if ((atom.ss != 'helix' && atom.ss != 'sheet') || atom.ssend || atom.ssbegin) others.push(atom.serial);
-			if (atom.ss == 'sheet') beta.push(atom.serial);
+			if (atom.ss === 'sheet') beta.push(atom.serial);
 			if (atom.name != 'CA') continue;
-			if (atom.ss == 'helix' && atom.ssend) {
+			if (atom.ss === 'helix' && atom.ssend) {
 				if (start != null) this.createCylinder(start.coord, atom.coord, radius, atom.color, true);
 				start = null;
 			}
 			currentChain = atom.chain;
 			currentResi = atom.resi;
-			if (start == null && atom.ss == 'helix' && atom.ssbegin) start = atom;
+			if (start == null && atom.ss === 'helix' && atom.ssbegin) start = atom;
 		}
 		if (start != null) this.createCylinder(start.coord, atom.coord, radius, atom.color);
 		this.createTube(others, 'CA', 0.3);
