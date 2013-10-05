@@ -910,6 +910,9 @@ $(function () {
 	};
 
 	var path = '/idock/jobs/' + location.search.substr(1) + '/';
+	$('#phase1_csv_gz').attr('href', path + 'phase1.csv.gz');
+	$('#phase2_csv_gz').attr('href', path + 'phase2.csv.gz');
+	$('#hits_pdbqt_gz').attr('href', path + 'hits.pdbqt.gz');
 	$.get(path + 'box.conf', function (box) {
 		parseBox(box);
 		mdl.position = ct.clone().multiplyScalar(-1);
