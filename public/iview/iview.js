@@ -841,34 +841,25 @@ var iview = (function () {
 		}
 	};
 
-	iview.prototype.createLineRepresentationSub = function (geo, atom0, atom1) {
-		var p1 = atom0.coord;
-		var p2 = atom1.coord;
-		var mp = p1.clone().add(p2).multiplyScalar(0.5);
-		var c1 = atom0.color;
-		var c2 = atom1.color;
-		geo.vertices.push(p1); geo.colors.push(c1); geo.vertices.push(mp); geo.colors.push(c1);
-		geo.vertices.push(p2); geo.colors.push(c2); geo.vertices.push(mp); geo.colors.push(c2);
-	};
-
 	iview.prototype.createLineRepresentation = function (atomlist, linewidth) {
 		var geo = new THREE.Geometry();
 		var nAtoms = atomlist.length;
 		for (var _i = 0; _i < nAtoms; ++_i) {
 			var i = atomlist[_i];
 			var atom0 = this.atoms[i];
-			for (var _j = _i + 1; _j < _i + 30 && _j < nAtoms; ++_j) {
-				var j = atomlist[_j];
-				var atom1 = this.atoms[j];
-				if (atom0.bonds.indexOf(atom1.serial) == -1) continue;
-				this.createLineRepresentationSub(geo, atom0, atom1);
-			}
 			for (var _j = 0; _j < atom0.bonds.length; ++_j) {
 				var j = atom0.bonds[_j];
-				if (j < i + 30) continue; // be conservative!
-				if (atomlist.indexOf(j) == -1) continue;
 				var atom1 = this.atoms[j];
-				this.createLineRepresentationSub(geo, atom0, atom1);
+				if (atom1.serial < atom0.serial) continue;
+				var mp = atom0.coord.clone().add(atom1.coord).multiplyScalar(0.5);
+				geo.vertices.push(atom0.coord);
+				geo.vertices.push(mp);
+				geo.vertices.push(atom1.coord);
+				geo.vertices.push(mp);
+				geo.colors.push(atom0.color);
+				geo.colors.push(atom0.color);
+				geo.colors.push(atom1.color);
+				geo.colors.push(atom1.color);
 			}
 		}
 		this.mdl.add(new THREE.Line(geo, new THREE.LineBasicMaterial({ linewidth: linewidth, vertexColors: true }), THREE.LinePieces));
