@@ -823,9 +823,9 @@ var iview = (function () {
 		}
 		points.push(_points[_points.length - 1]);
 		for (var i = -1, size = points.length; i <= size - 3; ++i) {
-			var p0 = points[(i == -1) ? 0 : i];
+			var p0 = points[i == -1 ? 0 : i];
 			var p1 = points[i + 1], p2 = points[i + 2];
-			var p3 = points[(i == size - 3) ? size - 1 : i + 3];
+			var p3 = points[i == size - 3 ? size - 1 : i + 3];
 			var v0 = p2.clone().sub(p0).multiplyScalar(0.5);
 			var v1 = p3.clone().sub(p1).multiplyScalar(0.5);
 			for (var j = 0; j < DIV; ++j) {
@@ -853,7 +853,7 @@ var iview = (function () {
 		var geo = new THREE.Geometry();
 		for (var i = 0; i < points.length; ++i) {
 			geo.vertices.push(points[i]);
-			geo.colors.push(new THREE.Color(colors[(i == 0) ? 0 : Math.round((i - 1) / div)]));
+			geo.colors.push(new THREE.Color(colors[i == 0 ? 0 : Math.round((i - 1) / div)]));
 		}
 		this.mdl.add(new THREE.Line(geo, new THREE.LineBasicMaterial({ linewidth: width, vertexColors: true }), THREE.LineStrip));
 	};
@@ -1012,11 +1012,7 @@ var iview = (function () {
 			}
 			for (var j = 0; j < circleDiv; ++j) {
 				var angle = 2 * Math.PI / circleDiv * j; //* dir  + offset;
-				var c = Math.cos(angle), s = Math.sin(angle);
-				geo.vertices.push(new THREE.Vector3(
-				points[i].x + c * axis1.x + s * axis2.x,
-				points[i].y + c * axis1.y + s * axis2.y,
-				points[i].z + c * axis1.z + s * axis2.z));
+				geo.vertices.push(points[i].clone().add(axis1.clone().multiplyScalar(Math.cos(angle))).add(axis2.clone().multiplyScalar(Math.sin(angle))));
 			}
 		}
 		var offset = 0;
@@ -1083,6 +1079,7 @@ var iview = (function () {
 	};
 
 	iview.prototype.rebuildScene = function (options) {
+		$.extend(this.options, options);
 		this.scene = new THREE.Scene();
 		var directionalLight = new THREE.DirectionalLight(0xFFFFFF, 1.2);
 		directionalLight.position = new THREE.Vector3(0.2, 0.2, -1).normalize();
@@ -1099,7 +1096,6 @@ var iview = (function () {
 		this.rot.quaternion = rq;
 		this.rot.add(this.mdl);
 		this.scene.add(this.rot);
-		$.extend(this.options, options);
 		this.camera = this.cameras[this.options.camera];
 		var background = this.backgroundColors[this.options.background];
 		this.renderer.setClearColor(background);
