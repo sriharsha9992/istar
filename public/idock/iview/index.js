@@ -717,7 +717,7 @@ $(function () {
 		}
 		var hits = $('#hits');
 		hits.html(ids.map(function(id) {
-			return '<label class="btn btn-primary"><input type="radio">ZINC' + id + '</label>';
+			return '<label class="btn btn-primary"><input type="radio">' + id + '</label>';
 		}).join(''));
 		$(':first', hits).addClass('active');
 		$('> .btn', hits).click(function(e) {
