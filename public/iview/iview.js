@@ -1365,5 +1365,59 @@ var iview = (function () {
 		window.open(this.renderer.domElement.toDataURL('image/png'));
 	};
 
+	iview.prototype.drawSurface = function (atomlist, type, wireframe, opacity) {
+		var atomsToShow = this.removeSolvents(atomlist);
+		if (!this.surfaces[type]) {
+			var extent = this.getExtent(atomsToShow);
+			var ps = new ProteinSurface();
+			ps.initparm(extent, (type == 1) ? false : true);
+			ps.fillvoxels(this.atoms, atomsToShow);
+			ps.buildboundary();
+			if (type == 4 || type == 2) ps.fastdistancemap();
+			if (type == 2) { ps.boundingatom(false); ps.fillvoxelswaals(this.atoms, atomsToShow); }
+			ps.marchingcube(type);
+			ps.laplaciansmooth(1);
+			ps.transformVertices();
+			this.surfaces[type] = ps;
+		}
+		var mesh = new THREE.Mesh(this.surfaces[type].getModel(this.atoms, atomsToShow), new THREE.MeshLambertMaterial({
+			vertexColors: THREE.VertexColors,
+			wireframe: wireframe,
+			opacity: opacity,
+			transparent: true,
+		}));
+		mesh.doubleSided = true;
+		this.modelGroup.add(mesh);
+	};
+
+	iview.prototype.removeSolvents = function (atomlist) {
+		var ret = [];
+		for (var i in atomlist) {
+			var atom = this.atoms[atomlist[i]];
+			if (atom.resn != 'HOH') ret.push(atom.serial);
+		}
+		return ret;
+	};
+
+	iview.prototype.getExtent = function (atomlist) {
+		var xmin = ymin = zmin = 9999;
+		var xmax = ymax = zmax = -9999;
+		var xsum = ysum = zsum = cnt = 0;
+		for (var i in atomlist) {
+			var atom = this.atoms[atomlist[i]];
+			cnt++;
+			xsum += atom.x;
+			ysum += atom.y;
+			zsum += atom.z;
+			xmin = (xmin < atom.x) ? xmin : atom.x;
+			ymin = (ymin < atom.y) ? ymin : atom.y;
+			zmin = (zmin < atom.z) ? zmin : atom.z;
+			xmax = (xmax > atom.x) ? xmax : atom.x;
+			ymax = (ymax > atom.y) ? ymax : atom.y;
+			zmax = (zmax > atom.z) ? zmax : atom.z;
+		}
+		return [[xmin, ymin, zmin], [xmax, ymax, zmax], [xsum / cnt, ysum / cnt, zsum / cnt]];
+	};
+
 	return iview;
 }());
