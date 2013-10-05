@@ -621,7 +621,7 @@ var iview = (function () {
 
 	iview.prototype.loadPDB = function (src) {
 		var helices = [], sheets = [];
-		this.atoms = [];
+		this.atoms = {};
 		var lines = src.split('\n');
 		for (var i in lines) {
 			var line = lines[i];
@@ -966,7 +966,7 @@ var iview = (function () {
 		coilWidth = coilWidth || this.coilWidth;
 		doNotSmoothen = doNotSmoothen || false;
 		helixSheetWidth = helixSheetWidth || this.helixSheetWidth;
-		var points = []; for (var k = 0; k < num; k++) points[k] = [];
+		var points = {}; for (var k = 0; k < num; k++) points[k] = [];
 		var colors = [];
 		var currentChain, currentResi, currentCA;
 		var prevCO = null, ss = null, ssborder = false;
@@ -978,7 +978,7 @@ var iview = (function () {
 						for (var j = 0; !thickness && j < num; ++j)
 							this.createCurveSub(points[j], 1, colors, div);
 						if (fill) this.createStrip(points[0], points[num - 1], colors, div, thickness);
-						var points = []; for (var k = 0; k < num; k++) points[k] = [];
+						var points = {}; for (var k = 0; k < num; k++) points[k] = [];
 						colors = [];
 						prevCO = null; ss = null; ssborder = false;
 					}
