@@ -59,7 +59,7 @@ var ProteinSurface = (function () {
 			var f = this.faces[i];
 			var a = vertices[f.a].atomid, b = vertices[f.b].atomid, c = vertices[f.c].atomid;
 			if (!atomsToShow[a] && !atomsToShow[b] && !atomsToShow[c]) continue;
-			f.vertexColors = [atoms[a].color, atoms[b].color, atoms[c].color];
+			f.vertexColors = [new THREE.Color(atoms[a].color), new THREE.Color(atoms[b].color), new THREE.Color(atoms[c].color)];
 			faces.push(f);
 		}
 		geo.computeFaceNormals();
@@ -317,9 +317,9 @@ var ProteinSurface = (function () {
 
 	this.fillAtom = function (atom, atoms) {
 		var cx, cy, cz, ox, oy, oz;
-		cx = Math.floor(0.5 + scaleFactor * (atom.x + ptranx));
-		cy = Math.floor(0.5 + scaleFactor * (atom.y + ptrany));
-		cz = Math.floor(0.5 + scaleFactor * (atom.z + ptranz));
+		cx = Math.floor(0.5 + scaleFactor * (atom.coord.x + ptranx));
+		cy = Math.floor(0.5 + scaleFactor * (atom.coord.y + ptrany));
+		cz = Math.floor(0.5 + scaleFactor * (atom.coord.z + ptranz));
 
 		var at = this.getAtomType(atom);
 		var nind = 0;
@@ -349,9 +349,9 @@ var ProteinSurface = (function () {
 												vpSISJSK.atomid = atom.serial;
 											} else if (vpSISJSK.inout) {
 												var atom2 = atoms[vpSISJSK.atomid];
-												ox = Math.floor(0.5 + scaleFactor * (atom2.x + ptranx));
-												oy = Math.floor(0.5 + scaleFactor * (atom2.y + ptrany));
-												oz = Math.floor(0.5 + scaleFactor * (atom2.z + ptranz));
+												ox = Math.floor(0.5 + scaleFactor * (atom2.coord.x + ptranx));
+												oy = Math.floor(0.5 + scaleFactor * (atom2.coord.y + ptrany));
+												oz = Math.floor(0.5 + scaleFactor * (atom2.coord.z + ptranz));
 												if (mi * mi + mj * mj + mk * mk < ox * ox + oy * oy + oz * oz)
 													vpSISJSK.atomid = atom.serial;
 											}
@@ -379,9 +379,9 @@ var ProteinSurface = (function () {
 
 	this.fillAtomWaals = function (atom, atoms) {
 		var cx, cy, cz, ox, oy, oz, nind = 0;
-		cx = Math.floor(0.5 + scaleFactor * (atom.x + ptranx));
-		cy = Math.floor(0.5 + scaleFactor * (atom.y + ptrany));
-		cz = Math.floor(0.5 + scaleFactor * (atom.z + ptranz));
+		cx = Math.floor(0.5 + scaleFactor * (atom.coord.x + ptranx));
+		cy = Math.floor(0.5 + scaleFactor * (atom.coord.y + ptrany));
+		cz = Math.floor(0.5 + scaleFactor * (atom.coord.z + ptranz));
 
 		var at = this.getAtomType(atom);
 
@@ -411,9 +411,9 @@ var ProteinSurface = (function () {
 											}
 											else if (vpSISJSK.isdone) {
 												var atom2 = atoms[vpSISJSK.atomid];
-												ox = Math.floor(0.5 + scaleFactor * (atom2.x + ptranx));
-												oy = Math.floor(0.5 + scaleFactor * (atom2.y + ptrany));
-												oz = Math.floor(0.5 + scaleFactor * (atom2.z + ptranz));
+												ox = Math.floor(0.5 + scaleFactor * (atom2.coord.x + ptranx));
+												oy = Math.floor(0.5 + scaleFactor * (atom2.coord.y + ptrany));
+												oz = Math.floor(0.5 + scaleFactor * (atom2.coord.z + ptranz));
 												if (mi * mi + mj * mj + mk * mk < ox * ox + oy * oy + oz * oz)
 													vpSISJSK.atomid = atom.serial;
 											}
