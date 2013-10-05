@@ -1078,6 +1078,29 @@ var iview = (function () {
 		this.createStrand(beta, undefined, undefined, true, 0, this.helixSheetWidth, false, this.thickness * 2);
 	};
 
+	iview.prototype.createSurfaceRepresentation = function (atomlist, type, wireframe, opacity) {
+		if (!this.surfaces[type]) {
+			var ps = new ProteinSurface();
+			ps.initparm(this.extent, type > 1);
+			ps.fillvoxels(this.atoms, atomlist);
+			ps.buildboundary();
+			if (type == 4 || type == 2) ps.fastdistancemap();
+			if (type == 2) { ps.boundingatom(false); ps.fillvoxelswaals(this.atoms, atomlist); }
+			ps.marchingcube(type);
+			ps.laplaciansmooth(1);
+			ps.transformVertices();
+			this.surfaces[type] = ps.getModel(this.atoms, atomlist);
+		}
+		var mesh = new THREE.Mesh(this.surfaces[type], new THREE.MeshLambertMaterial({
+			vertexColors: THREE.VertexColors,
+			wireframe: wireframe,
+			opacity: opacity,
+			transparent: true,
+		}));
+		mesh.doubleSided = true;
+		this.mdl.add(mesh);
+	};
+
 	iview.prototype.rebuildScene = function (options) {
 		$.extend(this.options, options);
 		this.scene = new THREE.Scene();
@@ -1312,29 +1335,6 @@ var iview = (function () {
 	iview.prototype.exportView = function () {
 		this.render();
 		window.open(this.renderer.domElement.toDataURL('image/png'));
-	};
-
-	iview.prototype.createSurfaceRepresentation = function (atomlist, type, wireframe, opacity) {
-		if (!this.surfaces[type]) {
-			var ps = new ProteinSurface();
-			ps.initparm(this.extent, type > 1);
-			ps.fillvoxels(this.atoms, atomlist);
-			ps.buildboundary();
-			if (type == 4 || type == 2) ps.fastdistancemap();
-			if (type == 2) { ps.boundingatom(false); ps.fillvoxelswaals(this.atoms, atomlist); }
-			ps.marchingcube(type);
-			ps.laplaciansmooth(1);
-			ps.transformVertices();
-			this.surfaces[type] = ps.getModel(this.atoms, atomlist);
-		}
-		var mesh = new THREE.Mesh(this.surfaces[type], new THREE.MeshLambertMaterial({
-			vertexColors: THREE.VertexColors,
-			wireframe: wireframe,
-			opacity: opacity,
-			transparent: true,
-		}));
-		mesh.doubleSided = true;
-		this.mdl.add(mesh);
 	};
 
 	return iview;
