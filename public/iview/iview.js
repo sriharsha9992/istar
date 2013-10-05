@@ -556,7 +556,7 @@ var iview = (function () {
 				x = ev.originalEvent.targetTouches[0].pageX;
 				y = ev.originalEvent.targetTouches[0].pageY;
 			}
-			if (x == undefined) return;
+			if (x === undefined) return;
 			me.isDragging = true;
 			me.mouseButton = ev.which;
 			me.mouseStartX = x;
@@ -587,7 +587,7 @@ var iview = (function () {
 				x = ev.originalEvent.targetTouches[0].pageX;
 				y = ev.originalEvent.targetTouches[0].pageY;
 			}
-			if (x == undefined) return;
+			if (x === undefined) return;
 			var dx = (x - me.mouseStartX) / me.container.width();
 			var dy = (y - me.mouseStartY) / me.container.height();
 			if (!dx && !dy) return;
@@ -1311,7 +1311,7 @@ var iview = (function () {
 	};
 
 	iview.prototype.resetView = function () {
-		var xmin = ymin = zmin = 9999;
+		var xmin = ymin = zmin =  9999;
 		var xmax = ymax = zmax = -9999;
 		var xsum = ysum = zsum = cnt = 0;
 		for (var i in this.atoms) {
@@ -1327,12 +1327,12 @@ var iview = (function () {
 			zmax = (zmax > atom.coord.z) ? zmax : atom.coord.z;
 			++cnt;
 		}
-		this.mdl.position = new THREE.Vector3(xsum / cnt, ysum / cnt, zsum / cnt).multiplyScalar(-1);
+		this.mdl.position = new THREE.Vector3(xsum, ysum, zsum).multiplyScalar(-1 / cnt);
 		var maxD = new THREE.Vector3(xmax, ymax, zmax).distanceTo(new THREE.Vector3(xmin, ymin, zmin));
 		if (maxD < 25) maxD = 25;
 		this.slabNear = -maxD / 2;
 		this.slabFar = maxD / 4;
-		this.rot.position.z = maxD * 0.35 / Math.tan(Math.PI / 180.0 * this.camera.fov * 0.5) - 150;
+		this.rot.position.z = maxD * 0.35 / Math.tan(Math.PI / 180.0 * 10) - 150;
 		this.rot.quaternion = new THREE.Quaternion(1, 0, 0, 0);
 		this.render();
 	};
