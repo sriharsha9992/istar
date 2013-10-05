@@ -791,8 +791,8 @@ $(function () {
 
 	var createLineRepresentation = function (atoms) {
 		var obj = new THREE.Object3D();
-		obj.add(new THREE.Line(new THREE.Geometry(), new THREE.LineBasicMaterial({ linewidth: 2, vertexColors: true }), THREE.LinePieces));
-		var geo = obj.children[0].geometry;
+		var geo = new THREE.Geometry();
+		obj.add(new THREE.Line(geo, new THREE.LineBasicMaterial({ linewidth: 2, vertexColors: true }), THREE.LinePieces));
 		for (var i in atoms) {
 			var atom0 = atoms[i];
 			for (var j in atom0.bonds) {
