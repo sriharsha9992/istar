@@ -789,14 +789,14 @@ var iview = (function () {
 	};
 
 	iview.prototype.createSphere = function (atom, defaultRadius, forceDefault, scale) {
-		var mesh = new THREE.Mesh(this.meshGeometry, new THREE.MeshLambertMaterial({ color: atom.color }));
+		var mesh = new THREE.Mesh(this.sphereGeometry, new THREE.MeshLambertMaterial({ color: atom.color }));
 		mesh.scale.x = mesh.scale.y = mesh.scale.z = forceDefault ? defaultRadius : (this.vdwRadii[atom.elem] || defaultRadius) * (scale ? scale : 1);
 		mesh.position = atom.coord;
 		this.mdl.add(mesh);
 	};
 
 	iview.prototype.createCylinder = function (p1, p2, radius, color) {
-		var mesh = new THREE.Mesh(this.meshGeometry, new THREE.MeshLambertMaterial({ color: color }));
+		var mesh = new THREE.Mesh(this.cylinderGeometry, new THREE.MeshLambertMaterial({ color: color }));
 		mesh.position = p1.clone().add(p2).multiplyScalar(0.5);
 		mesh.matrixAutoUpdate = false;
 		mesh.lookAt(p1);
