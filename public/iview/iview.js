@@ -879,38 +879,38 @@ var iview = (function () {
 		this.createCurveSub(points, curveWidth, colors, div);
 	};
 
-	iview.prototype.createStrip = function (p1, p2, colors, div, thickness) {
-		if (p1.length < 2) return;
+	iview.prototype.createStrip = function (p0, p1, colors, div, thickness) {
+		if (p0.length < 2) return;
 		div = div || this.axisDIV;
+		p0 = this.subdivide(p0, div);
 		p1 = this.subdivide(p1, div);
-		p2 = this.subdivide(p2, div);
 		var geo = new THREE.Geometry();
 		if (!thickness) {
-			for (var i = 0, lim = p1.length; i < lim; ++i) {
-				geo.vertices.push(p1[i]); // 2i
-				geo.vertices.push(p2[i]); // 2i + 1
+			for (var i = 0, lim = p0.length; i < lim; ++i) {
+				geo.vertices.push(p0[i]); // 2i
+				geo.vertices.push(p1[i]); // 2i + 1
 			}
-			for (var i = 1, lim = p1.length; i < lim; ++i) {
+			for (var i = 1, lim = p0.length; i < lim; ++i) {
 				geo.faces.push(new THREE.Face4(2 * i, 2 * i + 1, 2 * i - 1, 2 * i - 2, undefined, new THREE.Color(colors[Math.round((i - 1) / div)])));
 			}
 		} else {
 			var vs = geo.vertices, fs = geo.faces;
-			var axis, p1v, p2v, a1v, a2v;
-			for (var i = 0, lim = p1.length; i < lim; ++i) {
-				vs.push(p1v = p1[i]); // 0
-				vs.push(p1v); // 1
-				vs.push(p2v = p2[i]); // 2
-				vs.push(p2v); // 3
+			var axis, p0v, p1v, a0v, a1v;
+			for (var i = 0, lim = p0.length; i < lim; ++i) {
+				vs.push(p0v = p0[i]); // 0
+				vs.push(p0v); // 1
+				vs.push(p1v = p1[i]); // 2
+				vs.push(p1v); // 3
 				if (i < lim - 1) {
-					axis = p2[i].clone().sub(p1[i]).cross(p1[i + 1].clone().sub(p1[i])).normalize().multiplyScalar(thickness);
+					axis = p1[i].clone().sub(p0[i]).cross(p0[i + 1].clone().sub(p0[i])).normalize().multiplyScalar(thickness);
 				}
-				vs.push(a1v = p1[i].clone().add(axis)); // 4
-				vs.push(a1v); // 5
-				vs.push(a2v = p2[i].clone().add(axis)); // 6
-				vs.push(a2v); // 7
+				vs.push(a0v = p0[i].clone().add(axis)); // 4
+				vs.push(a0v); // 5
+				vs.push(a1v = p1[i].clone().add(axis)); // 6
+				vs.push(a1v); // 7
 			}
 			var faces = [[0, 2, -6, -8], [-4, -2, 6, 4], [7, 3, -5, -1], [-3, -7, 1, 5]];
-			for (var i = 1, lim = p1.length; i < lim; ++i) {
+			for (var i = 1, lim = p0.length; i < lim; ++i) {
 				var offset = 8 * i, color = new THREE.Color(colors[Math.round((i - 1) / div)]);
 				for (var j = 0; j < 4; ++j) {
 					fs.push(new THREE.Face4(offset + faces[j][0], offset + faces[j][1], offset + faces[j][2], offset + faces[j][3], undefined, color));
