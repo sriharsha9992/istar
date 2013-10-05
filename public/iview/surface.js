@@ -45,8 +45,6 @@ var ProteinSurface = (function () {
 	};
 
 	this.getModel = function (atoms, atomlist) {
-		var atomsToShow = new Object();
-		for (var i = 0, lim = atomlist.length; i < lim; ++i) atomsToShow[atomlist[i]] = true;
 		var v = [], vertices = this.verts;
 		for (i = 0; i < vertnumber; ++i) {
 			v.push(new THREE.Vector3(vertices[i].x, vertices[i].y, vertices[i].z));
@@ -58,7 +56,7 @@ var ProteinSurface = (function () {
 		for (var i = 0; i < facenumber; ++i) {
 			var f = this.faces[i];
 			var a = vertices[f.a].atomid, b = vertices[f.b].atomid, c = vertices[f.c].atomid;
-			if (!atomsToShow[a] && !atomsToShow[b] && !atomsToShow[c]) continue;
+			if (!atomlist[a] && !atomlist[b] && !atomlist[c]) continue;
 			f.vertexColors = [atoms[a].color, atoms[b].color, atoms[c].color];
 			faces.push(f);
 		}
@@ -285,8 +283,7 @@ var ProteinSurface = (function () {
 		}
 
 		for (i in atomlist) {
-			atom = atoms[atomlist[i]]; if (atom.het) continue;
-			this.fillAtom(atom, atoms);
+			this.fillAtom(atoms[atomlist[i]], atoms);
 		}
 
 		for (i = 0, lim = vp.length; i < lim; ++i)
@@ -371,9 +368,7 @@ var ProteinSurface = (function () {
 		for (var i = 0, lim = vp.length; i < lim; ++i) vp[i].isdone = false;
 
 		for (i in atomlist) {
-			atom = atoms[atomlist[i]]; if (atom.het) continue;
-
-			this.fillAtomWaals(atom, atoms);
+			this.fillAtomWaals(atoms[atomlist[i]], atoms);
 		}
 	};
 
