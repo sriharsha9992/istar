@@ -788,20 +788,14 @@ var iview = (function () {
 		return ret;
 	};
 
-	iview.prototype.drawSphere = function (atom, defaultRadius, forceDefault, scale) {
+	iview.prototype.createSphere = function (atom, defaultRadius, forceDefault, scale) {
 		var sphere = new THREE.Mesh(this.sphereGeometry, new THREE.MeshLambertMaterial({ color: atom.color }));
 		sphere.scale.x = sphere.scale.y = sphere.scale.z = forceDefault ? defaultRadius : (this.vdwRadii[atom.elem] || defaultRadius) * (scale ? scale : 1);
 		sphere.position = atom.coord;
 		this.mdl.add(sphere);
 	};
 
-	iview.prototype.drawAtomsAsSphere = function (atomlist, defaultRadius, forceDefault, scale) {
-		for (var i in atomlist) {
-			this.drawSphere(this.atoms[atomlist[i]], defaultRadius, forceDefault, scale);
-		}
-	};
-
-	iview.prototype.drawCylinder = function (p1, p2, radius, color) {
+	iview.prototype.createCylinder = function (p1, p2, radius, color) {
 		var cylinder = new THREE.Mesh(this.cylinderGeometry, new THREE.MeshLambertMaterial({ color: color }));
 		cylinder.position = p1.clone().add(p2).multiplyScalar(0.5);
 		cylinder.matrixAutoUpdate = false;
@@ -811,13 +805,19 @@ var iview = (function () {
 		this.mdl.add(cylinder);
 	};
 
-	iview.prototype.drawBondAsStickSub = function (atom1, atom2, bondR) {
-		var mp = atom1.coord.clone().add(atom2.coord).multiplyScalar(0.5);
-		this.drawCylinder(atom1.coord, mp, bondR, atom1.color);
-		this.drawCylinder(atom2.coord, mp, bondR, atom2.color);
+	iview.prototype.createSphereRepresentation = function (atomlist, defaultRadius, forceDefault, scale) {
+		for (var i in atomlist) {
+			this.createSphere(this.atoms[atomlist[i]], defaultRadius, forceDefault, scale);
+		}
 	};
 
-	iview.prototype.drawBondsAsStick = function (atomlist, atomR, bondR, scale) {
+	iview.prototype.createStickRepresentationSub = function (atom1, atom2, bondR) {
+		var mp = atom1.coord.clone().add(atom2.coord).multiplyScalar(0.5);
+		this.createCylinder(atom1.coord, mp, bondR, atom1.color);
+		this.createCylinder(atom2.coord, mp, bondR, atom2.color);
+	};
+
+	iview.prototype.createStickRepresentation = function (atomlist, atomR, bondR, scale) {
 		var nAtoms = atomlist.length;
 		for (var _i = 0; _i < nAtoms; _i++) {
 			var i = atomlist[_i];
@@ -827,7 +827,7 @@ var iview = (function () {
 				var atom2 = this.atoms[j];
 				if (atom1.bonds.indexOf(atom2.serial) == -1) continue;
 				atom1.connected = atom2.connected = true;
-				this.drawBondAsStickSub(atom1, atom2, bondR);
+				this.createStickRepresentationSub(atom1, atom2, bondR);
 			}
 			for (var _j = 0; _j < atom1.bonds.length; _j++) {
 				var j = atom1.bonds[_j];
@@ -835,13 +835,13 @@ var iview = (function () {
 				if (atomlist.indexOf(j) == -1) continue;
 				var atom2 = this.atoms[j];
 				atom1.connected = atom2.connected = true;
-				this.drawBondAsStickSub(atom1, atom2, bondR);
+				this.createStickRepresentationSub(atom1, atom2, bondR);
 			}
-			this.drawSphere(atom1, atomR, !scale, scale);
+			this.createSphere(atom1, atomR, !scale, scale);
 		}
 	};
 
-	iview.prototype.drawBondsAsLineSub = function (geo, atom1, atom2) {
+	iview.prototype.createLineRepresentationSub = function (geo, atom1, atom2) {
 		var p1 = atom1.coord;
 		var p2 = atom2.coord;
 		var mp = p1.clone().add(p2).multiplyScalar(0.5);
@@ -851,7 +851,7 @@ var iview = (function () {
 		geo.vertices.push(p2); geo.colors.push(c2); geo.vertices.push(mp); geo.colors.push(c2);
 	};
 
-	iview.prototype.drawBondsAsLine = function (atomlist, linewidth) {
+	iview.prototype.createLineRepresentation = function (atomlist, linewidth) {
 		var geo = new THREE.Geometry();
 		var nAtoms = atomlist.length;
 		for (var _i = 0; _i < nAtoms; _i++) {
@@ -861,20 +861,20 @@ var iview = (function () {
 				var j = atomlist[_j];
 				var atom2 = this.atoms[j];
 				if (atom1.bonds.indexOf(atom2.serial) == -1) continue;
-				this.drawBondsAsLineSub(geo, atom1, atom2);
+				this.createLineRepresentationSub(geo, atom1, atom2);
 			}
 			for (var _j = 0; _j < atom1.bonds.length; _j++) {
 				var j = atom1.bonds[_j];
 				if (j < i + 30) continue; // be conservative!
 				if (atomlist.indexOf(j) == -1) continue;
 				var atom2 = this.atoms[j];
-				this.drawBondsAsLineSub(geo, atom1, atom2);
+				this.createLineRepresentationSub(geo, atom1, atom2);
 			}
 		}
 		this.mdl.add(new THREE.Line(geo, new THREE.LineBasicMaterial({ linewidth: linewidth, vertexColors: true }), THREE.LinePieces));
 	};
 
-	iview.prototype.drawSmoothCurve = function (_points, width, colors, div) {
+	iview.prototype.createCurveSub = function (_points, width, colors, div) {
 		if (_points.length == 0) return;
 		div = div || 5;
 		var points = this.subdivide(_points, div);
@@ -886,7 +886,7 @@ var iview = (function () {
 		this.mdl.add(new THREE.Line(geo, new THREE.LineBasicMaterial({ linewidth: width, vertexColors: true }), THREE.LineStrip));
 	};
 
-	iview.prototype.drawMainchainCurve = function (atomlist, curveWidth, atomName, div) {
+	iview.prototype.createCurve = function (atomlist, curveWidth, atomName, div) {
 		var points = [], colors = [];
 		var currentChain, currentResi;
 		div = div || 5;
@@ -894,7 +894,7 @@ var iview = (function () {
 			var atom = this.atoms[atomlist[i]];
 			if ((atom.name == atomName) && !atom.het) {
 				if (currentChain != atom.chain || currentResi + 1 != atom.resi) {
-					this.drawSmoothCurve(points, curveWidth, colors, div);
+					this.createCurveSub(points, curveWidth, colors, div);
 					points = [];
 					colors = [];
 				}
@@ -904,10 +904,10 @@ var iview = (function () {
 				currentResi = atom.resi;
 			}
 		}
-		this.drawSmoothCurve(points, curveWidth, colors, div);
+		this.createCurveSub(points, curveWidth, colors, div);
 	};
 
-	iview.prototype.drawStrip = function (p1, p2, colors, div, thickness) {
+	iview.prototype.createStrip = function (p1, p2, colors, div, thickness) {
 		if ((p1.length) < 2) return;
 		div = div || this.axisDIV;
 		p1 = this.subdivide(p1, div);
@@ -960,7 +960,7 @@ var iview = (function () {
 		this.mdl.add(mesh);
 	};
 
-	iview.prototype.drawStrand = function (atomlist, num, div, fill, coilWidth, helixSheetWidth, doNotSmoothen, thickness) {
+	iview.prototype.createStrand = function (atomlist, num, div, fill, coilWidth, helixSheetWidth, doNotSmoothen, thickness) {
 		num = num || this.strandDIV;
 		div = div || this.axisDIV;
 		coilWidth = coilWidth || this.coilWidth;
@@ -976,8 +976,8 @@ var iview = (function () {
 				if (atom.name == 'CA') {
 					if (currentChain != atom.chain || currentResi + 1 != atom.resi) {
 						for (var j = 0; !thickness && j < num; ++j)
-							this.drawSmoothCurve(points[j], 1, colors, div);
-						if (fill) this.drawStrip(points[0], points[num - 1], colors, div, thickness);
+							this.createCurveSub(points[j], 1, colors, div);
+						if (fill) this.createStrip(points[0], points[num - 1], colors, div, thickness);
 						var points = []; for (var k = 0; k < num; k++) points[k] = [];
 						colors = [];
 						prevCO = null; ss = null; ssborder = false;
@@ -1004,11 +1004,11 @@ var iview = (function () {
 			}
 		}
 		for (var j = 0; !thickness && j < num; j++)
-			this.drawSmoothCurve(points[j], 1, colors, div);
-		if (fill) this.drawStrip(points[0], points[num - 1], colors, div, thickness);
+			this.createCurveSub(points[j], 1, colors, div);
+		if (fill) this.createStrip(points[0], points[num - 1], colors, div, thickness);
 	};
 
-	iview.prototype.drawSmoothTube = function (_points, colors, radii) {
+	iview.prototype.createTubeSub = function (_points, colors, radii) {
 		if (_points.length < 2) return;
 		var circleDiv = this.tubeDIV, axisDiv = this.axisDIV;
 		var geo = new THREE.Geometry();
@@ -1067,14 +1067,14 @@ var iview = (function () {
 		this.mdl.add(mesh);
 	};
 
-	iview.prototype.drawMainchainTube = function (atomlist, atomName, radius) {
+	iview.prototype.createTube = function (atomlist, atomName, radius) {
 		var points = [], colors = [], radii = [];
 		var currentChain, currentResi;
 		for (var i in atomlist) {
 			var atom = this.atoms[atomlist[i]];
 			if ((atom.name == atomName) && !atom.het) {
 				if (currentChain != atom.chain || currentResi + 1 != atom.resi) {
-					this.drawSmoothTube(points, colors, radii);
+					this.createTubeSub(points, colors, radii);
 					points = []; colors = []; radii = [];
 				}
 				points.push(atom.coord);
@@ -1084,10 +1084,10 @@ var iview = (function () {
 				currentResi = atom.resi;
 			}
 		}
-		this.drawSmoothTube(points, colors, radii);
+		this.createTubeSub(points, colors, radii);
 	};
 
-	iview.prototype.drawHelixAsCylinder = function (atomlist, radius) {
+	iview.prototype.createCylinderHelix = function (atomlist, radius) {
 		var start = null;
 		var currentChain, currentResi;
 		var others = [], beta = [];
@@ -1098,16 +1098,16 @@ var iview = (function () {
 			if (atom.ss == 'sheet') beta.push(atom.serial);
 			if (atom.name != 'CA') continue;
 			if (atom.ss == 'helix' && atom.ssend) {
-				if (start != null) this.drawCylinder(start.coord, atom.coord, radius, atom.color, true);
+				if (start != null) this.createCylinder(start.coord, atom.coord, radius, atom.color, true);
 				start = null;
 			}
 			currentChain = atom.chain;
 			currentResi = atom.resi;
 			if (start == null && atom.ss == 'helix' && atom.ssbegin) start = atom;
 		}
-		if (start != null) this.drawCylinder(start.coord, atom.coord, radius, atom.color);
-		this.drawMainchainTube(others, 'CA', 0.3);
-		this.drawStrand(beta, undefined, undefined, true, 0, this.helixSheetWidth, false, this.thickness * 2);
+		if (start != null) this.createCylinder(start.coord, atom.coord, radius, atom.color);
+		this.createTube(others, 'CA', 0.3);
+		this.createStrand(beta, undefined, undefined, true, 0, this.helixSheetWidth, false, this.thickness * 2);
 	};
 
 	iview.prototype.rebuildScene = function (options) {
@@ -1191,35 +1191,35 @@ var iview = (function () {
 
 		switch (this.options.primaryStructure) {
 			case 'lines':
-				this.drawBondsAsLine(this.peptides, this.linewidth);
+				this.createLineRepresentation(this.peptides, this.linewidth);
 				break;
 			case 'stick':
-				this.drawBondsAsStick(this.peptides, this.cylinderRadius, this.cylinderRadius);
+				this.createStickRepresentation(this.peptides, this.cylinderRadius, this.cylinderRadius);
 				break;
 			case 'ball & stick':
-				this.drawBondsAsStick(this.peptides, this.cylinderRadius, this.cylinderRadius * 0.5, 0.3);
+				this.createStickRepresentation(this.peptides, this.cylinderRadius, this.cylinderRadius * 0.5, 0.3);
 				break;
 			case 'sphere':
-				this.drawAtomsAsSphere(this.peptides, this.sphereRadius);
+				this.createSphereRepresentation(this.peptides, this.sphereRadius);
 				break;
 		}
 
 		var doNotSmoothen = false;
 		switch (this.options.secondaryStructure) {
 			case 'ribbon':
-				this.drawStrand(this.peptides, 2, undefined, true, undefined, undefined, doNotSmoothen, this.thickness);
+				this.createStrand(this.peptides, 2, undefined, true, undefined, undefined, doNotSmoothen, this.thickness);
 				break;
 			case 'strand':
-				this.drawStrand(this.peptides, null, null, null, null, null, doNotSmoothen);
+				this.createStrand(this.peptides, null, null, null, null, null, doNotSmoothen);
 				break;
 			case 'cylinder & plate':
-				this.drawHelixAsCylinder(this.peptides, 1.6);
+				this.createCylinderHelix(this.peptides, 1.6);
 				break;
 			case 'C alpha trace':
-				this.drawMainchainCurve(this.peptides, this.curveWidth, 'CA', 1);
+				this.createCurve(this.peptides, this.curveWidth, 'CA', 1);
 				break;
 			case 'B factor tube':
-				this.drawMainchainTube(this.peptides, 'CA');
+				this.createTube(this.peptides, 'CA');
 				break;
 		}
 
@@ -1251,34 +1251,34 @@ var iview = (function () {
 
 		switch (this.options.ligands) {
 			case 'line':
-				this.drawBondsAsLine(this.ligands, this.curveWidth);
+				this.createLineRepresentation(this.ligands, this.curveWidth);
 				break;
 			case 'stick':
-				this.drawBondsAsStick(this.ligands, this.cylinderRadius, this.cylinderRadius);
+				this.createStickRepresentation(this.ligands, this.cylinderRadius, this.cylinderRadius);
 				break;
 			case 'ball & stick':
-				this.drawBondsAsStick(this.ligands, this.cylinderRadius, this.cylinderRadius * 0.5, 0.3);
+				this.createStickRepresentation(this.ligands, this.cylinderRadius, this.cylinderRadius * 0.5, 0.3);
 				break;
 			case 'sphere':
-				this.drawAtomsAsSphere(this.ligands, this.sphereRadius);
+				this.createSphereRepresentation(this.ligands, this.sphereRadius);
 				break;
 		}
 
 		switch (this.options.waters) {
 			case 'sphere':
-				this.drawAtomsAsSphere(this.waters, this.sphereRadius);
+				this.createSphereRepresentation(this.waters, this.sphereRadius);
 				break;
 			case 'dot':
-				this.drawAtomsAsSphere(this.waters, 0.3, true);
+				this.createSphereRepresentation(this.waters, 0.3, true);
 				break;
 		}
 
 		switch (this.options.ions) {
 			case 'sphere':
-				this.drawAtomsAsSphere(this.ions, this.sphereRadius);
+				this.createSphereRepresentation(this.ions, this.sphereRadius);
 				break;
 			case 'dot':
-				this.drawAtomsAsSphere(this.ions, 0.3, true);
+				this.createSphereRepresentation(this.ions, 0.3, true);
 				break;
 		}
 
