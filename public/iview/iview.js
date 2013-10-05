@@ -974,14 +974,6 @@ var iview = (function () {
 		this.drawStrand(beta, undefined, undefined, true, 0, this.helixSheetWidth, false, this.thickness * 2);
 	};
 
-	iview.prototype.drawDashLines = function (p1, p2, color) {
-		var geo = new THREE.Geometry();
-		geo.vertices.push(p1);
-		geo.vertices.push(p2);
-		geo.computeLineDistances();
-		this.mdl.add(new THREE.Line(geo, new THREE.LineDashedMaterial({ 'color': color, dashSize: 0.5, gapSize: 0.25 })));
-	};
-
 	iview.prototype.rebuildScene = function (options) {
 		this.scene = new THREE.Scene();
 		var directionalLight = new THREE.DirectionalLight(0xFFFFFF, 1.2);
