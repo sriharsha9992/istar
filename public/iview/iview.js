@@ -614,11 +614,6 @@ var iview = (function () {
 		});
 	}
 
-	iview.prototype.hasCovalentBond = function (atom1, atom2) {
-		var r = this.covalentRadii[atom1.elem] + this.covalentRadii[atom2.elem];
-		return atom1.coord.distanceToSquared(atom2.coord) < 1.2 * r * r;
-	}
-
 	iview.prototype.subdivide = function (_points, DIV) { // Catmull-Rom subdivision
 		var ret = [];
 		var points = new Array(); // Smoothing test
@@ -1149,6 +1144,11 @@ var iview = (function () {
 		this.effect = this.effects[this.options.effect];
 		this.effect.setSize(this.container.width(), this.container.height());
 	};
+
+	iview.prototype.hasCovalentBond = function (atom1, atom2) {
+		var r = this.covalentRadii[atom1.elem] + this.covalentRadii[atom2.elem];
+		return atom1.coord.distanceToSquared(atom2.coord) < 1.2 * r * r;
+	}
 
 	iview.prototype.loadPDB = function (src) {
 		var helices = [], sheets = [];
