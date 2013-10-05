@@ -642,7 +642,6 @@ var iview = (function () {
 					terminalInscode: line.substr(37, 1),
 				});
 			} else if (record === 'ATOM  ' || record === 'HETATM') {
-				if (!(line[16] === ' ' || line[16] === 'A')) continue;
 				var serial = parseInt(line.substr(6, 5));
 				this.atoms[serial] = {
 					het: record[0] === 'H',
