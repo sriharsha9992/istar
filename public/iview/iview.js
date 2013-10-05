@@ -755,39 +755,6 @@ var iview = (function () {
 		this.resetView();
 	};
 
-	iview.prototype.subdivide = function (_points, DIV) { // Catmull-Rom subdivision
-		var ret = [];
-		var points = new Array(); // Smoothing test
-		points.push(_points[0]);
-		for (var i = 1, lim = _points.length - 1; i < lim; ++i) {
-			var p0 = _points[i], p1 = _points[i + 1];
-			points.push(p0.smoothen ? p0.clone().add(p1).multiplyScalar(0.5) : p0);
-		}
-		points.push(_points[_points.length - 1]);
-		for (var i = -1, size = points.length; i <= size - 3; ++i) {
-			var p0 = points[(i == -1) ? 0 : i];
-			var p1 = points[i + 1], p2 = points[i + 2];
-			var p3 = points[(i == size - 3) ? size - 1 : i + 3];
-			var v0 = p2.clone().sub(p0).multiplyScalar(0.5);
-			var v1 = p3.clone().sub(p1).multiplyScalar(0.5);
-			for (var j = 0; j < DIV; ++j) {
-				var t = 1.0 / DIV * j;
-				var x = p1.x + t * v0.x
-						 + t * t * (-3 * p1.x + 3 * p2.x - 2 * v0.x - v1.x)
-						 + t * t * t * (2 * p1.x - 2 * p2.x + v0.x + v1.x);
-				var y = p1.y + t * v0.y
-						 + t * t * (-3 * p1.y + 3 * p2.y - 2 * v0.y - v1.y)
-						 + t * t * t * (2 * p1.y - 2 * p2.y + v0.y + v1.y);
-				var z = p1.z + t * v0.z
-						 + t * t * (-3 * p1.z + 3 * p2.z - 2 * v0.z - v1.z)
-						 + t * t * t * (2 * p1.z - 2 * p2.z + v0.z + v1.z);
-				ret.push(new THREE.Vector3(x, y, z));
-			}
-		}
-		ret.push(points[points.length - 1]);
-		return ret;
-	};
-
 	iview.prototype.createSphere = function (atom, defaultRadius, forceDefault, scale) {
 		var mesh = new THREE.Mesh(this.sphereGeometry, new THREE.MeshLambertMaterial({ color: atom.color }));
 		mesh.scale.x = mesh.scale.y = mesh.scale.z = forceDefault ? defaultRadius : (this.vdwRadii[atom.elem] || defaultRadius) * (scale ? scale : 1);
@@ -844,6 +811,39 @@ var iview = (function () {
 			}
 		}
 		this.mdl.add(new THREE.Line(geo, new THREE.LineBasicMaterial({ linewidth: linewidth, vertexColors: true }), THREE.LinePieces));
+	};
+
+	iview.prototype.subdivide = function (_points, DIV) { // Catmull-Rom subdivision
+		var ret = [];
+		var points = new Array(); // Smoothing test
+		points.push(_points[0]);
+		for (var i = 1, lim = _points.length - 1; i < lim; ++i) {
+			var p0 = _points[i], p1 = _points[i + 1];
+			points.push(p0.smoothen ? p0.clone().add(p1).multiplyScalar(0.5) : p0);
+		}
+		points.push(_points[_points.length - 1]);
+		for (var i = -1, size = points.length; i <= size - 3; ++i) {
+			var p0 = points[(i == -1) ? 0 : i];
+			var p1 = points[i + 1], p2 = points[i + 2];
+			var p3 = points[(i == size - 3) ? size - 1 : i + 3];
+			var v0 = p2.clone().sub(p0).multiplyScalar(0.5);
+			var v1 = p3.clone().sub(p1).multiplyScalar(0.5);
+			for (var j = 0; j < DIV; ++j) {
+				var t = 1.0 / DIV * j;
+				var x = p1.x + t * v0.x
+						 + t * t * (-3 * p1.x + 3 * p2.x - 2 * v0.x - v1.x)
+						 + t * t * t * (2 * p1.x - 2 * p2.x + v0.x + v1.x);
+				var y = p1.y + t * v0.y
+						 + t * t * (-3 * p1.y + 3 * p2.y - 2 * v0.y - v1.y)
+						 + t * t * t * (2 * p1.y - 2 * p2.y + v0.y + v1.y);
+				var z = p1.z + t * v0.z
+						 + t * t * (-3 * p1.z + 3 * p2.z - 2 * v0.z - v1.z)
+						 + t * t * t * (2 * p1.z - 2 * p2.z + v0.z + v1.z);
+				ret.push(new THREE.Vector3(x, y, z));
+			}
+		}
+		ret.push(points[points.length - 1]);
+		return ret;
 	};
 
 	iview.prototype.createCurveSub = function (_points, width, colors, div) {
