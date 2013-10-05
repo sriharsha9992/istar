@@ -637,14 +637,20 @@ $(function () {
 	};
 
 	var parseLigand = function (src) {
-		var ligand = entities.ligand = {};
-		var lines = src.split('\n'), rotors = [], start_ligand = true, start_frame;
+		var ligand;
+		var lines = src.split('\n'), ids = [], start_ligand = true, start_frame, rotors;
 		for (var i in lines) {
 			var line = lines[i];
 			var record = line.substr(0, 6);
 			if (start_ligand)
 			{
 				if (record === 'REMARK') {
+					var id = line.substr(11, 8);
+					if (isNaN(parseInt(id))) continue;
+					id = 'ligand';
+					ids.push(id);
+					ligand = entities[id] = {};
+					rotors = [];
 					start_ligand = false;
 				}
 				continue;
@@ -676,45 +682,45 @@ $(function () {
 				});
 				start_frame = undefined;
 			} else if (record === 'TORSDO') {
+				for (var i in rotors) {
+					var r = rotors[i];
+					ligand[r.x].bonds.push(r.y);
+					ligand[r.y].bonds.push(r.x);
+				}
+				var geo = new THREE.Geometry();
+				for (var li in ligand) {
+					var la = ligand[li];
+					if (isHBondDonor(la.elqt)) {
+						for (var pi in proteinHBondAcceptors) {
+							var pa = proteinHBondAcceptors[pi];
+							if (la.coord.distanceToSquared(pa.coord) < hbondCutoffSquared) {
+								geo.vertices.push(la.coord);
+								geo.vertices.push(pa.coord);
+							}
+						}
+					} else if (isHBondAcceptor(la.elqt)) {
+						for (var pi in proteinHBondDonors) {
+							var pa = proteinHBondDonors[pi];
+							if (la.coord.distanceToSquared(pa.coord) < hbondCutoffSquared) {
+								geo.vertices.push(la.coord);
+								geo.vertices.push(pa.coord);
+							}
+						}
+					}
+				}
+				geo.computeLineDistances();
+				mdl.add(new THREE.Line(geo, new THREE.LineDashedMaterial({ linewidth: 4, color: defaultHBondColor, dashSize: 0.25, gapSize: 0.125 }), THREE.LinePieces));
+				if (ids.length == 1) break;
 				start_ligand = true;
-				break;
 			}
 		}
-		for (var i in rotors) {
-			var r = rotors[i];
-			ligand[r.x].bonds.push(r.y);
-			ligand[r.y].bonds.push(r.x);
-		}
-		var geo = new THREE.Geometry();
-		for (var li in ligand) {
-			var la = ligand[li];
-			if (isHBondDonor(la.elqt)) {
-				for (var pi in proteinHBondAcceptors) {
-					var pa = proteinHBondAcceptors[pi];
-					if (la.coord.distanceToSquared(pa.coord) < hbondCutoffSquared) {
-						geo.vertices.push(la.coord);
-						geo.vertices.push(pa.coord);
-					}
-				}
-			} else if (isHBondAcceptor(la.elqt)) {
-				for (var pi in proteinHBondDonors) {
-					var pa = proteinHBondDonors[pi];
-					if (la.coord.distanceToSquared(pa.coord) < hbondCutoffSquared) {
-						geo.vertices.push(la.coord);
-						geo.vertices.push(pa.coord);
-					}
-				}
-			}
-		}
-		geo.computeLineDistances();
-		mdl.add(new THREE.Line(geo, new THREE.LineDashedMaterial({ linewidth: 4, color: defaultHBondColor, dashSize: 0.25, gapSize: 0.125 }), THREE.LinePieces));
 		var hits = $('#hits');
-		hits.html(['ZINC01234568', 'ZINC01234569', 'ZINC01234566', 'ZINC01234567'].map(function(id) {
-			return '<label class="btn btn-primary"><input type="radio">' + id + '</label>';
+		hits.html(ids.map(function(id) {
+			return '<label class="btn btn-primary"><input type="radio">ZINC' + id + '</label>';
 		}).join(''));
 		$(':first', hits).addClass('active');
 		$('> .btn', hits).click(function(e) {
-			alert(e.currentTarget.innerText);
+			console.log(e.target.innerText);
 		});
 	};
 
