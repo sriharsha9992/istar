@@ -614,9 +614,9 @@ var iview = (function () {
 		});
 	}
 
-	iview.prototype.hasCovalentBond = function (atom1, atom2) {
-		var r = this.covalentRadii[atom1.elem] + this.covalentRadii[atom2.elem];
-		return atom1.coord.distanceToSquared(atom2.coord) < 1.2 * r * r;
+	iview.prototype.hasCovalentBond = function (atom0, atom1) {
+		var r = this.covalentRadii[atom0.elem] + this.covalentRadii[atom1.elem];
+		return atom0.coord.distanceToSquared(atom1.coord) < 1.2 * r * r;
 	}
 
 	iview.prototype.loadPDB = function (src) {
@@ -811,42 +811,42 @@ var iview = (function () {
 		}
 	};
 
-	iview.prototype.createStickRepresentationSub = function (atom1, atom2, bondR) {
-		var mp = atom1.coord.clone().add(atom2.coord).multiplyScalar(0.5);
+	iview.prototype.createStickRepresentationSub = function (atom0, atom1, bondR) {
+		var mp = atom0.coord.clone().add(atom1.coord).multiplyScalar(0.5);
+		this.createCylinder(atom0.coord, mp, bondR, atom0.color);
 		this.createCylinder(atom1.coord, mp, bondR, atom1.color);
-		this.createCylinder(atom2.coord, mp, bondR, atom2.color);
 	};
 
 	iview.prototype.createStickRepresentation = function (atomlist, atomR, bondR, scale) {
 		var nAtoms = atomlist.length;
 		for (var _i = 0; _i < nAtoms; ++_i) {
 			var i = atomlist[_i];
-			var atom1 = this.atoms[i];
+			var atom0 = this.atoms[i];
 			for (var _j = _i + 1; _j < _i + 30 && _j < nAtoms; ++_j) {
 				var j = atomlist[_j];
-				var atom2 = this.atoms[j];
-				if (atom1.bonds.indexOf(atom2.serial) == -1) continue;
-				atom1.connected = atom2.connected = true;
-				this.createStickRepresentationSub(atom1, atom2, bondR);
+				var atom1 = this.atoms[j];
+				if (atom0.bonds.indexOf(atom1.serial) == -1) continue;
+				atom0.connected = atom1.connected = true;
+				this.createStickRepresentationSub(atom0, atom1, bondR);
 			}
-			for (var _j = 0; _j < atom1.bonds.length; ++_j) {
-				var j = atom1.bonds[_j];
+			for (var _j = 0; _j < atom0.bonds.length; ++_j) {
+				var j = atom0.bonds[_j];
 				if (j < i + 30) continue; // be conservative!
 				if (atomlist.indexOf(j) == -1) continue;
-				var atom2 = this.atoms[j];
-				atom1.connected = atom2.connected = true;
-				this.createStickRepresentationSub(atom1, atom2, bondR);
+				var atom1 = this.atoms[j];
+				atom0.connected = atom1.connected = true;
+				this.createStickRepresentationSub(atom0, atom1, bondR);
 			}
-			this.createSphere(atom1, atomR, !scale, scale);
+			this.createSphere(atom0, atomR, !scale, scale);
 		}
 	};
 
-	iview.prototype.createLineRepresentationSub = function (geo, atom1, atom2) {
-		var p1 = atom1.coord;
-		var p2 = atom2.coord;
+	iview.prototype.createLineRepresentationSub = function (geo, atom0, atom1) {
+		var p1 = atom0.coord;
+		var p2 = atom1.coord;
 		var mp = p1.clone().add(p2).multiplyScalar(0.5);
-		var c1 = atom1.color;
-		var c2 = atom2.color;
+		var c1 = atom0.color;
+		var c2 = atom1.color;
 		geo.vertices.push(p1); geo.colors.push(c1); geo.vertices.push(mp); geo.colors.push(c1);
 		geo.vertices.push(p2); geo.colors.push(c2); geo.vertices.push(mp); geo.colors.push(c2);
 	};
@@ -856,19 +856,19 @@ var iview = (function () {
 		var nAtoms = atomlist.length;
 		for (var _i = 0; _i < nAtoms; ++_i) {
 			var i = atomlist[_i];
-			var atom1 = this.atoms[i];
+			var atom0 = this.atoms[i];
 			for (var _j = _i + 1; _j < _i + 30 && _j < nAtoms; ++_j) {
 				var j = atomlist[_j];
-				var atom2 = this.atoms[j];
-				if (atom1.bonds.indexOf(atom2.serial) == -1) continue;
-				this.createLineRepresentationSub(geo, atom1, atom2);
+				var atom1 = this.atoms[j];
+				if (atom0.bonds.indexOf(atom1.serial) == -1) continue;
+				this.createLineRepresentationSub(geo, atom0, atom1);
 			}
-			for (var _j = 0; _j < atom1.bonds.length; ++_j) {
-				var j = atom1.bonds[_j];
+			for (var _j = 0; _j < atom0.bonds.length; ++_j) {
+				var j = atom0.bonds[_j];
 				if (j < i + 30) continue; // be conservative!
 				if (atomlist.indexOf(j) == -1) continue;
-				var atom2 = this.atoms[j];
-				this.createLineRepresentationSub(geo, atom1, atom2);
+				var atom1 = this.atoms[j];
+				this.createLineRepresentationSub(geo, atom0, atom1);
 			}
 		}
 		this.mdl.add(new THREE.Line(geo, new THREE.LineBasicMaterial({ linewidth: linewidth, vertexColors: true }), THREE.LinePieces));
