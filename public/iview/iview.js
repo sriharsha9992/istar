@@ -1204,16 +1204,16 @@ var iview = (function () {
 
 		switch (this.options.surface) {
 			case 'Van der Waals surface':
-				this.drawSurface(this.peptides, 1, this.options.wireframe, this.options.opacity);
+				this.createSurfaceRepresentation(this.peptides, 1, this.options.wireframe, this.options.opacity);
 				break;
 			case 'solvent excluded surface':
-				this.drawSurface(this.peptides, 2, this.options.wireframe, this.options.opacity);
+				this.createSurfaceRepresentation(this.peptides, 2, this.options.wireframe, this.options.opacity);
 				break;
 			case 'solvent accessible surface':
-				this.drawSurface(this.peptides, 3, this.options.wireframe, this.options.opacity);
+				this.createSurfaceRepresentation(this.peptides, 3, this.options.wireframe, this.options.opacity);
 				break;
 			case 'molecular surface':
-				this.drawSurface(this.peptides, 4, this.options.wireframe, this.options.opacity);
+				this.createSurfaceRepresentation(this.peptides, 4, this.options.wireframe, this.options.opacity);
 				break;
 		}
 
@@ -1310,7 +1310,7 @@ var iview = (function () {
 		window.open(this.renderer.domElement.toDataURL('image/png'));
 	};
 
-	iview.prototype.drawSurface = function (atomlist, type, wireframe, opacity) {
+	iview.prototype.createSurfaceRepresentation = function (atomlist, type, wireframe, opacity) {
 		var atomsToShow = this.removeSolvents(atomlist);
 		if (!this.surfaces[type]) {
 			var extent = this.getExtent(atomsToShow);
