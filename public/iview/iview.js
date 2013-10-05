@@ -455,7 +455,7 @@ var iview = (function () {
 		this.cylinderGeometry = new THREE.CylinderGeometry(1, 1, 1, 32, 1);
 		this.sphereRadius = 1.5;
 		this.cylinderRadius = 0.4;
-		this.linewidth = 1.5;
+		this.linewidth = 2;
 		this.curveWidth = 3;
 		this.helixSheetWidth = 1.3;
 		this.coilWidth = 0.3;
@@ -1284,7 +1284,7 @@ var iview = (function () {
 		if (this.camera.near < 1) this.camera.near = 1;
 		this.camera.far = center + this.slabFar;
 		if (this.camera.near + 1 > this.camera.far) this.camera.far = this.camera.near + 1;
-		if (this.camera === this.orthographicCamera ){
+		if (this.camera === this.orthographicCamera){
 			this.camera.right = center * Math.tan(Math.PI / 180 * this.fov);
 			this.camera.left = -this.camera.right;
 			this.camera.top = this.camera.right / (this.container.width() / this.container.height());
