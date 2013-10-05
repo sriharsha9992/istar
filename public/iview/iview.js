@@ -811,31 +811,18 @@ var iview = (function () {
 		}
 	};
 
-	iview.prototype.createStickRepresentationSub = function (atom0, atom1, bondR) {
-		var mp = atom0.coord.clone().add(atom1.coord).multiplyScalar(0.5);
-		this.createCylinder(atom0.coord, mp, bondR, atom0.color);
-		this.createCylinder(atom1.coord, mp, bondR, atom1.color);
-	};
-
 	iview.prototype.createStickRepresentation = function (atomlist, atomR, bondR, scale) {
 		var nAtoms = atomlist.length;
 		for (var _i = 0; _i < nAtoms; ++_i) {
 			var i = atomlist[_i];
 			var atom0 = this.atoms[i];
-			for (var _j = _i + 1; _j < _i + 30 && _j < nAtoms; ++_j) {
-				var j = atomlist[_j];
-				var atom1 = this.atoms[j];
-				if (atom0.bonds.indexOf(atom1.serial) == -1) continue;
-				atom0.connected = atom1.connected = true;
-				this.createStickRepresentationSub(atom0, atom1, bondR);
-			}
 			for (var _j = 0; _j < atom0.bonds.length; ++_j) {
 				var j = atom0.bonds[_j];
-				if (j < i + 30) continue; // be conservative!
-				if (atomlist.indexOf(j) == -1) continue;
 				var atom1 = this.atoms[j];
-				atom0.connected = atom1.connected = true;
-				this.createStickRepresentationSub(atom0, atom1, bondR);
+				if (atom1.serial < atom0.serial) continue;
+				var mp = atom0.coord.clone().add(atom1.coord).multiplyScalar(0.5);
+				this.createCylinder(atom0.coord, mp, bondR, atom0.color);
+				this.createCylinder(atom1.coord, mp, bondR, atom1.color);
 			}
 			this.createSphere(atom0, atomR, !scale, scale);
 		}
