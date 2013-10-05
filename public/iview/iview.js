@@ -819,17 +819,17 @@ var iview = (function () {
 
 	iview.prototype.createStickRepresentation = function (atomlist, atomR, bondR, scale) {
 		var nAtoms = atomlist.length;
-		for (var _i = 0; _i < nAtoms; _i++) {
+		for (var _i = 0; _i < nAtoms; ++_i) {
 			var i = atomlist[_i];
 			var atom1 = this.atoms[i];
-			for (var _j = _i + 1; _j < _i + 30 && _j < nAtoms; _j++) {
+			for (var _j = _i + 1; _j < _i + 30 && _j < nAtoms; ++_j) {
 				var j = atomlist[_j];
 				var atom2 = this.atoms[j];
 				if (atom1.bonds.indexOf(atom2.serial) == -1) continue;
 				atom1.connected = atom2.connected = true;
 				this.createStickRepresentationSub(atom1, atom2, bondR);
 			}
-			for (var _j = 0; _j < atom1.bonds.length; _j++) {
+			for (var _j = 0; _j < atom1.bonds.length; ++_j) {
 				var j = atom1.bonds[_j];
 				if (j < i + 30) continue; // be conservative!
 				if (atomlist.indexOf(j) == -1) continue;
@@ -854,16 +854,16 @@ var iview = (function () {
 	iview.prototype.createLineRepresentation = function (atomlist, linewidth) {
 		var geo = new THREE.Geometry();
 		var nAtoms = atomlist.length;
-		for (var _i = 0; _i < nAtoms; _i++) {
+		for (var _i = 0; _i < nAtoms; ++_i) {
 			var i = atomlist[_i];
 			var atom1 = this.atoms[i];
-			for (var _j = _i + 1; _j < _i + 30 && _j < nAtoms; _j++) {
+			for (var _j = _i + 1; _j < _i + 30 && _j < nAtoms; ++_j) {
 				var j = atomlist[_j];
 				var atom2 = this.atoms[j];
 				if (atom1.bonds.indexOf(atom2.serial) == -1) continue;
 				this.createLineRepresentationSub(geo, atom1, atom2);
 			}
-			for (var _j = 0; _j < atom1.bonds.length; _j++) {
+			for (var _j = 0; _j < atom1.bonds.length; ++_j) {
 				var j = atom1.bonds[_j];
 				if (j < i + 30) continue; // be conservative!
 				if (atomlist.indexOf(j) == -1) continue;
@@ -879,7 +879,7 @@ var iview = (function () {
 		div = div || 5;
 		var points = this.subdivide(_points, div);
 		var geo = new THREE.Geometry();
-		for (var i = 0; i < points.length; i++) {
+		for (var i = 0; i < points.length; ++i) {
 			geo.vertices.push(points[i]);
 			geo.colors.push(new THREE.Color(colors[(i == 0) ? 0 : Math.round((i - 1) / div)]));
 		}
@@ -966,7 +966,7 @@ var iview = (function () {
 		coilWidth = coilWidth || this.coilWidth;
 		doNotSmoothen = doNotSmoothen || false;
 		helixSheetWidth = helixSheetWidth || this.helixSheetWidth;
-		var points = {}; for (var k = 0; k < num; k++) points[k] = [];
+		var points = {}; for (var k = 0; k < num; ++k) points[k] = [];
 		var colors = [];
 		var currentChain, currentResi, currentCA;
 		var prevCO = null, ss = null, ssborder = false;
@@ -978,7 +978,7 @@ var iview = (function () {
 						for (var j = 0; !thickness && j < num; ++j)
 							this.createCurveSub(points[j], 1, colors, div);
 						if (fill) this.createStrip(points[0], points[num - 1], colors, div, thickness);
-						var points = {}; for (var k = 0; k < num; k++) points[k] = [];
+						var points = {}; for (var k = 0; k < num; ++k) points[k] = [];
 						colors = [];
 						prevCO = null; ss = null; ssborder = false;
 					}
@@ -994,7 +994,7 @@ var iview = (function () {
 					O.multiplyScalar(ss === 'coil' ? coilWidth : helixSheetWidth);
 					if (prevCO != undefined && O.dot(prevCO) < 0) O.negate();
 					prevCO = O;
-					for (var j = 0; j < num; j++) {
+					for (var j = 0; j < num; ++j) {
 						var delta = -1 + 2 / (num - 1) * j;
 						var v = new THREE.Vector3(currentCA.x + prevCO.x * delta, currentCA.y + prevCO.y * delta, currentCA.z + prevCO.z * delta);
 						if (!doNotSmoothen && ss === 'sheet') v.smoothen = true;
@@ -1003,7 +1003,7 @@ var iview = (function () {
 				}
 			}
 		}
-		for (var j = 0; !thickness && j < num; j++)
+		for (var j = 0; !thickness && j < num; ++j)
 			this.createCurveSub(points[j], 1, colors, div);
 		if (fill) this.createStrip(points[0], points[num - 1], colors, div, thickness);
 	};
@@ -1014,7 +1014,7 @@ var iview = (function () {
 		var geo = new THREE.Geometry();
 		var points = this.subdivide(_points, axisDiv);
 		var prevAxis1 = new THREE.Vector3(), prevAxis2;
-		for (var i = 0, lim = points.length; i < lim; i++) {
+		for (var i = 0, lim = points.length; i < lim; ++i) {
 			var r, idx = (i - 1) / axisDiv;
 			if (i == 0) r = radii[0];
 			else {
@@ -1038,7 +1038,7 @@ var iview = (function () {
 			} else {
 				axis1 = prevAxis1; axis2 = prevAxis2;
 			}
-			for (var j = 0; j < circleDiv; j++) {
+			for (var j = 0; j < circleDiv; ++j) {
 				var angle = 2 * Math.PI / circleDiv * j; //* dir  + offset;
 				var c = Math.cos(angle), s = Math.sin(angle);
 				geo.vertices.push(new THREE.Vector3(
@@ -1048,13 +1048,13 @@ var iview = (function () {
 			}
 		}
 		var offset = 0;
-		for (var i = 0, lim = points.length - 1; i < lim; i++) {
+		for (var i = 0, lim = points.length - 1; i < lim; ++i) {
 			var c = new THREE.Color(colors[Math.round((i - 1) / axisDiv)]);
 			var reg = 0;
 			var r1 = geo.vertices[offset].clone().sub(geo.vertices[offset + circleDiv]).lengthSq();
 			var r2 = geo.vertices[offset].clone().sub(geo.vertices[offset + circleDiv + 1]).lengthSq();
 			if (r1 > r2) { r1 = r2; reg = 1; };
-			for (var j = 0; j < circleDiv; j++) {
+			for (var j = 0; j < circleDiv; ++j) {
 				geo.faces.push(new THREE.Face3(offset + j, offset + (j + reg) % circleDiv + circleDiv, offset + (j + 1) % circleDiv, undefined, c));
 				geo.faces.push(new THREE.Face3(offset + (j + 1) % circleDiv, offset + (j + reg) % circleDiv + circleDiv, offset + (j + reg + 1) % circleDiv + circleDiv, undefined, c));
 			}
