@@ -760,8 +760,8 @@ var iview = (function () {
 		var points = new Array(); // Smoothing test
 		points.push(_points[0]);
 		for (var i = 1, lim = _points.length - 1; i < lim; ++i) {
-			var p1 = _points[i], p2 = _points[i + 1];
-			points.push(p1.smoothen ? p1.clone().add(p2).multiplyScalar(0.5) : p1);
+			var p0 = _points[i], p1 = _points[i + 1];
+			points.push(p0.smoothen ? p0.clone().add(p1).multiplyScalar(0.5) : p0);
 		}
 		points.push(_points[_points.length - 1]);
 		for (var i = -1, size = points.length; i <= size - 3; ++i) {
@@ -795,13 +795,13 @@ var iview = (function () {
 		this.mdl.add(mesh);
 	};
 
-	iview.prototype.createCylinder = function (p1, p2, radius, color) {
+	iview.prototype.createCylinder = function (p0, p1, radius, color) {
 		var mesh = new THREE.Mesh(this.cylinderGeometry, new THREE.MeshLambertMaterial({ color: color }));
-		mesh.position = p1.clone().add(p2).multiplyScalar(0.5);
+		mesh.position = p0.clone().add(p1).multiplyScalar(0.5);
 		mesh.matrixAutoUpdate = false;
-		mesh.lookAt(p1);
+		mesh.lookAt(p0);
 		mesh.updateMatrix();
-		mesh.matrix.multiply(new THREE.Matrix4().makeScale(radius, radius, p1.distanceTo(p2))).multiply(new THREE.Matrix4().makeRotationX(Math.PI * 0.5));
+		mesh.matrix.multiply(new THREE.Matrix4().makeScale(radius, radius, p0.distanceTo(p1))).multiply(new THREE.Matrix4().makeRotationX(Math.PI * 0.5));
 		this.mdl.add(mesh);
 	};
 
