@@ -18,10 +18,8 @@ $(function () {
 		})
 	});
 
-	['resetView', 'exportView'].forEach(function (func) {
-		$('#' + func).click(function (e) {
-			e.preventDefault();
-			iv[func]();
-		})
+	$('#exportCanvas').click(function (e) {
+		e.preventDefault();
+		iv.exportCanvas();
 	});
 });

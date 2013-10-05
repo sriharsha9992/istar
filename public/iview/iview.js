@@ -748,8 +748,35 @@ var iview = (function () {
 			3: undefined,
 			4: undefined,
 		};
+		var xmin = ymin = zmin =  9999;
+		var xmax = ymax = zmax = -9999;
+		var xsum = ysum = zsum = cnt = 0;
+		for (var i in this.atoms) {
+			var atom = this.atoms[i];
+			xsum += atom.coord.x;
+			ysum += atom.coord.y;
+			zsum += atom.coord.z;
+			xmin = (xmin < atom.coord.x) ? xmin : atom.coord.x;
+			ymin = (ymin < atom.coord.y) ? ymin : atom.coord.y;
+			zmin = (zmin < atom.coord.z) ? zmin : atom.coord.z;
+			xmax = (xmax > atom.coord.x) ? xmax : atom.coord.x;
+			ymax = (ymax > atom.coord.y) ? ymax : atom.coord.y;
+			zmax = (zmax > atom.coord.z) ? zmax : atom.coord.z;
+			++cnt;
+		}
+		var xavg = xsum / cnt;
+		var yavg = ysum / cnt;
+		var zavg = zsum / cnt;
+		this.extent = [[xmin, ymin, zmin], [xmax, ymax, zmax], [xavg, yavg, zavg]];
 		this.rebuildScene();
-		this.resetView();
+		this.mdl.position = new THREE.Vector3(xavg, yavg, zavg).multiplyScalar(-1);
+		var maxD = new THREE.Vector3(xmax, ymax, zmax).distanceTo(new THREE.Vector3(xmin, ymin, zmin));
+		if (maxD < 25) maxD = 25;
+		this.slabNear = -maxD / 2;
+		this.slabFar = maxD / 4;
+		this.rot.position.z = maxD * 0.35 / Math.tan(Math.PI / 180.0 * 10) - 150;
+		this.rot.quaternion = new THREE.Quaternion(1, 0, 0, 0);
+		this.render();
 	};
 
 	iview.prototype.createSphere = function (atom, defaultRadius, forceDefault, scale) {
@@ -1076,7 +1103,7 @@ var iview = (function () {
 	};
 
 	iview.prototype.createSurfaceRepresentation = function (atomlist, type, wireframe, opacity) {
-		if (!this.surfaces[type]) {
+		if (this.surfaces[type] === undefined) {
 			var ps = new ProteinSurface();
 			ps.initparm(this.extent, type > 1);
 			ps.fillvoxels(this.atoms, atomlist);
@@ -1298,38 +1325,7 @@ var iview = (function () {
 		}
 	};
 
-	iview.prototype.resetView = function () {
-		var xmin = ymin = zmin =  9999;
-		var xmax = ymax = zmax = -9999;
-		var xsum = ysum = zsum = cnt = 0;
-		for (var i in this.atoms) {
-			var atom = this.atoms[i];
-			xsum += atom.coord.x;
-			ysum += atom.coord.y;
-			zsum += atom.coord.z;
-			xmin = (xmin < atom.coord.x) ? xmin : atom.coord.x;
-			ymin = (ymin < atom.coord.y) ? ymin : atom.coord.y;
-			zmin = (zmin < atom.coord.z) ? zmin : atom.coord.z;
-			xmax = (xmax > atom.coord.x) ? xmax : atom.coord.x;
-			ymax = (ymax > atom.coord.y) ? ymax : atom.coord.y;
-			zmax = (zmax > atom.coord.z) ? zmax : atom.coord.z;
-			++cnt;
-		}
-		var xavg = xsum / cnt;
-		var yavg = ysum / cnt;
-		var zavg = zsum / cnt;
-		this.extent = [[xmin, ymin, zmin], [xmax, ymax, zmax], [xavg, yavg, zavg]];
-		this.mdl.position = new THREE.Vector3(xavg, yavg, zavg).multiplyScalar(-1);
-		var maxD = new THREE.Vector3(xmax, ymax, zmax).distanceTo(new THREE.Vector3(xmin, ymin, zmin));
-		if (maxD < 25) maxD = 25;
-		this.slabNear = -maxD / 2;
-		this.slabFar = maxD / 4;
-		this.rot.position.z = maxD * 0.35 / Math.tan(Math.PI / 180.0 * 10) - 150;
-		this.rot.quaternion = new THREE.Quaternion(1, 0, 0, 0);
-		this.render();
-	};
-
-	iview.prototype.exportView = function () {
+	iview.prototype.exportCanvas = function () {
 		this.render();
 		window.open(this.renderer.domElement.toDataURL('image/png'));
 	};
