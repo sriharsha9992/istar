@@ -463,7 +463,6 @@ var iview = (function () {
 		this.axisDIV = 5; // 3
 		this.strandDIV = 6;
 		this.tubeDIV = 8;
-		this.fov = 20;
 		this.backgroundColors = {
 			black: new THREE.Color(0x000000),
 			 grey: new THREE.Color(0xCCCCCC),
@@ -1285,7 +1284,7 @@ var iview = (function () {
 		this.camera.far = center + this.slabFar;
 		if (this.camera.near + 1 > this.camera.far) this.camera.far = this.camera.near + 1;
 		if (this.camera === this.orthographicCamera){
-			this.camera.right = center * Math.tan(Math.PI / 180 * this.fov);
+			this.camera.right = center * Math.tan(Math.PI / 180 * 20);
 			this.camera.left = -this.camera.right;
 			this.camera.top = this.camera.right / (this.container.width() / this.container.height());
 			this.camera.bottom = -this.camera.top;
