@@ -1,6 +1,8 @@
 $(function () {
 	var iv = new iview('iview');
-	$.get('http://www.pdb.org/pdb/files/3KFN.pdb', function (src) {
+	var code = location.search.substr(1);
+	if (!code.length) code = '3KFN';
+	$.get('http://www.pdb.org/pdb/files/' + code + '.pdb', function (src) {
 		iv.loadPDB(src);
 	});
 	$('#loadPDB').change(function () {
