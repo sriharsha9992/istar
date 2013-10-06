@@ -78,36 +78,48 @@
       </div>
       <div class="row">
         <div class="col-md-3">
-          <p>Result</p>
+          <p>Results</p>
           <ul>
             <li><a id="phase1_csv_gz"><img src="/excel.png" alt="phase1.csv.gz">phase1.csv.gz</a></li>
             <li><a id="phase2_csv_gz"><img src="/excel.png" alt="phase1.csv.gz">phase2.csv.gz</a></li>
             <li><a id="hits_pdbqt_gz"><img src="/molecule.png" alt="hits.pdbqt.gz">hits.pdbqt.gz</a></li>
           </ul>
+          <p>Summary</p>
+          <ul>
+            <li>ZINC ID: <a id="lid" href="http://zinc.docking.org/substance/20601927">20601927</a></li>
+            <li>idock score (kcal/mol): <span id="idock_score">-9.842</span></li>
+            <li>RF-Score score (pKd): <span id="rf_score">7.255</span></li>
+            <li>Consensus score (pKd): <span id="consensus_score">7.237</span></li>
+          </ul>
         </div>
         <div class="col-md-3">
           <p>10 molecular properties</p>
           <ul>
-            <li>Molecular weight (g/mol): <span id="mwt">400</span></li>
-            <li>Partition coefficient xlogP: <span id="lgp">0</span></li>
-            <li>Rotatable bonds: <span id="nrb">4</span></li>
+            <li>Molecular weight (g/mol): <span id="mwt">502.335</span></li>
+            <li>Partition coefficient xlogP: <span id="lgp">2.8</span></li>
+            <li>Rotatable bonds: <span id="nrb">6</span></li>
             <li>Hydrogen bond donors: <span id="hbd">2</span></li>
-            <li>Hydrogen bond acceptors: <span id="hba">4</span></li>
+            <li>Hydrogen bond acceptors: <span id="hba">7</span></li>
             <li>Net charge: <span id="chg">0</span></li>
-            <li>Apolar desolvation (kcal/mol): <span id="ads">0</span></li>
-            <li>Polar desolvation (kcal/mol): <span id="pds">-20</span></li>
-            <li>Polar surface area tPSA (&Aring;<sup>2</sup>): <span id="psa">60</span></li>
-            <li>SMILES: <span id="smiles">CC</span></li>
+            <li>Apolar desolvation (kcal/mol): <span id="ads">4.18</span></li>
+            <li>Polar desolvation (kcal/mol): <span id="pds">-15.1</span></li>
+            <li>Polar surface area tPSA (&Aring;<sup>2</sup>): <span id="psa">71</span></li>
+            <li>SMILES: <span id="smiles">c1cc(ccc1[C@@H]2C[C@H](n3c(c(cn3)C(=O)NCCN4CCOCC4)N2)C(F)(F)F)Br</span></li>
           </ul>
         </div>
         <div class="col-md-3">
-          <p><span id="nsuppliers">7</span> suppliers</p>
+          <p><span id="nsuppliers">4</span> suppliers and annotations</p>
           <ul id="suppliers">
+            <li>ChemDB</li>
+            <li>TimTec Make-on-Demand</li>
+            <li>Zelinsky Institute</li>
+            <li>eMolecules</li>
           </ul>
         </div>
         <div class="col-md-3">
-          <p><span id="nhbonds">5</span> hydrogen bonds</p>
+          <p><span id="nhbonds">1</span> hydrogen bonds</p>
           <ul id="hbonds">
+            <li>A:LYS101:NZ - O2</li>
           </ul>
         </div>
       </div>
