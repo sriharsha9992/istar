@@ -431,6 +431,7 @@ var iview = (function () {
 		this.effects = {
 			'anaglyph': new THREE.AnaglyphEffect(this.renderer),
 			'parallax barrier': new THREE.ParallaxBarrierEffect(this.renderer),
+			'oculus rift': new THREE.OculusRiftEffect(this.renderer),
 			'none': this.renderer,
 		};
 
@@ -1333,6 +1334,7 @@ var iview = (function () {
 				break;
 		}
 
+		this.renderer.autoClear = this.options.effect !== 'oculus rift';
 		this.effect = this.effects[this.options.effect];
 		this.effect.setSize(this.container.width(), this.container.height());
 	};
