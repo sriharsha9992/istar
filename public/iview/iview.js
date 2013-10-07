@@ -694,7 +694,7 @@ var iview = (function () {
 				for (var j in curResAtoms) {
 					var from = this.atoms[curResAtoms[j]];
 					for (var k in curResAtoms) {
-						if (j == k) continue;
+						if (j === k) continue;
 						var to = this.atoms[curResAtoms[k]];
 						if (this.hasCovalentBond(from, to)) {
 							from.bonds.push(to.serial);
@@ -715,7 +715,7 @@ var iview = (function () {
 		for (var j in curResAtoms) {
 			var from = this.atoms[curResAtoms[j]];
 			for (var k in curResAtoms) {
-				if (j == k) continue;
+				if (j === k) continue;
 				var to = this.atoms[curResAtoms[k]];
 				if (this.hasCovalentBond(from, to)) {
 					from.bonds.push(to.serial);
@@ -728,17 +728,17 @@ var iview = (function () {
 		this.ions = [];
 		for (var i in this.atoms) {
 			var atom = this.atoms[i];
-			if (atom.serial < lastStdSerial) {
+			if (atom.serial <= lastStdSerial) {
 				this.peptides.push(atom.serial);
 			} else {
-				if (atom.bonds.length) {
-					this.ligands.push(atom.serial);
-				} else {
+				if ((this.atoms[atom.serial - 1] === undefined || this.atoms[atom.serial - 1].resi !== atom.resi) && (this.atoms[atom.serial + 1] === undefined || this.atoms[atom.serial + 1].resi !== atom.resi)) {
 					if (atom.resn === 'HOH') {
 						this.waters.push(atom.serial);
 					} else {
 						this.ions.push(atom.serial);
 					}
+				} else {
+					this.ligands.push(atom.serial);
 				}
 			}
 		}

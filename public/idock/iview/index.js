@@ -566,7 +566,7 @@ $(function () {
 				for (var j in curResAtoms) {
 					var from = protein[curResAtoms[j]];
 					for (var k in curResAtoms) {
-						if (j == k) continue;
+						if (j === k) continue;
 						var to = protein[curResAtoms[k]];
 						if (hasCovalentBond(from, to)) {
 							from.bonds.push(to.serial);
@@ -587,7 +587,7 @@ $(function () {
 		for (var j in curResAtoms) {
 			var from = protein[curResAtoms[j]];
 			for (var k in curResAtoms) {
-				if (j == k) continue;
+				if (j === k) continue;
 				var to = protein[curResAtoms[k]];
 				if (hasCovalentBond(from, to)) {
 					from.bonds.push(to.serial);
@@ -596,14 +596,14 @@ $(function () {
 		}
 		var surface = entities.surface = {};
 		proteinHBondDonors = {}, proteinHBondAcceptors = {};
-		for (var serial in protein) {
-			var atom = protein[serial];
-			if (serial <= lastStdSerial) {
+		for (var i in protein) {
+			var atom = protein[i];
+			if (atom.serial <= lastStdSerial) {
 				if (atom.elem !== 'H') {
-					surface[serial] = atom;
+					surface[atom.serial] = atom;
 				}
 			} else {
-				if ((protein[serial - 1] === undefined || protein[serial - 1].resi !== atom.resi) && (protein[serial + 1] === undefined || protein[serial + 1].resi !== atom.resi)) {
+				if ((protein[atom.serial - 1] === undefined || protein[atom.serial - 1].resi !== atom.resi) && (protein[atom.serial + 1] === undefined || protein[atom.serial + 1].resi !== atom.resi)) {
 					atom.solvent = true;
 				}
 			}
@@ -615,22 +615,22 @@ $(function () {
 			if (atom.coord.z > zmax) zmax = atom.coord.z;
 			if (!isHBondDonor(atom.elqt) && !isHBondAcceptor(atom.elqt)) continue;
 			var r2 = 0;
-			for (var i = 0; i < 3; ++i)
+			for (var j = 0; j < 3; ++j)
 			{
-				if (atom.coord.getComponent(i) < c000.getComponent(i)) {
-					var d = atom.coord.getComponent(i) - c000.getComponent(i);
+				if (atom.coord.getComponent(j) < c000.getComponent(j)) {
+					var d = atom.coord.getComponent(j) - c000.getComponent(j);
 					r2 += d * d;
-				} else if (atom.coord.getComponent(i) > c111.getComponent(i)) {
-					var d = atom.coord.getComponent(i) - c111.getComponent(i);
+				} else if (atom.coord.getComponent(j) > c111.getComponent(j)) {
+					var d = atom.coord.getComponent(j) - c111.getComponent(j);
 					r2 += d * d;
 				}
 			}
 			if (r2 < hbondCutoffSquared)
 			{
 				if (isHBondDonor(atom.elqt)) {
-					proteinHBondDonors[serial] = atom;
+					proteinHBondDonors[i] = atom;
 				} else {
-					proteinHBondAcceptors[serial] = atom;
+					proteinHBondAcceptors[i] = atom;
 				}
 			}
 		}
