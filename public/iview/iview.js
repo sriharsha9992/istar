@@ -525,6 +525,7 @@ var iview = (function () {
 			sheet: this.sheetColor,
 			 coil: this.coilColor,
 		};
+		this.defaultBondColor = new THREE.Color(0x2194D6);
 		this.options = {
 			camera: 'perspective',
 			background: 'black',
@@ -536,7 +537,7 @@ var iview = (function () {
 			opacity: '0.8',
 			ligands: 'stick',
 			waters: 'dot',
-			ions: 'sphere',
+			ions: 'dot',
 			effect: 'none',
 		};
 
@@ -619,7 +620,7 @@ var iview = (function () {
 	}
 
 	iview.prototype.loadPDB = function (src) {
-		var helices = [], sheets = [], lastStdSerial;
+		var helices = [], sheets = [];
 		this.atoms = {};
 		var lines = src.split('\n');
 		for (var i in lines) {
@@ -657,7 +658,7 @@ var iview = (function () {
 					bonds: [],
 					ss: 'coil',
 				};
-				if (record[0] !== 'H') lastStdSerial = serial;
+				if (record[0] !== 'H') this.lastStdSerial = serial;
 			} else if (record === 'CONECT') {
 				var from = parseInt(line.substr(6, 5));
 				for (var j = 0; j < 4; ++j) {
@@ -728,7 +729,7 @@ var iview = (function () {
 		this.ions = [];
 		for (var i in this.atoms) {
 			var atom = this.atoms[i];
-			if (atom.serial <= lastStdSerial) {
+			if (atom.serial <= this.lastStdSerial) {
 				this.peptides.push(atom.serial);
 			} else {
 				if ((this.atoms[atom.serial - 1] === undefined || this.atoms[atom.serial - 1].resi !== atom.resi) && (this.atoms[atom.serial + 1] === undefined || this.atoms[atom.serial + 1].resi !== atom.resi)) {
@@ -797,44 +798,79 @@ var iview = (function () {
 	};
 
 	iview.prototype.createSphereRepresentation = function (atomlist, defaultRadius, forceDefault, scale) {
-		for (var i in atomlist) {
-			this.createSphere(this.atoms[atomlist[i]], defaultRadius, forceDefault, scale);
-		}
-	};
-
-	iview.prototype.createStickRepresentation = function (atomlist, atomR, bondR, scale) {
+		var ged = new THREE.Geometry();
 		for (var i in atomlist) {
 			var atom0 = this.atoms[atomlist[i]];
 			for (var j in atom0.bonds) {
 				var atom1 = this.atoms[atom0.bonds[j]];
 				if (atom1.serial < atom0.serial) continue;
-				var mp = atom0.coord.clone().add(atom1.coord).multiplyScalar(0.5);
-				this.createCylinder(atom0.coord, mp, bondR, atom0.color);
-				this.createCylinder(atom1.coord, mp, bondR, atom1.color);
+				if (atom1.chain === atom0.chain && ((atom0.serial <= this.lastStdSerial && atom1.serial <= this.lastStdSerial) || (atom1.resi === atom0.resi))) {
+				} else {
+					ged.vertices.push(atom0.coord);
+					ged.vertices.push(atom1.coord);
+				}
+			}
+			this.createSphere(atom0, defaultRadius, forceDefault, scale);
+		}
+		if (ged.vertices.length) {
+			ged.computeLineDistances();
+			this.mdl.add(new THREE.Line(ged, new THREE.LineDashedMaterial({ linewidth: this.linewidth, color: this.defaultBondColor, dashSize: 0.25, gapSize: 0.125 }), THREE.LinePieces));
+		}
+	};
+
+	iview.prototype.createStickRepresentation = function (atomlist, atomR, bondR, scale) {
+		var ged = new THREE.Geometry();
+		for (var i in atomlist) {
+			var atom0 = this.atoms[atomlist[i]];
+			for (var j in atom0.bonds) {
+				var atom1 = this.atoms[atom0.bonds[j]];
+				if (atom1.serial < atom0.serial) continue;
+				if (atom1.chain === atom0.chain && ((atom0.serial <= this.lastStdSerial && atom1.serial <= this.lastStdSerial) || (atom1.resi === atom0.resi))) {
+					var mp = atom0.coord.clone().add(atom1.coord).multiplyScalar(0.5);
+					this.createCylinder(atom0.coord, mp, bondR, atom0.color);
+					this.createCylinder(atom1.coord, mp, bondR, atom1.color);
+				} else {
+					ged.vertices.push(atom0.coord);
+					ged.vertices.push(atom1.coord);
+				}
 			}
 			this.createSphere(atom0, atomR, !scale, scale);
+		}
+		if (ged.vertices.length) {
+			ged.computeLineDistances();
+			this.mdl.add(new THREE.Line(ged, new THREE.LineDashedMaterial({ linewidth: this.linewidth, color: this.defaultBondColor, dashSize: 0.25, gapSize: 0.125 }), THREE.LinePieces));
 		}
 	};
 
 	iview.prototype.createLineRepresentation = function (atomlist) {
 		var geo = new THREE.Geometry();
+		var ged = new THREE.Geometry();
 		for (var i in atomlist) {
 			var atom0 = this.atoms[atomlist[i]];
 			for (var j in atom0.bonds) {
 				var atom1 = this.atoms[atom0.bonds[j]];
 				if (atom1.serial < atom0.serial) continue;
-				var mp = atom0.coord.clone().add(atom1.coord).multiplyScalar(0.5);
-				geo.vertices.push(atom0.coord);
-				geo.vertices.push(mp);
-				geo.vertices.push(atom1.coord);
-				geo.vertices.push(mp);
-				geo.colors.push(atom0.color);
-				geo.colors.push(atom0.color);
-				geo.colors.push(atom1.color);
-				geo.colors.push(atom1.color);
+				if (atom1.chain === atom0.chain && ((atom0.serial <= this.lastStdSerial && atom1.serial <= this.lastStdSerial) || (atom1.resi === atom0.resi))) {
+					var mp = atom0.coord.clone().add(atom1.coord).multiplyScalar(0.5);
+					geo.vertices.push(atom0.coord);
+					geo.vertices.push(mp);
+					geo.vertices.push(atom1.coord);
+					geo.vertices.push(mp);
+					geo.colors.push(atom0.color);
+					geo.colors.push(atom0.color);
+					geo.colors.push(atom1.color);
+					geo.colors.push(atom1.color);
+				} else {
+					ged.vertices.push(atom0.coord);
+					ged.vertices.push(atom1.coord);
+				}
 			}
 		}
 		this.mdl.add(new THREE.Line(geo, new THREE.LineBasicMaterial({ linewidth: this.linewidth, vertexColors: true }), THREE.LinePieces));
+		if (ged.vertices.length) {
+			ged.computeLineDistances();
+			this.mdl.add(new THREE.Line(ged, new THREE.LineDashedMaterial({ linewidth: this.linewidth, color: this.defaultBondColor, dashSize: 0.25, gapSize: 0.125 }), THREE.LinePieces));
+		}
 	};
 
 	iview.prototype.subdivide = function (_points, DIV) { // Catmull-Rom subdivision
@@ -1284,7 +1320,7 @@ var iview = (function () {
 				this.createSphereRepresentation(this.waters, this.sphereRadius);
 				break;
 			case 'dot':
-				this.createSphereRepresentation(this.waters, 0.3, true);
+				this.createSphereRepresentation(this.waters, this.sphereRadius, false, 0.3);
 				break;
 		}
 
@@ -1293,7 +1329,7 @@ var iview = (function () {
 				this.createSphereRepresentation(this.ions, this.sphereRadius);
 				break;
 			case 'dot':
-				this.createSphereRepresentation(this.ions, 0.3, true);
+				this.createSphereRepresentation(this.ions, this.sphereRadius, false, 0.3);
 				break;
 		}
 
