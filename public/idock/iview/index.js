@@ -425,15 +425,15 @@ $(function () {
 			o[entity.innerText] = undefined;
 		});
 	});
-	var update = {
+	var refresh = {
 		protein: function () {
-			updateMolecule('protein');
+			refreshMolecule('protein');
 		},
 		ligand: function () {
-			updateMolecule('ligand');
+			refreshMolecule('ligand');
 		},
 		surface: function () {
-			updateSurface('surface');
+			refreshSurface('surface');
 		},
 	};
 
@@ -839,7 +839,7 @@ $(function () {
 		}));
 	};
 
-	var updateMolecule = function (entity) {
+	var refreshMolecule = function (entity) {
 		var m = objects[entity];
 		if (m[options[entity]] === undefined) {
 			switch (options[entity]) {
@@ -860,7 +860,7 @@ $(function () {
 		mdl.add(m[options[entity]]);
 	};
 
-	var updateSurface = function (entity) {
+	var refreshSurface = function (entity) {
 		var m = objects[entity];
 		if (m[options[entity]] === undefined) {
 			switch (options[entity]) {
@@ -942,8 +942,8 @@ $(function () {
 				}
 				parseLigand(hits_str);
 			}).always(function() {
-				Object.keys(update).forEach(function (option) {
-					update[option]();
+				Object.keys(refresh).forEach(function (option) {
+					refresh[option]();
 				});
 				render();
 			});
@@ -954,7 +954,7 @@ $(function () {
 		$('#' + option).click(function (e) {
 			mdl.remove(objects[option][options[option]]);
 			options[option] = e.target.innerText;
-			update[option]();
+			refresh[option]();
 			render();
 		});
 	});
