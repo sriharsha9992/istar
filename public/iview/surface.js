@@ -44,7 +44,7 @@ var ProteinSurface = (function () {
 		}
 	};
 
-	this.getModel = function (atoms, atomlist) {
+	this.getModel = function (atoms) {
 		var v = [], vertices = this.verts;
 		for (i = 0; i < vertnumber; ++i) {
 			v.push(new THREE.Vector3(vertices[i].x, vertices[i].y, vertices[i].z));
@@ -56,7 +56,7 @@ var ProteinSurface = (function () {
 		for (var i = 0; i < facenumber; ++i) {
 			var f = this.faces[i];
 			var a = vertices[f.a].atomid, b = vertices[f.b].atomid, c = vertices[f.c].atomid;
-			if (!atomlist[a] && !atomlist[b] && !atomlist[c]) continue;
+			if (!atoms[a] && !atoms[b] && !atoms[c]) continue;
 			f.vertexColors = [atoms[a].color, atoms[b].color, atoms[c].color];
 			faces.push(f);
 		}
@@ -64,7 +64,6 @@ var ProteinSurface = (function () {
 		geo.computeVertexNormals(false);
 		return geo;
 	};
-
 
 	this.laplaciansmooth = function (numiter) {
 		var tps = new Array(vertnumber);
@@ -277,13 +276,13 @@ var ProteinSurface = (function () {
 		}
 	}
 
-	this.fillvoxels = function (atoms, atomlist) { //(int seqinit,int seqterm,bool atomtype,atom* proseq,bool bcolor)
+	this.fillvoxels = function (atoms) { //(int seqinit,int seqterm,bool atomtype,atom* proseq,bool bcolor)
 		for (var i = 0, lim = vp.length; i < lim; ++i) {
 			vp[i] = { inout: false, isdone: false, isbound: false, distance: -1, atomid: -1 };
 		}
 
-		for (i in atomlist) {
-			this.fillAtom(atoms[atomlist[i]], atoms);
+		for (i in atoms) {
+			this.fillAtom(atoms[i], atoms);
 		}
 
 		for (i = 0, lim = vp.length; i < lim; ++i)
@@ -364,11 +363,11 @@ var ProteinSurface = (function () {
 		}//i
 	};
 
-	this.fillvoxelswaals = function (atoms, atomlist) {
+	this.fillvoxelswaals = function (atoms) {
 		for (var i = 0, lim = vp.length; i < lim; ++i) vp[i].isdone = false;
 
-		for (i in atomlist) {
-			this.fillAtomWaals(atoms[atomlist[i]], atoms);
+		for (i in atoms) {
+			this.fillAtomWaals(atoms[i], atoms);
 		}
 	};
 

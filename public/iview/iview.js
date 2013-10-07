@@ -724,23 +724,23 @@ var iview = (function () {
 				}
 			}
 		}
-		this.peptides = [];
-		this.ligands = [];
-		this.waters = [];
-		this.ions = [];
+		this.peptides = {};
+		this.ligands = {};
+		this.waters = {};
+		this.ions = {};
 		for (var i in this.atoms) {
 			var atom = this.atoms[i];
 			if (atom.serial <= this.lastStdSerial) {
-				this.peptides.push(atom.serial);
+				this.peptides[atom.serial] = atom;
 			} else {
 				if ((this.atoms[atom.serial - 1] === undefined || this.atoms[atom.serial - 1].resi !== atom.resi) && (this.atoms[atom.serial + 1] === undefined || this.atoms[atom.serial + 1].resi !== atom.resi)) {
 					if (atom.resn === 'HOH') {
-						this.waters.push(atom.serial);
+						this.waters[atom.serial] = atom;
 					} else {
-						this.ions.push(atom.serial);
+						this.ions[atom.serial] = atom;
 					}
 				} else {
-					this.ligands.push(atom.serial);
+					this.ligands[atom.serial] = atom;
 				}
 			}
 		}
@@ -798,10 +798,10 @@ var iview = (function () {
 		this.mdl.add(mesh);
 	};
 
-	iview.prototype.createSphereRepresentation = function (atomlist, defaultRadius, forceDefault, scale) {
+	iview.prototype.createSphereRepresentation = function (atoms, defaultRadius, forceDefault, scale) {
 		var ged = new THREE.Geometry();
-		for (var i in atomlist) {
-			var atom0 = this.atoms[atomlist[i]];
+		for (var i in atoms) {
+			var atom0 = atoms[i];
 			for (var j in atom0.bonds) {
 				var atom1 = this.atoms[atom0.bonds[j]];
 				if (atom1.serial < atom0.serial) continue;
@@ -819,10 +819,10 @@ var iview = (function () {
 		}
 	};
 
-	iview.prototype.createStickRepresentation = function (atomlist, atomR, bondR, scale) {
+	iview.prototype.createStickRepresentation = function (atoms, atomR, bondR, scale) {
 		var ged = new THREE.Geometry();
-		for (var i in atomlist) {
-			var atom0 = this.atoms[atomlist[i]];
+		for (var i in atoms) {
+			var atom0 = atoms[i];
 			for (var j in atom0.bonds) {
 				var atom1 = this.atoms[atom0.bonds[j]];
 				if (atom1.serial < atom0.serial) continue;
@@ -843,11 +843,11 @@ var iview = (function () {
 		}
 	};
 
-	iview.prototype.createLineRepresentation = function (atomlist) {
+	iview.prototype.createLineRepresentation = function (atoms) {
 		var geo = new THREE.Geometry();
 		var ged = new THREE.Geometry();
-		for (var i in atomlist) {
-			var atom0 = this.atoms[atomlist[i]];
+		for (var i in atoms) {
+			var atom0 = atoms[i];
 			for (var j in atom0.bonds) {
 				var atom1 = this.atoms[atom0.bonds[j]];
 				if (atom1.serial < atom0.serial) continue;
@@ -919,12 +919,12 @@ var iview = (function () {
 		this.mdl.add(new THREE.Line(geo, new THREE.LineBasicMaterial({ linewidth: width, vertexColors: true }), THREE.LineStrip));
 	};
 
-	iview.prototype.createCurve = function (atomlist, curveWidth, atomName, div) {
+	iview.prototype.createCurve = function (atoms, curveWidth, atomName, div) {
 		var points = [], colors = [];
 		var currentChain, currentResi;
 		div = div || 5;
-		for (var i in atomlist) {
-			var atom = this.atoms[atomlist[i]];
+		for (var i in atoms) {
+			var atom = atoms[i];
 			if (atom.name == atomName && !atom.het) {
 				if (currentChain != atom.chain || currentResi + 1 != atom.resi) {
 					this.createCurveSub(points, curveWidth, colors, div);
@@ -993,7 +993,7 @@ var iview = (function () {
 		this.mdl.add(mesh);
 	};
 
-	iview.prototype.createStrand = function (atomlist, num, div, fill, coilWidth, helixSheetWidth, doNotSmoothen, thickness) {
+	iview.prototype.createStrand = function (atoms, num, div, fill, coilWidth, helixSheetWidth, doNotSmoothen, thickness) {
 		num = num || this.strandDIV;
 		div = div || this.axisDIV;
 		coilWidth = coilWidth || this.coilWidth;
@@ -1003,8 +1003,8 @@ var iview = (function () {
 		var colors = [];
 		var currentChain, currentResi, currentCA;
 		var prevCO = null, ss = null, ssborder = false;
-		for (var i in atomlist) {
-			var atom = this.atoms[atomlist[i]];
+		for (var i in atoms) {
+			var atom = atoms[i];
 			if ((atom.name === 'O' || atom.name === 'CA') && !atom.het) {
 				if (atom.name === 'CA') {
 					if (currentChain != atom.chain || currentResi + 1 != atom.resi) {
@@ -1096,11 +1096,11 @@ var iview = (function () {
 		this.mdl.add(mesh);
 	};
 
-	iview.prototype.createTube = function (atomlist, atomName, radius) {
+	iview.prototype.createTube = function (atoms, atomName, radius) {
 		var points = [], colors = [], radii = [];
 		var currentChain, currentResi;
-		for (var i in atomlist) {
-			var atom = this.atoms[atomlist[i]];
+		for (var i in atoms) {
+			var atom = atoms[i];
 			if ((atom.name == atomName) && !atom.het) {
 				if (currentChain != atom.chain || currentResi + 1 != atom.resi) {
 					this.createTubeSub(points, colors, radii);
@@ -1116,15 +1116,15 @@ var iview = (function () {
 		this.createTubeSub(points, colors, radii);
 	};
 
-	iview.prototype.createCylinderHelix = function (atomlist, radius) {
+	iview.prototype.createCylinderHelix = function (atoms, radius) {
 		var start = null;
 		var currentChain, currentResi;
 		var others = [], beta = [];
-		for (var i in atomlist) {
-			var atom = this.atoms[atomlist[i]];
+		for (var i in atoms) {
+			var atom = atoms[i];
 			if (atom.het) continue;
-			if ((atom.ss != 'helix' && atom.ss != 'sheet') || atom.ssend || atom.ssbegin) others.push(atom.serial);
-			if (atom.ss === 'sheet') beta.push(atom.serial);
+			if ((atom.ss != 'helix' && atom.ss != 'sheet') || atom.ssend || atom.ssbegin) others[atom.serial] = atom;
+			if (atom.ss === 'sheet') beta[atom.serial] = atom;
 			if (atom.name != 'CA') continue;
 			if (atom.ss === 'helix' && atom.ssend) {
 				if (start != null) this.createCylinder(start.coord, atom.coord, radius, atom.color, true);
@@ -1139,20 +1139,20 @@ var iview = (function () {
 		this.createStrand(beta, undefined, undefined, true, 0, this.helixSheetWidth, false, this.thickness * 2);
 	};
 
-	iview.prototype.createSurfaceRepresentation = function (atomlist, type, wireframe, opacity) {
+	iview.prototype.createSurfaceRepresentation = function (atoms, type, wireframe, opacity) {
 		if (this.surfaces[type] === undefined) {
 			var ps = new ProteinSurface();
 			ps.initparm(this.extent, type > 1);
-			ps.fillvoxels(this.atoms, atomlist);
+			ps.fillvoxels(atoms);
 			ps.buildboundary();
 			if (type == 4 || type == 2) ps.fastdistancemap();
-			if (type == 2) { ps.boundingatom(false); ps.fillvoxelswaals(this.atoms, atomlist); }
+			if (type == 2) { ps.boundingatom(false); ps.fillvoxelswaals(atoms); }
 			ps.marchingcube(type);
 			ps.laplaciansmooth(1);
 			ps.transformVertices();
 			this.surfaces[type] = ps;
 		}
-		var mesh = new THREE.Mesh(this.surfaces[type].getModel(this.atoms, atomlist), new THREE.MeshLambertMaterial({
+		var mesh = new THREE.Mesh(this.surfaces[type].getModel(atoms), new THREE.MeshLambertMaterial({
 			vertexColors: THREE.VertexColors,
 			wireframe: wireframe,
 			opacity: opacity,
@@ -1189,7 +1189,7 @@ var iview = (function () {
 				var idx = 0;
 				for (var i in this.atoms) {
 					var atom = this.atoms[i];
-					atom.color = atom.het ? this.atomColors[atom.elem] || this.defaultAtomColor : new THREE.Color().setHSL(2 / 3 * (1 - idx++ / this.peptides.length), 1, 0.45);
+					atom.color = atom.het ? this.atomColors[atom.elem] || this.defaultAtomColor : new THREE.Color().setHSL(2 / 3 * (1 - idx++ / this.lastStdSerial), 1, 0.45);
 				}
 				break;
 			case 'chain':
