@@ -409,12 +409,451 @@ $(function () {
 	scene.add(ambientLight);
 	scene.add(rot);
 	scene.fog = new THREE.Fog(defaultBackgroundColor, 100, 200);
-	var camera = new THREE.PerspectiveCamera(20, canvas.width() / canvas.height(), 1, 800);
+	var camera = new THREE.PerspectiveCamera(20, canvas.width() / canvas.height(), 1, 800), sn, sf;
 	camera.position = new THREE.Vector3(0, 0, -150);
 	camera.lookAt(new THREE.Vector3(0, 0, 0));
-	var entities = {};
 
-	var dg, wh, cx, cy, cq, cz, cp, cn, cf, sn, sf;
+	var createSphere = function (atom, defaultRadius, forceDefault, scale) {
+		var mesh = new THREE.Mesh(sphereGeometry, new THREE.MeshLambertMaterial({ color: atom.color }));
+		mesh.scale.x = mesh.scale.y = mesh.scale.z = forceDefault ? defaultRadius : (vdwRadii[atom.elem] || defaultRadius) * (scale ? scale : 1);
+		mesh.position = atom.coord;
+		return mesh;
+	};
+	var createCylinder = function (p0, p1, radius, color) {
+		var mesh = new THREE.Mesh(cylinderGeometry, new THREE.MeshLambertMaterial({ color: color }));
+		mesh.position = p0.clone().add(p1).multiplyScalar(0.5);
+		mesh.matrixAutoUpdate = false;
+		mesh.lookAt(p0);
+		mesh.updateMatrix();
+		mesh.matrix.multiply(new THREE.Matrix4().makeScale(radius, radius, p0.distanceTo(p1))).multiply(new THREE.Matrix4().makeRotationX(Math.PI * 0.5));
+		return mesh;
+	};
+	var createSphereRepresentation = function (atoms) {
+		var obj = new THREE.Object3D();
+		for (var i in atoms) {
+			obj.add(createSphere(atoms[i], sphereRadius));
+		}
+		return obj;
+	};
+	var createStickRepresentation = function (atoms, atomR, bondR) {
+		var obj = new THREE.Object3D();
+		for (var i in atoms) {
+			var atom0 = atoms[i];
+			for (var j in atom0.bonds) {
+				var atom1 = atoms[atom0.bonds[j]];
+				if (atom1.serial < atom0.serial) continue;
+				var mp = atom0.coord.clone().add(atom1.coord).multiplyScalar(0.5);
+				obj.add(createCylinder(atom0.coord, mp, bondR, atom0.color));
+				obj.add(createCylinder(atom1.coord, mp, bondR, atom1.color));
+			}
+			obj.add(createSphere(atom0, atomR, true));
+		}
+		return obj;
+	};
+	var createLineRepresentation = function (atoms) {
+		var obj = new THREE.Object3D();
+		var geo = new THREE.Geometry();
+		obj.add(new THREE.Line(geo, new THREE.LineBasicMaterial({ linewidth: 2, vertexColors: true }), THREE.LinePieces));
+		for (var i in atoms) {
+			var atom0 = atoms[i];
+			for (var j in atom0.bonds) {
+				var atom1 = atoms[atom0.bonds[j]];
+				if (atom1.serial < atom0.serial) continue;
+				var mp = atom0.coord.clone().add(atom1.coord).multiplyScalar(0.5);
+				geo.vertices.push(atom0.coord);
+				geo.vertices.push(mp);
+				geo.vertices.push(atom1.coord);
+				geo.vertices.push(mp);
+				geo.colors.push(atom0.color);
+				geo.colors.push(atom0.color);
+				geo.colors.push(atom1.color);
+				geo.colors.push(atom1.color);
+			}
+			if (atom0.solvent) {
+				obj.add(createSphere(atom0, sphereRadius, false, 0.2));
+			}
+		}
+		return obj;
+	};
+	var createSurfaceRepresentation = function (entity, type) {
+		var ps = new ProteinSurface();
+		ps.initparm(entity.extent, type > 1);
+		ps.fillvoxels(entity.atoms);
+		ps.buildboundary();
+		if (type == 4 || type == 2) ps.fastdistancemap();
+		if (type == 2) { ps.boundingatom(false); ps.fillvoxelswaals(entity.atoms); }
+		ps.marchingcube(type);
+		ps.laplaciansmooth(1);
+		ps.transformVertices();
+		return new THREE.Mesh(ps.getModel(entity.atoms), new THREE.MeshLambertMaterial({
+			vertexColors: THREE.VertexColors,
+			opacity: 0.9,
+			transparent: true,
+		}));
+	};
+	var createHBondRepresentation = function (atoms, hbondDonors, hbondAcceptors) {
+		var geo = new THREE.Geometry();
+		for (var li in atoms) {
+			var la = atoms[li];
+			if (isHBondDonor(la.elqt)) {
+				for (var pi in hbondAcceptors) {
+					var pa = hbondAcceptors[pi];
+					if (la.coord.distanceToSquared(pa.coord) < hbondCutoffSquared) {
+						geo.vertices.push(la.coord);
+						geo.vertices.push(pa.coord);
+					}
+				}
+			} else if (isHBondAcceptor(la.elqt)) {
+				for (var pi in hbondDonors) {
+					var pa = hbondDonors[pi];
+					if (la.coord.distanceToSquared(pa.coord) < hbondCutoffSquared) {
+						geo.vertices.push(la.coord);
+						geo.vertices.push(pa.coord);
+					}
+				}
+			}
+		}
+		geo.computeLineDistances();
+		return new THREE.Line(geo, new THREE.LineDashedMaterial({ linewidth: 4, color: defaultHBondColor, dashSize: 0.25, gapSize: 0.125 }), THREE.LinePieces);
+	};
+	var refreshMolecule = function (entity) {
+		var r = entity.representations;
+		if (r[entity.active] === undefined) {
+			switch (entity.active) {
+				case 'line':
+					r[entity.active] = createLineRepresentation(entity.atoms);
+					break;
+				case 'stick':
+					r[entity.active] = createStickRepresentation(entity.atoms, cylinderRadius, cylinderRadius);
+					break;
+				case 'ball & stick':
+					r[entity.active] = createStickRepresentation(entity.atoms, cylinderRadius, cylinderRadius * 0.5);
+					break;
+				case 'sphere':
+					r[entity.active] = createSphereRepresentation(entity.atoms);
+					break;
+			}
+		}
+		mdl.add(r[entity.active]);
+	};
+	var refreshSurface = function (entity) {
+		var r = entity.representations;
+		if (r[entity.active] === undefined) {
+			switch (entity.active) {
+				case 'Van der Waals surface':
+					r[entity.active] = createSurfaceRepresentation(entity, 1);
+					break;
+				case 'solvent excluded surface':
+					r[entity.active] = createSurfaceRepresentation(entity, 2);
+					break;
+				case 'solvent accessible surface':
+					r[entity.active] = createSurfaceRepresentation(entity, 3);
+					break;
+				case 'molecular surface':
+					r[entity.active] = createSurfaceRepresentation(entity, 4);
+					break;
+				case 'nothing':
+					r[entity.active] = undefined;
+					break;
+			}
+		}
+		mdl.add(r[entity.active]);
+	};
+	var render = function () {
+		var center = rot.position.z - camera.position.z;
+		if (center < 1) center = 1;
+		camera.near = center + sn;
+		if (camera.near < 1) camera.near = 1;
+		camera.far = center + sf;
+		if (camera.near + 1 > camera.far) camera.far = camera.near + 1;
+		camera.updateProjectionMatrix();
+		scene.fog.near = camera.near + 0.4 * (camera.far - camera.near);
+		scene.fog.far = camera.far;
+		renderer.render(scene, camera);
+	};
+	var hasCovalentBond = function (atom1, atom2) {
+		var r = covalentRadii[atom1.elem] + covalentRadii[atom2.elem];
+		return atom1.coord.distanceToSquared(atom2.coord) < 1.2 * r * r;
+	};
+	var isHBondDonor = function (elqt) {
+		return elqt === 'HD' || elqt === 'Zn' || elqt === 'Fe' || elqt === 'Mg' || elqt === 'Ca' || elqt === 'Mn' || elqt === 'Cu' || elqt === 'Na' || elqt === 'K ' || elqt === 'Hg' || elqt === 'Ni' || elqt === 'Co' || elqt === 'Cd' || elqt === 'As' || elqt === 'Sr' || elqt === 'U ';
+	};
+	var isHBondAcceptor = function (elqt) {
+		return elqt === 'NA' || elqt === 'OA' || elqt === 'SA';
+	};
+	var entities = {};
+	var path = '/idock/jobs/' + location.search.substr(1) + '/';
+	$('#results a').each(function () {
+		$(this).attr('href', path + this.innerText);
+	});
+	$.get(path + 'box.conf', function (bsrc) {
+		var lines = bsrc.split('\n');
+		var bct = new THREE.Vector3(parseFloat(lines[0].substr(9)), parseFloat(lines[1].substr(9)), parseFloat(lines[2].substr(9)));
+		var bsz = new THREE.Vector3(parseFloat(lines[3].substr(7)), parseFloat(lines[4].substr(7)), parseFloat(lines[5].substr(7)));
+		var bhf = bsz.multiplyScalar(0.5);
+		var b000 = bct.clone().add(bhf.clone().multiply(new THREE.Vector3(-1, -1, -1)));
+		var b100 = bct.clone().add(bhf.clone().multiply(new THREE.Vector3( 1, -1, -1)));
+		var b010 = bct.clone().add(bhf.clone().multiply(new THREE.Vector3(-1,  1, -1)));
+		var b110 = bct.clone().add(bhf.clone().multiply(new THREE.Vector3( 1,  1, -1)));
+		var b001 = bct.clone().add(bhf.clone().multiply(new THREE.Vector3(-1, -1,  1)));
+		var b101 = bct.clone().add(bhf.clone().multiply(new THREE.Vector3( 1, -1,  1)));
+		var b011 = bct.clone().add(bhf.clone().multiply(new THREE.Vector3(-1,  1,  1)));
+		var b111 = bct.clone().add(bhf.clone().multiply(new THREE.Vector3( 1,  1,  1)));
+		var bgeo = new THREE.Geometry();
+		bgeo.vertices.push(b000);
+		bgeo.vertices.push(b100);
+		bgeo.vertices.push(b010);
+		bgeo.vertices.push(b110);
+		bgeo.vertices.push(b001);
+		bgeo.vertices.push(b101);
+		bgeo.vertices.push(b011);
+		bgeo.vertices.push(b111);
+		bgeo.vertices.push(b000);
+		bgeo.vertices.push(b010);
+		bgeo.vertices.push(b100);
+		bgeo.vertices.push(b110);
+		bgeo.vertices.push(b001);
+		bgeo.vertices.push(b011);
+		bgeo.vertices.push(b101);
+		bgeo.vertices.push(b111);
+		bgeo.vertices.push(b000);
+		bgeo.vertices.push(b001);
+		bgeo.vertices.push(b100);
+		bgeo.vertices.push(b101);
+		bgeo.vertices.push(b010);
+		bgeo.vertices.push(b011);
+		bgeo.vertices.push(b110);
+		bgeo.vertices.push(b111);
+		bgeo.computeLineDistances();
+		mdl.add(new THREE.Line(bgeo, new THREE.LineDashedMaterial({ linewidth: 4, color: defaultBoxColor, dashSize: 0.25, gapSize: 0.125 }), THREE.LinePieces));
+		mdl.position = bct.clone().multiplyScalar(-1);
+		$.get(path + 'receptor.pdbqt', function (psrc) {
+			var protein = entities.protein = {
+				atoms: {},
+				representations: {},
+				refresh: function () {
+					refreshMolecule(protein);
+				}
+			}, atoms = protein.atoms, lastStdSerial;
+			var lines = psrc.split('\n');
+			for (var i in lines) {
+				var line = lines[i];
+				var record = line.substr(0, 6);
+				if (record === 'ATOM  ' || record === 'HETATM') {
+					if (!(line[16] === ' ' || line[16] === 'A')) continue;
+					var atom = {
+						serial: parseInt(line.substr(6, 5)),
+						name: line.substr(12, 4).replace(/ /g, ''),
+						chain: line.substr(21, 1),
+						resi: parseInt(line.substr(22, 4)),
+						insc: line.substr(26, 1),
+						coord: new THREE.Vector3(parseFloat(line.substr(30, 8)), parseFloat(line.substr(38, 8)), parseFloat(line.substr(46, 8))),
+						elqt: line.substr(77, 2),
+						elem: line.substr(77, 2).replace(/ /g, '').toUpperCase(),
+						bonds: [],
+					};
+					if (atom.elem === 'H') continue;
+					var elem = pdbqt2pdb[atom.elem];
+					if (elem) atom.elem = elem;
+					atom.color = atomColors[atom.elem] || defaultAtomColor;
+					atoms[atom.serial] = atom;
+					if (record[0] !== 'H') lastStdSerial = atom.serial;
+				}
+			}
+			var curChain, curResi, curInsc, curResAtoms = [];
+			for (var i in atoms) {
+				var atom = atoms[i];
+				if (!(curChain == atom.chain && curResi == atom.resi && curInsc == atom.insc)) {
+					for (var j in curResAtoms) {
+						var from = atoms[curResAtoms[j]];
+						for (var k in curResAtoms) {
+							if (j === k) continue;
+							var to = atoms[curResAtoms[k]];
+							if (hasCovalentBond(from, to)) {
+								from.bonds.push(to.serial);
+							}
+						}
+						if (from.name === 'C' && atom.name === 'N' && hasCovalentBond(from, atom)) {
+							from.bonds.push(atom.serial);
+							atom.bonds.push(from.serial);
+						}
+					}
+					curChain = atom.chain;
+					curResi = atom.resi;
+					curInsc = atom.insc;
+					curResAtoms.length = 0;
+				}
+				curResAtoms.push(atom.serial);
+			}
+			for (var j in curResAtoms) {
+				var from = atoms[curResAtoms[j]];
+				for (var k in curResAtoms) {
+					if (j === k) continue;
+					var to = atoms[curResAtoms[k]];
+					if (hasCovalentBond(from, to)) {
+						from.bonds.push(to.serial);
+					}
+				}
+			}
+			var surface = entities.surface = {
+				atoms: {},
+				representations: {},
+				refresh: function () {
+					refreshSurface(surface);
+				}
+			}, satoms = surface.atoms;
+			var hbondDonors = {}, hbondAcceptors = {};
+			var xsum = ysum = zsum = cnt = 0;
+			var xmin = ymin = zmin =  9999;
+			var xmax = ymax = zmax = -9999;
+			for (var i in atoms) {
+				var atom = atoms[i];
+				if (atom.serial <= lastStdSerial) {
+					if (atom.elem !== 'H') {
+						satoms[atom.serial] = atom;
+					}
+				} else {
+					if ((atoms[atom.serial - 1] === undefined || atoms[atom.serial - 1].resi !== atom.resi) && (atoms[atom.serial + 1] === undefined || atoms[atom.serial + 1].resi !== atom.resi)) {
+						atom.solvent = true;
+					}
+				}
+				++cnt;
+				xsum += atom.coord.x;
+				ysum += atom.coord.y;
+				zsum += atom.coord.z;
+				if (atom.coord.x < xmin) xmin = atom.coord.x;
+				if (atom.coord.y < ymin) ymin = atom.coord.y;
+				if (atom.coord.z < zmin) zmin = atom.coord.z;
+				if (atom.coord.x > xmax) xmax = atom.coord.x;
+				if (atom.coord.y > ymax) ymax = atom.coord.y;
+				if (atom.coord.z > zmax) zmax = atom.coord.z;
+				if (!isHBondDonor(atom.elqt) && !isHBondAcceptor(atom.elqt)) continue;
+				var r2 = 0;
+				for (var j = 0; j < 3; ++j) {
+					if (atom.coord.getComponent(j) < b000.getComponent(j)) {
+						var d = atom.coord.getComponent(j) - b000.getComponent(j);
+						r2 += d * d;
+					} else if (atom.coord.getComponent(j) > b111.getComponent(j)) {
+						var d = atom.coord.getComponent(j) - b111.getComponent(j);
+						r2 += d * d;
+					}
+				}
+				if (r2 < hbondCutoffSquared) {
+					if (isHBondDonor(atom.elqt)) {
+						hbondDonors[i] = atom;
+					} else {
+						hbondAcceptors[i] = atom;
+					}
+				}
+			}
+			surface.extent = [[xmin, ymin, zmin], [xmax, ymax, zmax], [xsum / cnt, ysum / cnt, zsum / cnt]];
+			var maxD = new THREE.Vector3(xmax, ymax, zmax).distanceTo(new THREE.Vector3(xmin, ymin, zmin));
+			sn = -maxD / 2;
+			sf =  maxD / 4;
+			rot.position.z = maxD * 0.08 / Math.tan(Math.PI / 180.0 * 10) - 150;
+			rot.quaternion = new THREE.Quaternion(1, 0, 0, 0);
+			$.ajax({
+				url: path + 'hits.pdbqt.gz',
+				mimeType: 'application/octet-stream; charset=x-user-defined',
+			}).done(function (lsrcz) {
+				var lsrczr = new Uint8Array(lsrcz.length);
+				for (var i = 0, l = lsrcz.length; i < l; ++i) {
+					lsrczr[i] = lsrcz.charCodeAt(i);
+				}
+				var lsrcr = new Zlib.Gunzip(lsrczr).decompress();
+				var lsrc = '';
+				for (var i = 0, l = lsrcr.length; i < l; ++i) {
+					lsrc += String.fromCharCode(lsrcr[i]);
+				}
+				var ligand = entities.ligand = {
+					atoms: {},
+					representations: {},
+					refresh: function() {
+						refreshMolecule(ligand);
+					},
+				}, atoms = ligand.atoms, ids = [], start_ligand = true, start_frame, rotors;
+				var lines = lsrc.split('\n')
+				for (var i in lines) {
+					var line = lines[i];
+					var record = line.substr(0, 6);
+					if (start_ligand)
+					{
+						if (record === 'REMARK') {
+							var id = line.substr(11, 8);
+							if (isNaN(parseInt(id))) continue;
+							id = 'ligand';
+							ids.push(id);
+//							ligand = entities[id] = {};
+							rotors = [];
+							start_ligand = false;
+						}
+						continue;
+					}
+					if (record === 'ATOM  ' || record === 'HETATM') {
+						var atom = {
+							serial: parseInt(line.substr(6, 5)),
+							coord: new THREE.Vector3(parseFloat(line.substr(30, 8)), parseFloat(line.substr(38, 8)), parseFloat(line.substr(46, 8))),
+							elqt: line.substr(77, 2),
+							elem: line.substr(77, 2).replace(/ /g, '').toUpperCase(),
+							bonds: [],
+						};
+						if (atom.elem === 'H') continue;
+						var elem = pdbqt2pdb[atom.elem];
+						if (elem) atom.elem = elem;
+						atom.color = atomColors[atom.elem] || defaultAtomColor;
+						atoms[atom.serial] = atom;
+						if (start_frame === undefined) start_frame = atom.serial;
+						for (var j = start_frame; j < atom.serial; ++j) {
+							var a = atoms[j];
+							if (a && hasCovalentBond(a, atom)) {
+								a.bonds.push(atom.serial);
+								atom.bonds.push(a.serial);
+							}
+						}
+					} else if (record === 'BRANCH') {
+						rotors.push({
+							x: parseInt(line.substr( 6, 4)),
+							y: parseInt(line.substr(10, 4)),
+						});
+						start_frame = undefined;
+					} else if (record === 'TORSDO') {
+						for (var i in rotors) {
+							var r = rotors[i];
+							atoms[r.x].bonds.push(r.y);
+							atoms[r.y].bonds.push(r.x);
+						}
+						mdl.add(createHBondRepresentation(atoms, hbondDonors, hbondAcceptors));
+						if (ids.length == 1) break;
+						start_ligand = true;
+					}
+				}
+				var hits = $('#hits');
+				hits.html(ids.map(function(id) {
+					return '<label class="btn btn-primary"><input type="radio">' + id + '</label>';
+				}).join(''));
+				$(':first', hits).addClass('active');
+				$('> .btn', hits).click(function(e) {
+					console.log(e.target.innerText);
+				});
+			}).always(function() {
+				for (var key in entities) {
+					var entity = entities[key];
+					entity.active = $('#' + key + ' .active')[0].innerText;
+					entity.refresh();
+					$('#' + key).click(function (e) {
+						var key = e.target.parentElement.id;
+						var entity = entities[key];
+						mdl.remove(entity.representations[entity.active]);
+						entity.active = e.target.innerText;
+						entity.refresh();
+						render();
+					});
+				}
+				render();
+			});
+		});
+	});
+	var dg, wh, cx, cy, cq, cz, cp, cn, cf;
 	canvas.bind('contextmenu', function (e) {
 		e.preventDefault();
 	});
@@ -476,483 +915,8 @@ $(function () {
 		}
 		render();
 	});
-
-	var ct, sz, c000, c100, c010, c110, c001, c101, c011, c111;
-	var parseBox = function (src) {
-		var lines = src.split('\n');
-		ct = new THREE.Vector3(parseFloat(lines[0].substr(9)), parseFloat(lines[1].substr(9)), parseFloat(lines[2].substr(9)));
-		sz = new THREE.Vector3(parseFloat(lines[3].substr(7)), parseFloat(lines[4].substr(7)), parseFloat(lines[5].substr(7)));
-		var hf = sz.multiplyScalar(0.5);
-		c000 = ct.clone().add(hf.clone().multiply(new THREE.Vector3(-1, -1, -1)));
-		c100 = ct.clone().add(hf.clone().multiply(new THREE.Vector3( 1, -1, -1)));
-		c010 = ct.clone().add(hf.clone().multiply(new THREE.Vector3(-1,  1, -1)));
-		c110 = ct.clone().add(hf.clone().multiply(new THREE.Vector3( 1,  1, -1)));
-		c001 = ct.clone().add(hf.clone().multiply(new THREE.Vector3(-1, -1,  1)));
-		c101 = ct.clone().add(hf.clone().multiply(new THREE.Vector3( 1, -1,  1)));
-		c011 = ct.clone().add(hf.clone().multiply(new THREE.Vector3(-1,  1,  1)));
-		c111 = ct.clone().add(hf.clone().multiply(new THREE.Vector3( 1,  1,  1)));
-	};
-
-	var hasCovalentBond = function (atom1, atom2) {
-		var r = covalentRadii[atom1.elem] + covalentRadii[atom2.elem];
-		return atom1.coord.distanceToSquared(atom2.coord) < 1.2 * r * r;
-	};
-
-	var isHBondDonor = function (elqt) {
-		return elqt === 'HD' || elqt === 'Zn' || elqt === 'Fe' || elqt === 'Mg' || elqt === 'Ca' || elqt === 'Mn' || elqt === 'Cu' || elqt === 'Na' || elqt === 'K ' || elqt === 'Hg' || elqt === 'Ni' || elqt === 'Co' || elqt === 'Cd' || elqt === 'As' || elqt === 'Sr' || elqt === 'U ';
-	}
-
-	var isHBondAcceptor = function (elqt) {
-		return elqt === 'NA' || elqt === 'OA' || elqt === 'SA';
-	}
-
-	var parseProtein = function (src) {
-		var protein = entities.protein = {
-			atoms: {},
-			representations: {},
-			refresh: function () {
-				refreshMolecule(protein);
-			}
-		}, atoms = protein.atoms, lastStdSerial;
-		var lines = src.split('\n');
-		for (var i in lines) {
-			var line = lines[i];
-			var record = line.substr(0, 6);
-			if (record === 'ATOM  ' || record === 'HETATM') {
-				if (!(line[16] === ' ' || line[16] === 'A')) continue;
-				var atom = {
-					serial: parseInt(line.substr(6, 5)),
-					name: line.substr(12, 4).replace(/ /g, ''),
-					chain: line.substr(21, 1),
-					resi: parseInt(line.substr(22, 4)),
-					insc: line.substr(26, 1),
-					coord: new THREE.Vector3(parseFloat(line.substr(30, 8)), parseFloat(line.substr(38, 8)), parseFloat(line.substr(46, 8))),
-					elqt: line.substr(77, 2),
-					elem: line.substr(77, 2).replace(/ /g, '').toUpperCase(),
-					bonds: [],
-				};
-				if (atom.elem === 'H') continue;
-				var elem = pdbqt2pdb[atom.elem];
-				if (elem) atom.elem = elem;
-				atom.color = atomColors[atom.elem] || defaultAtomColor;
-				atoms[atom.serial] = atom;
-				if (record[0] !== 'H') lastStdSerial = atom.serial;
-			}
-		}
-		var curChain, curResi, curInsc, curResAtoms = [];
-		for (var i in atoms) {
-			var atom = atoms[i];
-			if (!(curChain == atom.chain && curResi == atom.resi && curInsc == atom.insc)) {
-				for (var j in curResAtoms) {
-					var from = atoms[curResAtoms[j]];
-					for (var k in curResAtoms) {
-						if (j === k) continue;
-						var to = atoms[curResAtoms[k]];
-						if (hasCovalentBond(from, to)) {
-							from.bonds.push(to.serial);
-						}
-					}
-					if (from.name === 'C' && atom.name === 'N' && hasCovalentBond(from, atom)) {
-						from.bonds.push(atom.serial);
-						atom.bonds.push(from.serial);
-					}
-				}
-				curChain = atom.chain;
-				curResi = atom.resi;
-				curInsc = atom.insc;
-				curResAtoms.length = 0;
-			}
-			curResAtoms.push(atom.serial);
-		}
-		for (var j in curResAtoms) {
-			var from = atoms[curResAtoms[j]];
-			for (var k in curResAtoms) {
-				if (j === k) continue;
-				var to = atoms[curResAtoms[k]];
-				if (hasCovalentBond(from, to)) {
-					from.bonds.push(to.serial);
-				}
-			}
-		}
-		var surface = entities.surface = {
-			atoms: {},
-			representations: {},
-			refresh: function () {
-				refreshSurface(surface);
-			}
-		}, satoms = surface.atoms;
-		var hbondDonors = protein.HBondDonors = {}, hbondAcceptors = protein.HBondAcceptors = {};
-		var xsum = ysum = zsum = cnt = 0;
-		var xmin = ymin = zmin =  9999;
-		var xmax = ymax = zmax = -9999;
-		for (var i in atoms) {
-			var atom = atoms[i];
-			if (atom.serial <= lastStdSerial) {
-				if (atom.elem !== 'H') {
-					satoms[atom.serial] = atom;
-				}
-			} else {
-				if ((atoms[atom.serial - 1] === undefined || atoms[atom.serial - 1].resi !== atom.resi) && (atoms[atom.serial + 1] === undefined || atoms[atom.serial + 1].resi !== atom.resi)) {
-					atom.solvent = true;
-				}
-			}
-			++cnt;
-			xsum += atom.coord.x;
-			ysum += atom.coord.y;
-			zsum += atom.coord.z;
-			if (atom.coord.x < xmin) xmin = atom.coord.x;
-			if (atom.coord.y < ymin) ymin = atom.coord.y;
-			if (atom.coord.z < zmin) zmin = atom.coord.z;
-			if (atom.coord.x > xmax) xmax = atom.coord.x;
-			if (atom.coord.y > ymax) ymax = atom.coord.y;
-			if (atom.coord.z > zmax) zmax = atom.coord.z;
-			if (!isHBondDonor(atom.elqt) && !isHBondAcceptor(atom.elqt)) continue;
-			var r2 = 0;
-			for (var j = 0; j < 3; ++j) {
-				if (atom.coord.getComponent(j) < c000.getComponent(j)) {
-					var d = atom.coord.getComponent(j) - c000.getComponent(j);
-					r2 += d * d;
-				} else if (atom.coord.getComponent(j) > c111.getComponent(j)) {
-					var d = atom.coord.getComponent(j) - c111.getComponent(j);
-					r2 += d * d;
-				}
-			}
-			if (r2 < hbondCutoffSquared) {
-				if (isHBondDonor(atom.elqt)) {
-					hbondDonors[i] = atom;
-				} else {
-					hbondAcceptors[i] = atom;
-				}
-			}
-		}
-		protein.maxD = new THREE.Vector3(xmax, ymax, zmax).distanceTo(new THREE.Vector3(xmin, ymin, zmin));
-		surface.extent = [[xmin, ymin, zmin], [xmax, ymax, zmax], [xsum / cnt, ysum / cnt, zsum / cnt]];
-	};
-
-	var parseLigand = function (src) {
-		var ligand = entities.ligand = {
-			atoms: {},
-			representations: {},
-			refresh: function() {
-				refreshMolecule(ligand);
-			},
-		}, atoms = ligand.atoms, ids = [], start_ligand = true, start_frame, rotors;
-		var lines = src.split('\n')
-		for (var i in lines) {
-			var line = lines[i];
-			var record = line.substr(0, 6);
-			if (start_ligand)
-			{
-				if (record === 'REMARK') {
-					var id = line.substr(11, 8);
-					if (isNaN(parseInt(id))) continue;
-					id = 'ligand';
-					ids.push(id);
-//					ligand = entities[id] = {};
-					rotors = [];
-					start_ligand = false;
-				}
-				continue;
-			}
-			if (record === 'ATOM  ' || record === 'HETATM') {
-				var atom = {
-					serial: parseInt(line.substr(6, 5)),
-					coord: new THREE.Vector3(parseFloat(line.substr(30, 8)), parseFloat(line.substr(38, 8)), parseFloat(line.substr(46, 8))),
-					elqt: line.substr(77, 2),
-					elem: line.substr(77, 2).replace(/ /g, '').toUpperCase(),
-					bonds: [],
-				};
-				if (atom.elem === 'H') continue;
-				var elem = pdbqt2pdb[atom.elem];
-				if (elem) atom.elem = elem;
-				atom.color = atomColors[atom.elem] || defaultAtomColor;
-				if (start_frame === undefined) start_frame = atom.serial;
-				for (var j = start_frame; j < atom.serial; ++j) {
-					var a = atoms[j];
-					if (a && hasCovalentBond(a, atom)) {
-						a.bonds.push(atom.serial);
-						atom.bonds.push(a.serial);
-					}
-				}
-				atoms[atom.serial] = atom;
-			} else if (record === 'BRANCH') {
-				rotors.push({
-					x: parseInt(line.substr( 6, 4)),
-					y: parseInt(line.substr(10, 4)),
-				});
-				start_frame = undefined;
-			} else if (record === 'TORSDO') {
-				for (var i in rotors) {
-					var r = rotors[i];
-					atoms[r.x].bonds.push(r.y);
-					atoms[r.y].bonds.push(r.x);
-				}
-				mdl.add(createHBondRepresentation(atoms));
-				if (ids.length == 1) break;
-				start_ligand = true;
-			}
-		}
-		var hits = $('#hits');
-		hits.html(ids.map(function(id) {
-			return '<label class="btn btn-primary"><input type="radio">' + id + '</label>';
-		}).join(''));
-		$(':first', hits).addClass('active');
-		$('> .btn', hits).click(function(e) {
-			console.log(e.target.innerText);
-		});
-	};
-
-	var createBox = function () {
-		var geo = new THREE.Geometry();
-		geo.vertices.push(c000);
-		geo.vertices.push(c100);
-		geo.vertices.push(c010);
-		geo.vertices.push(c110);
-		geo.vertices.push(c001);
-		geo.vertices.push(c101);
-		geo.vertices.push(c011);
-		geo.vertices.push(c111);
-		geo.vertices.push(c000);
-		geo.vertices.push(c010);
-		geo.vertices.push(c100);
-		geo.vertices.push(c110);
-		geo.vertices.push(c001);
-		geo.vertices.push(c011);
-		geo.vertices.push(c101);
-		geo.vertices.push(c111);
-		geo.vertices.push(c000);
-		geo.vertices.push(c001);
-		geo.vertices.push(c100);
-		geo.vertices.push(c101);
-		geo.vertices.push(c010);
-		geo.vertices.push(c011);
-		geo.vertices.push(c110);
-		geo.vertices.push(c111);
-		geo.computeLineDistances();
-		return new THREE.Line(geo, new THREE.LineDashedMaterial({ linewidth: 4, color: defaultBoxColor, dashSize: 0.25, gapSize: 0.125 }), THREE.LinePieces);
-	};
-
-	var createSphere = function (atom, defaultRadius, forceDefault, scale) {
-		var mesh = new THREE.Mesh(sphereGeometry, new THREE.MeshLambertMaterial({ color: atom.color }));
-		mesh.scale.x = mesh.scale.y = mesh.scale.z = forceDefault ? defaultRadius : (vdwRadii[atom.elem] || defaultRadius) * (scale ? scale : 1);
-		mesh.position = atom.coord;
-		return mesh;
-	};
-
-	var createCylinder = function (p0, p1, radius, color) {
-		var mesh = new THREE.Mesh(cylinderGeometry, new THREE.MeshLambertMaterial({ color: color }));
-		mesh.position = p0.clone().add(p1).multiplyScalar(0.5);
-		mesh.matrixAutoUpdate = false;
-		mesh.lookAt(p0);
-		mesh.updateMatrix();
-		mesh.matrix.multiply(new THREE.Matrix4().makeScale(radius, radius, p0.distanceTo(p1))).multiply(new THREE.Matrix4().makeRotationX(Math.PI * 0.5));
-		return mesh;
-	};
-
-	var createSphereRepresentation = function (atoms) {
-		var obj = new THREE.Object3D();
-		for (var i in atoms) {
-			obj.add(createSphere(atoms[i], sphereRadius));
-		}
-		return obj;
-	};
-
-	var createStickRepresentation = function (atoms, atomR, bondR) {
-		var obj = new THREE.Object3D();
-		for (var i in atoms) {
-			var atom0 = atoms[i];
-			for (var j in atom0.bonds) {
-				var atom1 = atoms[atom0.bonds[j]];
-				if (atom1.serial < atom0.serial) continue;
-				var mp = atom0.coord.clone().add(atom1.coord).multiplyScalar(0.5);
-				obj.add(createCylinder(atom0.coord, mp, bondR, atom0.color));
-				obj.add(createCylinder(atom1.coord, mp, bondR, atom1.color));
-			}
-			obj.add(createSphere(atom0, atomR, true));
-		}
-		return obj;
-	};
-
-	var createLineRepresentation = function (atoms) {
-		var obj = new THREE.Object3D();
-		var geo = new THREE.Geometry();
-		obj.add(new THREE.Line(geo, new THREE.LineBasicMaterial({ linewidth: 2, vertexColors: true }), THREE.LinePieces));
-		for (var i in atoms) {
-			var atom0 = atoms[i];
-			for (var j in atom0.bonds) {
-				var atom1 = atoms[atom0.bonds[j]];
-				if (atom1.serial < atom0.serial) continue;
-				var mp = atom0.coord.clone().add(atom1.coord).multiplyScalar(0.5);
-				geo.vertices.push(atom0.coord);
-				geo.vertices.push(mp);
-				geo.vertices.push(atom1.coord);
-				geo.vertices.push(mp);
-				geo.colors.push(atom0.color);
-				geo.colors.push(atom0.color);
-				geo.colors.push(atom1.color);
-				geo.colors.push(atom1.color);
-			}
-			if (atom0.solvent) {
-				obj.add(createSphere(atom0, sphereRadius, false, 0.2));
-			}
-		}
-		return obj;
-	};
-
-	var createSurfaceRepresentation = function (entity, type) {
-		var ps = new ProteinSurface();
-		ps.initparm(entity.extent, type > 1);
-		ps.fillvoxels(entity.atoms);
-		ps.buildboundary();
-		if (type == 4 || type == 2) ps.fastdistancemap();
-		if (type == 2) { ps.boundingatom(false); ps.fillvoxelswaals(entity.atoms); }
-		ps.marchingcube(type);
-		ps.laplaciansmooth(1);
-		ps.transformVertices();
-		return new THREE.Mesh(ps.getModel(entity.atoms), new THREE.MeshLambertMaterial({
-			vertexColors: THREE.VertexColors,
-			opacity: 0.9,
-			transparent: true,
-		}));
-	};
-
-	var createHBondRepresentation = function (atoms) {
-		var hbondDonors = entities.protein.HBondDonors, hbondAcceptors = entities.protein.HBondAcceptors;
-		var geo = new THREE.Geometry();
-		for (var li in atoms) {
-			var la = atoms[li];
-			if (isHBondDonor(la.elqt)) {
-				for (var pi in hbondAcceptors) {
-					var pa = hbondAcceptors[pi];
-					if (la.coord.distanceToSquared(pa.coord) < hbondCutoffSquared) {
-						geo.vertices.push(la.coord);
-						geo.vertices.push(pa.coord);
-					}
-				}
-			} else if (isHBondAcceptor(la.elqt)) {
-				for (var pi in hbondDonors) {
-					var pa = hbondDonors[pi];
-					if (la.coord.distanceToSquared(pa.coord) < hbondCutoffSquared) {
-						geo.vertices.push(la.coord);
-						geo.vertices.push(pa.coord);
-					}
-				}
-			}
-		}
-		geo.computeLineDistances();
-		return new THREE.Line(geo, new THREE.LineDashedMaterial({ linewidth: 4, color: defaultHBondColor, dashSize: 0.25, gapSize: 0.125 }), THREE.LinePieces);
-	};
-
-	var refreshMolecule = function (entity) {
-		var r = entity.representations;
-		if (r[entity.active] === undefined) {
-			switch (entity.active) {
-				case 'line':
-					r[entity.active] = createLineRepresentation(entity.atoms);
-					break;
-				case 'stick':
-					r[entity.active] = createStickRepresentation(entity.atoms, cylinderRadius, cylinderRadius);
-					break;
-				case 'ball & stick':
-					r[entity.active] = createStickRepresentation(entity.atoms, cylinderRadius, cylinderRadius * 0.5);
-					break;
-				case 'sphere':
-					r[entity.active] = createSphereRepresentation(entity.atoms);
-					break;
-			}
-		}
-		mdl.add(r[entity.active]);
-	};
-
-	var refreshSurface = function (entity) {
-		var r = entity.representations;
-		if (r[entity.active] === undefined) {
-			switch (entity.active) {
-				case 'Van der Waals surface':
-					r[entity.active] = createSurfaceRepresentation(entity, 1);
-					break;
-				case 'solvent excluded surface':
-					r[entity.active] = createSurfaceRepresentation(entity, 2);
-					break;
-				case 'solvent accessible surface':
-					r[entity.active] = createSurfaceRepresentation(entity, 3);
-					break;
-				case 'molecular surface':
-					r[entity.active] = createSurfaceRepresentation(entity, 4);
-					break;
-				case 'nothing':
-					r[entity.active] = undefined;
-					break;
-			}
-		}
-		mdl.add(r[entity.active]);
-	};
-
-	var render = function () {
-		var center = rot.position.z - camera.position.z;
-		if (center < 1) center = 1;
-		camera.near = center + sn;
-		if (camera.near < 1) camera.near = 1;
-		camera.far = center + sf;
-		if (camera.near + 1 > camera.far) camera.far = camera.near + 1;
-		camera.updateProjectionMatrix();
-		scene.fog.near = camera.near + 0.4 * (camera.far - camera.near);
-		scene.fog.far = camera.far;
-		renderer.render(scene, camera);
-	};
-
-	var path = '/idock/jobs/' + location.search.substr(1) + '/';
-	$('#results a').each(function () {
-		$(this).attr('href', path + this.innerText);
-	});
-	$.get(path + 'box.conf', function (box) {
-		parseBox(box);
-		mdl.position = ct.clone().multiplyScalar(-1);
-		mdl.add(createBox());
-		$.get(path + 'receptor.pdbqt', function (protein) {
-			parseProtein(protein);
-			var maxD = entities.protein.maxD;
-			sn = -maxD / 2;
-			sf =  maxD / 4;
-			rot.position.z = maxD * 0.08 / Math.tan(Math.PI / 180.0 * 10) - 150;
-			rot.quaternion = new THREE.Quaternion(1, 0, 0, 0);
-			$.ajax({
-				url: path + 'hits.pdbqt.gz',
-				mimeType: 'application/octet-stream; charset=x-user-defined',
-			}).done(function (hits_gz_str) {
-				// Convert hits_gz_str to hits_gz_raw
-				var hits_gz_raw = new Uint8Array(hits_gz_str.length);
-				for (var i = 0, l = hits_gz_str.length; i < l; ++i) {
-					hits_gz_raw[i] = hits_gz_str.charCodeAt(i);
-				}
-				// Gunzip hits_gz_raw to hits_raw
-				var hits_raw = new Zlib.Gunzip(hits_gz_raw).decompress();
-				// Convert hits_raw to hits_str
-				var hits_str = '';
-				for (var i = 0, l = hits_raw.length; i < l; ++i) {
-					hits_str += String.fromCharCode(hits_raw[i]);
-				}
-				parseLigand(hits_str);
-			}).always(function() {
-				for (var key in entities) {
-					var entity = entities[key];
-					entity.active = $('#' + key + ' .active')[0].innerText;
-					entity.refresh();
-					$('#' + key).click(function (e) {
-						var key = e.target.parentElement.id;
-						var entity = entities[key];
-						mdl.remove(entity.representations[entity.active]);
-						entity.active = e.target.innerText;
-						entity.refresh();
-						render();
-					});
-				}
-				render();
-				$('#exportCanvas').click(function (e) {
-					render();
-					window.open(renderer.domElement.toDataURL('image/png'));
-				});
-			});
-		});
+	$('#exportCanvas').click(function (e) {
+		render();
+		window.open(renderer.domElement.toDataURL('image/png'));
 	});
 });
