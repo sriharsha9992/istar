@@ -412,18 +412,10 @@ $(function () {
 	var camera = new THREE.PerspectiveCamera(20, canvas.width() / canvas.height(), 1, 800);
 	camera.position = new THREE.Vector3(0, 0, -150);
 	camera.lookAt(new THREE.Vector3(0, 0, 0));
-	var entities = {
-		protein: undefined,
-		 ligand: undefined,
-		surface: undefined,
-	};
-	var options = {}, objects = {};
-	Object.keys(entities).forEach(function(entity) {
+	var entities = {};
+	var options = {};
+	['protein', 'ligand', 'surface'].forEach(function(entity) {
 		options[entity] = $('#' + entity + ' .active')[0].innerText;
-		var o = objects[entity] = {};
-		$('#' + entity + ' label').each(function() {
-			o[entity.innerText] = undefined;
-		});
 	});
 	var refresh = {
 		protein: function () {
@@ -530,7 +522,10 @@ $(function () {
 	}
 
 	var parseProtein = function (src) {
-		var protein = entities.protein = {}, atoms = protein.atoms = {}, lastStdSerial;
+		var protein = entities.protein = {
+			atoms: {},
+			representations: {},
+		}, atoms = protein.atoms, lastStdSerial;
 		var lines = src.split('\n');
 		for (var i in lines) {
 			var line = lines[i];
@@ -591,7 +586,10 @@ $(function () {
 				}
 			}
 		}
-		var surface = entities.surface = {}, satoms = surface.atoms = {};
+		var surface = entities.surface = {
+			atoms: {},
+			representations: {},
+		}, satoms = surface.atoms;
 		var hbondDonors = protein.HBondDonors = {}, hbondAcceptors = protein.HBondAcceptors = {};
 		var xsum = ysum = zsum = cnt = 0;
 		var xmin = ymin = zmin =  9999;
@@ -641,7 +639,10 @@ $(function () {
 	};
 
 	var parseLigand = function (src) {
-		var ligand = entities.ligand = {}, atoms = ligand.atoms = {}, ids = [], start_ligand = true, start_frame, rotors;
+		var ligand = entities.ligand = {
+			atoms: {},
+			representations: {},
+		}, atoms = ligand.atoms, ids = [], start_ligand = true, start_frame, rotors;
 		var lines = src.split('\n')
 		for (var i in lines) {
 			var line = lines[i];
@@ -849,48 +850,48 @@ $(function () {
 	};
 
 	var refreshMolecule = function (entity) {
-		var m = objects[entity];
-		if (m[options[entity]] === undefined) {
+		var r = entities[entity].representations;
+		if (r[options[entity]] === undefined) {
 			switch (options[entity]) {
 				case 'line':
-					m[options[entity]] = createLineRepresentation(entities[entity].atoms);
+					r[options[entity]] = createLineRepresentation(entities[entity].atoms);
 					break;
 				case 'stick':
-					m[options[entity]] = createStickRepresentation(entities[entity].atoms, cylinderRadius, cylinderRadius);
+					r[options[entity]] = createStickRepresentation(entities[entity].atoms, cylinderRadius, cylinderRadius);
 					break;
 				case 'ball & stick':
-					m[options[entity]] = createStickRepresentation(entities[entity].atoms, cylinderRadius, cylinderRadius * 0.5);
+					r[options[entity]] = createStickRepresentation(entities[entity].atoms, cylinderRadius, cylinderRadius * 0.5);
 					break;
 				case 'sphere':
-					m[options[entity]] = createSphereRepresentation(entities[entity].atoms);
+					r[options[entity]] = createSphereRepresentation(entities[entity].atoms);
 					break;
 			}
 		}
-		mdl.add(m[options[entity]]);
+		mdl.add(r[options[entity]]);
 	};
 
 	var refreshSurface = function (entity) {
-		var m = objects[entity];
-		if (m[options[entity]] === undefined) {
+		var r = entities[entity].representations;
+		if (r[options[entity]] === undefined) {
 			switch (options[entity]) {
 				case 'Van der Waals surface':
-					m[options[entity]] = createSurfaceRepresentation(entities[entity], 1);
+					r[options[entity]] = createSurfaceRepresentation(entities[entity], 1);
 					break;
 				case 'solvent excluded surface':
-					m[options[entity]] = createSurfaceRepresentation(entities[entity], 2);
+					r[options[entity]] = createSurfaceRepresentation(entities[entity], 2);
 					break;
 				case 'solvent accessible surface':
-					m[options[entity]] = createSurfaceRepresentation(entities[entity], 3);
+					r[options[entity]] = createSurfaceRepresentation(entities[entity], 3);
 					break;
 				case 'molecular surface':
-					m[options[entity]] = createSurfaceRepresentation(entities[entity], 4);
+					r[options[entity]] = createSurfaceRepresentation(entities[entity], 4);
 					break;
 				case 'nothing':
-					m[options[entity]] = undefined;
+					r[options[entity]] = undefined;
 					break;
 			}
 		}
-		mdl.add(m[options[entity]]);
+		mdl.add(r[options[entity]]);
 	};
 
 	var render = function () {
@@ -949,7 +950,7 @@ $(function () {
 
 	['protein', 'ligand', 'surface'].forEach(function (option) {
 		$('#' + option).click(function (e) {
-			mdl.remove(objects[option][options[option]]);
+			mdl.remove(entities[option].representations[options[option]]);
 			options[option] = e.target.innerText;
 			refresh[option]();
 			render();
