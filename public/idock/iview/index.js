@@ -529,9 +529,6 @@ $(function () {
 		return elqt === 'NA' || elqt === 'OA' || elqt === 'SA';
 	}
 
-	var proteinHBondDonors, proteinHBondAcceptors;
-	var xmin = ymin = zmin =  9999;
-	var xmax = ymax = zmax = -9999;
 	var parseProtein = function (src) {
 		var protein = entities.protein = {}, atoms = protein.atoms = {}, lastStdSerial;
 		var lines = src.split('\n');
@@ -596,6 +593,9 @@ $(function () {
 		}
 		var surface = entities.surface = {}, satoms = surface.atoms = {};
 		var hbondDonors = protein.HBondDonors = {}, hbondAcceptors = protein.HBondAcceptors = {};
+		var xsum = ysum = zsum = cnt = 0;
+		var xmin = ymin = zmin =  9999;
+		var xmax = ymax = zmax = -9999;
 		for (var i in atoms) {
 			var atom = atoms[i];
 			if (atom.serial <= lastStdSerial) {
@@ -607,6 +607,10 @@ $(function () {
 					atom.solvent = true;
 				}
 			}
+			++cnt;
+			xsum += atom.coord.x;
+			ysum += atom.coord.y;
+			zsum += atom.coord.z;
 			if (atom.coord.x < xmin) xmin = atom.coord.x;
 			if (atom.coord.y < ymin) ymin = atom.coord.y;
 			if (atom.coord.z < zmin) zmin = atom.coord.z;
@@ -632,6 +636,8 @@ $(function () {
 				}
 			}
 		}
+		protein.maxD = new THREE.Vector3(xmax, ymax, zmax).distanceTo(new THREE.Vector3(xmin, ymin, zmin));
+		surface.extent = [[xmin, ymin, zmin], [xmax, ymax, zmax], [xsum / cnt, ysum / cnt, zsum / cnt]];
 	};
 
 	var parseLigand = function (src) {
@@ -922,7 +928,7 @@ $(function () {
 		mdl.add(createBox());
 		$.get(path + 'receptor.pdbqt', function (protein) {
 			parseProtein(protein);
-			var maxD = new THREE.Vector3(xmax, ymax, zmax).distanceTo(new THREE.Vector3(xmin, ymin, zmin));
+			var maxD = entities.protein.maxD;
 			sn = -maxD / 2;
 			sf =  maxD / 4;
 			rot.position.z = maxD * 0.08 / Math.tan(Math.PI / 180.0 * 10) - 150;
