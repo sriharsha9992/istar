@@ -517,47 +517,49 @@ $(function () {
 		return new THREE.Line(geo, new THREE.LineDashedMaterial({ linewidth: 4, color: defaultHBondColor, dashSize: 0.25, gapSize: 0.125 }), THREE.LinePieces);
 	};
 	var refreshMolecule = function (entity) {
-		var r = entity.representations;
-		if (r[entity.active] === undefined) {
+		var r = entity.representations[entity.active];
+		if (r === undefined) {
 			switch (entity.active) {
 				case 'line':
-					r[entity.active] = createLineRepresentation(entity.atoms);
+					r = createLineRepresentation(entity.atoms);
 					break;
 				case 'stick':
-					r[entity.active] = createStickRepresentation(entity.atoms, cylinderRadius, cylinderRadius);
+					r = createStickRepresentation(entity.atoms, cylinderRadius, cylinderRadius);
 					break;
 				case 'ball & stick':
-					r[entity.active] = createStickRepresentation(entity.atoms, cylinderRadius, cylinderRadius * 0.5);
+					r = createStickRepresentation(entity.atoms, cylinderRadius, cylinderRadius * 0.5);
 					break;
 				case 'sphere':
-					r[entity.active] = createSphereRepresentation(entity.atoms);
+					r = createSphereRepresentation(entity.atoms);
 					break;
 			}
+			entity.representations[entity.active] = r;
 		}
-		mdl.add(r[entity.active]);
+		mdl.add(r);
 	};
 	var refreshSurface = function (entity) {
-		var r = entity.representations;
-		if (r[entity.active] === undefined) {
+		var r = entity.representations[entity.active];
+		if (r === undefined) {
 			switch (entity.active) {
 				case 'Van der Waals surface':
-					r[entity.active] = createSurfaceRepresentation(entity, 1);
+					r = createSurfaceRepresentation(entity, 1);
 					break;
 				case 'solvent excluded surface':
-					r[entity.active] = createSurfaceRepresentation(entity, 2);
+					r = createSurfaceRepresentation(entity, 2);
 					break;
 				case 'solvent accessible surface':
-					r[entity.active] = createSurfaceRepresentation(entity, 3);
+					r = createSurfaceRepresentation(entity, 3);
 					break;
 				case 'molecular surface':
-					r[entity.active] = createSurfaceRepresentation(entity, 4);
+					r = createSurfaceRepresentation(entity, 4);
 					break;
 				case 'nothing':
-					r[entity.active] = undefined;
+					r = undefined;
 					break;
 			}
+			entity.representations[entity.active] = r;
 		}
-		mdl.add(r[entity.active]);
+		mdl.add(r);
 	};
 	var render = function () {
 		var center = rot.position.z - camera.position.z;
@@ -581,7 +583,6 @@ $(function () {
 	var isHBondAcceptor = function (elqt) {
 		return elqt === 'NA' || elqt === 'OA' || elqt === 'SA';
 	};
-	var entities = {};
 	var path = '/idock/jobs/' + location.search.substr(1) + '/';
 	$('#results a').each(function () {
 		$(this).attr('href', path + this.innerText);
@@ -627,6 +628,7 @@ $(function () {
 		bgeo.computeLineDistances();
 		mdl.add(new THREE.Line(bgeo, new THREE.LineDashedMaterial({ linewidth: 4, color: defaultBoxColor, dashSize: 0.25, gapSize: 0.125 }), THREE.LinePieces));
 		mdl.position = bct.clone().multiplyScalar(-1);
+		var entities = {};
 		$.get(path + 'receptor.pdbqt', function (psrc) {
 			var protein = entities.protein = {
 				atoms: {},
