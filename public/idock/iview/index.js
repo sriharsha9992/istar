@@ -491,27 +491,12 @@ $(function () {
 			transparent: true,
 		}));
 	};
-	var createHBondRepresentation = function (atoms, hbondDonors, hbondAcceptors) {
+	var createHBondRepresentation = function (hbonds) {
 		var geo = new THREE.Geometry();
-		for (var li in atoms) {
-			var la = atoms[li];
-			if (isHBondDonor(la.elqt)) {
-				for (var pi in hbondAcceptors) {
-					var pa = hbondAcceptors[pi];
-					if (la.coord.distanceToSquared(pa.coord) < hbondCutoffSquared) {
-						geo.vertices.push(la.coord);
-						geo.vertices.push(pa.coord);
-					}
-				}
-			} else if (isHBondAcceptor(la.elqt)) {
-				for (var pi in hbondDonors) {
-					var pa = hbondDonors[pi];
-					if (la.coord.distanceToSquared(pa.coord) < hbondCutoffSquared) {
-						geo.vertices.push(la.coord);
-						geo.vertices.push(pa.coord);
-					}
-				}
-			}
+		for (var i in hbonds) {
+			var hbond = hbonds[i];
+			geo.vertices.push(hbond.p.coord);
+			geo.vertices.push(hbond.l.coord);
 		}
 		geo.computeLineDistances();
 		return new THREE.Line(geo, new THREE.LineDashedMaterial({ linewidth: 4, color: defaultHBondColor, dashSize: 0.25, gapSize: 0.125 }), THREE.LinePieces);
@@ -798,6 +783,7 @@ $(function () {
 							}, atoms = ligand.atoms;
 							ligand.smiles = lines[++i].substr(11);
 							ligand.suppliers = lines[++i].substr(11).split(' | ').slice(1);
+							ligand.nsuppliers = ligand.suppliers.length;
 							ligand.idock_score = parseFloat(lines[i+2].substr(55, 8));
 							ligand.rf_score = parseFloat(lines[i+8].substr(55, 8));
 							ligand.consensus_score = parseFloat(lines[i+9].substr(55, 8));
@@ -838,7 +824,33 @@ $(function () {
 							atoms[r.x].bonds.push(r.y);
 							atoms[r.y].bonds.push(r.x);
 						}
-						ligand.representations.hbond = createHBondRepresentation(atoms, hbondDonors, hbondAcceptors);
+						var hbonds = ligand.hbonds = [];
+						for (var pi in hbondDonors) {
+							var pa = hbondDonors[pi];
+							for (var li in atoms) {
+								var la = atoms[li];
+								if (isHBondAcceptor(la.elqt) && la.coord.distanceToSquared(pa.coord) < hbondCutoffSquared) {
+									hbonds.push({
+										p: pa,
+										l: la,
+									});
+								}
+							}
+						}
+						for (var pi in hbondAcceptors) {
+							var pa = hbondAcceptors[pi];
+							for (var li in atoms) {
+								var la = atoms[li];
+								if (isHBondDonor(la.elqt) && la.coord.distanceToSquared(pa.coord) < hbondCutoffSquared) {
+									hbonds.push({
+										p: pa,
+										l: la,
+									});
+								}
+							}
+						}
+						ligand.nhbonds = hbonds.length;
+						ligand.representations.hbond = createHBondRepresentation(hbonds);
 						ligands[ligand.id] = ligand;
 						if (entities.ligand === undefined) entities.ligand = ligand;
 						if (++nligands == 100) break;
@@ -857,6 +869,10 @@ $(function () {
 					mdl.remove(ligand.representations[ligand.active]);
 					ligand = entities.ligand = ligands[e.target.innerText];
 					mdl.add(ligand.representations.hbond);
+					$('#data span').each(function() {
+						var $this = $(this);
+						$this.text(ligand[$this.attr('id')]);
+					});
 				});
 			}).always(function() {
 				for (var key in entities) {
