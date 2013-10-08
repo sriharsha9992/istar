@@ -510,6 +510,9 @@ $(function () {
 		var protein = entities.protein = {
 			atoms: {},
 			representations: {},
+			refresh: function () {
+				refreshMolecule(protein);
+			}
 		}, atoms = protein.atoms, lastStdSerial;
 		var lines = src.split('\n');
 		for (var i in lines) {
@@ -571,12 +574,12 @@ $(function () {
 				}
 			}
 		}
-		protein.refresh = function () {
-			refreshMolecule(protein);
-		};
 		var surface = entities.surface = {
 			atoms: {},
 			representations: {},
+			refresh: function () {
+				refreshSurface(surface);
+			}
 		}, satoms = surface.atoms;
 		var hbondDonors = protein.HBondDonors = {}, hbondAcceptors = protein.HBondAcceptors = {};
 		var xsum = ysum = zsum = cnt = 0;
@@ -624,15 +627,15 @@ $(function () {
 		}
 		protein.maxD = new THREE.Vector3(xmax, ymax, zmax).distanceTo(new THREE.Vector3(xmin, ymin, zmin));
 		surface.extent = [[xmin, ymin, zmin], [xmax, ymax, zmax], [xsum / cnt, ysum / cnt, zsum / cnt]];
-		surface.refresh = function () {
-			refreshSurface(surface);
-		};
 	};
 
 	var parseLigand = function (src) {
 		var ligand = entities.ligand = {
 			atoms: {},
 			representations: {},
+			refresh: function() {
+				refreshMolecule(ligand);
+			},
 		}, atoms = ligand.atoms, ids = [], start_ligand = true, start_frame, rotors;
 		var lines = src.split('\n')
 		for (var i in lines) {
@@ -684,9 +687,6 @@ $(function () {
 					atoms[r.x].bonds.push(r.y);
 					atoms[r.y].bonds.push(r.x);
 				}
-				ligand.refresh = function () {
-					refreshMolecule(ligand);
-				};
 				mdl.add(createHBondRepresentation(atoms));
 				if (ids.length == 1) break;
 				start_ligand = true;
