@@ -595,7 +595,7 @@ $(function () {
 			}
 		}
 		var surface = entities.surface = {}, satoms = surface.atoms = {};
-		proteinHBondDonors = {}, proteinHBondAcceptors = {};
+		var hbondDonors = protein.HBondDonors = {}, hbondAcceptors = protein.HBondAcceptors = {};
 		for (var i in atoms) {
 			var atom = atoms[i];
 			if (atom.serial <= lastStdSerial) {
@@ -615,8 +615,7 @@ $(function () {
 			if (atom.coord.z > zmax) zmax = atom.coord.z;
 			if (!isHBondDonor(atom.elqt) && !isHBondAcceptor(atom.elqt)) continue;
 			var r2 = 0;
-			for (var j = 0; j < 3; ++j)
-			{
+			for (var j = 0; j < 3; ++j) {
 				if (atom.coord.getComponent(j) < c000.getComponent(j)) {
 					var d = atom.coord.getComponent(j) - c000.getComponent(j);
 					r2 += d * d;
@@ -625,12 +624,11 @@ $(function () {
 					r2 += d * d;
 				}
 			}
-			if (r2 < hbondCutoffSquared)
-			{
+			if (r2 < hbondCutoffSquared) {
 				if (isHBondDonor(atom.elqt)) {
-					proteinHBondDonors[i] = atom;
+					hbondDonors[i] = atom;
 				} else {
-					proteinHBondAcceptors[i] = atom;
+					hbondAcceptors[i] = atom;
 				}
 			}
 		}
@@ -818,20 +816,21 @@ $(function () {
 	};
 
 	var createHBondRepresentation = function (atoms) {
+		var hbondDonors = entities.protein.HBondDonors, hbondAcceptors = entities.protein.HBondAcceptors;
 		var geo = new THREE.Geometry();
 		for (var li in atoms) {
 			var la = atoms[li];
 			if (isHBondDonor(la.elqt)) {
-				for (var pi in proteinHBondAcceptors) {
-					var pa = proteinHBondAcceptors[pi];
+				for (var pi in hbondAcceptors) {
+					var pa = hbondAcceptors[pi];
 					if (la.coord.distanceToSquared(pa.coord) < hbondCutoffSquared) {
 						geo.vertices.push(la.coord);
 						geo.vertices.push(pa.coord);
 					}
 				}
 			} else if (isHBondAcceptor(la.elqt)) {
-				for (var pi in proteinHBondDonors) {
-					var pa = proteinHBondDonors[pi];
+				for (var pi in hbondDonors) {
+					var pa = hbondDonors[pi];
 					if (la.coord.distanceToSquared(pa.coord) < hbondCutoffSquared) {
 						geo.vertices.push(la.coord);
 						geo.vertices.push(pa.coord);
