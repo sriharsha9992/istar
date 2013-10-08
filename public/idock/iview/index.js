@@ -688,29 +688,7 @@ $(function () {
 					ligand[r.x].bonds.push(r.y);
 					ligand[r.y].bonds.push(r.x);
 				}
-				var geo = new THREE.Geometry();
-				for (var li in ligand) {
-					var la = ligand[li];
-					if (isHBondDonor(la.elqt)) {
-						for (var pi in proteinHBondAcceptors) {
-							var pa = proteinHBondAcceptors[pi];
-							if (la.coord.distanceToSquared(pa.coord) < hbondCutoffSquared) {
-								geo.vertices.push(la.coord);
-								geo.vertices.push(pa.coord);
-							}
-						}
-					} else if (isHBondAcceptor(la.elqt)) {
-						for (var pi in proteinHBondDonors) {
-							var pa = proteinHBondDonors[pi];
-							if (la.coord.distanceToSquared(pa.coord) < hbondCutoffSquared) {
-								geo.vertices.push(la.coord);
-								geo.vertices.push(pa.coord);
-							}
-						}
-					}
-				}
-				geo.computeLineDistances();
-				mdl.add(new THREE.Line(geo, new THREE.LineDashedMaterial({ linewidth: 4, color: defaultHBondColor, dashSize: 0.25, gapSize: 0.125 }), THREE.LinePieces));
+				mdl.add(createHBondRepresentation(ligand));
 				if (ids.length == 1) break;
 				start_ligand = true;
 			}
@@ -837,6 +815,32 @@ $(function () {
 			opacity: 0.9,
 			transparent: true,
 		}));
+	};
+
+	var createHBondRepresentation = function (ligand) {
+		var geo = new THREE.Geometry();
+		for (var li in ligand) {
+			var la = ligand[li];
+			if (isHBondDonor(la.elqt)) {
+				for (var pi in proteinHBondAcceptors) {
+					var pa = proteinHBondAcceptors[pi];
+					if (la.coord.distanceToSquared(pa.coord) < hbondCutoffSquared) {
+						geo.vertices.push(la.coord);
+						geo.vertices.push(pa.coord);
+					}
+				}
+			} else if (isHBondAcceptor(la.elqt)) {
+				for (var pi in proteinHBondDonors) {
+					var pa = proteinHBondDonors[pi];
+					if (la.coord.distanceToSquared(pa.coord) < hbondCutoffSquared) {
+						geo.vertices.push(la.coord);
+						geo.vertices.push(pa.coord);
+					}
+				}
+			}
+		}
+		geo.computeLineDistances();
+		return new THREE.Line(geo, new THREE.LineDashedMaterial({ linewidth: 4, color: defaultHBondColor, dashSize: 0.25, gapSize: 0.125 }), THREE.LinePieces);
 	};
 
 	var refreshMolecule = function (entity) {
