@@ -754,6 +754,7 @@ $(function () {
 			sf =  maxD / 4;
 			rot.position.z = maxD * 0.08 / Math.tan(Math.PI / 180.0 * 10) - 150;
 			rot.quaternion = new THREE.Quaternion(1, 0, 0, 0);
+			var ligands = [];
 			$.ajax({
 				url: path + 'hits.pdbqt.gz',
 				mimeType: 'application/octet-stream; charset=x-user-defined',
