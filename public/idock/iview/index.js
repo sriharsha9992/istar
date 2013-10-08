@@ -533,7 +533,7 @@ $(function () {
 	var xmin = ymin = zmin =  9999;
 	var xmax = ymax = zmax = -9999;
 	var parseProtein = function (src) {
-		var protein = entities.protein = {}, lastStdSerial;
+		var protein = entities.protein = {}, atoms = protein.atoms = {}, lastStdSerial;
 		var lines = src.split('\n');
 		for (var i in lines) {
 			var line = lines[i];
@@ -555,19 +555,19 @@ $(function () {
 				var elem = pdbqt2pdb[atom.elem];
 				if (elem) atom.elem = elem;
 				atom.color = atomColors[atom.elem] || defaultAtomColor;
-				protein[atom.serial] = atom;
+				atoms[atom.serial] = atom;
 				if (record[0] !== 'H') lastStdSerial = atom.serial;
 			}
 		}
 		var curChain, curResi, curInsc, curResAtoms = [];
-		for (var i in protein) {
-			var atom = protein[i];
+		for (var i in atoms) {
+			var atom = atoms[i];
 			if (!(curChain == atom.chain && curResi == atom.resi && curInsc == atom.insc)) {
 				for (var j in curResAtoms) {
-					var from = protein[curResAtoms[j]];
+					var from = atoms[curResAtoms[j]];
 					for (var k in curResAtoms) {
 						if (j === k) continue;
-						var to = protein[curResAtoms[k]];
+						var to = atoms[curResAtoms[k]];
 						if (hasCovalentBond(from, to)) {
 							from.bonds.push(to.serial);
 						}
@@ -585,25 +585,25 @@ $(function () {
 			curResAtoms.push(atom.serial);
 		}
 		for (var j in curResAtoms) {
-			var from = protein[curResAtoms[j]];
+			var from = atoms[curResAtoms[j]];
 			for (var k in curResAtoms) {
 				if (j === k) continue;
-				var to = protein[curResAtoms[k]];
+				var to = atoms[curResAtoms[k]];
 				if (hasCovalentBond(from, to)) {
 					from.bonds.push(to.serial);
 				}
 			}
 		}
-		var surface = entities.surface = {};
+		var surface = entities.surface = {}, satoms = surface.atoms = {};
 		proteinHBondDonors = {}, proteinHBondAcceptors = {};
-		for (var i in protein) {
-			var atom = protein[i];
+		for (var i in atoms) {
+			var atom = atoms[i];
 			if (atom.serial <= lastStdSerial) {
 				if (atom.elem !== 'H') {
-					surface[atom.serial] = atom;
+					satoms[atom.serial] = atom;
 				}
 			} else {
-				if ((protein[atom.serial - 1] === undefined || protein[atom.serial - 1].resi !== atom.resi) && (protein[atom.serial + 1] === undefined || protein[atom.serial + 1].resi !== atom.resi)) {
+				if ((atoms[atom.serial - 1] === undefined || atoms[atom.serial - 1].resi !== atom.resi) && (atoms[atom.serial + 1] === undefined || atoms[atom.serial + 1].resi !== atom.resi)) {
 					atom.solvent = true;
 				}
 			}
@@ -637,8 +637,8 @@ $(function () {
 	};
 
 	var parseLigand = function (src) {
-		var ligand;
-		var lines = src.split('\n'), ids = [], start_ligand = true, start_frame, rotors;
+		var ligand = entities.ligand = {}, atoms = ligand.atoms = {}, ids = [], start_ligand = true, start_frame, rotors;
+		var lines = src.split('\n')
 		for (var i in lines) {
 			var line = lines[i];
 			var record = line.substr(0, 6);
@@ -649,7 +649,7 @@ $(function () {
 					if (isNaN(parseInt(id))) continue;
 					id = 'ligand';
 					ids.push(id);
-					ligand = entities[id] = {};
+//					ligand = entities[id] = {};
 					rotors = [];
 					start_ligand = false;
 				}
@@ -669,13 +669,13 @@ $(function () {
 				atom.color = atomColors[atom.elem] || defaultAtomColor;
 				if (start_frame === undefined) start_frame = atom.serial;
 				for (var j = start_frame; j < atom.serial; ++j) {
-					var a = ligand[j];
+					var a = atoms[j];
 					if (a && hasCovalentBond(a, atom)) {
 						a.bonds.push(atom.serial);
 						atom.bonds.push(a.serial);
 					}
 				}
-				ligand[atom.serial] = atom;
+				atoms[atom.serial] = atom;
 			} else if (record === 'BRANCH') {
 				rotors.push({
 					x: parseInt(line.substr( 6, 4)),
@@ -685,10 +685,10 @@ $(function () {
 			} else if (record === 'TORSDO') {
 				for (var i in rotors) {
 					var r = rotors[i];
-					ligand[r.x].bonds.push(r.y);
-					ligand[r.y].bonds.push(r.x);
+					atoms[r.x].bonds.push(r.y);
+					atoms[r.y].bonds.push(r.x);
 				}
-				mdl.add(createHBondRepresentation(ligand));
+				mdl.add(createHBondRepresentation(atoms));
 				if (ids.length == 1) break;
 				start_ligand = true;
 			}
@@ -817,10 +817,10 @@ $(function () {
 		}));
 	};
 
-	var createHBondRepresentation = function (ligand) {
+	var createHBondRepresentation = function (atoms) {
 		var geo = new THREE.Geometry();
-		for (var li in ligand) {
-			var la = ligand[li];
+		for (var li in atoms) {
+			var la = atoms[li];
 			if (isHBondDonor(la.elqt)) {
 				for (var pi in proteinHBondAcceptors) {
 					var pa = proteinHBondAcceptors[pi];
@@ -848,16 +848,16 @@ $(function () {
 		if (m[options[entity]] === undefined) {
 			switch (options[entity]) {
 				case 'line':
-					m[options[entity]] = createLineRepresentation(entities[entity]);
+					m[options[entity]] = createLineRepresentation(entities[entity].atoms);
 					break;
 				case 'stick':
-					m[options[entity]] = createStickRepresentation(entities[entity], cylinderRadius, cylinderRadius);
+					m[options[entity]] = createStickRepresentation(entities[entity].atoms, cylinderRadius, cylinderRadius);
 					break;
 				case 'ball & stick':
-					m[options[entity]] = createStickRepresentation(entities[entity], cylinderRadius, cylinderRadius * 0.5);
+					m[options[entity]] = createStickRepresentation(entities[entity].atoms, cylinderRadius, cylinderRadius * 0.5);
 					break;
 				case 'sphere':
-					m[options[entity]] = createSphereRepresentation(entities[entity]);
+					m[options[entity]] = createSphereRepresentation(entities[entity].atoms);
 					break;
 			}
 		}
@@ -869,16 +869,16 @@ $(function () {
 		if (m[options[entity]] === undefined) {
 			switch (options[entity]) {
 				case 'Van der Waals surface':
-					m[options[entity]] = createSurfaceRepresentation(entities[entity], 1);
+					m[options[entity]] = createSurfaceRepresentation(entities[entity].atoms, 1);
 					break;
 				case 'solvent excluded surface':
-					m[options[entity]] = createSurfaceRepresentation(entities[entity], 2);
+					m[options[entity]] = createSurfaceRepresentation(entities[entity].atoms, 2);
 					break;
 				case 'solvent accessible surface':
-					m[options[entity]] = createSurfaceRepresentation(entities[entity], 3);
+					m[options[entity]] = createSurfaceRepresentation(entities[entity].atoms, 3);
 					break;
 				case 'molecular surface':
-					m[options[entity]] = createSurfaceRepresentation(entities[entity], 4);
+					m[options[entity]] = createSurfaceRepresentation(entities[entity].atoms, 4);
 					break;
 				case 'nothing':
 					m[options[entity]] = undefined;
