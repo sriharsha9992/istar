@@ -804,17 +804,17 @@ $(function () {
 		return obj;
 	};
 
-	var createSurfaceRepresentation = function (atoms, type) {
+	var createSurfaceRepresentation = function (entity, type) {
 		var ps = new ProteinSurface();
-		ps.initparm(getExtent(atoms), type > 1);
-		ps.fillvoxels(atoms);
+		ps.initparm(entity.extent, type > 1);
+		ps.fillvoxels(entity.atoms);
 		ps.buildboundary();
 		if (type == 4 || type == 2) ps.fastdistancemap();
-		if (type == 2) { ps.boundingatom(false); ps.fillvoxelswaals(atoms); }
+		if (type == 2) { ps.boundingatom(false); ps.fillvoxelswaals(entity.atoms); }
 		ps.marchingcube(type);
 		ps.laplaciansmooth(1);
 		ps.transformVertices();
-		return new THREE.Mesh(ps.getModel(atoms), new THREE.MeshLambertMaterial({
+		return new THREE.Mesh(ps.getModel(entity.atoms), new THREE.MeshLambertMaterial({
 			vertexColors: THREE.VertexColors,
 			opacity: 0.9,
 			transparent: true,
@@ -874,16 +874,16 @@ $(function () {
 		if (m[options[entity]] === undefined) {
 			switch (options[entity]) {
 				case 'Van der Waals surface':
-					m[options[entity]] = createSurfaceRepresentation(entities[entity].atoms, 1);
+					m[options[entity]] = createSurfaceRepresentation(entities[entity], 1);
 					break;
 				case 'solvent excluded surface':
-					m[options[entity]] = createSurfaceRepresentation(entities[entity].atoms, 2);
+					m[options[entity]] = createSurfaceRepresentation(entities[entity], 2);
 					break;
 				case 'solvent accessible surface':
-					m[options[entity]] = createSurfaceRepresentation(entities[entity].atoms, 3);
+					m[options[entity]] = createSurfaceRepresentation(entities[entity], 3);
 					break;
 				case 'molecular surface':
-					m[options[entity]] = createSurfaceRepresentation(entities[entity].atoms, 4);
+					m[options[entity]] = createSurfaceRepresentation(entities[entity], 4);
 					break;
 				case 'nothing':
 					m[options[entity]] = undefined;
@@ -904,18 +904,6 @@ $(function () {
 		scene.fog.near = camera.near + 0.4 * (camera.far - camera.near);
 		scene.fog.far = camera.far;
 		renderer.render(scene, camera);
-	};
-
-	var getExtent = function (atoms) {
-		var xsum = ysum = zsum = cnt = 0;
-		for (var i in atoms) {
-			var atom = atoms[i];
-			cnt++;
-			xsum += atom.coord.x;
-			ysum += atom.coord.y;
-			zsum += atom.coord.z;
-		}
-		return [[xmin, ymin, zmin], [xmax, ymax, zmax], [xsum / cnt, ysum / cnt, zsum / cnt]];
 	};
 
 	var path = '/idock/jobs/' + location.search.substr(1) + '/';
