@@ -767,7 +767,7 @@ $(function () {
 				for (var i = 0, l = lsrcr.length; i < l; ++i) {
 					lsrc += String.fromCharCode(lsrcr[i]);
 				}
-				var ligands = [], ligand, atoms, start_ligand = true, start_frame, rotors;
+				var ligands = {}, nligands = 0, ligand, atoms, start_ligand = true, start_frame, rotors;
 				var lines = lsrc.split('\n')
 				for (var i = 0, l = lines.length; i < l; ++i) {
 					var line = lines[i];
@@ -839,23 +839,24 @@ $(function () {
 							atoms[r.y].bonds.push(r.x);
 						}
 						ligand.representations.hbond = createHBondRepresentation(atoms, hbondDonors, hbondAcceptors);
-						ligands.push(ligand);
-						if (ligands.length == 100) break;
+						ligands[ligand.id] = ligand;
+						if (entities.ligand === undefined) entities.ligand = ligand;
+						if (++nligands == 100) break;
 						start_ligand = true;
 					}
 				}
-				$('#nligands').text(ligands.length);
-				entities.ligand = ligands[0];
+				$('#nligands').text(nligands);
 				var hits = $('#hits');
-				hits.html(ligands.map(function(ligand) {
-					return '<label class="btn btn-primary"><input type="radio">' + ligand.id + '</label>';
+				hits.html(Object.keys(ligands).map(function(id) {
+					return '<label class="btn btn-primary"><input type="radio">' + id + '</label>';
 				}).join(''));
 				$(':first', hits).addClass('active');
 				$('> .btn', hits).click(function(e) {
-					mdl.remove(entities.ligand.hbondRepresentation);
-//					mdl.remove(entity.representations[entity.active]);
-//					entities.ligand = ligands[];
-					console.log(e.target.innerText);
+					var ligand = entities.ligand;
+					mdl.remove(ligand.representations.hbond);
+					mdl.remove(ligand.representations[ligand.active]);
+					ligand = entities.ligand = ligands[e.target.innerText];
+					mdl.add(ligand.representations.hbond);
 				});
 			}).always(function() {
 				for (var key in entities) {
