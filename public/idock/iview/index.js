@@ -754,7 +754,6 @@ $(function () {
 			sf =  maxD / 4;
 			rot.position.z = maxD * 0.08 / Math.tan(Math.PI / 180.0 * 10) - 150;
 			rot.quaternion = new THREE.Quaternion(1, 0, 0, 0);
-			var ligands = [];
 			$.ajax({
 				url: path + 'hits.pdbqt.gz',
 				mimeType: 'application/octet-stream; charset=x-user-defined',
@@ -768,15 +767,9 @@ $(function () {
 				for (var i = 0, l = lsrcr.length; i < l; ++i) {
 					lsrc += String.fromCharCode(lsrcr[i]);
 				}
-				var ligand = entities.ligand = {
-					atoms: {},
-					representations: {},
-					refresh: function() {
-						refreshMolecule(ligand);
-					},
-				}, atoms = ligand.atoms, ids = [], start_ligand = true, start_frame, rotors;
+				var ligands = [], ligand, atoms, start_ligand = true, start_frame, rotors;
 				var lines = lsrc.split('\n')
-				for (var i in lines) {
+				for (var i = 0, l = lines.length; i < l; ++i) {
 					var line = lines[i];
 					var record = line.substr(0, 6);
 					if (start_ligand)
@@ -784,11 +777,31 @@ $(function () {
 						if (record === 'REMARK') {
 							var id = line.substr(11, 8);
 							if (isNaN(parseInt(id))) continue;
-							id = 'ligand';
-							ids.push(id);
-//							ligand = entities[id] = {};
-							rotors = [];
 							start_ligand = false;
+							rotors = [];
+							var ligand = {
+								atoms: {},
+								representations: {},
+								refresh: function() {
+									refreshMolecule(ligand);
+								},
+								id: id,
+								mwt: parseFloat(line.substr(20, 8)),
+								lgp: parseFloat(line.substr(29, 8)),
+								ads: parseFloat(line.substr(38, 8)),
+								pds: parseFloat(line.substr(47, 8)),
+								hbd: parseInt(line.substr(56, 3)),
+								hba: parseInt(line.substr(60, 3)),
+								psa: parseInt(line.substr(64, 3)),
+								chg: parseInt(line.substr(68, 3)),
+								nrb: parseInt(line.substr(72, 3)),
+							}, atoms = ligand.atoms;
+							ligand.smiles = lines[++i].substr(11);
+							ligand.suppliers = lines[++i].substr(11).split(' | ').slice(1);
+							ligand.idock_score = parseFloat(lines[i+2].substr(55, 8));
+							ligand.rf_score = parseFloat(lines[i+8].substr(55, 8));
+							ligand.consensus_score = parseFloat(lines[i+9].substr(55, 8));
+							i += 10;
 						}
 						continue;
 					}
@@ -825,17 +838,23 @@ $(function () {
 							atoms[r.x].bonds.push(r.y);
 							atoms[r.y].bonds.push(r.x);
 						}
-						mdl.add(createHBondRepresentation(atoms, hbondDonors, hbondAcceptors));
-						if (ids.length == 1) break;
+						ligand.representations.hbond = createHBondRepresentation(atoms, hbondDonors, hbondAcceptors);
+						ligands.push(ligand);
+						if (ligands.length == 1) break;
 						start_ligand = true;
 					}
 				}
+				$('#nligands').text(ligands.length);
+				entities.ligand = ligands[0];
 				var hits = $('#hits');
-				hits.html(ids.map(function(id) {
-					return '<label class="btn btn-primary"><input type="radio">' + id + '</label>';
+				hits.html(ligands.map(function(ligand) {
+					return '<label class="btn btn-primary"><input type="radio">' + ligand.id + '</label>';
 				}).join(''));
 				$(':first', hits).addClass('active');
 				$('> .btn', hits).click(function(e) {
+					mdl.remove(entities.ligand.hbondRepresentation);
+//					mdl.remove(entity.representations[entity.active]);
+//					entities.ligand = ligands[];
 					console.log(e.target.innerText);
 				});
 			}).always(function() {
