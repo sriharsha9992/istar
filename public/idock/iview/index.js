@@ -413,19 +413,15 @@ $(function () {
 	camera.position = new THREE.Vector3(0, 0, -150);
 	camera.lookAt(new THREE.Vector3(0, 0, 0));
 	var entities = {};
-	var options = {};
-	['protein', 'ligand', 'surface'].forEach(function(entity) {
-		options[entity] = $('#' + entity + ' .active')[0].innerText;
-	});
 	var refresh = {
 		protein: function () {
-			refreshMolecule('protein');
+			refreshMolecule(entities.protein);
 		},
 		ligand: function () {
-			refreshMolecule('ligand');
+			refreshMolecule(entities.ligand);
 		},
 		surface: function () {
-			refreshSurface('surface');
+			refreshSurface(entities.surface);
 		},
 	};
 
@@ -850,48 +846,48 @@ $(function () {
 	};
 
 	var refreshMolecule = function (entity) {
-		var r = entities[entity].representations;
-		if (r[options[entity]] === undefined) {
-			switch (options[entity]) {
+		var r = entity.representations;
+		if (r[entity.active] === undefined) {
+			switch (entity.active) {
 				case 'line':
-					r[options[entity]] = createLineRepresentation(entities[entity].atoms);
+					r[entity.active] = createLineRepresentation(entity.atoms);
 					break;
 				case 'stick':
-					r[options[entity]] = createStickRepresentation(entities[entity].atoms, cylinderRadius, cylinderRadius);
+					r[entity.active] = createStickRepresentation(entity.atoms, cylinderRadius, cylinderRadius);
 					break;
 				case 'ball & stick':
-					r[options[entity]] = createStickRepresentation(entities[entity].atoms, cylinderRadius, cylinderRadius * 0.5);
+					r[entity.active] = createStickRepresentation(entity.atoms, cylinderRadius, cylinderRadius * 0.5);
 					break;
 				case 'sphere':
-					r[options[entity]] = createSphereRepresentation(entities[entity].atoms);
+					r[entity.active] = createSphereRepresentation(entity.atoms);
 					break;
 			}
 		}
-		mdl.add(r[options[entity]]);
+		mdl.add(r[entity.active]);
 	};
 
 	var refreshSurface = function (entity) {
-		var r = entities[entity].representations;
-		if (r[options[entity]] === undefined) {
-			switch (options[entity]) {
+		var r = entity.representations;
+		if (r[entity.active] === undefined) {
+			switch (entity.active) {
 				case 'Van der Waals surface':
-					r[options[entity]] = createSurfaceRepresentation(entities[entity], 1);
+					r[entity.active] = createSurfaceRepresentation(entity, 1);
 					break;
 				case 'solvent excluded surface':
-					r[options[entity]] = createSurfaceRepresentation(entities[entity], 2);
+					r[entity.active] = createSurfaceRepresentation(entity, 2);
 					break;
 				case 'solvent accessible surface':
-					r[options[entity]] = createSurfaceRepresentation(entities[entity], 3);
+					r[entity.active] = createSurfaceRepresentation(entity, 3);
 					break;
 				case 'molecular surface':
-					r[options[entity]] = createSurfaceRepresentation(entities[entity], 4);
+					r[entity.active] = createSurfaceRepresentation(entity, 4);
 					break;
 				case 'nothing':
-					r[options[entity]] = undefined;
+					r[entity.active] = undefined;
 					break;
 			}
 		}
-		mdl.add(r[options[entity]]);
+		mdl.add(r[entity.active]);
 	};
 
 	var render = function () {
@@ -940,25 +936,25 @@ $(function () {
 				}
 				parseLigand(hits_str);
 			}).always(function() {
-				Object.keys(refresh).forEach(function (option) {
-					refresh[option]();
-				});
+				for (var key in entities) {
+					var entity = entities[key];
+					entity.active = $('#' + key + ' .active')[0].innerText;
+					refresh[key]();
+					$('#' + key).click(function (e) {
+						var key = e.target.parentElement.id;
+						var entity = entities[key];
+						mdl.remove(entity.representations[entity.active]);
+						entity.active = e.target.innerText;
+						refresh[key]();
+						render();
+					});
+				}
 				render();
+				$('#exportCanvas').click(function (e) {
+					render();
+					window.open(renderer.domElement.toDataURL('image/png'));
+				});
 			});
 		});
-	});
-
-	['protein', 'ligand', 'surface'].forEach(function (option) {
-		$('#' + option).click(function (e) {
-			mdl.remove(entities[option].representations[options[option]]);
-			options[option] = e.target.innerText;
-			refresh[option]();
-			render();
-		});
-	});
-
-	$('#exportCanvas').click(function (e) {
-		render();
-		window.open(renderer.domElement.toDataURL('image/png'));
 	});
 });
