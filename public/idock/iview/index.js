@@ -631,6 +631,7 @@ $(function () {
 					var atom = {
 						serial: parseInt(line.substr(6, 5)),
 						name: line.substr(12, 4).replace(/ /g, ''),
+						resn: line.substr(17, 3),
 						chain: line.substr(21, 1),
 						resi: parseInt(line.substr(22, 4)),
 						insc: line.substr(26, 1),
@@ -794,6 +795,7 @@ $(function () {
 					if (record === 'ATOM  ' || record === 'HETATM') {
 						var atom = {
 							serial: parseInt(line.substr(6, 5)),
+							name: line.substr(12, 4).replace(/ /g, ''),
 							coord: new THREE.Vector3(parseFloat(line.substr(30, 8)), parseFloat(line.substr(38, 8)), parseFloat(line.substr(46, 8))),
 							elqt: line.substr(77, 2),
 							elem: line.substr(77, 2).replace(/ /g, '').toUpperCase(),
@@ -869,10 +871,20 @@ $(function () {
 					mdl.remove(ligand.representations[ligand.active]);
 					ligand = entities.ligand = ligands[e.target.innerText];
 					mdl.add(ligand.representations.hbond);
-					$('#data span').each(function() {
+					var data = $('#data');
+					$('span', data).each(function() {
 						var $this = $(this);
 						$this.text(ligand[$this.attr('id')]);
 					});
+					$('#id', data).parent().attr('href', 'http://zinc.docking.org/substance/' + ligand.id);
+					$('#suppliers', data).html(ligand.suppliers.map(function(supplier) {
+						return '<li>' + supplier + '</li>';
+					}).join(''));
+					$('#hbonds', data).html(ligand.hbonds.map(function(hbond) {
+						var p = hbond.p;
+						var l = hbond.l;
+						return '<li>' + p.chain + ':' + p.resn + p.resi + ':' + p.name + ' - ' + l.name + '</li>';
+					}).join(''));
 				});
 			}).always(function() {
 				for (var key in entities) {
