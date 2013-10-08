@@ -413,17 +413,6 @@ $(function () {
 	camera.position = new THREE.Vector3(0, 0, -150);
 	camera.lookAt(new THREE.Vector3(0, 0, 0));
 	var entities = {};
-	var refresh = {
-		protein: function () {
-			refreshMolecule(entities.protein);
-		},
-		ligand: function () {
-			refreshMolecule(entities.ligand);
-		},
-		surface: function () {
-			refreshSurface(entities.surface);
-		},
-	};
 
 	var dg, wh, cx, cy, cq, cz, cp, cn, cf, sn, sf;
 	canvas.bind('contextmenu', function (e) {
@@ -582,6 +571,9 @@ $(function () {
 				}
 			}
 		}
+		protein.refresh = function () {
+			refreshMolecule(protein);
+		};
 		var surface = entities.surface = {
 			atoms: {},
 			representations: {},
@@ -632,6 +624,9 @@ $(function () {
 		}
 		protein.maxD = new THREE.Vector3(xmax, ymax, zmax).distanceTo(new THREE.Vector3(xmin, ymin, zmin));
 		surface.extent = [[xmin, ymin, zmin], [xmax, ymax, zmax], [xsum / cnt, ysum / cnt, zsum / cnt]];
+		surface.refresh = function () {
+			refreshSurface(surface);
+		};
 	};
 
 	var parseLigand = function (src) {
@@ -689,6 +684,9 @@ $(function () {
 					atoms[r.x].bonds.push(r.y);
 					atoms[r.y].bonds.push(r.x);
 				}
+				ligand.refresh = function () {
+					refreshMolecule(ligand);
+				};
 				mdl.add(createHBondRepresentation(atoms));
 				if (ids.length == 1) break;
 				start_ligand = true;
@@ -939,13 +937,13 @@ $(function () {
 				for (var key in entities) {
 					var entity = entities[key];
 					entity.active = $('#' + key + ' .active')[0].innerText;
-					refresh[key]();
+					entity.refresh();
 					$('#' + key).click(function (e) {
 						var key = e.target.parentElement.id;
 						var entity = entities[key];
 						mdl.remove(entity.representations[entity.active]);
 						entity.active = e.target.innerText;
-						refresh[key]();
+						entity.refresh();
 						render();
 					});
 				}
