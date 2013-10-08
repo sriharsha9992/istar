@@ -783,7 +783,7 @@ $(function () {
 								atoms: {},
 								representations: {},
 								refresh: function() {
-									refreshMolecule(ligand);
+									refreshMolecule(entities.ligand);
 								},
 								id: id,
 								mwt: parseFloat(line.substr(20, 8)),
@@ -833,14 +833,14 @@ $(function () {
 						});
 						start_frame = undefined;
 					} else if (record === 'TORSDO') {
-						for (var i in rotors) {
-							var r = rotors[i];
+						for (var j in rotors) {
+							var r = rotors[j];
 							atoms[r.x].bonds.push(r.y);
 							atoms[r.y].bonds.push(r.x);
 						}
 						ligand.representations.hbond = createHBondRepresentation(atoms, hbondDonors, hbondAcceptors);
 						ligands.push(ligand);
-						if (ligands.length == 1) break;
+						if (ligands.length == 100) break;
 						start_ligand = true;
 					}
 				}
