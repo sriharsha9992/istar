@@ -753,7 +753,7 @@ $(function () {
 				for (var i = 0, l = lsrcr.length; i < l; ++i) {
 					lsrc += String.fromCharCode(lsrcr[i]);
 				}
-				var ligands = {}, nligands = 0, ligand, atoms, start_ligand = true, start_frame, rotors;
+				var ligands = [], nligands = 0, ligand, atoms, start_ligand = true, start_frame, rotors;
 				var lines = lsrc.split('\n')
 				for (var i = 0, l = lines.length; i < l; ++i) {
 					var line = lines[i];
@@ -853,7 +853,7 @@ $(function () {
 						}
 						ligand.nhbonds = hbonds.length;
 						ligand.representations.hbond = createHBondRepresentation(hbonds);
-						ligands[ligand.id] = ligand;
+						ligands.push(ligand);
 						if (entities.ligand === undefined) entities.ligand = ligand;
 						if (++nligands == 100) break;
 						start_ligand = true;
@@ -861,15 +861,19 @@ $(function () {
 				}
 				$('#nligands').text(nligands);
 				var hits = $('#hits');
-				hits.html(Object.keys(ligands).map(function(id) {
-					return '<label class="btn btn-primary"><input type="radio">' + id + '</label>';
+				hits.html(ligands.map(function(ligand) {
+					return '<label class="btn btn-primary"><input type="radio">' + ligand.id + '</label>';
 				}).join(''));
 				$(':first', hits).addClass('active');
 				$('> .btn', hits).click(function(e) {
 					var ligand = entities.ligand;
 					mdl.remove(ligand.representations.hbond);
 					mdl.remove(ligand.representations[ligand.active]);
-					ligand = entities.ligand = ligands[e.target.innerText];
+					ligands.forEach(function(l) {
+						if (l.id.toString() === e.target.innerText) {
+							ligand = entities.ligand = l;
+						}
+					});
 					mdl.add(ligand.representations.hbond);
 					var data = $('#data');
 					$('span', data).each(function() {
