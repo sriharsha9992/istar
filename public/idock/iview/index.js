@@ -1129,6 +1129,7 @@ $(function () {
 						if (entities.ligand === undefined) entities.ligand = ligand;
 						if (++nligands == 100) break;
 						start_ligand = true;
+						start_frame = undefined;
 					}
 				}
 				$('#nligands').text(nligands);
