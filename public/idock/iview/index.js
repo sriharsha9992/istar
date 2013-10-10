@@ -815,7 +815,8 @@ $(function () {
 		$('#hbonds', data).html(ligand.hbonds.map(function(hbond) {
 			var p = hbond.p;
 			var l = hbond.l;
-			return '<li>' + p.chain + ':' + p.resn + p.resi + ':' + p.name + ' - ' + l.name + '</li>';
+			var d = hbond.d;
+			return '<li>' + p.chain + ':' + p.resn + p.resi + ':' + p.name + ' - ' + l.name  + ', ' + d.toFixed(2) + '&Aring;</li>';
 		}).join(''));
 	}
 	var render = function () {
@@ -1098,15 +1099,16 @@ $(function () {
 							atoms[r.x].bonds.push(r.y);
 							atoms[r.y].bonds.push(r.x);
 						}
-						var hbonds = ligand.hbonds = [];
+						var hbonds = ligand.hbonds = [], ds;
 						for (var pi in hbondDonors) {
 							var pa = hbondDonors[pi];
 							for (var li in atoms) {
 								var la = atoms[li];
-								if (isHBondAcceptor(la.elqt) && la.coord.distanceToSquared(pa.coord) < hbondCutoffSquared) {
+								if (isHBondAcceptor(la.elqt) && (ds = la.coord.distanceToSquared(pa.coord)) < hbondCutoffSquared) {
 									hbonds.push({
 										p: pa,
 										l: la,
+										d: Math.sqrt(ds),
 									});
 								}
 							}
@@ -1115,10 +1117,11 @@ $(function () {
 							var pa = hbondAcceptors[pi];
 							for (var li in atoms) {
 								var la = atoms[li];
-								if (isHBondDonor(la.elqt) && la.coord.distanceToSquared(pa.coord) < hbondCutoffSquared) {
+								if (isHBondDonor(la.elqt) && (ds = la.coord.distanceToSquared(pa.coord)) < hbondCutoffSquared) {
 									hbonds.push({
 										p: pa,
 										l: la,
+										d: Math.sqrt(ds),
 									});
 								}
 							}
