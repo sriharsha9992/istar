@@ -1027,7 +1027,7 @@ $(function () {
 				for (var i = 0, l = lsrcr.length; i < l; ++i) {
 					lsrc += String.fromCharCode(lsrcr[i]);
 				}
-				var ligands = [], nligands = 0, ligand, atoms, start_ligand = true, start_frame, rotors;
+				var ligands = [], ligand, atoms, start_ligand = true, start_frame, rotors;
 				var lines = lsrc.split('\n')
 				for (var i = 0, l = lines.length; i < l; ++i) {
 					var line = lines[i];
@@ -1131,12 +1131,12 @@ $(function () {
 						ligand.representations.hbond = createHBondRepresentation(hbonds);
 						ligands.push(ligand);
 						if (entities.ligand === undefined) entities.ligand = ligand;
-						if (++nligands == 100) break;
+						if (ligands.length == 100) break;
 						start_ligand = true;
 						start_frame = undefined;
 					}
 				}
-				$('#nligands').text(nligands);
+				$('#nligands').text(ligands.length);
 				var hits = $('#hits');
 				hits.html(ligands.map(function(ligand) {
 					return '<label class="btn btn-primary"><input type="radio">' + ligand.id + '</label>';
