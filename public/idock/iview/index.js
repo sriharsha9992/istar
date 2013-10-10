@@ -1128,7 +1128,7 @@ $(function () {
 						ligand.representations.hbond = createHBondRepresentation(hbonds);
 						ligands.push(ligand);
 						if (entities.ligand === undefined) entities.ligand = ligand;
-						if (ligands.length == 100) break;
+//						if (ligands.length == 100) break;
 						start_ligand = true;
 						start_frame = undefined;
 					}
