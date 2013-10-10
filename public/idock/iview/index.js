@@ -808,7 +808,7 @@ $(function () {
 			var $this = $(this);
 			$this.text(ligand[$this.attr('id')]);
 		});
-		$('#id', data).parent().attr('href', 'http://zinc.docking.org/substance/' + ligand.id);
+		$('#id', data).parent().attr('href', '//zinc.docking.org/substance/' + ligand.id);
 		$('#suppliers', data).html(ligand.suppliers.map(function(supplier) {
 			var link = catalogs[supplier];
 			return '<li><a' + (link === undefined || link.length === 0 ? '' : ' href="' + link + '"') + '>' + supplier + '</a></li>';
