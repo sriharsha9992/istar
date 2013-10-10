@@ -32,7 +32,7 @@
 #include "grid_map_task.hpp"
 #include "monte_carlo_task.hpp"
 #include "summary.hpp"
-#include "random_forest.hpp"
+#include "random_forest_test.hpp"
 
 using namespace std;
 using namespace std::chrono;
@@ -155,15 +155,12 @@ int main(int argc, char* argv[])
 		tp.sync();
 	}
 
-	// Build a random forest of 512 trees in parallel.
+	// Load a random forest from file.
+	forest f;
+	f.load("rf.data");
+
+	// Initialize a MT19937 random number generator.
 	mt19937eng rng(seed);
-	forest f(num_trees, rng);
-	for (tree& t : f)
-	{
-		tp.push_back(packaged_task<void()>(bind(&tree::train, std::ref(t), 5, f.u01_s)));
-	}
-	tp.sync();
-	f.clear();
 
 	// Precalculate alpha values for determining step size in BFGS.
 	array<fl, num_alphas> alphas;
@@ -345,20 +342,25 @@ int main(int argc, char* argv[])
 				const result& r = phase1_results.front();
 
 				// Rescore conformations with random forest.
-				array<float, tree::nv> x;
-				x.fill(0);
+				vector<float> v(41);
 				for (size_t i = 0; i < lig.num_heavy_atoms; ++i)
 				{
-					if (lig.heavy_atoms[i].rf == RF_TYPE_SIZE) continue;
-					for (const auto& a : rec.atoms)
+					const auto& la = lig.heavy_atoms[i];
+					if (la.rf == RF_TYPE_SIZE) continue;
+					for (const auto& ra : rec.atoms)
 					{
-						if (a.rf == RF_TYPE_SIZE) continue;
-						const auto dist_sqr = distance_sqr(r.heavy_atoms[i], a.coordinate);
-						if (dist_sqr >= 144) continue;
-						++x[(lig.heavy_atoms[i].rf << 2) + a.rf];
+						if (ra.rf == RF_TYPE_SIZE) continue;
+						const auto dist_sqr = distance_sqr(r.heavy_atoms[i], ra.coordinate);
+						if (dist_sqr >= 144) continue; // RF-Score cutoff 12A
+						++v[(la.rf << 2) + ra.rf];
+						if (dist_sqr >= 64) continue; // Vina score cutoff 8A
+						if (la.xs != XS_TYPE_SIZE && ra.xs != XS_TYPE_SIZE)
+						{
+							sf.score(v.data() + 36, la.xs, ra.xs, dist_sqr);
+						}
 					}
 				}
-				const float rfscore = f(x);
+				const float rfscore = f(v);
 
 				// Dump ligand summaries to the csv file.
 				slice_csv << idx << ',' << lig_id << ',' << (r.f * lig.flexibility_penalty_factor) << ',' << (r.f * lig.num_heavy_atoms_inverse) << ',' << rfscore << ',' << mwt << ',' << lgp << ',' << ads << ',' << pds << ',' << hbd << ',' << hba << ',' << psa << ',' << chg << ',' << nrb << ',' << smiles << '\n';
@@ -549,20 +551,25 @@ int main(int argc, char* argv[])
 					r.hbonds = lexical_cast<string>(num_hbonds) + r.hbonds;
 
 					// Rescore conformations with random forest.
-					array<float, tree::nv> x;
-					x.fill(0);
+					vector<float> v(41);
 					for (size_t i = 0; i < lig.num_heavy_atoms; ++i)
 					{
-						if (lig.heavy_atoms[i].rf == RF_TYPE_SIZE) continue;
-						for (const auto& a : rec.atoms)
+						const auto& la = lig.heavy_atoms[i];
+						if (la.rf == RF_TYPE_SIZE) continue;
+						for (const auto& ra : rec.atoms)
 						{
-							if (a.rf == RF_TYPE_SIZE) continue;
-							const auto dist_sqr = distance_sqr(r.heavy_atoms[i], a.coordinate);
-							if (dist_sqr >= 144) continue;
-							++x[(lig.heavy_atoms[i].rf << 2) + a.rf];
+							if (ra.rf == RF_TYPE_SIZE) continue;
+							const auto dist_sqr = distance_sqr(r.heavy_atoms[i], ra.coordinate);
+							if (dist_sqr >= 144) continue; // RF-Score cutoff 12A
+							++v[(la.rf << 2) + ra.rf];
+							if (dist_sqr >= 64) continue; // Vina score cutoff 8A
+							if (la.xs != XS_TYPE_SIZE && ra.xs != XS_TYPE_SIZE)
+							{
+								sf.score(v.data() + 36, la.xs, ra.xs, dist_sqr);
+							}
 						}
 					}
-					r.rfscore = f(x);
+					r.rfscore = f(v);
 					r.consensus = (r.rfscore + energy2pK * r.e_nd) * 0.5;
 				}
 

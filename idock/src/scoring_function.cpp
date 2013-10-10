@@ -40,6 +40,16 @@ fl scoring_function::score(const size_t t1, const size_t t2, const fl r)
 		+  (-0.587439) * ((xs_hbond(t1, t2)) ? ((d >= 0) ? 0.0 : ((d <= -0.7) ? 1 : d * (-1.4285714285714286))): 0.0);
 }
 
+void scoring_function::score(float* const v, const size_t t1, const size_t t2, const float r2)
+{
+	const float d = sqrt(r2) - (xs_vdw_radius(t1) + xs_vdw_radius(t2));
+	v[0] += exp(-4.0f * d * d);
+	v[1] += exp(-0.25f * (d - 3.0f) * (d - 3.0f));
+	v[2] += d < 0.0f ? d * d : 0.0f;
+	v[3] += xs_is_hydrophobic(t1, t2) ? (d >= 1.5f ? 0.0f : (d <= 0.5f ? 1.0f : 1.5f - d)) : 0.0f;
+	v[4] += xs_hbond(t1, t2) ? (d >= 0.0f ? 0.0f : (d <= -0.7f ? 1.0f : d * -1.4285714285714286f)) : 0.0f;
+}
+
 void scoring_function::precalculate(const size_t t1, const size_t t2, const vector<fl>& rs)
 {
 	vector<scoring_function_element>& p = (*this)[triangular_matrix_restrictive_index(t1, t2)];

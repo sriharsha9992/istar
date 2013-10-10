@@ -195,6 +195,12 @@ inline bool xs_is_hydrophobic(const size_t xs)
 		|| xs == XS_TYPE_I_H;
 }
 
+/// Returns true if the XScore atom types are hydrophobic.
+inline bool xs_is_hydrophobic(const size_t xs1, const size_t xs2)
+{
+	return xs_is_hydrophobic(xs1) && xs_is_hydrophobic(xs2);
+}
+
 /// Returns true if the XScore atom type is a hydrogen bond donor.
 inline bool xs_is_donor(const size_t xs)
 {
