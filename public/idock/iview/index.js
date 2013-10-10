@@ -1147,6 +1147,7 @@ $(function () {
 						}
 					});
 					refreshLigand(ligand);
+					ligand.active = $('#ligand .active')[0].innerText;
 					ligand.refresh();
 					render();
 				});
