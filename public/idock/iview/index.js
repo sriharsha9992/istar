@@ -793,9 +793,6 @@ $(function () {
 				case 'molecular surface':
 					r = createSurfaceRepresentation(entity, 4);
 					break;
-				case 'nothing':
-					r = undefined;
-					break;
 			}
 			entity.representations[entity.active] = r;
 		}
