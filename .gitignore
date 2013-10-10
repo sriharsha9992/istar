@@ -7,4 +7,5 @@ nbproject
 build
 dist
 16_*
+*.data
 genomes
