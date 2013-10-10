@@ -810,7 +810,8 @@ $(function () {
 		});
 		$('#id', data).parent().attr('href', 'http://zinc.docking.org/substance/' + ligand.id);
 		$('#suppliers', data).html(ligand.suppliers.map(function(supplier) {
-			return '<li><a href="' + catalogs[supplier] + '">' + supplier + '</a></li>';
+			var link = catalogs[supplier];
+			return '<li><a' + (link === undefined || link.length === 0 ? '' : ' href="' + link + '"') + '>' + supplier + '</a></li>';
 		}).join(''));
 		$('#hbonds', data).html(ligand.hbonds.map(function(hbond) {
 			var p = hbond.p;
