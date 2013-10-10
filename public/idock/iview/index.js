@@ -801,6 +801,23 @@ $(function () {
 		}
 		mdl.add(r);
 	};
+	var refreshLigand = function(ligand) {
+		mdl.add(ligand.representations.hbond);
+		var data = $('#data');
+		$('span', data).each(function() {
+			var $this = $(this);
+			$this.text(ligand[$this.attr('id')]);
+		});
+		$('#id', data).parent().attr('href', 'http://zinc.docking.org/substance/' + ligand.id);
+		$('#suppliers', data).html(ligand.suppliers.map(function(supplier) {
+			return '<li><a href="' + catalogs[supplier] + '">' + supplier + '</a></li>';
+		}).join(''));
+		$('#hbonds', data).html(ligand.hbonds.map(function(hbond) {
+			var p = hbond.p;
+			var l = hbond.l;
+			return '<li>' + p.chain + ':' + p.resn + p.resi + ':' + p.name + ' - ' + l.name + '</li>';
+		}).join(''));
+	}
 	var render = function () {
 		var center = rot.position.z - camera.position.z;
 		if (center < 1) center = 1;
@@ -1129,22 +1146,11 @@ $(function () {
 							ligand = entities.ligand = l;
 						}
 					});
-					mdl.add(ligand.representations.hbond);
-					var data = $('#data');
-					$('span', data).each(function() {
-						var $this = $(this);
-						$this.text(ligand[$this.attr('id')]);
-					});
-					$('#id', data).parent().attr('href', 'http://zinc.docking.org/substance/' + ligand.id);
-					$('#suppliers', data).html(ligand.suppliers.map(function(supplier) {
-						return '<li><a href="' + catalogs[supplier] + '">' + supplier + '</a></li>';
-					}).join(''));
-					$('#hbonds', data).html(ligand.hbonds.map(function(hbond) {
-						var p = hbond.p;
-						var l = hbond.l;
-						return '<li>' + p.chain + ':' + p.resn + p.resi + ':' + p.name + ' - ' + l.name + '</li>';
-					}).join(''));
+					refreshLigand(ligand);
+					ligand.refresh();
+					render();
 				});
+				refreshLigand(entities.ligand);
 			}).always(function() {
 				for (var key in entities) {
 					var entity = entities[key];
