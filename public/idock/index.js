@@ -77,13 +77,13 @@ $(function() {
 		range: true,
 		min: 55,
 		max: 567,
-		values: [ 400, 450 ]
+		values: [ 400, 420 ]
 	});
 	$('#lgp').slider({
 		range: true,
 		min: -6,
 		max: 12,
-		values: [ 0, 4 ]
+		values: [ 0, 2 ]
 	});
 	$('#ads').slider({
 		range: true,
@@ -101,13 +101,13 @@ $(function() {
 		range: true,
 		min: 0,
 		max: 20,
-		values: [ 2, 5 ]
+		values: [ 2, 4 ]
 	});
 	$('#hba').slider({
 		range: true,
 		min: 0,
 		max: 18,
-		values: [ 4, 8 ]
+		values: [ 4, 6 ]
 	});
 	$('#psa').slider({
 		range: true,
