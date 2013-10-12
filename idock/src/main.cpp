@@ -538,7 +538,7 @@ int main(int argc, char* argv[])
 		MailMessage message;
 		message.setSender("idock <noreply@cse.cuhk.edu.hk>");
 		message.setSubject("Your idock job has completed");
-		message.setContent("Your idock job submitted on " + to_simple_string(ptime(epoch, boost::posix_time::milliseconds(compt["submitted"].Date().millis))) + " UTC docking " + lexical_cast<string>(num_ligands) + " ligands with description as \"" + compt["description"].String() + "\" was done on " + to_simple_string(ptime(epoch, boost::posix_time::milliseconds(millis_since_epoch))) + " UTC. " + lexical_cast<string>(num_summaries) + " ligands were successfully docked and the top " + lexical_cast<string>(num_hits) + " ligands were written to output. View result at http://istar.cse.cuhk.edu.hk/idock/iview?" + _id.str());
+		message.setContent("Your idock job submitted on " + to_simple_string(ptime(epoch, boost::posix_time::milliseconds(compt["submitted"].Date().millis))) + " UTC docking " + lexical_cast<string>(num_ligands) + " ligands with description as \"" + compt["description"].String() + "\" was done on " + to_simple_string(ptime(epoch, boost::posix_time::milliseconds(millis_since_epoch))) + " UTC. " + lexical_cast<string>(num_summaries) + " ligands were successfully docked and the top " + lexical_cast<string>(num_hits) + " ligands were written to output. View result at http://istar.cse.cuhk.edu.hk/idock/iview/?" + _id.str());
 		message.addRecipient(MailRecipient(MailRecipient::PRIMARY_RECIPIENT, email));
 		SMTPClientSession session("137.189.91.190");
 		session.login();
