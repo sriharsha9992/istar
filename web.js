@@ -111,9 +111,6 @@ if (cluster.isMaster) {
 				'ligands': 1,
 				'submitted': 1,
 				'scheduled': 1,
-				'completed': 1,
-				'refined': 1,
-				'hits': 1,
 				'done': 1
 			};
 			for (var i = 0; i < 100; ++i) {
@@ -122,9 +119,6 @@ if (cluster.isMaster) {
 			var idockProgressFields = {
 				'_id': 0,
 				'scheduled': 1,
-				'completed': 1,
-				'refined': 1,
-				'hits': 1,
 				'done': 1
 			};
 			for (var i = 0; i < 100; ++i) {
@@ -262,8 +256,6 @@ if (cluster.isMaster) {
 					f.res.ligands = ligands;
 					f.res.scheduled = 0;
 					f.res.completed = 0;
-					f.res.refined = 0;
-					f.res.hits = 1000;
 					for (var i = 0; i < 100; ++i) {
 						f.res[i.toString()] = 0;
 					}

@@ -22,6 +22,7 @@
 
 #include <boost/ptr_container/ptr_vector.hpp>
 #include "vec3.hpp"
+#include "conformation.hpp"
 
 using boost::ptr_vector;
 
@@ -29,18 +30,14 @@ using boost::ptr_vector;
 class result
 {
 public:
+	conformation conf; ///< Conformation.
 	fl e; ///< Free energy.
 	fl f; ///< Inter-molecular free energy.
-	fl e_nd; ///< Normalized free energy.
-	fl efficiency; ///< Ligand efficiency.
-	fl rfscore; ///< RF-Score.
-	fl consensus; ///< consensus = rfscore - e_nd.
-	string hbonds; ///< Hydrogen bonds string.
 	vector<vec3> heavy_atoms; ///< Heavy atom coordinates.
 	vector<vec3> hydrogens; ///< Hydrogen atom coordinates.
 
 	/// Constructs a result from free energy e, force f, heavy atom coordinates and hydrogen atom coordinates.
-	explicit result(const fl e, const fl f, vector<vec3>&& heavy_atoms_, vector<vec3>&& hydrogens_) : e(e), f(f), heavy_atoms(static_cast<vector<vec3>&&>(heavy_atoms_)), hydrogens(static_cast<vector<vec3>&&>(hydrogens_)) {}
+	explicit result(const conformation& conf, const fl e, const fl f, vector<vec3>&& heavy_atoms_, vector<vec3>&& hydrogens_) : conf(conf), e(e), f(f), heavy_atoms(static_cast<vector<vec3>&&>(heavy_atoms_)), hydrogens(static_cast<vector<vec3>&&>(hydrogens_)) {}
 
 	result(const result&) = default;
 	result(result&&) = default;

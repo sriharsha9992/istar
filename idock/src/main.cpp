@@ -85,12 +85,7 @@ int main(int argc, char* argv[])
 	const path headers_path = "16_hdr.bin";
 	const size_t seed = system_clock::now().time_since_epoch().count();
 	const size_t num_threads = thread::hardware_concurrency();
-	const size_t num_trees = 512;
-	const size_t phase1_num_mc_tasks = 32;
-	const size_t phase2_num_mc_tasks = 128;
-	const size_t max_conformations = 9;
-	const size_t max_results = 9; // Maximum number of results obtained from a single Monte Carlo task.
-	const fl energy_range = 3.0;
+	const size_t num_mc_tasks = 32;
 	const fl grid_granularity = 0.08;
 	const auto epoch = boost::gregorian::date(1970, 1, 1);
 
@@ -171,14 +166,11 @@ int main(int argc, char* argv[])
 	}
 
 	// Reserve space for containers.
-	string line;
 	vector<size_t> atom_types_to_populate; atom_types_to_populate.reserve(XS_TYPE_SIZE);
-	ptr_vector<ptr_vector<result>> phase1_result_containers, phase2_result_containers;
-	phase1_result_containers.resize(phase1_num_mc_tasks);
-	phase2_result_containers.resize(phase2_num_mc_tasks);
-	for (auto& rc : phase1_result_containers) rc.reserve(1);
-	for (auto& rc : phase2_result_containers) rc.reserve(max_results);
-	ptr_vector<result> phase1_results(1), phase2_results(max_results * phase2_num_mc_tasks);
+	ptr_vector<ptr_vector<result>> result_containers;
+	result_containers.resize(num_mc_tasks);
+	for (auto& rc : result_containers) rc.reserve(1);
+	ptr_vector<result> results(1);
 
 	// Open files for reading.
 	boost::filesystem::ifstream headers(headers_path);
@@ -186,9 +178,9 @@ int main(int argc, char* argv[])
 
 	while (true)
 	{
-		// Fetch a job in a FCFS manner.
+		// Fetch a job in a first-come-first-served manner.
 		BSONObj info;
-		conn.runCommand("istar", BSON("findandmodify" << "idock" << "query" << BSON("scheduled" << BSON("$lt" << 100)) << "sort" << BSON("submitted" << 1) << "update" << BSON("$inc" << BSON("scheduled" << 1)) << "fields" << jobid_fields), info);
+		conn.runCommand("istar", BSON("findandmodify" << "idock" << "query" << BSON("scheduled" << BSON("$lt" << static_cast<unsigned int>(num_slices))) << "sort" << BSON("submitted" << 1) << "update" << BSON("$inc" << BSON("scheduled" << 1)) << "fields" << jobid_fields), info);
 		const auto value = info["value"];
 		if (value.isNull())
 		{
@@ -203,8 +195,7 @@ int main(int argc, char* argv[])
 		{
 			// Load job parameters from MongoDB.
 			_id = job["_id"].OID();
-			auto param_cursor = conn.query(collection, QUERY("_id" << _id), 1, 0, &param_fields);
-			const auto param = param_cursor->next();
+			const auto param = conn.query(collection, QUERY("_id" << _id), 1, 0, &param_fields)->next();
 			num_ligands = param["ligands"].Int();
 			mwt_lb = param["mwt_lb"].Number();
 			mwt_ub = param["mwt_ub"].Number();
@@ -250,16 +241,15 @@ int main(int argc, char* argv[])
 		const auto slice = job["scheduled"].Int();
 
 		// Perform phase 1.
-		cout << now() << "Executing job " << _id << " phase 1 slice " << slice << endl;
+		cout << now() << "Executing job " << _id << " slice " << slice << endl;
 		const auto slice_key = lexical_cast<string>(slice);
-		const auto start_lig = slices[slice];
+		const auto beg_lig = slices[slice];
 		const auto end_lig = slices[slice + 1];
-
+		headers.seekg(sizeof(size_t) * beg_lig);
 		boost::filesystem::ofstream slice_csv(job_path / (slice_key + ".csv"));
 		slice_csv.setf(ios::fixed, ios::floatfield);
-		slice_csv << setprecision(3);
-		headers.seekg(sizeof(size_t) * start_lig);
-		for (auto idx = start_lig; idx < end_lig; ++idx)
+		slice_csv << setprecision(8); // Dump as many digits as possible in order to recover accurate conformations in summaries.
+		for (auto idx = beg_lig; idx < end_lig; ++idx)
 		{
 			// Locate a ligand.
 			size_t header;
@@ -267,27 +257,21 @@ int main(int argc, char* argv[])
 			ligands.seekg(header);
 
 			// Check if the ligand satisfies the filtering conditions.
-			getline(ligands, line);
-			const auto mwt = right_cast<fl>(line, 21, 28);
-			const auto lgp = right_cast<fl>(line, 30, 37);
-			const auto ads = right_cast<fl>(line, 39, 46);
-			const auto pds = right_cast<fl>(line, 48, 55);
-			const auto hbd = right_cast<int>(line, 57, 59);
-			const auto hba = right_cast<int>(line, 61, 63);
-			const auto psa = right_cast<int>(line, 65, 67);
-			const auto chg = right_cast<int>(line, 69, 71);
-			const auto nrb = right_cast<int>(line, 73, 75);
+			string property;
+			getline(ligands, property); // REMARK     00000007  277.364     2.51        9   -14.93   0   4  39   0   8    
+			const auto mwt = right_cast<fl>(property, 21, 28);
+			const auto lgp = right_cast<fl>(property, 30, 37);
+			const auto ads = right_cast<fl>(property, 39, 46);
+			const auto pds = right_cast<fl>(property, 48, 55);
+			const auto hbd = right_cast<int>(property, 57, 59);
+			const auto hba = right_cast<int>(property, 61, 63);
+			const auto psa = right_cast<int>(property, 65, 67);
+			const auto chg = right_cast<int>(property, 69, 71);
+			const auto nrb = right_cast<int>(property, 73, 75);
 			if (!((mwt_lb <= mwt) && (mwt <= mwt_ub) && (lgp_lb <= lgp) && (lgp <= lgp_ub) && (ads_lb <= ads) && (ads <= ads_ub) && (pds_lb <= pds) && (pds <= pds_ub) && (hbd_lb <= hbd) && (hbd <= hbd_ub) && (hba_lb <= hba) && (hba <= hba_ub) && (psa_lb <= psa) && (psa <= psa_ub) && (chg_lb <= chg) && (chg <= chg_ub) && (nrb_lb <= nrb) && (nrb <= nrb_ub))) continue;
 
 			// Obtain ligand ID. ZINC IDs are 8-character long.
-			const auto lig_id = line.substr(11, 8);
-
-			// Filter out smiles line.
-			getline(ligands, line);
-			const string smiles = line.substr(11);
-
-			// Filter out supplier line.
-			getline(ligands, line);
+			const auto lig_id = property.substr(11, 8);
 
 			// Parse the ligand.
 			ligand lig(ligands);
@@ -313,33 +297,35 @@ int main(int argc, char* argv[])
 				atom_types_to_populate.clear();
 			}
 
-			// Run Monte Carlo tasks.
-			for (size_t i = 0; i < phase1_num_mc_tasks; ++i)
+			// Run Monte Carlo tasks in parallel.
+			for (size_t i = 0; i < num_mc_tasks; ++i)
 			{
-				BOOST_ASSERT(phase1_result_containers[i].empty());
-				BOOST_ASSERT(phase1_result_containers[i].capacity() == 1);
-				tp.push_back(packaged_task<void()>(bind(monte_carlo_task, std::ref(phase1_result_containers[i]), cref(lig), rng(), cref(alphas), cref(sf), cref(b), cref(grid_maps))));
+				BOOST_ASSERT(result_containers[i].empty());
+				BOOST_ASSERT(result_containers[i].capacity() == 1);
+				tp.push_back(packaged_task<void()>(bind(monte_carlo_task, std::ref(result_containers[i]), cref(lig), rng(), cref(alphas), cref(sf), cref(b), cref(grid_maps))));
 			}
 			tp.sync();
 
 			// Merge results from all the tasks into one single result container.
-			BOOST_ASSERT(phase1_results.empty());
+			BOOST_ASSERT(results.empty());
+			BOOST_ASSERT(results.capacity() == 1);
 			const fl required_square_error = static_cast<fl>(4 * lig.num_heavy_atoms); // Ligands with RMSD < 2.0 will be clustered into the same cluster.
-			for (size_t i = 0; i < phase1_num_mc_tasks; ++i)
+			for (size_t i = 0; i < num_mc_tasks; ++i)
 			{
-				ptr_vector<result>& task_results = phase1_result_containers[i];
+				ptr_vector<result>& task_results = result_containers[i];
 				BOOST_ASSERT(task_results.capacity() == 1);
 				for (auto& task_result : task_results)
 				{
-					add_to_result_container(phase1_results, static_cast<result&&>(task_result), required_square_error);
+					add_to_result_container(results, static_cast<result&&>(task_result), required_square_error);
 				}
 				task_results.clear();
 			}
 
 			// No conformation can be found if the search space is too small.
-			if (phase1_results.size())
+			if (results.size())
 			{
-				const result& r = phase1_results.front();
+				BOOST_ASSERT(results.size() == 1);
+				const result& r = results.front();
 
 				// Rescore conformations with random forest.
 				vector<float> v(41);
@@ -360,13 +346,51 @@ int main(int argc, char* argv[])
 						}
 					}
 				}
-				const float rfscore = f(v);
+				const auto rfscore = f(v);
 
-				// Dump ligand summaries to the csv file.
-				slice_csv << idx << ',' << lig_id << ',' << (r.f * lig.flexibility_penalty_factor) << ',' << (r.f * lig.num_heavy_atoms_inverse) << ',' << rfscore << ',' << mwt << ',' << lgp << ',' << ads << ',' << pds << ',' << hbd << ',' << hba << ',' << psa << ',' << chg << ',' << nrb << ',' << smiles << '\n';
+				// Find hydrogen bonds.
+				const size_t num_lig_hbda = lig.hbda.size();
+				string hbonds;
+				size_t num_hbonds = 0;
+				for (size_t i = 0; i < num_lig_hbda; ++i)
+				{
+					const atom& lig_atom = lig.heavy_atoms[lig.hbda[i]];
+					BOOST_ASSERT(xs_is_donor_acceptor(lig_atom.xs));
+
+					// Find the possibly interacting receptor atoms via partitions.
+					const vec3 lig_coords = r.heavy_atoms[lig.hbda[i]];
+					const vector<size_t>& rec_hbda = rec.hbda_3d(b.partition_index(lig_coords));
+
+					// Accumulate individual free energies for each atom types to populate.
+					const size_t num_rec_hbda = rec_hbda.size();
+					for (size_t l = 0; l < num_rec_hbda; ++l)
+					{
+						const atom& rec_atom = rec.atoms[rec_hbda[l]];
+						BOOST_ASSERT(xs_is_donor_acceptor(rec_atom.xs));
+						if (!xs_hbond(lig_atom.xs, rec_atom.xs)) continue;
+						const fl r2 = distance_sqr(lig_coords, rec_atom.coordinate);
+						if (r2 <= hbond_dist_sqr)
+						{
+							++num_hbonds;
+							hbonds += " | " + rec_atom.name + " - " + lig_atom.name;
+						}
+					}
+				}
+				hbonds = lexical_cast<string>(num_hbonds) + hbonds;
+
+				// Dump ligand result to the slice csv file.
+				slice_csv << idx << ',' << (r.f * lig.flexibility_penalty_factor) << ',' << (r.f * lig.num_heavy_atoms_inverse) << ',' << rfscore << ',' << hbonds;
+				const auto& p = r.conf.position;
+				const auto& q = r.conf.orientation;
+				slice_csv << ',' << p[0] << ',' << p[1] << ',' << p[2] << ',' << q.a << ',' << q.b << ',' << q.c << ',' << q.d;
+				for (const auto t : r.conf.torsions)
+				{
+					slice_csv << ',' << t;
+				}
+				slice_csv << '\n';
 
 				// Clear the results of the current ligand.
-				phase1_results.clear();
+				results.clear();
 			}
 
 			// Report progress.
@@ -377,253 +401,128 @@ int main(int argc, char* argv[])
 		// Increment the completed counter.
 		conn.update(collection, BSON("_id" << _id << "$atomic" << 1), BSON("$inc" << BSON("completed" << 1)));
 
-		// If phase 1 is done, transit to phase 2.
-		if (!conn.query(collection, QUERY("_id" << _id << "completed" << 100))->more()) continue;
-		cout << now() << "Executing job " << _id << " phase 2" << endl;
+		// If the number of completed slices is not equal to the number of total slices, loop again to fetch another slice.
+		if (!conn.query(collection, QUERY("_id" << _id << "completed" << static_cast<unsigned int>(num_slices)))->more()) continue;
 
 		// Combine and delete multiple slice csv's.
-		ptr_vector<summary> phase1_summaries(num_ligands);
-		for (size_t s = 0; s < 100; ++s)
+		cout << now() << "Executing job " << _id << " phase 2" << endl;
+		ptr_vector<summary> summaries(num_ligands);
+		for (size_t s = 0; s < num_slices; ++s)
 		{
 			// Parse slice csv.
 			const auto slice_csv_path = job_path / (lexical_cast<string>(s) + ".csv");
-			boost::filesystem::ifstream slice_csv(slice_csv_path);
-			while (getline(slice_csv, line))
+			string line;
+			for (boost::filesystem::ifstream slice_csv(slice_csv_path); getline(slice_csv, line);)
 			{
-				const auto comma1 = line.find(',', 1);
-				const auto comma2 = comma1 + 9;
-				const auto comma3 = line.find(',', comma2 + 6);
-				const auto comma4 = line.find(',', comma3 + 6);
-				const auto comma5 = line.find(',', comma4 + 6);
-				BOOST_ASSERT(line[comma2] == ',');
-				vector<fl> energies, efficiencies, rfscores;
-				energies.push_back(lexical_cast<fl>(line.substr(comma2 + 1, comma3 - comma2 - 1)));
-				efficiencies.push_back(lexical_cast<fl>(line.substr(comma3 + 1, comma4 - comma3 - 1)));
-				rfscores.push_back(lexical_cast<fl>(line.substr(comma4 + 1, comma5 - comma4 - 1)));
-				phase1_summaries.push_back(new summary(lexical_cast<size_t>(line.substr(0, comma1)), line.substr(comma1 + 1, 8), static_cast<vector<fl>&&>(energies), static_cast<vector<fl>&&>(efficiencies), static_cast<vector<fl>&&>(rfscores), vector<string>(), line.substr(comma5 + 1), string()));
+				vector<string> tokens;
+				tokens.reserve(12);
+				for (size_t comma0 = 0; true;)
+				{
+					const size_t comma1 = line.find(',', comma0 + 1);
+					if (comma1 == string::npos)
+					{
+						tokens.push_back(line.substr(comma0 + 1));
+						break;
+					}
+					tokens.push_back(line.substr(comma0, comma1 - comma0));
+					comma0 = comma1 + 1;
+				}
+				BOOST_ASSERT(tokens.size() >= 12);
+				conformation conf(tokens.size() - 12);
+				conf.position = vec3(lexical_cast<fl>(tokens[5]), lexical_cast<fl>(tokens[6]), lexical_cast<fl>(tokens[7]));
+				conf.orientation = qtn4(lexical_cast<fl>(tokens[8]), lexical_cast<fl>(tokens[9]), lexical_cast<fl>(tokens[10]), lexical_cast<fl>(tokens[11]));
+				for (size_t i = 0; i < conf.torsions.size(); ++i)
+				{
+					conf.torsions[i] = lexical_cast<fl>(tokens[12 + i]);
+				}
+				summaries.push_back(new summary(lexical_cast<size_t>(tokens[0]), lexical_cast<fl>(tokens[1]), lexical_cast<fl>(tokens[2]), lexical_cast<fl>(tokens[3]), static_cast<string&&>(tokens[4]), conf));
 			}
-			slice_csv.close();
 			remove(slice_csv_path);
 		}
-		const auto docked = phase1_summaries.size();
-		BOOST_ASSERT(docked <= num_ligands);
-		unsigned int num_hits = 1000;
-		if (docked < 1000)
-		{
-			num_hits = docked;
-			conn.update(collection, BSON("_id" << _id), BSON("$set" << BSON("hits" << num_hits)));
-		}
 
-		// Sort phase 1 summaries.
-		phase1_summaries.sort();
-
-		// Write phase 1 csv.
-		{
-			boost::filesystem::ofstream phase1_csv(job_path / "phase1.csv.gz");
-			filtering_ostream phase1_csv_gz;
-			phase1_csv_gz.push(gzip_compressor());
-			phase1_csv_gz.push(phase1_csv);
-			phase1_csv_gz.setf(ios::fixed, ios::floatfield);
-			phase1_csv_gz << setprecision(3);
-			phase1_csv_gz << "ZINC ID,Free energy (kcal/mol),Ligand efficiency (kcal/mol),RF-Score (pK),Consensus score (pK),Molecular weight (g/mol),Partition coefficient xlogP,Apolar desolvation (kcal/mol),Polar desolvation (kcal/mol),Hydrogen bond donors,Hydrogen bond acceptors,Polar surface area tPSA (A^2),Net charge,Rotatable bonds,SMILES\n";
-			for (const auto& s : phase1_summaries)
-			{
-				BOOST_ASSERT(s.energies.size() == 1);
-				BOOST_ASSERT(s.efficiencies.size() == 1);
-				BOOST_ASSERT(s.rfscores.size() == 1);
-				phase1_csv_gz << s.lig_id << ',' << s.energies.front() << ',' << s.efficiencies.front() << ',' << s.rfscores.front() << ',' << s.consensuses.front() << ',' << s.property << '\n';
-			}
-		}
+		// Sort summaries.
+		summaries.sort();
+		const auto num_summaries = summaries.size();
+		BOOST_ASSERT(num_summaries <= num_ligands);
+		const auto num_hits = min<size_t>(num_summaries, 1000);
+		BOOST_ASSERT(num_hits <= num_ligands);
 
 		// Perform phase 2.
-		const auto hits_pdbqt_path = job_path / "hits.pdbqt.gz";
-		ptr_vector<summary> phase2_summaries(num_hits);
-		for (auto idx = 0; idx < num_hits; ++idx)
 		{
-			// Locate a ligand.
-			const auto& s = phase1_summaries[idx];
-			headers.seekg(sizeof(size_t) * s.index);
-			size_t header;
-			headers.read((char*)&header, sizeof(size_t));
-			ligands.seekg(header);
-
-			// Get the remark lines.
-			string property, smiles, supplier;
-			getline(ligands, property); // REMARK     00000007  277.364     2.51        9   -14.93   0   4  39   0   8    
-			getline(ligands, smiles);   // REMARK     CCN(CC)C(=O)COc1ccc(cc1OC)CC=C
-			getline(ligands, supplier); // REMARK     8 | ChEMBL12 | ChEMBL13 | ChEMBL14 | ChEMBL15 | ChemDB | Enamine (Depleted) | PubChem | UORSY
-
-			// Parse the ligand.
-			ligand lig(ligands);
-
-			// Create grid maps on the fly if necessary.
-			BOOST_ASSERT(atom_types_to_populate.empty());
-			const vector<size_t> ligand_atom_types = lig.get_atom_types();
-			for (const auto t : ligand_atom_types)
+			boost::filesystem::ofstream log_csv(job_path / "log.csv.gz");
+			boost::filesystem::ofstream ligands_pdbqt(job_path / "ligands.pdbqt.gz");
+			filtering_ostream log_csv_gz;
+			filtering_ostream ligands_pdbqt_gz;
+			log_csv_gz.push(gzip_compressor());
+			ligands_pdbqt_gz.push(gzip_compressor());
+			log_csv_gz.push(log_csv);
+			ligands_pdbqt_gz.push(ligands_pdbqt);
+			log_csv_gz.setf(ios::fixed, ios::floatfield);
+			ligands_pdbqt_gz.setf(ios::fixed, ios::floatfield);
+			log_csv_gz << "ZINC ID,Free energy (kcal/mol),Ligand efficiency (kcal/mol),RF-Score (pK),Consensus score (pK),Hydrogen bonds,Molecular weight (g/mol),Partition coefficient xlogP,Apolar desolvation (kcal/mol),Polar desolvation (kcal/mol),Hydrogen bond donors,Hydrogen bond acceptors,Polar surface area tPSA (A^2),Net charge,Rotatable bonds,SMILES,Substance information,Suppliers\n" << setprecision(3);
+			ligands_pdbqt_gz << setprecision(3);
+			for (auto idx = 0; idx < num_summaries; ++idx)
 			{
-				BOOST_ASSERT(t < XS_TYPE_SIZE);
-				array3d<fl>& grid_map = grid_maps[t];
-				if (grid_map.initialized()) continue; // The grid map of XScore atom type t has already been populated.
-				grid_map.resize(b.num_probes); // An exception may be thrown in case memory is exhausted.
-				atom_types_to_populate.push_back(t);  // The grid map of XScore atom type t has not been populated and should be populated now.
-			}
-			if (atom_types_to_populate.size())
-			{
-				for (size_t x = 0; x < num_gm_tasks; ++x)
+				// Locate a ligand.
+				const auto& s = summaries[idx];
+				headers.seekg(sizeof(size_t) * s.index);
+				size_t header;
+				headers.read((char*)&header, sizeof(size_t));
+				ligands.seekg(header);
+
+				// Parse the REMARK lines.
+				string property, smiles, supplier;
+				getline(ligands, property); // REMARK     00000007  277.364     2.51        9   -14.93   0   4  39   0   8    
+				getline(ligands, smiles);   // REMARK     CCN(CC)C(=O)COc1ccc(cc1OC)CC=C
+				getline(ligands, supplier); // REMARK     8 | ChEMBL12 | ChEMBL13 | ChEMBL14 | ChEMBL15 | ChemDB | Enamine (Depleted) | PubChem | UORSY
+				const auto lig_id = property.substr(11, 8);
+				const auto mwt = right_cast<fl>(property, 21, 28);
+				const auto lgp = right_cast<fl>(property, 30, 37);
+				const auto ads = right_cast<fl>(property, 39, 46);
+				const auto pds = right_cast<fl>(property, 48, 55);
+				const auto hbd = right_cast<int>(property, 57, 59);
+				const auto hba = right_cast<int>(property, 61, 63);
+				const auto psa = right_cast<int>(property, 65, 67);
+				const auto chg = right_cast<int>(property, 69, 71);
+				const auto nrb = right_cast<int>(property, 73, 75);
+
+				// Write to summary.csv.
+				log_csv_gz << lig_id << ',' << s.energy << ',' << s.efficiency << ',' << s.rfscore << ',' << s.consensus() << ',' << s.hbonds << ',' << mwt << ',' << lgp << ',' << ads << ',' << pds << ',' << hbd << ',' << hba << ',' << psa << ',' << chg << ',' << nrb << ',' << smiles.substr(11) << ",http://zinc.docking.org/substance/" << lig_id << ',' << supplier.substr(11) << '\n';
+
+				if (idx >= num_hits) continue;
+
+				// Parse the ligand.
+				ligand lig(ligands);
+
+				// Create grid maps on the fly if necessary.
+				BOOST_ASSERT(atom_types_to_populate.empty());
+				const vector<size_t> ligand_atom_types = lig.get_atom_types();
+				for (const auto t : ligand_atom_types)
 				{
-					tp.push_back(packaged_task<void()>(bind(grid_map_task, std::ref(grid_maps), cref(atom_types_to_populate), x, cref(sf), cref(b), cref(rec))));
+					BOOST_ASSERT(t < XS_TYPE_SIZE);
+					array3d<fl>& grid_map = grid_maps[t];
+					if (grid_map.initialized()) continue; // The grid map of XScore atom type t has already been populated.
+					grid_map.resize(b.num_probes); // An exception may be thrown in case memory is exhausted.
+					atom_types_to_populate.push_back(t);  // The grid map of XScore atom type t has not been populated and should be populated now.
 				}
-				tp.sync();
-				atom_types_to_populate.clear();
-			}
-
-			// Run Monte Carlo tasks.
-			for (size_t i = 0; i < phase2_num_mc_tasks; ++i)
-			{
-				BOOST_ASSERT(phase2_result_containers[i].empty());
-				tp.push_back(packaged_task<void()>(bind(monte_carlo_task, std::ref(phase2_result_containers[i]), cref(lig), rng(), cref(alphas), cref(sf), cref(b), cref(grid_maps))));
-			}
-			tp.sync();
-
-			// Merge results from all the tasks into one single result container.
-			BOOST_ASSERT(phase2_results.empty());
-			const fl required_square_error = static_cast<fl>(4 * lig.num_heavy_atoms); // Ligands with RMSD < 2.0 will be clustered into the same cluster.
-			for (size_t i = 0; i < phase2_num_mc_tasks; ++i)
-			{
-				ptr_vector<result>& task_results = phase2_result_containers[i];
-				for (auto& task_result : task_results)
+				if (atom_types_to_populate.size())
 				{
-					add_to_result_container(phase2_results, static_cast<result&&>(task_result), required_square_error);
-				}
-				task_results.clear();
-			}
-
-			const size_t num_results = min<size_t>(phase2_results.size(), max_conformations);
-			if (num_results)
-			{
-				// Adjust free energy relative to flexibility, and calculate ligand efficiency.
-				result& best_result = phase2_results.front();
-				const fl best_result_intra_e = best_result.e - best_result.f;
-				for (size_t i = 0; i < num_results; ++i)
-				{
-					auto& r = phase2_results[i];
-					r.e_nd = (r.e - best_result_intra_e) * lig.flexibility_penalty_factor;
-					r.efficiency = r.f * lig.num_heavy_atoms_inverse;
-				}
-
-				// Determine the number of conformations to output according to user-supplied max_conformations and energy_range.
-				const fl energy_upper_bound = best_result.e_nd + energy_range;
-				size_t num_conformations;
-				for (num_conformations = 1; (num_conformations < num_results) && (phase2_results[num_conformations].e_nd <= energy_upper_bound); ++num_conformations);
-
-				const size_t num_lig_hbda = lig.hbda.size();
-				for (size_t k = 0; k < num_conformations; ++k)
-				{
-					result& r = phase2_results[k];
-
-					// Find the number of hydrogen bonds.
-					BOOST_ASSERT(r.hbonds.empty());
-					size_t num_hbonds = 0;
-					for (size_t i = 0; i < num_lig_hbda; ++i)
+					for (size_t x = 0; x < num_gm_tasks; ++x)
 					{
-						const atom& lig_atom = lig.heavy_atoms[lig.hbda[i]];
-						BOOST_ASSERT(xs_is_donor_acceptor(lig_atom.xs));
-
-						// Find the possibly interacting receptor atoms via partitions.
-						const vec3 lig_coords = r.heavy_atoms[lig.hbda[i]];
-						const vector<size_t>& rec_hbda = rec.hbda_3d(b.partition_index(lig_coords));
-
-						// Accumulate individual free energies for each atom types to populate.
-						const size_t num_rec_hbda = rec_hbda.size();
-						for (size_t l = 0; l < num_rec_hbda; ++l)
-						{
-							const atom& rec_atom = rec.atoms[rec_hbda[l]];
-							BOOST_ASSERT(xs_is_donor_acceptor(rec_atom.xs));
-							if (!xs_hbond(lig_atom.xs, rec_atom.xs)) continue;
-							const fl r2 = distance_sqr(lig_coords, rec_atom.coordinate);
-							if (r2 <= hbond_dist_sqr)
-							{
-								++num_hbonds;
-								r.hbonds += " | " + rec_atom.name + " - " + lig_atom.name;
-							}
-						}
+						tp.push_back(packaged_task<void()>(bind(grid_map_task, std::ref(grid_maps), cref(atom_types_to_populate), x, cref(sf), cref(b), cref(rec))));
 					}
-					r.hbonds = lexical_cast<string>(num_hbonds) + r.hbonds;
-
-					// Rescore conformations with random forest.
-					vector<float> v(41);
-					for (size_t i = 0; i < lig.num_heavy_atoms; ++i)
-					{
-						const auto& la = lig.heavy_atoms[i];
-						if (la.rf == RF_TYPE_SIZE) continue;
-						for (const auto& ra : rec.atoms)
-						{
-							if (ra.rf == RF_TYPE_SIZE) continue;
-							const auto dist_sqr = distance_sqr(r.heavy_atoms[i], ra.coordinate);
-							if (dist_sqr >= 144) continue; // RF-Score cutoff 12A
-							++v[(la.rf << 2) + ra.rf];
-							if (dist_sqr >= 64) continue; // Vina score cutoff 8A
-							if (la.xs != XS_TYPE_SIZE && ra.xs != XS_TYPE_SIZE)
-							{
-								sf.score(v.data() + 36, la.xs, ra.xs, dist_sqr);
-							}
-						}
-					}
-					r.rfscore = f(v);
-					r.consensus = (r.rfscore + energy2pK * r.e_nd) * 0.5;
+					tp.sync();
+					atom_types_to_populate.clear();
 				}
+
+				// Apply conformation.
+				fl e, f;
+				change g(lig.num_active_torsions);
+				lig.evaluate(s.conf, sf, b, grid_maps, -100, e, f, g);
+				const auto r = lig.compose_result(e, f, s.conf);
 
 				// Write models to file.
-				lig.write_models(hits_pdbqt_path, property, smiles, supplier, phase2_results, num_conformations, b, grid_maps);
-
-				// Add to summaries.
-				vector<fl> energies(num_conformations), efficiencies(num_conformations), rfscores(num_conformations);
-				vector<string> hbonds(num_conformations);
-				for (size_t k = 0; k < num_conformations; ++k)
-				{
-					const auto& r = phase2_results[k];
-					energies[k] = r.e_nd;
-					efficiencies[k] = r.efficiency;
-					hbonds[k] = r.hbonds;
-					rfscores[k] = r.rfscore;
-				}
-				phase2_summaries.push_back(new summary(s.index, s.lig_id, static_cast<vector<fl>&&>(energies), static_cast<vector<fl>&&>(efficiencies), static_cast<vector<fl>&&>(rfscores), static_cast<vector<string>&&>(hbonds), string(s.property), supplier.substr(11)));
-
-				// Clear the results of the current ligand.
-				phase2_results.clear();
-			}
-
-			// Report progress every ligand.
-			conn.update(collection, BSON("_id" << _id), BSON("$inc" << BSON("refined" << 1)));
-		}
-
-		// Sort phase 2 summaries.
-		phase2_summaries.sort();
-
-		// Write phase 2 csv.
-		{
-			boost::filesystem::ofstream phase2_csv(job_path / "phase2.csv.gz");
-			filtering_ostream phase2_csv_gz;
-			phase2_csv_gz.push(gzip_compressor());
-			phase2_csv_gz.push(phase2_csv);
-			phase2_csv_gz.setf(ios::fixed, ios::floatfield);
-			phase2_csv_gz << setprecision(3);
-			phase2_csv_gz << "ZINC ID,Conformations";
-			for (size_t i = 1; i <= max_conformations; ++i) phase2_csv_gz << ",Conformation " << i << " free energy (kcal/mol),Conformation " << i << " ligand efficiency (kcal/mol),Conformation " << i << " RF-Score (pK),Conformation " << i << " consensus score (pK),Conformation " << i << " hydrogen bonds";
-			phase2_csv_gz << ",Molecular weight (g/mol),Partition coefficient xlogP,Apolar desolvation (kcal/mol),Polar desolvation (kcal/mol),Hydrogen bond donors,Hydrogen bond acceptors,Polar surface area tPSA (A^2),Net charge,Rotatable bonds,SMILES,Substance information,Suppliers\n";
-			for (const auto& s : phase2_summaries)
-			{
-				const size_t num_conformations = s.energies.size();
-				phase2_csv_gz << s.lig_id << ',' << num_conformations;
-				for (size_t j = 0; j < num_conformations; ++j)
-				{
-					phase2_csv_gz << ',' << s.energies[j] << ',' << s.efficiencies[j] << ',' << s.rfscores[j] << ',' << s.consensuses[j] << ',' << s.hbonds[j];
-				}
-				for (size_t j = num_conformations; j < max_conformations; ++j)
-				{
-					phase2_csv_gz << ",,,,,";
-				}
-				phase2_csv_gz << ',' << s.property << ",http://zinc.docking.org/substance/" << s.lig_id << ',' << s.supplier << '\n';
+				lig.write_model(ligands_pdbqt_gz, property, smiles, supplier, s, r, b, grid_maps);
 			}
 		}
 
@@ -639,7 +538,7 @@ int main(int argc, char* argv[])
 		MailMessage message;
 		message.setSender("idock <noreply@cse.cuhk.edu.hk>");
 		message.setSubject("Your idock job has completed");
-		message.setContent("Your idock job submitted on " + to_simple_string(ptime(epoch, boost::posix_time::milliseconds(compt["submitted"].Date().millis))) + " UTC docking " + lexical_cast<string>(num_ligands) + " ligands with description as \"" + compt["description"].String() + "\" was done on " + to_simple_string(ptime(epoch, boost::posix_time::milliseconds(millis_since_epoch))) + " UTC. " + lexical_cast<string>(docked) + " ligands were docked and " + lexical_cast<string>(num_hits) + " hits were refined. View result at http://istar.cse.cuhk.edu.hk/idock/iview?" + _id.str());
+		message.setContent("Your idock job submitted on " + to_simple_string(ptime(epoch, boost::posix_time::milliseconds(compt["submitted"].Date().millis))) + " UTC docking " + lexical_cast<string>(num_ligands) + " ligands with description as \"" + compt["description"].String() + "\" was done on " + to_simple_string(ptime(epoch, boost::posix_time::milliseconds(millis_since_epoch))) + " UTC. " + lexical_cast<string>(num_summaries) + " ligands were successfully docked and the top " + lexical_cast<string>(num_hits) + " ligands were written to output. View result at http://istar.cse.cuhk.edu.hk/idock/iview?" + _id.str());
 		message.addRecipient(MailRecipient(MailRecipient::PRIMARY_RECIPIENT, email));
 		SMTPClientSession session("137.189.91.190");
 		session.login();

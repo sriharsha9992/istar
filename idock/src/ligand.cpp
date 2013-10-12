@@ -556,60 +556,44 @@ result ligand::compose_result(const fl e, const fl f, const conformation& conf) 
 		}
 	}
 
-	return result(e, f, static_cast<vector<vec3>&&>(heavy_atoms), static_cast<vector<vec3>&&>(hydrogens));
+	return result(conf, e, f, static_cast<vector<vec3>&&>(heavy_atoms), static_cast<vector<vec3>&&>(hydrogens));
 }
 
-void ligand::write_models(const path& output_ligand_path, const string& property, const string& smiles, const string& supplier, const ptr_vector<result>& results, const size_t num_conformations, const box& b, const vector<array3d<fl>>& grid_maps)
+void ligand::write_model(boost::iostreams::filtering_ostream& ligands_pdbqt_gz, const string& property, const string& smiles, const string& supplier, const summary& s, const result& r, const box& b, const vector<array3d<fl>>& grid_maps)
 {
-	BOOST_ASSERT(num_conformations > 0);
-	BOOST_ASSERT(num_conformations <= results.size());
-
-	const size_t num_lines = lines.size();
-
 	// Dump binding conformations to the output ligand file.
 	using namespace std;
-	using boost::iostreams::filtering_ostream;
-	using boost::iostreams::gzip_compressor;
-	boost::filesystem::ofstream out(output_ligand_path, ios::app); // Dumping starts. Open the file stream as late as possible.
-	filtering_ostream fos;
-	fos.push(gzip_compressor());
-	fos.push(out);
-	fos.setf(ios::fixed, ios::floatfield);
-	fos << setprecision(3);
-	fos << property << '\n' << smiles << '\n' << supplier << '\n';
-	for (size_t i = 0; i < num_conformations; ++i)
+	ligands_pdbqt_gz
+		<< property << '\n' << smiles << '\n' << supplier << '\n'
+		<< "REMARK       NORMALIZED FREE ENERGY PREDICTED BY IDOCK:" << setw(8) << r.f * flexibility_penalty_factor << " KCAL/MOL\n"
+		<< "REMARK            TOTAL FREE ENERGY PREDICTED BY IDOCK:" << setw(8) << r.e       << " KCAL/MOL\n"
+		<< "REMARK     INTER-LIGAND FREE ENERGY PREDICTED BY IDOCK:" << setw(8) << r.f       << " KCAL/MOL\n"
+		<< "REMARK     INTRA-LIGAND FREE ENERGY PREDICTED BY IDOCK:" << setw(8) << (r.e - r.f) << " KCAL/MOL\n"
+		<< "REMARK            LIGAND EFFICIENCY PREDICTED BY IDOCK:" << setw(8) << r.f * num_heavy_atoms_inverse << " KCAL/MOL\n"
+		<< "REMARK               HYDROGEN BONDS PREDICTED BY IDOCK:" << string(4 - (s.hbonds.size() == 1 ? 1 : s.hbonds.find(' ', 1)), ' ') << s.hbonds << '\n'
+		<< "REMARK          BINDING AFFINITY PREDICTED BY RF-SCORE:" << setw(8) << s.rfscore << " pK\n"
+		<< "REMARK                                 CONSENSUS SCORE:" << setw(8) << s.consensus() << " pK\n";
+	const size_t num_lines = lines.size();
+	for (size_t j = 0, heavy_atom = 0, hydrogen = 0; j < num_lines; ++j)
 	{
-		const result& r = results[i];
-		fos << "MODEL     " << setw(4) << (i + 1) << '\n'
-			<< "REMARK       NORMALIZED FREE ENERGY PREDICTED BY IDOCK:" << setw(8) << r.e_nd    << " KCAL/MOL\n"
-			<< "REMARK            TOTAL FREE ENERGY PREDICTED BY IDOCK:" << setw(8) << r.e       << " KCAL/MOL\n"
-			<< "REMARK     INTER-LIGAND FREE ENERGY PREDICTED BY IDOCK:" << setw(8) << r.f       << " KCAL/MOL\n"
-			<< "REMARK     INTRA-LIGAND FREE ENERGY PREDICTED BY IDOCK:" << setw(8) << (r.e - r.f) << " KCAL/MOL\n"
-			<< "REMARK            LIGAND EFFICIENCY PREDICTED BY IDOCK:" << setw(8) << r.efficiency << " KCAL/MOL\n"
-			<< "REMARK               HYDROGEN BONDS PREDICTED BY IDOCK:" << string(4 - (r.hbonds.size() == 1 ? 1 : r.hbonds.find(' ', 1)), ' ') << r.hbonds << '\n'
-			<< "REMARK          BINDING AFFINITY PREDICTED BY RF-SCORE:" << setw(8) << r.rfscore << " pK\n"
-			<< "REMARK                                 CONSENSUS SCORE:" << setw(8) << r.consensus << " pK\n";
-		for (size_t j = 0, heavy_atom = 0, hydrogen = 0; j < num_lines; ++j)
+		const string& line = lines[j];
+		if (line.size() >= 79) // This line starts with "ATOM" or "HETATM"
 		{
-			const string& line = lines[j];
-			if (line.size() >= 79) // This line starts with "ATOM" or "HETATM"
-			{
-				const fl   free_energy = line[77] == 'H' ? 0 : grid_maps[heavy_atoms[heavy_atom].xs](b.grid_index(r.heavy_atoms[heavy_atom]));
-				const vec3& coordinate = line[77] == 'H' ? r.hydrogens[hydrogen++] : r.heavy_atoms[heavy_atom++];
-				fos << line.substr(0, 30)
-					<< setw(8) << coordinate[0]
-					<< setw(8) << coordinate[1]
-					<< setw(8) << coordinate[2]
-					<< line.substr(54, 16)
-					<< setw(6) << free_energy
-					<< line.substr(76);
-			}
-			else // This line starts with "ROOT", "ENDROOT", "BRANCH", "ENDBRANCH", TORSDOF", which will not change during docking.
-			{
-				fos << line;
-			}
-			fos << '\n';
+			const fl   atom_energy = line[77] == 'H' ? 0 : grid_maps[heavy_atoms[heavy_atom].xs](b.grid_index(r.heavy_atoms[heavy_atom]));
+			const vec3& coordinate = line[77] == 'H' ? r.hydrogens[hydrogen++] : r.heavy_atoms[heavy_atom++];
+			ligands_pdbqt_gz
+				<< line.substr(0, 30)
+				<< setw(8) << coordinate[0]
+				<< setw(8) << coordinate[1]
+				<< setw(8) << coordinate[2]
+				<< line.substr(54, 16)
+				<< setw(6) << atom_energy
+				<< line.substr(76);
 		}
-		fos << "ENDMDL\n";
+		else // This line starts with "ROOT", "ENDROOT", "BRANCH", "ENDBRANCH", TORSDOF", which will not change during docking.
+		{
+			ligands_pdbqt_gz << line;
+		}
+		ligands_pdbqt_gz << '\n';
 	}
 }

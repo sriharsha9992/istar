@@ -1012,7 +1012,7 @@ $(function () {
 			rot.position.z = maxD * 0.08 / Math.tan(Math.PI / 180.0 * 10) - 150;
 			rot.quaternion = new THREE.Quaternion(1, 0, 0, 0);
 			$.ajax({
-				url: path + 'hits.pdbqt.gz',
+				url: path + 'ligands.pdbqt.gz',
 				mimeType: 'application/octet-stream; charset=x-user-defined',
 			}).done(function (lsrcz) {
 				var lsrczr = new Uint8Array(lsrcz.length);
@@ -1024,46 +1024,44 @@ $(function () {
 				for (var i = 0, l = lsrcr.length; i < l; ++i) {
 					lsrc += String.fromCharCode(lsrcr[i]);
 				}
-				var ligands = [], ligand, atoms, start_ligand = true, start_frame, rotors;
+				var ligands = [], ligand, atoms, start_frame, rotors;
 				var lines = lsrc.split('\n')
 				for (var i = 0, l = lines.length; i < l; ++i) {
 					var line = lines[i];
 					var record = line.substr(0, 6);
-					if (start_ligand)
-					{
-						if (record === 'REMARK') {
-							var id = line.substr(11, 8);
-							if (isNaN(parseInt(id))) continue;
-							start_ligand = false;
-							rotors = [];
-							var ligand = {
-								atoms: {},
-								representations: {},
-								refresh: function() {
-									refreshMolecule(entities.ligand);
-								},
-								id: id,
-								mwt: parseFloat(line.substr(20, 8)),
-								lgp: parseFloat(line.substr(29, 8)),
-								ads: parseFloat(line.substr(38, 8)),
-								pds: parseFloat(line.substr(47, 8)),
-								hbd: parseInt(line.substr(56, 3)),
-								hba: parseInt(line.substr(60, 3)),
-								psa: parseInt(line.substr(64, 3)),
-								chg: parseInt(line.substr(68, 3)),
-								nrb: parseInt(line.substr(72, 3)),
-							}, atoms = ligand.atoms;
-							ligand.smiles = lines[++i].substr(11);
-							ligand.suppliers = lines[++i].substr(11).split(' | ').slice(1);
-							ligand.nsuppliers = ligand.suppliers.length;
-							ligand.idock_score = parseFloat(lines[i+2].substr(55, 8));
-							ligand.rf_score = parseFloat(lines[i+8].substr(55, 8));
-							ligand.consensus_score = parseFloat(lines[i+9].substr(55, 8));
-							i += 10;
-						}
-						continue;
-					}
-					if (record === 'ATOM  ' || record === 'HETATM') {
+					if (record === 'REMARK') {
+						var id = line.substr(11, 8);
+						if (isNaN(parseInt(id))) continue;
+						rotors = [];
+						var ligand = {
+							atoms: {},
+							representations: {},
+							refresh: function() {
+								refreshMolecule(entities.ligand);
+							},
+							id: id,
+							mwt: parseFloat(line.substr(20, 8)),
+							lgp: parseFloat(line.substr(29, 8)),
+							ads: parseFloat(line.substr(38, 8)),
+							pds: parseFloat(line.substr(47, 8)),
+							hbd: parseInt(line.substr(56, 3)),
+							hba: parseInt(line.substr(60, 3)),
+							psa: parseInt(line.substr(64, 3)),
+							chg: parseInt(line.substr(68, 3)),
+							nrb: parseInt(line.substr(72, 3)),
+						}, atoms = ligand.atoms;
+						ligand.smiles = lines[++i].substr(11);
+						ligand.suppliers = lines[++i].substr(11).split(' | ').slice(1);
+						ligand.nsuppliers = ligand.suppliers.length;
+						ligand.idock_score = parseFloat(lines[++i].substr(55, 8));
+						ligand.e_total = parseFloat(lines[++i].substr(55, 8));
+						ligand.e_inter = parseFloat(lines[++i].substr(55, 8));
+						ligand.e_intra = parseFloat(lines[++i].substr(55, 8));
+						ligand.efficiency = parseFloat(lines[++i].substr(55, 8));
+						++i;
+						ligand.rf_score = parseFloat(lines[++i].substr(55, 8));
+						ligand.consensus_score = parseFloat(lines[++i].substr(55, 8));
+					} else if (record === 'ATOM  ' || record === 'HETATM') {
 						var atom = {
 							serial: parseInt(line.substr(6, 5)),
 							name: line.substr(12, 4).replace(/ /g, ''),
@@ -1128,8 +1126,6 @@ $(function () {
 						ligand.representations.hbond = createHBondRepresentation(hbonds);
 						ligands.push(ligand);
 						if (entities.ligand === undefined) entities.ligand = ligand;
-//						if (ligands.length == 100) break;
-						start_ligand = true;
 						start_frame = undefined;
 					}
 				}

@@ -10,21 +10,17 @@ $(function() {
 		if (!job.scheduled) {
 			status = 'Queued for execution';
 			progress = 0;
-		} else if (job.completed < 100) {
-			status = 'Phase 1 in progress';
+		} else if (!job.done) {
+			status = 'Execution in progress';
 			var num_completed_ligands = 0;
 			for (var i = 0; i < job.scheduled; ++i) {
 				num_completed_ligands += parseInt(job[i.toString()]);
 			}
 			progress = num_completed_ligands / job.ligands;
-		} else if (job.refined < job.hits) {
-			status = 'Phase 2 in progress';
-			progress = job.refined / job.hits;
-			result += '<a href="jobs/' + job._id + '/phase1.csv.gz"><img src="/excel.png" alt="phase1.csv.gz"></a>';
 		} else {
 			status = 'Done on ' + $.format.date(new Date(job.done), 'yyyy/MM/dd HH:mm:ss');
 			progress = 1;
-			result += '<a href="jobs/' + job._id + '/phase1.csv.gz"><img src="/excel.png" alt="phase1.csv.gz"></a><a href="jobs/' + job._id + '/phase2.csv.gz"><img src="/excel.png" alt="phase2.csv.gz"></a><a href="jobs/' + job._id + '/hits.pdbqt.gz"><img src="/molecule.png" alt="hits.pdbqt.gz"></a>';
+			result += '<a href="jobs/' + job._id + '/log.csv.gz"><img src="/excel.png" alt="log.csv.gz"></a><a href="jobs/' + job._id + '/ligands.pdbqt.gz"><img src="/molecule.png" alt="ligands.pdbqt.gz"></a>';
 		}
 		return [
 			job.description,
@@ -44,9 +40,6 @@ $(function() {
 				for (var i = skip; i < jobs.length; ++i) {
 					var job = res[i - skip];
 					jobs[i].scheduled = job.scheduled;
-					jobs[i].completed = job.completed;
-					jobs[i].refined = job.refined;
-					jobs[i].hits = job.hits;
 					jobs[i].done = job.done;
 					for (var s = 0; s < job.scheduled; ++s) {
 						jobs[i][s.toString()] = job[s.toString()];

@@ -84,21 +84,12 @@
         </div>
       </div>
       <div class="row">
-        <div class="col-md-6">
-          <p>Our workstations execute <a href="https://github.com/HongjianLi/idock">idock</a> daemon and perform two-phase docking:<p>
+        <div class="col-md-12">
+          <p>The output from idock is twofold:</p>
           <ul>
-            <li>In phase 1, the selected ligands will be docked in a coarse but fast manner.</li>
-            <li>In phase 2, the top 1000 ligands will be docked again in a fine but slow manner.</li>
+            <li><img src="/excel.png" alt="log.csv.gz">log.csv.gz: the predicted free energy, ligand efficiency, RF-Score, hydrogen bonds, molecular properties, link to substance information and supplier list of the selected ligands.</li>
+            <li><img src="/molecule.png" alt="ligands.pdbqt.gz">ligands.pdbqt.gz: the predicted conformations of the top 1000 ligands.</li>
           </ul>
-          <p>As result, you can download:</p>
-          <ul>
-            <li><img src="/excel.png" alt="phase1.csv.gz">phase1.csv.gz: the predicted free energy, RF-Score, and 9 molecular properties of the selected ligands produced in phase 1.</li>
-            <li><img src="/excel.png" alt="phase2.csv.gz">phase2.csv.gz: the predicted free energy, RF-Score, and 9 molecular properties, as well as link to substance information and supplier list of the top 1000 ligands produced in phase 2.</li>
-            <li><img src="/molecule.png" alt="hits.pdbqt.gz">hits.pdbqt.gz: the predicted conformations of the top 1000 ligands produced in phase 2.</li>
-          </ul>
-        </div>
-        <div class="col-md-6">
-          <img src="2PhaseDocking.png" alt="2PhaseDocking" class="img-responsive">
         </div>
       </div>
       <div class="row" role="form">

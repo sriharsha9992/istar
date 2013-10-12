@@ -20,29 +20,25 @@
 #ifndef IDOCK_SUMMARY_HPP
 #define IDOCK_SUMMARY_HPP
 
-#include "common.hpp"
+#include "conformation.hpp"
 
 /// Represents a summary of docking results of a ligand.
 class summary
 {
 public:
 	size_t index;
-	string lig_id;
-	vector<fl> energies;
-	vector<fl> efficiencies;
-	vector<fl> rfscores;
-	vector<fl> consensuses;
-	vector<string> hbonds;
-	string property;
-	string supplier;
-	explicit summary(const size_t index, const string& lig_id, vector<fl>&& energies_, vector<fl>&& efficiencies_, vector<fl>&& rfscores_, vector<string>&& hbonds_, string&& property_, string&& supplier_) : index(index), lig_id(lig_id), energies(static_cast<vector<fl>&&>(energies_)), efficiencies(static_cast<vector<fl>&&>(efficiencies_)), rfscores(static_cast<vector<fl>&&>(rfscores_)), hbonds(static_cast<vector<string>&&>(hbonds_)), property(static_cast<string&&>(property_)), supplier(static_cast<string&&>(supplier_))
+	fl energy;
+	fl efficiency;
+	fl rfscore;
+	string hbonds;
+	conformation conf;
+	explicit summary(const size_t index, const fl energy, const fl efficiency, const fl rfscore, string&& hbonds_, const conformation& conf) : index(index), energy(energy), efficiency(efficiency), rfscore(rfscore), hbonds(static_cast<string&&>(hbonds_)), conf(conf)
 	{
-		const auto size = energies.size();
-		consensuses.resize(size);
-		for (size_t i = 0; i < size; ++i)
-		{
-			consensuses[i] = (rfscores[i] + energy2pK * energies[i]) * 0.5;
-		}
+	}
+
+	fl consensus() const
+	{
+		return (rfscore + energy2pK * energy) * 0.5;
 	}
 
 	summary(const summary&) = default;
@@ -54,7 +50,7 @@ public:
 /// For sorting ptr_vector<summary>.
 inline bool operator<(const summary& a, const summary& b)
 {
-	return a.energies.front() < b.energies.front();
+	return a.energy < b.energy;
 }
 
 #endif
