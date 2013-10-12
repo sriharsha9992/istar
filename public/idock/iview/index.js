@@ -1130,12 +1130,12 @@ $(function () {
 					}
 				}
 				$('#nligands').text(ligands.length);
-				var hits = $('#hits');
-				hits.html(ligands.map(function(ligand) {
+				var ids = $('#ids');
+				ids.html(ligands.map(function(ligand) {
 					return '<label class="btn btn-primary"><input type="radio">' + ligand.id + '</label>';
 				}).join(''));
-				$(':first', hits).addClass('active');
-				$('> .btn', hits).click(function(e) {
+				$(':first', ids).addClass('active');
+				$('> .btn', ids).click(function(e) {
 					var ligand = entities.ligand;
 					mdl.remove(ligand.representations.hbond);
 					mdl.remove(ligand.representations[ligand.active]);
