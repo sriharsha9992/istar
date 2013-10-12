@@ -831,7 +831,7 @@ $(function () {
 	};
 	var hasCovalentBond = function (atom1, atom2) {
 		var r = covalentRadii[atom1.elem] + covalentRadii[atom2.elem];
-		return atom1.coord.distanceToSquared(atom2.coord) < 1.2 * r * r;
+		return atom1.coord.distanceToSquared(atom2.coord) < 1.29 * r * r;
 	};
 	var isHBondDonor = function (elqt) {
 		return elqt === 'HD' || elqt === 'Zn' || elqt === 'Fe' || elqt === 'Mg' || elqt === 'Ca' || elqt === 'Mn' || elqt === 'Cu' || elqt === 'Na' || elqt === 'K ' || elqt === 'Hg' || elqt === 'Ni' || elqt === 'Co' || elqt === 'Cd' || elqt === 'As' || elqt === 'Sr' || elqt === 'U ';
