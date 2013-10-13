@@ -113,7 +113,7 @@ if (cluster.isMaster) {
 				'scheduled': 1,
 				'done': 1
 			};
-			for (var i = 0; i < 100; ++i) {
+			for (var i = 0; i < 10; ++i) {
 				idockJobFields[i.toString()] = 1;
 			}
 			var idockProgressFields = {
@@ -121,7 +121,7 @@ if (cluster.isMaster) {
 				'scheduled': 1,
 				'done': 1
 			};
-			for (var i = 0; i < 100; ++i) {
+			for (var i = 0; i < 10; ++i) {
 				idockProgressFields[i.toString()] = 1;
 			}
 			// Get idock jobs
@@ -256,7 +256,7 @@ if (cluster.isMaster) {
 					f.res.ligands = ligands;
 					f.res.scheduled = 0;
 					f.res.completed = 0;
-					for (var i = 0; i < 100; ++i) {
+					for (var i = 0; i < 10; ++i) {
 						f.res[i.toString()] = 0;
 					}
 					f.res.submitted = new Date();

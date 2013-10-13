@@ -91,7 +91,7 @@ int main(int argc, char* argv[])
 
 	// Calculate the slice split points on the fly.
 	const size_t total_ligands = 17224424;
-	const size_t num_slices = 100;
+	const size_t num_slices = 10;
 	const size_t num_ligands_per_slice = total_ligands / num_slices;
 	const size_t spare_ligands = total_ligands - num_ligands_per_slice * num_slices;
 	array<size_t, num_slices + 1> slices;
@@ -518,7 +518,7 @@ int main(int argc, char* argv[])
 				// Apply conformation.
 				fl e, f;
 				change g(lig.num_active_torsions);
-				lig.evaluate(s.conf, sf, b, grid_maps, -100, e, f, g);
+				lig.evaluate(s.conf, sf, b, grid_maps, -99, e, f, g);
 				const auto r = lig.compose_result(e, f, s.conf);
 
 				// Write models to file.
