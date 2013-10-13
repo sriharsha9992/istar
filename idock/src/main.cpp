@@ -248,7 +248,7 @@ int main(int argc, char* argv[])
 		headers.seekg(sizeof(size_t) * beg_lig);
 		boost::filesystem::ofstream slice_csv(job_path / (slice_key + ".csv"));
 		slice_csv.setf(ios::fixed, ios::floatfield);
-		slice_csv << setprecision(8); // Dump as many digits as possible in order to recover accurate conformations in summaries.
+		slice_csv << setprecision(12); // Dump as many digits as possible in order to recover accurate conformations in summaries.
 		for (auto idx = beg_lig; idx < end_lig; ++idx)
 		{
 			// Locate a ligand.
@@ -421,7 +421,7 @@ int main(int argc, char* argv[])
 					const size_t comma1 = line.find(',', comma0 + 1);
 					if (comma1 == string::npos)
 					{
-						tokens.push_back(line.substr(comma0 + 1));
+						tokens.push_back(line.substr(comma0));
 						break;
 					}
 					tokens.push_back(line.substr(comma0, comma1 - comma0));
