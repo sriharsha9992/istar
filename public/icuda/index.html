@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="author" content="Hongjian Li">
+  <meta name="description" content="hands-on introduction to CUDA programming">
+  <title>Hands-on Introduction to CUDA Programming</title>
+  <link rel="stylesheet" href="/bootstrap.min.css">
+  <link rel="stylesheet" href="/jquery.snippet.min.css">
+  <link rel="stylesheet" href="/index.css">
+  <link rel="stylesheet" href="index.css">
+  <link rel="shortcut icon" href="/favicon.ico">
+  <link rel="apple-touch-icon-precomposed" sizes="144x144" href="/apple-touch-icon-144-precomposed.png">
+  <link rel="apple-touch-icon-precomposed" sizes="114x114" href="/apple-touch-icon-114-precomposed.png">
+  <link rel="apple-touch-icon-precomposed" sizes="72x72" href="/apple-touch-icon-72-precomposed.png">
+  <link rel="apple-touch-icon-precomposed" href="/apple-touch-icon-57-precomposed.png">
+  <script>
+    var _gaq=[['_setAccount','UA-20604862-1'],['_trackPageview']];
+    (function(d,t){var g=d.createElement(t),s=d.getElementsByTagName(t)[0];
+    g.src=('https:'==location.protocol?'//ssl':'//www')+'.google-analytics.com/ga.js';
+    s.parentNode.insertBefore(g,s)}(document,'script'));
+  </script>
+</head>
+<body>
+  <a class="sr-only" href="#content">Skip navigation</a>
+  <a href="//github.com/HongjianLi/istar" class="ribbon"></a>
+  <header class="navbar navbar-inverse navbar-static-top" role="banner">
+    <div class="container">
+      <div class="navbar-header">
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+      </div>
+      <nav class="collapse navbar-collapse" role="navigation">
+        <ul class="nav navbar-nav">
+          <li>
+            <a href="/"><img src="/logo.png" alt="istar logo">istar: software as a service</a>
+          </li>
+          <li>
+            <a href="/idock"><img src="/idock/logo.png" alt="idock logo">idock: protein-ligand docking</a>
+          </li>
+          <li>
+            <a href="/igrep"><img src="/igrep/logo.png" alt="igrep logo">igrep: DNA sequence matching</a>
+          </li>
+          <li>
+            <a href="/iview"><img src="/iview/logo.png" alt="iview logo">iview: interactive WebGL visualizer</a>
+          </li>
+          <li class="active">
+            <a href="/icuda"><img src="/icuda/logo.png" alt="icuda logo">icuda: introduction to CUDA</a>
+          </li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+  <div class="jumbotron" id="content" role="main">
+    <div class="container">
+      <h1><img src="logo.png" alt="logo" class="logo">icuda</h1>
+      <p>hands-on introduction to CUDA programming</p>
+    </div>
+  </div>
+  <div class="container section">
+    <section>
+      <div class="page-header">
+        <h1>Outline</h1>
+      </div>
+      <div class="row">
+        <div class="col-md-12">
+          <p>This is a hands-on seminar series on pragmatic CUDA programming. It emphasizes <b>examples</b> and <b>tools</b>.
+          <h2>Schedule</h2>
+          <ul>
+            <li> 1 Dec 2013, 10:00am - 11:30am, SHB 904</li>
+            <li> 8 Dec 2013, 10:00am - 11:30am, SHB 904</li>
+            <li>15 Dec 2013, 10:00am - 11:30am, SHB 904</li>
+          </ul>
+          <h2>References</h2>
+          <p>CUDA toolkit documentation. <a href="http://docs.nvidia.com/">http://docs.nvidia.com/</a></p>
+          <p>CUDA education & training. <a href="https://developer.nvidia.com/cuda-education-training/">https://developer.nvidia.com/cuda-education-training/</a></p>
+          <p>University courses. <a href="http://ece408.hwu.crhc.illinois.edu">ECE408/CS483 @ UIUC</a> and <a href="http://stanford-cs193g-sp2010.googlecode.com/svn/trunk/">CS193G @ Stanford University</a></p>
+          <h2>Contents</h2>
+          <p>Seminar 1: <a href="#vectorAdd">vectorAdd</a>, <a href="#zeroCopy">zeroCopy</a> and <a href="bandwidthTest">bandwidthTest</a></p>
+          <p>Seminar 2: <a href="#matrixMul">matrixMul</a>, <a href="#atomicAdd">atomicAdd</a>, <a href="#hyperQ">hyperQ</a></p>
+          <p>Seminar 3: <a href="#deviceQuery">deviceQuery</a>, multiDevice, OpenMP, MPI, driver API, OpenCL</p>
+        </div>
+      </div>
+    </section>
+    <section>
+      <div class="page-header">
+        <h1>Samples</h1>
+      </div>
+      <div class="row">
+        <div class="col-md-12">
+          <h2>Makefile</h2>
+          <p>A sample Makefile looks like this. Instead of <code>gcc</code>, it uses <code>nvcc</code> as CUDA compiler. The option <code>arch</code> specifies the name of the class of nVidia GPU architectures for which the cuda input files must be compiled. Our K20m GPU architecture is <code>sm_35</code>.</p>
+<pre class="makefile">
+CC=nvcc -arch=sm_35
+
+vectorAdd: vectorAdd.o
+	$(CC) -o $@ $^
+
+vectorAdd.o: vectorAdd.cu
+	$(CC) -o $@ $< -c
+
+clean:
+	rm -f vectorAdd vectorAdd.o
+</pre>
+          <h2 id="vectorAdd">vectorAdd</h2>
+          <p>This sample adds two vectors of float.</p>
+<pre class="cpp">
+#include &lt;stdio.h&gt;
+
+__global__ void vectorAdd(const float *a, const float *b, float *c, int numElements)
+{
+	int i = blockDim.x * blockIdx.x + threadIdx.x;
+	if (i < numElements)
+	{
+		c[i] = a[i] + b[i];
+	}
+}
+
+int main(int argc, char *argv[])
+{
+	int numElements = 50000;
+
+	// Allocate vectors a, b and c in host memory.
+	size_t size = sizeof(float) * numElements;
+	float *h_a = (float *)malloc(size);
+	float *h_b = (float *)malloc(size);
+	float *h_c = (float *)malloc(size);
+
+	// Initialize vectors a and b.
+	for (int i = 0; i < numElements; ++i)
+	{
+		h_a[i] = rand() / (float)RAND_MAX;
+		h_b[i] = rand() / (float)RAND_MAX;
+	}
+
+	// Allocate vectors a, b and c in device memory.
+	float *d_a;
+	float *d_b;
+	float *d_c;
+	cudaMalloc((void **)&d_a, size);
+	cudaMalloc((void **)&d_b, size);
+	cudaMalloc((void **)&d_c, size);
+
+	// Copy vectors a and b from host memory to device memory synchronously.
+	cudaMemcpy(d_a, h_a, size, cudaMemcpyHostToDevice);
+	cudaMemcpy(d_b, h_b, size, cudaMemcpyHostToDevice);
+
+	// Determine the number of threads per block and the number of blocks per grid.
+	int numThreadsPerBlock = 256;
+	int numBlocksPerGrid = (numElements + numThreadsPerBlock - 1) / numThreadsPerBlock;
+
+	// Invoke the kernel on device asynchronously.
+	vectorAdd&lt;&lt;&lt;numBlocksPerGrid, numThreadsPerBlock&gt;&gt;&gt;(d_a, d_b, d_c, numElements);
+
+	// Copy vector c from device memory to host memory synchronously.
+	cudaMemcpy(h_c, d_c, size, cudaMemcpyDeviceToHost);
+
+	// Validate the result.
+	for (int i = 0; i < numElements; ++i)
+	{
+		float actual = h_c[i];
+		float expected = h_a[i] + h_b[i];
+		if (fabs(actual - expected) > 1e-7)
+		{
+			printf("h_c[%d] = %f, expected = %f\n", i, actual, expected);
+			break;
+		}
+	}
+
+	// Cleanup.
+	cudaFree(d_c);
+	cudaFree(d_b);
+	cudaFree(d_a);
+	cudaDeviceReset();
+	free(h_c);
+	free(h_b);
+	free(h_a);
+}
+</pre>
+          <p>Try different values of <code>numElements</code> and <code>numThreadsPerBlock</code>.</p>
+          <h2 id="zeroCopy">zeroCopy</h2>
+          <p>This sample maps device pointers to pinned host memory so that kernels can directly read from and write to pinned host memory.</p>
+          <p>On integrated systems where device memory and host memory are physically the same, the mapping mechanism saves superfluous copies from host to device and from device to host.</p>
+          <p>On discrete systems where device memory and host memory are physically different, the mapping mechanism saves explicit copies from host to device and from device to host.</p>
+<pre class="cpp">
+#include &lt;stdio.h&gt;
+
+__global__ void vectorAdd(const float* a, const float* b, float* c)
+{
+	int i = blockDim.x * blockIdx.x + threadIdx.x;
+	c[i] = a[i] + b[i];
+}
+
+int main(int argc, char *argv[])
+{
+	// Initialize the number of threads per block and the number of blocks per grid.
+	const unsigned int numThreadsPerBlock = 256;
+	const unsigned int numBlocksPerGrid = 1024;
+	const unsigned int numThreadsPerGrid = numThreadsPerBlock * numBlocksPerGrid;
+
+	// Allocate pinned vectors a, b and c in host memory with the cudaHostAllocMapped flag so that they can be accessed by the device.
+	float* h_a;
+	float* h_b;
+	float* h_c;
+	cudaHostAlloc((void**)&h_a, sizeof(float) * numThreadsPerGrid, cudaHostAllocMapped);
+	cudaHostAlloc((void**)&h_b, sizeof(float) * numThreadsPerGrid, cudaHostAllocMapped);
+	cudaHostAlloc((void**)&h_c, sizeof(float) * numThreadsPerGrid, cudaHostAllocMapped);
+
+	// Initialize vectors a and b.
+	for (int i = 0; i < numThreadsPerGrid; ++i)
+	{
+		h_a[i] = rand() / (float)RAND_MAX;
+		h_b[i] = rand() / (float)RAND_MAX;
+	}
+
+	// Get the mapped pointers for the device.
+	float* d_a;
+	float* d_b;
+	float* d_c;
+	cudaHostGetDevicePointer(&d_a, h_a, 0);
+	cudaHostGetDevicePointer(&d_b, h_b, 0);
+	cudaHostGetDevicePointer(&d_c, h_c, 0);
+
+	// Invoke the kernel on device asynchronously.
+	vectorAdd&lt;&lt;&lt;numBlocksPerGrid, numThreadsPerBlock&gt;&gt;&gt;(d_a, d_b, d_c);
+
+	// Wait for the device to finish.
+	cudaDeviceSynchronize();
+
+	// Validate the result.
+	for (int i = 0; i < numThreadsPerGrid; ++i)
+	{
+		float actual = h_c[i];
+		float expected = h_a[i] + h_b[i];
+		if (fabs(actual - expected) > 1e-7)
+		{
+			printf("h_c[%d] = %f, expected = %f\n", i, actual, expected);
+			break;
+		}
+	}
+
+	// Cleanup.
+	cudaFreeHost(h_c);
+	cudaFreeHost(h_b);
+	cudaFreeHost(h_a);
+	cudaDeviceReset();
+}
+</pre>
+          <p>Change the flag to <a href="http://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__MEMORY.html#group__CUDART__MEMORY_1g15a3871f15f8c38f5b7190946845758c">cudaHostAlloc</a> from <code>cudaHostAllocMapped</code> to other macros.</p>
+          <h2 id="bandwidthTest">bandwidthTest</h2>
+          <p>This sample measures host-to-device and device-to-host bandwidth via PCIe for pageable and pinned memory of four transfer sizes of 3KB, 15KB, 15MB and 100MB, and outputs them in CSV format.</p>
+<pre class="cpp">
+#include &lt;stdio.h&gt;
+#include &lt;sys/time.h&gt;
+
+// This function returns the current timestamp in seconds.
+double shrDeltaT()
+{
+	static struct timeval old_time;
+	struct timeval new_time;
+	gettimeofday(&new_time, NULL);
+	const double DeltaT = ((double)new_time.tv_sec + 1.0e-6 * (double)new_time.tv_usec) - ((double)old_time.tv_sec + 1.0e-6 * (double)old_time.tv_usec);
+	old_time.tv_sec  = new_time.tv_sec;
+	old_time.tv_usec = new_time.tv_usec;
+	return DeltaT;
+}
+
+int main(int argc, char* argv[])
+{
+	// Initialize 4 transfer sizes, i.e. 3KB, 15KB, 15MB and 100MB.
+	const int n = 4;
+	const size_t sizes[n] = { 3 << 10, 15 << 10, 15 << 20, 100 << 20 };
+
+	// Initialize the number of transfer iterations, i.e. 60K, 60K, 300 and 30 iterations, respectively.
+	const int iterations[n] = { 60000, 60000, 300, 30 };
+
+	// Print header in CSV format.
+	printf("size (B),memory,direction,bandwidth (MB/s)\n");
+
+	// Loop through the 4 transfer sizes.
+	for (int s = 0; s < n; ++s)
+	{
+		// Calculate the total transfer size.
+		const size_t size = sizes[s];
+		const int iteration = iterations[s];
+		const double totalSizeInMB = (double)size * iteration / (1 << 20);
+		double time;
+
+		// Allocate d_p in device memory.
+		void* h_p;
+		void* d_p;
+		cudaMalloc(&d_p, size);
+
+		// Allocate pageable h_p in host memory.
+		h_p = malloc(size);
+
+		// Test host-to-device bandwidth.
+		shrDeltaT();
+		for (int i = 0; i < iteration; ++i)
+		{
+			cudaMemcpy(d_p, h_p, size, cudaMemcpyHostToDevice);
+		}
+		time = shrDeltaT();
+		printf("%lu,%s,%s,%.0f\n", size, "pageable", "HtoD", totalSizeInMB / time);
+
+		// Test device-to-host bandwidth.
+		shrDeltaT();
+		for (int i = 0; i < iteration; ++i)
+		{
+			cudaMemcpy(h_p, d_p, size, cudaMemcpyDeviceToHost);
+		}
+		time = shrDeltaT();
+		printf("%lu,%s,%s,%.0f\n", size, "pageable", "DtoH", totalSizeInMB / time);
+
+		// Deallocate pageable h_p in host memory.
+		free(h_p);
+
+		// Allocate pinned h_p in host memory.
+        cudaHostAlloc(&h_p, size, cudaHostAllocDefault);
+
+		// Test host-to-device bandwidth.
+		shrDeltaT();
+		for (int i = 0; i < iteration; ++i)
+		{
+			cudaMemcpyAsync(d_p, h_p, size, cudaMemcpyHostToDevice);
+		}
+		cudaDeviceSynchronize();
+		time = shrDeltaT();
+		printf("%lu,%s,%s,%.0f\n", size, "pinned", "HtoD", totalSizeInMB / time);
+
+		// Test device-to-host bandwidth.
+		shrDeltaT();
+		for (int i = 0; i < iteration; ++i)
+		{
+			cudaMemcpyAsync(h_p, d_p, size, cudaMemcpyDeviceToHost);
+		}
+		cudaDeviceSynchronize();
+		time = shrDeltaT();
+		printf("%lu,%s,%s,%.0f\n", size, "pinned", "DtoH", totalSizeInMB / time);
+
+		// Deallocate pinned h_p in host memory.
+		cudaFreeHost(h_p);
+
+		// Deallocate d_p in device memory.
+		cudaFree(d_p);
+	}
+
+	// Cleanup.
+	cudaDeviceReset();
+}
+</pre>
+          <p>Try different values of <code>sizes</code>.</p>
+          <p>Try <code>cudaMemcpy</code> instead of <code>cudaMemcpyAsync</code> on pinned memory.</p>
+          <p>Try <a href="http://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__MEMORY.html#group__CUDART__MEMORY_1g36b9fe28f547f28d23742e8c7cd18141">cudaHostRegister</a> to register an existing host memory range as pinned memory, and <a href="http://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__MEMORY.html#group__CUDART__MEMORY_1gc07b1312c60ca36c118e2ed71b192afe">cudaHostUnregister</a> to unregister it after use.</p>
+          <p>Try passing the flag <code>cudaHostAllocWriteCombined</code> to <a href="http://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__MEMORY.html#group__CUDART__MEMORY_1g15a3871f15f8c38f5b7190946845758c">cudaHostAlloc</a> to allocate the memory as write-combined (WC).</p>
+          <h2 id="checkError">checkError</h2>
+          <p>This sample checks the return value of every runtime API. It requires <code>-I /usr/local/cuda/samples/common/inc</code> in the Makefile.</p>
+<pre class="cpp">
+#include &lt;helper_cuda.h&gt;
+
+__global__ void iota(float *a)
+{
+	int i = blockDim.x * blockIdx.x + threadIdx.x;
+	a[i] = i;
+}
+
+int main(int argc, char *argv[])
+{
+	int numElements = 1e+8;
+	size_t size = sizeof(float) * numElements;
+
+	// Allocate vector a in device memory.
+	float *d_a;
+	checkCudaErrors(cudaMalloc((void **)&d_a, size));
+
+	// Determine the number of threads per block and the number of blocks per grid.
+	int numThreadsPerBlock = 256;
+	int numBlocksPerGrid = (numElements + numThreadsPerBlock - 1) / numThreadsPerBlock;
+
+	// Invoke the kernel on device asynchronously.
+	iota&lt;&lt;&lt;numBlocksPerGrid, numThreadsPerBlock&gt;(d_a);
+
+	// Cleanup.
+	checkCudaErrors(cudaFree(d_a));
+	checkCudaErrors(cudaDeviceReset());
+}
+</pre>
+          <p>Try setting <code>numElements</code> to 1e+10, and observe <code>cudaErrorMemoryAllocation</code>.</p>
+          <p>Try setting <code>numThreadsPerBlock</code> to 2560, and observe <code>cudaErrorInvalidConfiguration</code>.</p>
+          <p>Try accessing <code>a[i*2]</code> in the kernel, and observe <code>cudaErrorLaunchFailure</code>. Note the error line number because kernel execution is asynchronous.</p>
+          <h2 id="matrixMul">matrixMul</h2>
+          <p>This sample uses shared memory to accelerate matrix multiplication.</p>
+<pre class="cpp">
+</pre>
+          <h2 id="atomicAdd">atomicAdd</h2>
+          <p>This sample uses atomic operations and printf.</p>
+<pre class="cpp">
+</pre>
+          <h2 id="hyperQ">hyperQ</h2>
+          <p>This sample uses multiple streams to exploit the HyperQ technology.</p>
+<pre class="cpp">
+</pre>
+          <h2 id="deviceQuery">deviceQuery</h2>
+          <p>This sample enumerates the properties of the CUDA devices present in the system.</p>
+<pre class="cpp">
+</pre>
+        </div>
+      </div>
+    </section>
+    <section>
+      <div class="page-header">
+        <h1>Tools</h1>
+      </div>
+      <div class="row">
+        <div class="col-md-12">
+<pre class="sh">
+<b class="text-info">hjli@P32-1:~></b> ls -l /usr/local/cuda-5.5/bin
+total 32112
+-rwxr-xr-x. 1 root root   63000 Sep  4 12:48 bin2c
+lrwxrwxrwx. 1 root root       4 Sep  4 12:48 computeprof -> nvvp
+drwxr-xr-x. 2 root root    4096 Sep  4 12:48 crt
+-rwxr-xr-x. 1 root root 3415240 Sep  4 12:48 cudafe
+-rwxr-xr-x. 1 root root 3081848 Sep  4 12:48 cudafe++
+-rwxr-xr-x. 1 root root 6093856 Sep  4 12:48 cuda-gdb
+-rwxr-xr-x. 1 root root  342809 Sep  4 12:48 cuda-gdbserver
+-rwxr-xr-x. 1 root root     665 Sep  4 12:49 cuda-install-samples-5.5.sh
+-rwxr-xr-x. 1 root root  348832 Sep  4 12:48 cuda-memcheck
+-rwxr-xr-x. 1 root root  230744 Sep  4 12:48 cuobjdump
+-rwxr-xr-x. 1 root root  163200 Sep  4 12:48 fatbin
+-rwxr-xr-x. 1 root root  125584 Sep  4 12:48 fatbinary
+-rwxr-xr-x. 1 root root   54584 Sep  4 12:48 filehash
+-rwxr-xr-x. 1 root root     219 Sep  4 12:48 nsight
+-rwxr-xr-x. 1 root root  164608 Sep  4 12:48 nvcc
+-rw-r--r--. 1 root root     377 Sep  4 12:48 nvcc.profile
+-rwxr-xr-x. 1 root root 3790843 Sep  4 12:48 nvdisasm
+-rwxr-xr-x. 1 root root 5895464 Sep  4 12:48 nvlink
+-rwxr-xr-x. 1 root root 3300720 Sep  4 12:48 nvprof
+-rwxr-xr-x. 1 root root     215 Sep  4 12:48 nvvp
+-rwxr-xr-x. 1 root root 5759328 Sep  4 12:48 ptxas
+</pre>
+          <h2>Compiler: nvcc & ptxas</h2>
+          <p>Analogue to GNU <code>cc</code>.</p>
+          <p><img class="img-responsive" src="http://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/graphics/cuda-compilation-from-cu-to-cu-cpp-ii.png" alt="nvcc"></p>
+          <p>The <code>-ptx</code> option generates ptx. The <code>-cubin</code> option generates cubin.</p>
+          <h2>Debugger: cuda-gdb & cuda-gdbserver</h2>
+          <p>debugger tools analogue to GNU <code>gdb</code> and <code>gdbserver</code>.</p>
+          <h2>Profiler: nvprof & nvvp</h2>
+          <p>analogue to GNU <code>gprof</code>.</p>
+<pre class="sh">
+<b class="text-info">hjli@P32-1:~></b> nvprof -o %h-%p.nvprof ~/idock/bin/idock --config idock.conf
+<b class="text-info">hjli@P32-1:~></b> nvprof -o %h-%p.nvprof --analysis-metrics ~/idock/bin/idock --config idock.conf
+<b class="text-info">hjli@P32-1:~></b> nvprof -i pc90124-26367.nvprof --print-gpu-trace
+<b class="text-info">hjli@P32-1:~></b> nvprof -i pc90124-26367.nvprof --print-api-trace
+</pre>
+          <p>File -> Import -> Nvprof</p>
+          <h2>cuda-memcheck</h2>
+          <p>cuda-memcheck is a tool analogue to <code>valgrind</code>.</p>
+<pre class="sh">
+<b class="text-info">hjli@P32-1:~></b> cuda-memcheck --leak-check full ~/idock/bin/idock --config idock.cfg
+<b class="text-info">hjli@P32-1:~></b> cuda-memcheck --tool racecheck ~/idock/bin/idock --config idock.cfg
+</pre>
+          <h2>CUDA IDE: Nsight</h2>
+          <p>Visual Studio and Eclipse</p>
+          <h2>Occupancy.xls</h2>
+          <p>There are a few easy ways to quickly get started with Bootstrap, each one appealing to a different skill level and use case. Read through to see what suits your particular needs.</p>
+          <h2>nvidia-smi</h2>
+          <p>analogue to <code>top</code>.</p>
+<pre class="sh">
+<b class="text-info">hjli@P32-1:~></b> nvidia-smi
+Tue Sep 10 10:39:25 2013       
++------------------------------------------------------+                       
+| NVIDIA-SMI 5.319.37   Driver Version: 319.37         |                       
+|-------------------------------+----------------------+----------------------+
+| GPU  Name        Persistence-M| Bus-Id        Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp  Perf  Pwr:Usage/Cap|         Memory-Usage | GPU-Util  Compute M. |
+|===============================+======================+======================|
+|   0  Tesla K20m          Off  | 0000:08:00.0     Off |                    0 |
+| N/A   35C    P0    42W / 225W |       11MB /  4799MB |      0%      Default |
++-------------------------------+----------------------+----------------------+
+|   1  Tesla K20m          Off  | 0000:24:00.0     Off |                    0 |
+| N/A   41C    P0    44W / 225W |       11MB /  4799MB |      0%      Default |
++-------------------------------+----------------------+----------------------+
+|   2  Tesla K20m          Off  | 0000:27:00.0     Off |                    0 |
+| N/A   35C    P0    39W / 225W |       11MB /  4799MB |     78%      Default |
++-------------------------------+----------------------+----------------------+
+                                                                               
++-----------------------------------------------------------------------------+
+| Compute processes:                                               GPU Memory |
+|  GPU       PID  Process name                                     Usage      |
+|=============================================================================|
+|  No running compute processes found                                         |
++-----------------------------------------------------------------------------+
+</pre>
+          <h2>Libraries: CUBLAS, CUFFT, CURAND</h2>
+          <p>Analogue to Intel <code>MKL</code></p>
+        </div>
+      </div>
+    </section>
+  </div>
+  <footer role="contentinfo">
+    <div class="container">
+      <p><a href="http://www.cuhk.edu.hk"><img src="/cuhk.jpg" alt="CUHK logo"></a>&copy; 2012-2013 Chinese University of Hong Kong. Platform designed by <a href="http://www.cse.cuhk.edu.hk/~hjli">Hongjian Li</a>. Code licensed under <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License 2.0</a>. Documentation licensed under <a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a>.<a href="http://validator.w3.org/check?uri=referer"><img src="/HTML5_Badge_512.png" alt="HTML5 logo"></a></p>
+    </div>
+  </footer>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+  <script src="/bootstrap.min.js"></script>
+  <script src="/jquery.lazyload.min.js"></script>
+  <script src="/jquery.snippet.min.js"></script>
+  <script src="/sh_sh.min.js"></script>
+  <script src="sh_makefile.min.js"></script>
+  <script src="index.js"></script>
+</body>
+</html>
