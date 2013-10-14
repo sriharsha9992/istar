@@ -68,7 +68,7 @@
       </div>
       <div class="row">
         <div class="col-md-12">
-          <p>This is a hands-on seminar series on pragmatic CUDA programming. It emphasizes <b>examples</b> and <b>tools</b>.
+          <p>This is a hands-on seminar series on pragmatic CUDA programming. It emphasizes <b>examples</b>, <b>tools</b> and <b>libraries</b>.
           <h2>Schedule</h2>
           <ul>
             <li> 1 Dec 2013, 10:00am - 11:30am, SHB 904</li>
@@ -250,7 +250,7 @@ int main(int argc, char *argv[])
 	cudaDeviceReset();
 }
 </pre>
-          <p>Change the flag to <a href="http://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__MEMORY.html#group__CUDART__MEMORY_1g15a3871f15f8c38f5b7190946845758c">cudaHostAlloc</a> from <code>cudaHostAllocMapped</code> to other macros.</p>
+          <p>Try passing the flag <code>cudaHostAllocDefault</code> to <a href="http://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__MEMORY.html#group__CUDART__MEMORY_1g15a3871f15f8c38f5b7190946845758c">cudaHostAlloc</a> to allocate the memory as non-mapped.</p>
           <h2 id="bandwidthTest">bandwidthTest</h2>
           <p>This sample measures host-to-device and device-to-host bandwidth via PCIe for pageable and pinned memory of four transfer sizes of 3KB, 15KB, 15MB and 100MB, and outputs them in CSV format.</p>
 <pre class="cpp">
@@ -397,17 +397,193 @@ int main(int argc, char *argv[])
 <pre class="cpp">
 </pre>
           <h2 id="atomicAdd">atomicAdd</h2>
-          <p>This sample uses atomic operations and printf.</p>
+          <p>This sample uses atomic operations, assertions and printf.</p>
 <pre class="cpp">
+#include &lt;stdio.h&gt;
+#include &lt;assert.h&gt;
+
+__constant__ int inc;
+__device__ int sum;
+
+__global__ void atomicAdd()
+{
+	int s = atomicAdd(&sum, inc);
+	assert((s - 1) % inc == 0);
+	if (threadIdx.x == 0)
+	{
+		printf("blockIdx.x = %d, sum = %d\n", blockIdx.x, s);
+	}
+}
+
+int main(int argc, char *argv[])
+{
+	// Initialize inc and sum.
+	int h_inc = 3;
+	int h_sum = 1;
+
+	// Copy inc and sum from host memory to device memory synchronously.
+	cudaMemcpyToSymbol(inc, &h_inc, sizeof(int));
+	cudaMemcpyToSymbol(sum, &h_sum, sizeof(int));
+
+	// Invoke the kernel on device asynchronously.
+	atomicAdd&lt;&lt;&lt;2, 2&gt;&gt;&gt;();
+
+	// Wait for the device to finish.
+	cudaDeviceSynchronize();
+
+	// Copy sum from device memory to host memory synchronously.
+	cudaMemcpyFromSymbol(&h_sum, sum, sizeof(int));
+
+	// Print the result.
+	printf("sum = %d\n", h_sum);
+
+	// Cleanup.
+	cudaDeviceReset();
+}
 </pre>
+          <p>Try atomic operations on shared memory, and measure the performance.</p>
           <h2 id="hyperQ">hyperQ</h2>
           <p>This sample uses multiple streams to exploit the HyperQ technology.</p>
 <pre class="cpp">
+#include <stdio.h>
+
+__global__ void spin(clock_t numClocks)
+{
+	for (const clock_t threshold = clock() + numClocks; clock() < threshold;);
+}
+
+int main(int argc, char *argv[])
+{
+	// Initialize constants.
+	const int numMilliseconds = 10;
+	const int numKernels = 2;
+	const int numStreams = 32;
+
+	// Get the major and minor compute capability version numbers.
+	int major, minor;
+	cudaDeviceGetAttribute(&major, cudaDevAttrComputeCapabilityMajor, 0);
+	cudaDeviceGetAttribute(&minor, cudaDevAttrComputeCapabilityMinor, 0);
+
+	// Get the peak clock frequency in KHz of device 0.
+	int clockRate;
+	cudaDeviceGetAttribute(&clockRate, cudaDevAttrClockRate, 0);
+
+	// Calculate the number of clocks within a certain period.
+	clock_t numClocks = clockRate * numMilliseconds;
+
+	// Create streams to enqueue kernels.
+	cudaStream_t *streams = (cudaStream_t*)malloc(sizeof(cudaStream_t) * numStreams);
+	for (int s = 0; s < numStreams; ++s)
+	{
+		cudaStreamCreate(&streams[s]);
+	}
+
+	// Create events to record timing data.
+	cudaEvent_t beg, end;
+	cudaEventCreate(&beg);
+	cudaEventCreate(&end);
+
+	// Record an event in stream 0 before kernel invocations.
+	cudaEventRecord(beg, 0);
+
+	// Enqueue kernels to streams.
+	for (int s = 0; s < numStreams; ++s)
+	{
+		for (int k = 0; k < numKernels; ++k)
+		{
+			// The 1st argument is of type dim3 and specifies the number of blocks per grid.
+			// The 2nd argument is of type dim3 and specifies the number of threads per block.
+			// The 3rd argument is of type size_t and specifiesthe number of bytes in shared memory that is dynamically allocated per block for this call in addition to the statically allocated memory. It is an optional argument which defaults to 0.
+			// The 4th argument is of type cudaStream_t and specifies the associated stream. It is an optional argument which defaults to 0.
+			spin<<<1, 1, 0, streams[s]>>>(numClocks);
+		}
+	}
+
+	// Record an event in stream 0 after kernel invocations.
+	cudaEventRecord(end, 0);
+
+	// Wait for the event to complete.
+	cudaEventSynchronize(end);
+
+	// Compute the elapsed time between two events.
+	float elapsed;
+	cudaEventElapsedTime(&elapsed, beg, end);
+
+	// Print the result.
+	printf("%d streams, each %d kernels, each %d ms\n", numStreams, numKernels, numMilliseconds);
+	printf("       SM <= 1.3:%4d ms\n", numMilliseconds * numKernels * numStreams);
+	printf("2.0 <= SM <= 3.0:%4d ms\n", numMilliseconds * (1 + (numKernels - 1) * numStreams));
+	printf("3.5 <= SM       :%4d ms\n", numMilliseconds * numKernels);
+	printf("       SM == %d.%d:%4d ms\n", major, minor, (int)elapsed);
+
+	// Cleanup.
+	cudaEventDestroy(end);
+	cudaEventDestroy(beg);
+	for (int s = 0; s < numStreams; ++s)
+	{
+		cudaStreamDestroy(streams[s]);
+	}
+	free(streams);
+	cudaDeviceReset();
+}
 </pre>
           <h2 id="deviceQuery">deviceQuery</h2>
           <p>This sample enumerates the properties of the CUDA devices present in the system.</p>
 <pre class="cpp">
+#include <stdio.h>
+
+int main(int argc, char *argv[])
+{
+	// Get the number of devices.
+	int deviceCount;
+	cudaGetDeviceCount(&deviceCount);
+	printf("deviceCount: %d\n", deviceCount);
+
+	// Get the properties of device 0.
+	cudaDeviceProp deviceProp;
+	cudaGetDeviceProperties(&deviceProp, 0);
+
+	// Print some properties.
+	printf("name: %s\n", deviceProp.name);
+	printf("major: %d\n", deviceProp.major);
+	printf("minor: %d\n", deviceProp.minor);
+	printf("multiProcessorCount: %d\n", deviceProp.multiProcessorCount);
+	printf("totalGlobalMem: %lu B = %lu MB\n", deviceProp.totalGlobalMem, deviceProp.totalGlobalMem / 1048576);
+	printf("sharedMemPerBlock: %lu B = %lu KB\n", deviceProp.sharedMemPerBlock, deviceProp.sharedMemPerBlock / 1024);
+	printf("totalConstMem: %lu B = %lu KB\n", deviceProp.totalConstMem, deviceProp.totalConstMem / 1024);
+	printf("regsPerBlock: %d\n", deviceProp.regsPerBlock);
+	printf("ECCEnabled: %d\n", deviceProp.ECCEnabled);
+	printf("kernelExecTimeoutEnabled: %d\n", deviceProp.kernelExecTimeoutEnabled);
+	printf("clockRate: %d KHz = %d MHz\n", deviceProp.clockRate, deviceProp.clockRate / 1000);
+	printf("memoryClockRate: %d KHz = %d MHz\n", deviceProp.memoryClockRate, deviceProp.memoryClockRate / 1000);
+	printf("memoryBusWidth: %d bits\n", deviceProp.memoryBusWidth);
+	printf("l2CacheSize: %d B = %d KB\n", deviceProp.l2CacheSize, deviceProp.l2CacheSize / 1024);
+	printf("warpSize: %d\n", deviceProp.warpSize);
+	printf("maxThreadsPerMultiProcessor: %d\n", deviceProp.maxThreadsPerMultiProcessor);
+	printf("maxThreadsPerBlock: %d\n", deviceProp.maxThreadsPerBlock);
+	printf("maxThreadsDim[0]: %d\n", deviceProp.maxThreadsDim[0]);
+	printf("maxThreadsDim[1]: %d\n", deviceProp.maxThreadsDim[1]);
+	printf("maxThreadsDim[2]: %d\n", deviceProp.maxThreadsDim[2]);
+	printf("maxGridSize[0]: %d\n", deviceProp.maxGridSize[0]);
+	printf("maxGridSize[1]: %d\n", deviceProp.maxGridSize[1]);
+	printf("maxGridSize[2]: %d\n", deviceProp.maxGridSize[2]);
+	printf("deviceOverlap: %d\n", deviceProp.deviceOverlap);
+	printf("asyncEngineCount: %d\n", deviceProp.asyncEngineCount);
+	printf("integrated: %d\n", deviceProp.integrated);
+	printf("canMapHostMemory: %d\n", deviceProp.canMapHostMemory);
+	printf("concurrentKernels: %d\n", deviceProp.concurrentKernels);
+	printf("tccDriver: %d\n", deviceProp.tccDriver);
+	printf("unifiedAddressing: %d\n", deviceProp.unifiedAddressing);
+	printf("pciBusID: %d\n", deviceProp.pciBusID);
+	printf("pciDeviceID: %d\n", deviceProp.pciDeviceID);
+	printf("computeMode: %d\n", deviceProp.computeMode);
+	if (deviceProp.computeMode == cudaComputeModeDefault) printf("computeMode: %s\n", "Default (multiple host threads can use ::cudaSetDevice() with device simultaneously)");
+	if (deviceProp.computeMode == cudaComputeModeExclusive) printf("computeMode: %s\n", "Exclusive (only one host thread in one process is able to use ::cudaSetDevice() with this device)");
+	if (deviceProp.computeMode == cudaComputeModeProhibited) printf("computeMode: %s\n", "Prohibited (no host thread can use ::cudaSetDevice() with this device)");
+	if (deviceProp.computeMode == cudaComputeModeExclusiveProcess) printf("computeMode: %s\n", "Exclusive Process (many threads in one process is able to use ::cudaSetDevice() with this device)");
+}
 </pre>
+          <p>Refer to driver_types.h for a complete list of properties.</p>
         </div>
       </div>
     </section>
@@ -463,11 +639,11 @@ drwxr-xr-x. 2 root root    4096 Sep  4 12:48 crt
 <b class="text-info">hjli@P32-1:~></b> cuda-memcheck --leak-check full ~/idock/bin/idock --config idock.cfg
 <b class="text-info">hjli@P32-1:~></b> cuda-memcheck --tool racecheck ~/idock/bin/idock --config idock.cfg
 </pre>
-          <h2>CUDA IDE: Nsight</h2>
+          <h2>IDE: Nsight</h2>
           <p>Visual Studio and Eclipse</p>
           <h2>Occupancy.xls</h2>
           <p>There are a few easy ways to quickly get started with Bootstrap, each one appealing to a different skill level and use case. Read through to see what suits your particular needs.</p>
-          <h2>nvidia-smi</h2>
+          <h2>Monitor: nvidia-smi</h2>
           <p>analogue to <code>top</code>.</p>
 <pre class="sh">
 <b class="text-info">hjli@P32-1:~></b> nvidia-smi
@@ -495,8 +671,20 @@ Tue Sep 10 10:39:25 2013
 |  No running compute processes found                                         |
 +-----------------------------------------------------------------------------+
 </pre>
-          <h2>Libraries: CUBLAS, CUFFT, CURAND</h2>
+        </div>
+      </div>
+    </section>
+    <section>
+      <div class="page-header">
+        <h1>Libraries</h1>
+      </div>
+      <div class="row">
+        <div class="col-md-12">
+          <h2>thrust</h2>
+          <h2>CUBLAS</h2>
           <p>Analogue to Intel <code>MKL</code></p>
+          <h2>CUFFT</h2>
+          <h2>CURAND</h2>
         </div>
       </div>
     </section>
