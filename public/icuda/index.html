@@ -107,7 +107,7 @@ clean:
 	rm -f vectorAdd vectorAdd.o
 </pre>
           <h2 id="vectorAdd">vectorAdd</h2>
-          <p>This sample adds two vectors of float.</p>
+          <p>This sample adds two vectors of floats.</p>
 <pre class="cpp">
 #include &lt;stdio.h&gt;
 
@@ -396,8 +396,12 @@ int main(int argc, char *argv[])
           <p>This sample uses shared memory to accelerate matrix multiplication.</p>
 <pre class="cpp">
 </pre>
+          <p>Try using <a href="http://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__DEVICE.html#group__CUDART__DEVICE_1gac27b566beee1aa9175373bb9e29b8d1">cudaDeviceSetCacheConfig</a> or <a href="http://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__EXECUTION.html#group__CUDART__EXECUTION_1g4f35d04be20a41c5df96613a748eecc1">cudaFuncSetCacheConfig</a> to set the sizes of L1 cache and shared memory out of 64KB.</p>
+          <p>Try using <a href="http://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__DEVICE.html#group__CUDART__DEVICE_1g1a4789fb687cc36dccc98f25c96f0cd8">cudaDeviceSetSharedMemConfig</a> or <a href="http://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__EXECUTION.html#group__CUDART__EXECUTION_1gcb2e02dc6c75e4f705dfd2252748fe99">cudaFuncSetSharedMemConfig</a> to set shared memory bank width to be eight bytes natively.</p>
+          <p>Try using <a href="http://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#shared">dynamic shared memory</a> instead of static shared memory which has a fixed size at compile time.</p>
+          <p>Try using <a href="http://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__MEMORY.html#group__CUDART__MEMORY_1g80d689bc903792f906e49be4a0b6d8db">cudaMallocPitch</a> to allocate a 2D array and <a href="http://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__MEMORY.html#group__CUDART__MEMORY_1g17f3a55e8c9aef5f90b67cdf22851375">cudaMemcpy2D</a> to copy a 2D array.</p>
           <h2 id="atomicAdd">atomicAdd</h2>
-          <p>This sample uses atomic operations, assertions and printf.</p>
+          <p>This sample uses <a href="http://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#atomic-functions">atomic functions</a>, <a href="http://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#assertion">assertions</a> and <a href="http://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#formatted-output">printf</a>.</p>
 <pre class="cpp">
 #include &lt;stdio.h&gt;
 #include &lt;assert.h&gt;
@@ -527,6 +531,8 @@ int main(int argc, char *argv[])
 	cudaDeviceReset();
 }
 </pre>
+          <p>Try different numbers of threads per block and different numbers of blocks per grid.</p>
+          <p>Try double buffering.</p>
           <h2 id="deviceQuery">deviceQuery</h2>
           <p>This sample enumerates the properties of the CUDA devices present in the system.</p>
 <pre class="cpp">
