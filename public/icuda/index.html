@@ -711,6 +711,19 @@ int main(int argc, char *argv[])
 	free(data);
 }
 </pre>
+          <p>In the Makefile, pass the compiler option <code>-Xcompiler -fopenmp</code> to <code>nvcc</code> in both compilation and linking.</p>
+<pre class="makefile">
+CC=nvcc -arch=sm_35 -Xcompiler -fopenmp
+
+openmp: openmp.o
+	$(CC) -o $@ $^
+
+openmp.o: openmp.cu
+	$(CC) -o $@ $< -c -I ~/cuda-5.5/samples/common/inc
+
+clean:
+	rm -f openmp openmp.o
+</pre>
           <p>Try <code>omp_set_num_threads(numDevices*2);</code> to create twice as many CPU threads as there are CUDA devices. In this case two threads will be allocating resources and launching kernels on the same device.</p>
           <p>Try using <code>valgrind</code> to detect memory leak in the following 3 cases of cleanup.</p>
 <pre class="sh">
@@ -866,6 +879,20 @@ int main(int argc, char *argv[])
 	MPI_Finalize();
 }
 </pre>
+          <p>In the Makefile, pass the compiler option <code>-L /usr/lib/openmpi -lmpi -lmpi_cxx</code> to <code>nvcc</code> in linking.</p>
+<pre class="makefile">
+CC=nvcc -arch=sm_11
+
+mpi: mpi.o
+	$(CC) -o $@ $^ -L /usr/lib/openmpi -lmpi -lmpi_cxx
+
+mpi.o: mpi.cu
+	$(CC) -o $@ $< -c
+
+clean:
+	rm -f mpi mpi.o
+</pre>
+          <p>Run the executable with <code>mpirun</code>. Specify the number of processes to run with the option <code>-n</code>.</p>
 <pre class="sh">
 <b class="text-info">hjli@P32-1:/data/hjli/cudart/mpi></b> mpirun -n 4 ./mpi
 </pre>
