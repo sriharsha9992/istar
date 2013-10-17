@@ -725,6 +725,7 @@ clean:
 	rm -f openmp openmp.o
 </pre>
           <p>Try <code>omp_set_num_threads(numDevices*2);</code> to create twice as many CPU threads as there are CUDA devices. In this case two threads will be allocating resources and launching kernels on the same device.</p>
+          <p>Try calling <a href="http://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__DEVICE.html#group__CUDART__DEVICE_1g418c299b069c4803bfb7cab4943da383">cudaSetDevice</a> multiple times within one single thread to utilize multiple GPUs.</p>
           <p>Try using <code>valgrind</code> to detect memory leak in the following 3 cases of cleanup.</p>
 <pre class="sh">
 <b class="text-info">hjli@P32-1:/data/hjli/cudart/openmp></b> valgrind ./openmp
@@ -881,7 +882,7 @@ int main(int argc, char *argv[])
 </pre>
           <p>In the Makefile, pass the compiler option <code>-L /usr/lib/openmpi -lmpi -lmpi_cxx</code> to <code>nvcc</code> in linking.</p>
 <pre class="makefile">
-CC=nvcc -arch=sm_11
+CC=nvcc -arch=sm_35
 
 mpi: mpi.o
 	$(CC) -o $@ $^ -L /usr/lib/openmpi -lmpi -lmpi_cxx
@@ -897,6 +898,7 @@ clean:
 <b class="text-info">hjli@P32-1:/data/hjli/cudart/mpi></b> mpirun -n 4 ./mpi
 </pre>
           <p>Try using <code>float</code> instead of <code>int</code>.</p>
+          <p>Try writing a reduce kernel to compute the sum of the current node.</p>
           <h2 id="openmp">openmp</h2>
           <p>This sample .</p>
 <pre class="cpp">
