@@ -82,7 +82,7 @@
           <h2>Contents</h2>
           <p>Seminar 1: <a href="#vectorAdd">vectorAdd</a>, <a href="#zeroCopy">zeroCopy</a> and <a href="bandwidthTest">bandwidthTest</a></p>
           <p>Seminar 2: <a href="#matrixMul">matrixMul</a>, <a href="#atomicAdd">atomicAdd</a>, <a href="#hyperQ">hyperQ</a></p>
-          <p>Seminar 3: <a href="#deviceQuery">deviceQuery</a>, multiDevice, OpenMP, MPI, driver API, OpenCL</p>
+          <p>Seminar 3: <a href="#deviceQuery">deviceQuery</a>, <a href="#multiDevice">multiDevice</a>, <a href="#openmp">openmp</a>, <a href="#mpi">mpi</a>, driver API, OpenCL</p>
         </div>
       </div>
     </section>
@@ -628,6 +628,187 @@ int main(int argc, char *argv[])
 }
 </pre>
           <p>Try enumerating all the properties returned by <a href="http://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__DEVICE.html#group__CUDART__DEVICE_1g929dcd9a191e17b7498e7ccaa3d16350">cudaGetDeviceProperties</a> of all the devices.</p>
+          <h2 id="multiDevice">multiDevice</h2>
+          <p>This sample uses <a href="http://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__DEVICE.html#group__CUDART__DEVICE_1g418c299b069c4803bfb7cab4943da383">cudaSetDevice</a> within a single thread to utilize multiple GPUs.</p>
+<pre class="cpp">
+#include &lt;stdio.h&gt;
+
+__global__ void vectorAdd(const float *a, const float *b, float *c, int numElements)
+{
+	int i = blockDim.x * blockIdx.x + threadIdx.x;
+	if (i < numElements)
+	{
+		c[i] = a[i] + b[i];
+	}
+}
+
+int main(int argc, char *argv[])
+{
+	int numElements = 5e+4;
+
+	// Allocate vectors a, b and c in host memory.
+	size_t numBytes = sizeof(float) * numElements;
+	float *h_a;
+	float *h_b;
+	float *h_c;
+	cudaMallocHost((void **)&h_a, numBytes);
+	cudaMallocHost((void **)&h_b, numBytes);
+	cudaMallocHost((void **)&h_c, numBytes);
+
+	// Initialize vectors a and b.
+	for (int i = 0; i < numElements; ++i)
+	{
+		h_a[i] = rand() / (float)RAND_MAX;
+		h_b[i] = rand() / (float)RAND_MAX;
+	}
+
+	// Get the number of CUDA devices.
+	int numDevices;
+	cudaGetDeviceCount(&numDevices);
+
+	// Compute the average number of elements per device and the number of spare elements.
+	int avgElementsPerDevice = numElements / numDevices;
+	int sprElements = numElements - avgElementsPerDevice * numDevices;
+
+	float **d_a = (float **)malloc(sizeof(float *) * numDevices);
+	float **d_b = (float **)malloc(sizeof(float *) * numDevices);
+	float **d_c = (float **)malloc(sizeof(float *) * numDevices);
+
+	for (int i = 0, offset = 0; i < numDevices; ++i)
+	{
+		// Determine the number of elements to be processed by the current device.
+		int numElementsCurrentDevice = avgElementsPerDevice + (i < sprElements);
+
+		// Set device to be used for GPU executions.
+		cudaSetDevice(i);
+
+		// Allocate vectors a, b and c in device memory.
+		size_t numBytesCurrentDevice = sizeof(int) * numElementsCurrentDevice;
+		cudaMalloc((void **)&d_a[i], numBytesCurrentDevice);
+		cudaMalloc((void **)&d_b[i], numBytesCurrentDevice);
+		cudaMalloc((void **)&d_c[i], numBytesCurrentDevice);
+
+		// Copy vectors a and b from host memory to device memory asynchronously.
+		cudaMemcpyAsync(d_a[i], h_a + offset, numBytesCurrentDevice, cudaMemcpyHostToDevice);
+		cudaMemcpyAsync(d_b[i], h_b + offset, numBytesCurrentDevice, cudaMemcpyHostToDevice);
+
+		// Determine the number of threads per block and the number of blocks per grid.
+		unsigned int numThreadsPerBlock = 256;
+		unsigned int numBlocksPerGrid = (numElementsCurrentDevice + numThreadsPerBlock - 1) / numThreadsPerBlock;
+
+		// Invoke the kernel on device asynchronously.
+		vectorAdd&lt;&lt;&lt;numBlocksPerGrid, numThreadsPerBlock&gt;&gt;&gt;(d_a[i], d_b[i], d_c[i], numElementsCurrentDevice);
+
+		// Copy vector c from device memory to host memory asynchronously.
+		cudaMemcpyAsync(h_c + offset, d_c[i], numBytesCurrentDevice, cudaMemcpyDeviceToHost);
+
+		// Increase offset to point to the next portion of data.
+		offset += numElementsCurrentDevice;
+	}
+
+	// Wait for the devices to finish.
+	for (int i = 0; i < numDevices; ++i)
+	{
+		cudaSetDevice(i);
+		cudaDeviceSynchronize();
+	}
+
+	// Validate the result.
+	for (int i = 0; i < numElements; ++i)
+	{
+		float actual = h_c[i];
+		float expected = h_a[i] + h_b[i];
+		if (fabs(actual - expected) > 1e-7)
+		{
+			printf("h_c[%d] = %f, expected = %f\n", i, actual, expected);
+			break;
+		}
+	}
+
+	// Cleanup.
+	for (int i = 0; i < numDevices; ++i)
+	{
+		cudaFree(d_c[i]);
+		cudaFree(d_b[i]);
+		cudaFree(d_a[i]);
+	}
+	free(d_c);
+	free(d_b);
+	free(d_a);
+	cudaFreeHost(h_c);
+	cudaFreeHost(h_b);
+	cudaFreeHost(h_a);
+	for (int i = 0; i < numDevices; ++i)
+	{
+		cudaSetDevice(i);
+		cudaDeviceReset();
+	}
+}
+</pre>
+          <p>Try using <code>valgrind</code> to detect memory leak in the following 3 cases of cleanup.</p>
+<pre class="sh">
+<b class="text-info">hjli@P32-1:/data/hjli/cudart/multiDevice></b> valgrind ./multiDevice
+</pre>
+          <p>Case 1: <a href="http://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__DEVICE.html#group__CUDART__DEVICE_1gdcc2c6f914eb9461565b12648faa5e28">cudaDeviceReset</a> is called on every device.</p>
+<pre class="cpp">
+	for (int i = 0; i < numDevices; ++i)
+	{
+		cudaSetDevice(i);
+		cudaDeviceReset();
+	}
+</pre>
+<pre class="sh">
+==37040== HEAP SUMMARY:
+==37040==     in use at exit: 343,139 bytes in 119 blocks
+==37040==   total heap usage: 21,210 allocs, 21,091 frees, 15,801,350 bytes allocated
+==37040== 
+==37040== LEAK SUMMARY:
+==37040==    definitely lost: 0 bytes in 0 blocks
+==37040==    indirectly lost: 0 bytes in 0 blocks
+==37040==      possibly lost: 2,992 bytes in 22 blocks
+==37040==    still reachable: 340,147 bytes in 97 blocks
+==37040==         suppressed: 0 bytes in 0 blocks
+</pre>
+          <p>Case 2: <a href="http://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__DEVICE.html#group__CUDART__DEVICE_1gdcc2c6f914eb9461565b12648faa5e28">cudaDeviceReset</a> is called on one device.</p>
+<pre class="cpp">
+//	for (int i = 0; i < numDevices; ++i)
+//	{
+//		cudaSetDevice(i);
+		cudaDeviceReset();
+//	}
+</pre>
+<pre class="sh">
+==37095== HEAP SUMMARY:
+==37095==     in use at exit: 7,027,625 bytes in 11,751 blocks
+==37095==   total heap usage: 21,194 allocs, 9,443 frees, 15,801,110 bytes allocated
+==37095== 
+==37095== LEAK SUMMARY:
+==37095==    definitely lost: 0 bytes in 0 blocks
+==37095==    indirectly lost: 0 bytes in 0 blocks
+==37095==      possibly lost: 51,168 bytes in 374 blocks
+==37095==    still reachable: 6,976,457 bytes in 11,377 blocks
+==37095==         suppressed: 0 bytes in 0 blocks
+</pre>
+          <p>Case 3: <a href="http://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__DEVICE.html#group__CUDART__DEVICE_1gdcc2c6f914eb9461565b12648faa5e28">cudaDeviceReset</a> is not called at all.</p>
+<pre class="cpp">
+//	for (int i = 0; i < numDevices; ++i)
+//	{
+//		cudaSetDevice(i);
+//		cudaDeviceReset();
+//	}
+</pre>
+<pre class="sh">
+==37143== HEAP SUMMARY:
+==37143==     in use at exit: 10,388,436 bytes in 17,712 blocks
+==37143==   total heap usage: 21,186 allocs, 3,474 frees, 15,800,990 bytes allocated
+==37143== 
+==37143== LEAK SUMMARY:
+==37143==    definitely lost: 0 bytes in 0 blocks
+==37143==    indirectly lost: 0 bytes in 0 blocks
+==37143==      possibly lost: 77,432 bytes in 566 blocks
+==37143==    still reachable: 10,311,004 bytes in 17,146 blocks
+==37143==         suppressed: 0 bytes in 0 blocks
+</pre>
           <h2 id="openmp">openmp</h2>
           <p>This sample uses OpenMP to create multiple CPU threads to utilize multiple GPUs.</p>
 <pre class="cpp">
@@ -726,71 +907,6 @@ clean:
 	rm -f openmp openmp.o
 </pre>
           <p>Try <code>omp_set_num_threads(numDevices*2);</code> to create twice as many CPU threads as there are CUDA devices. In this case two threads will be allocating resources and launching kernels on the same device.</p>
-          <p>Try calling <a href="http://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__DEVICE.html#group__CUDART__DEVICE_1g418c299b069c4803bfb7cab4943da383">cudaSetDevice</a> multiple times within one single thread to utilize multiple GPUs.</p>
-          <p>Try using <code>valgrind</code> to detect memory leak in the following 3 cases of cleanup.</p>
-<pre class="sh">
-<b class="text-info">hjli@P32-1:/data/hjli/cudart/openmp></b> valgrind ./openmp
-</pre>
-          <p>Case 1: <a href="http://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__DEVICE.html#group__CUDART__DEVICE_1gdcc2c6f914eb9461565b12648faa5e28">cudaDeviceReset</a> is called on every device.</p>
-<pre class="cpp">
-	for (int i = 0; i < numDevices; ++i)
-	{
-		cudaSetDevice(i);
-		cudaDeviceReset();
-	}
-</pre>
-<pre class="sh">
-==30241== HEAP SUMMARY:
-==30241==     in use at exit: 347,025 bytes in 133 blocks
-==30241==   total heap usage: 21,117 allocs, 20,984 frees, 15,888,183 bytes allocated
-==30241== 
-==30241== LEAK SUMMARY:
-==30241==    definitely lost: 0 bytes in 0 blocks
-==30241==    indirectly lost: 0 bytes in 0 blocks
-==30241==      possibly lost: 3,600 bytes in 24 blocks
-==30241==    still reachable: 343,425 bytes in 109 blocks
-==30241==         suppressed: 0 bytes in 0 blocks
-</pre>
-          <p>Case 2: <a href="http://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__DEVICE.html#group__CUDART__DEVICE_1gdcc2c6f914eb9461565b12648faa5e28">cudaDeviceReset</a> is called on one device.</p>
-<pre class="cpp">
-//	for (int i = 0; i < numDevices; ++i)
-//	{
-//		cudaSetDevice(i);
-		cudaDeviceReset();
-//	}
-</pre>
-<pre class="sh">
-==30316== HEAP SUMMARY:
-==30316==     in use at exit: 7,035,515 bytes in 11,801 blocks
-==30316==   total heap usage: 21,098 allocs, 9,297 frees, 15,887,463 bytes allocated
-==30316== 
-==30316== LEAK SUMMARY:
-==30316==    definitely lost: 0 bytes in 0 blocks
-==30316==    indirectly lost: 0 bytes in 0 blocks
-==30316==      possibly lost: 56,704 bytes in 412 blocks
-==30316==    still reachable: 6,978,811 bytes in 11,389 blocks
-==30316==         suppressed: 0 bytes in 0 blocks
-</pre>
-          <p>Case 3: <a href="http://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__DEVICE.html#group__CUDART__DEVICE_1gdcc2c6f914eb9461565b12648faa5e28">cudaDeviceReset</a> is not called at all.</p>
-<pre class="cpp">
-//	for (int i = 0; i < numDevices; ++i)
-//	{
-//		cudaSetDevice(i);
-//		cudaDeviceReset();
-//	}
-</pre>
-<pre class="sh">
-==30373== HEAP SUMMARY:
-==30373==     in use at exit: 10,397,784 bytes in 17,776 blocks
-==30373==   total heap usage: 21,095 allocs, 3,319 frees, 15,888,015 bytes allocated
-==30373== 
-==30373== LEAK SUMMARY:
-==30373==    definitely lost: 0 bytes in 0 blocks
-==30373==    indirectly lost: 0 bytes in 0 blocks
-==30373==      possibly lost: 84,888 bytes in 618 blocks
-==30373==    still reachable: 10,312,896 bytes in 17,158 blocks
-==30373==         suppressed: 0 bytes in 0 blocks
-</pre>
           <h2 id="mpi">mpi</h2>
           <p>This sample uses MPI to create multiple CPU processes to utilize multiple GPUs.</p>
 <pre class="cpp">
@@ -1171,9 +1287,11 @@ int main(int argc, char *argv[])
           <h2>CUFFT</h2>
           <p><a href="http://docs.nvidia.com/cuda/cufft/">CUFFT</a> is a CUDA implementation of FFT (Fast Fourier Transform).</p>
           <h2>CURAND</h2>
-          <p><a href="http://docs.nvidia.com/cuda/curand/">CURAND</a> is a CUDA implementation of PRNG (pseudorandom number generator) and QRNG (quasirandom number generator).</p>
+          <p><a href="http://docs.nvidia.com/cuda/curand/">CURAND</a> is a CUDA implementation of PRNG (PseudoRandom Number Generator) and QRNG (QuasiRandom Number Generator).</p>
           <h2>CUSPARSE</h2>
           <p><a href="http://docs.nvidia.com/cuda/cusparse/">CUSPARSE</a> is a CUDA implementation of basic linear algebra subroutines for sparse matrices.</p>
+          <h2>MAGMA</h2>
+          <p><a href="https://developer.nvidia.com/magma">MAGMA</a> is a third-party CUDA implementation of next generation LA (Linear Algebra) by the team that developed LAPACK and ScaLAPACK.</p>
         </div>
       </div>
     </section>
