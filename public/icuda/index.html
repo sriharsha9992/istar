@@ -43,10 +43,10 @@
             <a href="/idock"><img src="/idock/logo.png" alt="idock logo">idock: protein-ligand docking</a>
           </li>
           <li>
-            <a href="/igrep"><img src="/igrep/logo.png" alt="igrep logo">igrep: DNA sequence matching</a>
+            <a href="/iview"><img src="/iview/logo.png" alt="iview logo">iview: interactive WebGL visualizer</a>
           </li>
           <li>
-            <a href="/iview"><img src="/iview/logo.png" alt="iview logo">iview: interactive WebGL visualizer</a>
+            <a href="/igrep"><img src="/igrep/logo.png" alt="igrep logo">igrep: DNA sequence matching</a>
           </li>
           <li class="active">
             <a href="/icuda"><img src="/icuda/logo.png" alt="icuda logo">icuda: introduction to CUDA</a>
@@ -80,7 +80,7 @@
           <p>CUDA education & training. <a href="https://developer.nvidia.com/cuda-education-training/">https://developer.nvidia.com/cuda-education-training/</a></p>
           <p>University courses. <a href="http://ece408.hwu.crhc.illinois.edu">ECE408/CS483 @ UIUC</a> and <a href="http://stanford-cs193g-sp2010.googlecode.com/svn/trunk/">CS193G @ Stanford University</a></p>
           <h2>Contents</h2>
-          <p>Seminar 1: <a href="#vectorAdd">vectorAdd</a>, <a href="#zeroCopy">zeroCopy</a>, <a href="#checkError">checkError</a> and <a href="bandwidthTest">bandwidthTest</a></p>
+          <p>Seminar 1: <a href="#vectorAdd">vectorAdd</a>, <a href="#zeroCopy">zeroCopy</a>, <a href="bandwidthTest">bandwidthTest</a>, <a href="#checkError">checkError</a></p>
           <p>Seminar 2: <a href="#matrixMul">matrixMul</a>, <a href="#atomicAdd">atomicAdd</a>, <a href="#asyncEngine">asyncEngine</a>, <a href="#hyperQ">hyperQ</a></p>
           <p>Seminar 3: <a href="#deviceQuery">deviceQuery</a>, <a href="#multiDevice">multiDevice</a>, <a href="#openmp">openmp</a>, <a href="#mpi">mpi</a>, <a href="#cublas">cublas</a>, <a href="#thrust">thrust</a></p>
         </div>
@@ -92,6 +92,10 @@
       </div>
       <div class="row">
         <div class="col-md-12">
+          <p>All the samples are free and open source under Apache License 2.0. They are available at <a href="https://github.com/HongjianLi/cudart">https://github.com/HongjianLi/cudart</a>.</p>
+<pre class="sh">
+<b class="text-info">hjli@P32-1:/data/hjli></b> git clone https://github.com/HongjianLi/cudart.git
+</pre>
           <h2>Makefile</h2>
           <p>A sample Makefile looks like this. Instead of <code>gcc</code>, it uses <code>nvcc</code> as CUDA compiler. The option <code>arch</code> specifies the name of the class of nVidia GPU architectures for which the cuda input files must be compiled. Our K20m GPU architecture is <code>sm_35</code>.</p>
 <pre class="makefile">
@@ -122,7 +126,7 @@ __global__ void vectorAdd(const float *a, const float *b, float *c, int numEleme
 
 int main(int argc, char *argv[])
 {
-	int numElements = 50000;
+	int numElements = 5e+4;
 
 	// Allocate vectors a, b and c in host memory.
 	size_t numBytes = sizeof(float) * numElements;
@@ -375,11 +379,10 @@ __global__ void iota(float *a)
 int main(int argc, char *argv[])
 {
 	int numElements = 1e+8;
-	size_t size = sizeof(float) * numElements;
 
 	// Allocate vector a in device memory.
 	float *d_a;
-	checkCudaErrors(cudaMalloc((void **)&d_a, size));
+	checkCudaErrors(cudaMalloc((void **)&d_a, sizeof(float) * numElements));
 
 	// Determine the number of threads per block and the number of blocks per grid.
 	int numThreadsPerBlock = 256;
@@ -428,6 +431,148 @@ void check(T result, char const *const func, const char *const file, int const l
           <h2 id="matrixMul">matrixMul</h2>
           <p>This sample uses shared memory to accelerate matrix multiplication.</p>
 <pre class="cpp">
+#include &lt;stdio.h&gt;
+
+template &lt;int BLOCK_SIZE&gt; __global__ void matrixMul(float *C, float *A, float *B, int wA, int wB)
+{
+	int bx = blockIdx.x;
+	int by = blockIdx.y;
+	int tx = threadIdx.x;
+	int ty = threadIdx.y;
+	int aBegin = wA * BLOCK_SIZE * by;
+	int aEnd   = aBegin + wA - 1;
+	int aStep  = BLOCK_SIZE;
+	int bBegin = BLOCK_SIZE * bx;
+	int bStep  = BLOCK_SIZE * wB;
+	float Csub = 0;
+	for (int a = aBegin, b = bBegin; a <= aEnd; a += aStep, b += bStep)
+	{
+		// Allocate blocks of data in shared memory.
+		__shared__ float As[BLOCK_SIZE][BLOCK_SIZE];
+		__shared__ float Bs[BLOCK_SIZE][BLOCK_SIZE];
+
+		// Copy a block of data from global memory to shared memory.
+		As[ty][tx] = A[a + wA * ty + tx];
+		Bs[ty][tx] = B[b + wB * ty + tx];
+
+		// Waits until all threads in the thread block have reached this point and all global and shared memory accesses made by these threads prior to __syncthreads() are visible to all threads in the block.
+		__syncthreads();
+
+// Unrolling is possible because BLOCK_SIZE is known at compile time.
+#pragma unroll
+		for (int k = 0; k < BLOCK_SIZE; ++k)
+		{
+			Csub += As[ty][k] * Bs[k][tx];
+		}
+		__syncthreads();
+	}
+
+	// Save the result from shared memory to global memory.
+	int c = wB * BLOCK_SIZE * by + BLOCK_SIZE * bx;
+	C[c + wB * ty + tx] = Csub;
+}
+
+int main(int argc, char *argv[])
+{
+	// Initialize constants.
+	const int block_size = 32;
+	dim3 dimsA(5 * 2 * block_size, 5 * 2 * block_size, 1);
+	dim3 dimsB(5 * 4 * block_size, 5 * 2 * block_size, 1);
+	dim3 dimsC(dimsB.x, dimsA.y, 1);
+	unsigned int size_A = dimsA.x * dimsA.y;
+	unsigned int size_B = dimsB.x * dimsB.y;
+	unsigned int size_C = dimsC.x * dimsC.y;
+	unsigned int mem_size_A = sizeof(float) * size_A;
+	unsigned int mem_size_B = sizeof(float) * size_B;
+	unsigned int mem_size_C = sizeof(float) * size_C;
+
+	// Allocate matrices a, b and c in host memory.
+	float *h_A = (float *)malloc(mem_size_A);
+	float *h_B = (float *)malloc(mem_size_B);
+	float *h_C = (float *)malloc(mem_size_C);
+
+	// Initialize matrices a and b.
+	for (int i = 0; i < size_A; ++i)
+	{
+		h_A[i] = 1.0f;
+	}
+	const float valB = 0.01f;
+	for (int i = 0; i < size_B; ++i)
+	{
+		h_B[i] = valB;
+	}
+
+	// Allocate matrices a, b and c in device memory.
+	float *d_A, *d_B, *d_C;
+	cudaMalloc((void **)&d_A, mem_size_A);
+	cudaMalloc((void **)&d_B, mem_size_B);
+	cudaMalloc((void **)&d_C, mem_size_C);
+
+	// Copy matrices a and b from host memory to device memory.
+	cudaMemcpy(d_A, h_A, mem_size_A, cudaMemcpyHostToDevice);
+	cudaMemcpy(d_B, h_B, mem_size_B, cudaMemcpyHostToDevice);
+
+	// Determine the number of threads per block and the number of blocks per grid.
+	dim3 threadsPerBlock(block_size, block_size);
+	dim3 blocksPerGrid(dimsB.x / threadsPerBlock.x, dimsA.y / threadsPerBlock.y);
+
+	// Invoke the kernel on device asynchronously.
+	matrixMul&lt;block_size&gt;&lt;&lt;&lt;blocksPerGrid, threadsPerBlock&gt;&gt;&gt;(d_C, d_A, d_B, dimsA.x, dimsB.x);
+
+	// Wait for the device to finish.
+	cudaDeviceSynchronize();
+
+	// Create events to record timing data.
+	cudaEvent_t start, stop;
+	cudaEventCreate(&start);
+	cudaEventCreate(&stop);
+
+	// Record an event in stream 0 before kernel invocations.
+	cudaEventRecord(start, 0);
+
+	// Invoke the kernel for a number of iterations.
+	int numIterations = 300;
+	for (int i = 0; i < numIterations; ++i)
+	{
+		matrixMul<block_size><<<blocksPerGrid, threadsPerBlock>>>(d_C, d_A, d_B, dimsA.x, dimsB.x);
+	}
+
+	// Record an event in stream 0 after kernel invocations.
+	cudaEventRecord(stop, 0);
+
+	// Wait for the event to complete.
+	cudaEventSynchronize(stop);
+
+	// Compute the elapsed time between two events.
+	float elapsed;
+	cudaEventElapsedTime(&elapsed, start, stop);
+
+	// Compute and print the GLOPS/s performance metric.
+	printf("%.2f GFLOP/s\n", (2.0f * dimsA.x * dimsA.y * dimsB.x * numIterations * 1e-9f) / (elapsed / 1000.0f));
+
+	// Copy matrix c from device memory to host memory synchronously.
+	cudaMemcpy(h_C, d_C, mem_size_C, cudaMemcpyDeviceToHost);
+
+	// Validate the result.
+	for (int i = 0; i < dimsC.x * dimsC.y; ++i)
+	{
+		float actual = h_C[i];
+		float expected = dimsA.x * valB;
+		if (fabs(actual - expected) / fabs(actual) / dimsA.x > 1e-7)
+		{
+			printf("h_C[%d] = %f, expected = %f\n", i, actual, expected);
+		}
+	}
+
+	// Cleanup.
+	cudaFree(d_C);
+	cudaFree(d_B);
+	cudaFree(d_A);
+	cudaDeviceReset();
+	free(h_C);
+	free(h_B);
+	free(h_A);
+}
 </pre>
           <p>Try using <code>double</code> instead of <code>float</code>.</p>
           <p>Try using <a href="http://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__DEVICE.html#group__CUDART__DEVICE_1gac27b566beee1aa9175373bb9e29b8d1">cudaDeviceSetCacheConfig</a> or <a href="http://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__EXECUTION.html#group__CUDART__EXECUTION_1g4f35d04be20a41c5df96613a748eecc1">cudaFuncSetCacheConfig</a> to set the sizes of L1 cache and shared memory out of 64KB.</p>
@@ -467,9 +612,6 @@ int main(int argc, char *argv[])
 
 	// Invoke the kernel on device asynchronously.
 	atomicAdd&lt;&lt;&lt;2, 2&gt;&gt;&gt;();
-
-	// Wait for the device to finish.
-	cudaDeviceSynchronize();
 
 	// Copy sum from device memory to host memory synchronously.
 	cudaMemcpyFromSymbol(&h_sum, sum, sizeof(int));
@@ -553,6 +695,10 @@ int main(int argc, char *argv[])
 		unsigned int numBlocksPerGrid = (numElementsCurrentStream + numThreadsPerBlock - 1) / numThreadsPerBlock;
 
 		// Invoke the kernel on device asynchronously.
+		// The 1st argument is of type dim3 and specifies the number of blocks per grid.
+		// The 2nd argument is of type dim3 and specifies the number of threads per block.
+		// The 3rd argument is of type size_t and specifiesthe number of bytes in shared memory that is dynamically allocated per block for this call in addition to the statically allocated memory. It is an optional argument which defaults to 0.
+		// The 4th argument is of type cudaStream_t and specifies the associated stream. It is an optional argument which defaults to 0.
 		vectorAdd&lt;&lt;&lt;numBlocksPerGrid, numThreadsPerBlock, 0, streams[i]&gt;&gt;&gt;(d_a[i], d_b[i], d_c[i], numElementsCurrentStream);
 
 		// Copy vector c from device memory to host memory asynchronously.
@@ -647,10 +793,6 @@ int main(int argc, char *argv[])
 	{
 		for (int k = 0; k < numKernels; ++k)
 		{
-			// The 1st argument is of type dim3 and specifies the number of blocks per grid.
-			// The 2nd argument is of type dim3 and specifies the number of threads per block.
-			// The 3rd argument is of type size_t and specifiesthe number of bytes in shared memory that is dynamically allocated per block for this call in addition to the statically allocated memory. It is an optional argument which defaults to 0.
-			// The 4th argument is of type cudaStream_t and specifies the associated stream. It is an optional argument which defaults to 0.
 			spin&lt;&lt;&lt;1, 1, 0, streams[s]&gt;&gt;&gt;(numClocks);
 		}
 	}
@@ -1336,14 +1478,14 @@ drwxr-xr-x. 2 root root    4096 Sep  4 12:48 crt
 -rwxr-xr-x. 1 root root     215 Sep  4 12:48 nvvp
 -rwxr-xr-x. 1 root root 5759328 Sep  4 12:48 ptxas
 </pre>
-          <h2>Compiler: nvcc & ptxas</h2>
-          <p>Analogue to GNU <code>cc</code>.</p>
+          <h2>Compiler: nvcc</h2>
+          <p></p>
           <p><img class="img-responsive" src="http://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/graphics/cuda-compilation-from-cu-to-cu-cpp-ii.png" alt="nvcc"></p>
           <p>The <code>-ptx</code> option generates ptx. The <code>-cubin</code> option generates cubin.</p>
           <h2>Debugger: cuda-gdb & cuda-gdbserver</h2>
-          <p>debugger tools analogue to GNU <code>gdb</code> and <code>gdbserver</code>.</p>
+          <p></p>
           <h2>Profiler: nvprof & nvvp</h2>
-          <p>analogue to GNU <code>gprof</code>.</p>
+          <p></p>
 <pre class="sh">
 <b class="text-info">hjli@P32-1:~></b> nvprof -o %h-%p.nvprof ~/idock/bin/idock --config idock.conf
 <b class="text-info">hjli@P32-1:~></b> nvprof -o %h-%p.nvprof --analysis-metrics ~/idock/bin/idock --config idock.conf
@@ -1352,7 +1494,7 @@ drwxr-xr-x. 2 root root    4096 Sep  4 12:48 crt
 </pre>
           <p>File -> Import -> Nvprof</p>
           <h2>cuda-memcheck</h2>
-          <p>cuda-memcheck is a tool analogue to <code>valgrind</code>.</p>
+          <p></p>
 <pre class="sh">
 <b class="text-info">hjli@P32-1:~></b> cuda-memcheck --leak-check full ~/idock/bin/idock --config idock.cfg
 <b class="text-info">hjli@P32-1:~></b> cuda-memcheck --tool racecheck ~/idock/bin/idock --config idock.cfg
@@ -1362,7 +1504,7 @@ drwxr-xr-x. 2 root root    4096 Sep  4 12:48 crt
           <h2>Occupancy.xls</h2>
           <p>There are a few easy ways to quickly get started with Bootstrap, each one appealing to a different skill level and use case. Read through to see what suits your particular needs.</p>
           <h2>Monitor: nvidia-smi</h2>
-          <p>analogue to <code>top</code>.</p>
+          <p></p>
 <pre class="sh">
 <b class="text-info">hjli@P32-1:~></b> nvidia-smi
 Tue Sep 10 10:39:25 2013       
