@@ -434,6 +434,7 @@ void check(T result, char const *const func, const char *const file, int const l
           <p>Try using <a href="http://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__DEVICE.html#group__CUDART__DEVICE_1g1a4789fb687cc36dccc98f25c96f0cd8">cudaDeviceSetSharedMemConfig</a> or <a href="http://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__EXECUTION.html#group__CUDART__EXECUTION_1gcb2e02dc6c75e4f705dfd2252748fe99">cudaFuncSetSharedMemConfig</a> to set shared memory bank width to be eight bytes natively.</p>
           <p>Try using <a href="http://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#shared">dynamic shared memory</a> which can have a dynamic size at run time.</p>
           <p>Try using <a href="http://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__MEMORY.html#group__CUDART__MEMORY_1g80d689bc903792f906e49be4a0b6d8db">cudaMallocPitch</a> to allocate a 2D array and <a href="http://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__MEMORY.html#group__CUDART__MEMORY_1g17f3a55e8c9aef5f90b67cdf22851375">cudaMemcpy2D</a> to copy a 2D array.</p>
+          <p>Try using <a href="http://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#execution-configuration">memory fence functions</a> instead of <a href="http://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#synchronization-functions">synchronization functions</a>.</p>
           <p>Try rewriting the previous <a href="#bandwidthTest">bandwidthTest</a> sample using <a href="http://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__EVENT.html#group__CUDART__EVENT_1ge31b1b1558db52579c9e23c5782af93e">cudaEventRecord</a> and <a href="http://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__EVENT.html#group__CUDART__EVENT_1g14c387cc57ce2e328f6669854e6020a5">cudaEventElapsedTime</a> instead of <code>shrDeltaT</code>.</p>
           <h2 id="atomicAdd">atomicAdd</h2>
           <p>This sample uses <a href="http://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#atomic-functions">atomic functions</a>, <a href="http://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#assertion">assertions</a> and <a href="http://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#formatted-output">printf</a>.</p>
@@ -1002,6 +1003,49 @@ Tue Sep 10 10:39:25 2013
         <div class="col-md-12">
           <h2>thrust</h2>
           <p><a href="http://docs.nvidia.com/cuda/thrust/">thrust</a> is a CUDA implementation of STL (Standard Template Library).</p>
+<pre class="cpp">
+#include &lt;iostream&gt;
+#include &lt;thrust/host_vector.h&gt;
+#include &lt;thrust/device_vector.h&gt;
+#include &lt;thrust/generate.h&gt;
+#include &lt;thrust/reduce.h&gt;
+#include &lt;thrust/random.h&gt;
+
+int my_rand()
+{
+	static thrust::default_random_engine rng;
+	static thrust::uniform_int_distribution<int> dist(0, 999);
+	return dist(rng);
+}
+
+int main(int argc, char* argv[])
+{
+	// Allocate a vector in host memory.
+	thrust::host_vector<int> h(1e+7);
+
+	// Generate random numbers on the host.
+	thrust::generate(h.begin(), h.end(), my_rand);
+
+	// Copy the vector from host memory to device memory.
+	thrust::device_vector<int> d = h;
+ 
+	// Compute the sum on the device.
+	int actual = thrust::reduce(d.begin(), d.end(), 0, thrust::plus<int>());
+
+	// Compute the sum on the host.
+	int expected = 0;
+	for (int i = 0; i < h.size(); ++i)
+	{
+		expected += h[i];
+	}
+
+	// Validate the result.
+	if (actual != expected)
+	{
+		std::cout << "actual = " << actual << ", expected = " << expected << std::endl;
+	}
+}
+</pre>
           <h2>CUBLAS</h2>
           <p><a href="http://docs.nvidia.com/cuda/cublas/">CUBLAS</a> is a CUDA implementation of BLAS (Basic Linear Algebra Subprograms).</p>
 <pre class="cpp">
