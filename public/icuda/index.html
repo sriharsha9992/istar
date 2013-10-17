@@ -1016,154 +1016,8 @@ clean:
 </pre>
           <p>Try using <code>float</code> instead of <code>int</code>.</p>
           <p>Try writing a reduce kernel to compute the sum of the current node.</p>
-          <h2 id="openmp">openmp</h2>
-          <p>This sample .</p>
-<pre class="cpp">
-</pre>
-          <p>Try .</p>
-        </div>
-      </div>
-    </section>
-    <section>
-      <div class="page-header">
-        <h1>Tools</h1>
-      </div>
-      <div class="row">
-        <div class="col-md-12">
-<pre class="sh">
-<b class="text-info">hjli@P32-1:~></b> ls -l /usr/local/cuda-5.5/bin
-total 32112
--rwxr-xr-x. 1 root root   63000 Sep  4 12:48 bin2c
-lrwxrwxrwx. 1 root root       4 Sep  4 12:48 computeprof -> nvvp
-drwxr-xr-x. 2 root root    4096 Sep  4 12:48 crt
--rwxr-xr-x. 1 root root 3415240 Sep  4 12:48 cudafe
--rwxr-xr-x. 1 root root 3081848 Sep  4 12:48 cudafe++
--rwxr-xr-x. 1 root root 6093856 Sep  4 12:48 cuda-gdb
--rwxr-xr-x. 1 root root  342809 Sep  4 12:48 cuda-gdbserver
--rwxr-xr-x. 1 root root     665 Sep  4 12:49 cuda-install-samples-5.5.sh
--rwxr-xr-x. 1 root root  348832 Sep  4 12:48 cuda-memcheck
--rwxr-xr-x. 1 root root  230744 Sep  4 12:48 cuobjdump
--rwxr-xr-x. 1 root root  163200 Sep  4 12:48 fatbin
--rwxr-xr-x. 1 root root  125584 Sep  4 12:48 fatbinary
--rwxr-xr-x. 1 root root   54584 Sep  4 12:48 filehash
--rwxr-xr-x. 1 root root     219 Sep  4 12:48 nsight
--rwxr-xr-x. 1 root root  164608 Sep  4 12:48 nvcc
--rw-r--r--. 1 root root     377 Sep  4 12:48 nvcc.profile
--rwxr-xr-x. 1 root root 3790843 Sep  4 12:48 nvdisasm
--rwxr-xr-x. 1 root root 5895464 Sep  4 12:48 nvlink
--rwxr-xr-x. 1 root root 3300720 Sep  4 12:48 nvprof
--rwxr-xr-x. 1 root root     215 Sep  4 12:48 nvvp
--rwxr-xr-x. 1 root root 5759328 Sep  4 12:48 ptxas
-</pre>
-          <h2>Compiler: nvcc & ptxas</h2>
-          <p>Analogue to GNU <code>cc</code>.</p>
-          <p><img class="img-responsive" src="http://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/graphics/cuda-compilation-from-cu-to-cu-cpp-ii.png" alt="nvcc"></p>
-          <p>The <code>-ptx</code> option generates ptx. The <code>-cubin</code> option generates cubin.</p>
-          <h2>Debugger: cuda-gdb & cuda-gdbserver</h2>
-          <p>debugger tools analogue to GNU <code>gdb</code> and <code>gdbserver</code>.</p>
-          <h2>Profiler: nvprof & nvvp</h2>
-          <p>analogue to GNU <code>gprof</code>.</p>
-<pre class="sh">
-<b class="text-info">hjli@P32-1:~></b> nvprof -o %h-%p.nvprof ~/idock/bin/idock --config idock.conf
-<b class="text-info">hjli@P32-1:~></b> nvprof -o %h-%p.nvprof --analysis-metrics ~/idock/bin/idock --config idock.conf
-<b class="text-info">hjli@P32-1:~></b> nvprof -i pc90124-26367.nvprof --print-gpu-trace
-<b class="text-info">hjli@P32-1:~></b> nvprof -i pc90124-26367.nvprof --print-api-trace
-</pre>
-          <p>File -> Import -> Nvprof</p>
-          <h2>cuda-memcheck</h2>
-          <p>cuda-memcheck is a tool analogue to <code>valgrind</code>.</p>
-<pre class="sh">
-<b class="text-info">hjli@P32-1:~></b> cuda-memcheck --leak-check full ~/idock/bin/idock --config idock.cfg
-<b class="text-info">hjli@P32-1:~></b> cuda-memcheck --tool racecheck ~/idock/bin/idock --config idock.cfg
-</pre>
-          <h2>IDE: Nsight</h2>
-          <p>Visual Studio and Eclipse</p>
-          <h2>Occupancy.xls</h2>
-          <p>There are a few easy ways to quickly get started with Bootstrap, each one appealing to a different skill level and use case. Read through to see what suits your particular needs.</p>
-          <h2>Monitor: nvidia-smi</h2>
-          <p>analogue to <code>top</code>.</p>
-<pre class="sh">
-<b class="text-info">hjli@P32-1:~></b> nvidia-smi
-Tue Sep 10 10:39:25 2013       
-+------------------------------------------------------+                       
-| NVIDIA-SMI 5.319.37   Driver Version: 319.37         |                       
-|-------------------------------+----------------------+----------------------+
-| GPU  Name        Persistence-M| Bus-Id        Disp.A | Volatile Uncorr. ECC |
-| Fan  Temp  Perf  Pwr:Usage/Cap|         Memory-Usage | GPU-Util  Compute M. |
-|===============================+======================+======================|
-|   0  Tesla K20m          Off  | 0000:08:00.0     Off |                    0 |
-| N/A   35C    P0    42W / 225W |       11MB /  4799MB |      0%      Default |
-+-------------------------------+----------------------+----------------------+
-|   1  Tesla K20m          Off  | 0000:24:00.0     Off |                    0 |
-| N/A   41C    P0    44W / 225W |       11MB /  4799MB |      0%      Default |
-+-------------------------------+----------------------+----------------------+
-|   2  Tesla K20m          Off  | 0000:27:00.0     Off |                    0 |
-| N/A   35C    P0    39W / 225W |       11MB /  4799MB |     78%      Default |
-+-------------------------------+----------------------+----------------------+
-                                                                               
-+-----------------------------------------------------------------------------+
-| Compute processes:                                               GPU Memory |
-|  GPU       PID  Process name                                     Usage      |
-|=============================================================================|
-|  No running compute processes found                                         |
-+-----------------------------------------------------------------------------+
-</pre>
-        </div>
-      </div>
-    </section>
-    <section>
-      <div class="page-header">
-        <h1>Libraries</h1>
-      </div>
-      <div class="row">
-        <div class="col-md-12">
-          <h2>thrust</h2>
-          <p><a href="http://docs.nvidia.com/cuda/thrust/">thrust</a> is a CUDA implementation of STL (Standard Template Library).</p>
-<pre class="cpp">
-#include &lt;iostream&gt;
-#include &lt;thrust/host_vector.h&gt;
-#include &lt;thrust/device_vector.h&gt;
-#include &lt;thrust/generate.h&gt;
-#include &lt;thrust/reduce.h&gt;
-#include &lt;thrust/random.h&gt;
-
-int my_rand()
-{
-	static thrust::default_random_engine rng;
-	static thrust::uniform_int_distribution<int> dist(0, 999);
-	return dist(rng);
-}
-
-int main(int argc, char* argv[])
-{
-	// Allocate a vector in host memory.
-	thrust::host_vector<int> h(1e+7);
-
-	// Generate random numbers on the host.
-	thrust::generate(h.begin(), h.end(), my_rand);
-
-	// Copy the vector from host memory to device memory.
-	thrust::device_vector<int> d = h;
- 
-	// Compute the sum on the device.
-	int actual = thrust::reduce(d.begin(), d.end(), 0, thrust::plus<int>());
-
-	// Compute the sum on the host.
-	int expected = 0;
-	for (int i = 0; i < h.size(); ++i)
-	{
-		expected += h[i];
-	}
-
-	// Validate the result.
-	if (actual != expected)
-	{
-		std::cout << "actual = " << actual << ", expected = " << expected << std::endl;
-	}
-}
-</pre>
-          <h2>CUBLAS</h2>
-          <p><a href="http://docs.nvidia.com/cuda/cublas/">CUBLAS</a> is a CUDA implementation of BLAS (Basic Linear Algebra Subprograms).</p>
+          <h2>cublas</h2>
+          <p>This sample uses <a href="http://docs.nvidia.com/cuda/cublas/">CUBLAS</a>, a CUDA implementation of BLAS (Basic Linear Algebra Subprograms), for matrix multiplication.</p>
 <pre class="cpp">
 #include &lt;stdio.h&gt;
 #include &lt;cublas_v2.h&gt;
@@ -1284,14 +1138,142 @@ int main(int argc, char *argv[])
 	free(h_A);
 }
 </pre>
-          <h2>CUFFT</h2>
           <p><a href="http://docs.nvidia.com/cuda/cufft/">CUFFT</a> is a CUDA implementation of FFT (Fast Fourier Transform).</p>
-          <h2>CURAND</h2>
           <p><a href="http://docs.nvidia.com/cuda/curand/">CURAND</a> is a CUDA implementation of PRNG (PseudoRandom Number Generator) and QRNG (QuasiRandom Number Generator).</p>
-          <h2>CUSPARSE</h2>
           <p><a href="http://docs.nvidia.com/cuda/cusparse/">CUSPARSE</a> is a CUDA implementation of basic linear algebra subroutines for sparse matrices.</p>
-          <h2>MAGMA</h2>
           <p><a href="https://developer.nvidia.com/magma">MAGMA</a> is a third-party CUDA implementation of next generation LA (Linear Algebra) by the team that developed LAPACK and ScaLAPACK.</p>
+          <h2>thrust</h2>
+          <p>This sample uses <a href="http://docs.nvidia.com/cuda/thrust/">thrust</a>, a CUDA implementation of STL (Standard Template Library), for vector reduction.</p>
+<pre class="cpp">
+#include &lt;iostream&gt;
+#include &lt;thrust/host_vector.h&gt;
+#include &lt;thrust/device_vector.h&gt;
+#include &lt;thrust/generate.h&gt;
+#include &lt;thrust/reduce.h&gt;
+#include &lt;thrust/random.h&gt;
+
+int my_rand()
+{
+	static thrust::default_random_engine rng;
+	static thrust::uniform_int_distribution<int> dist(0, 999);
+	return dist(rng);
+}
+
+int main(int argc, char* argv[])
+{
+	// Allocate a vector in host memory.
+	thrust::host_vector<int> h(1e+7);
+
+	// Generate random numbers on the host.
+	thrust::generate(h.begin(), h.end(), my_rand);
+
+	// Copy the vector from host memory to device memory.
+	thrust::device_vector<int> d = h;
+ 
+	// Compute the sum on the device.
+	int actual = thrust::reduce(d.begin(), d.end(), 0, thrust::plus<int>());
+
+	// Compute the sum on the host.
+	int expected = 0;
+	for (int i = 0; i < h.size(); ++i)
+	{
+		expected += h[i];
+	}
+
+	// Validate the result.
+	if (actual != expected)
+	{
+		std::cout << "actual = " << actual << ", expected = " << expected << std::endl;
+	}
+}
+</pre>
+        </div>
+      </div>
+    </section>
+    <section>
+      <div class="page-header">
+        <h1>Tools</h1>
+      </div>
+      <div class="row">
+        <div class="col-md-12">
+<pre class="sh">
+<b class="text-info">hjli@P32-1:~></b> ls -l /usr/local/cuda-5.5/bin
+total 32112
+-rwxr-xr-x. 1 root root   63000 Sep  4 12:48 bin2c
+lrwxrwxrwx. 1 root root       4 Sep  4 12:48 computeprof -> nvvp
+drwxr-xr-x. 2 root root    4096 Sep  4 12:48 crt
+-rwxr-xr-x. 1 root root 3415240 Sep  4 12:48 cudafe
+-rwxr-xr-x. 1 root root 3081848 Sep  4 12:48 cudafe++
+-rwxr-xr-x. 1 root root 6093856 Sep  4 12:48 cuda-gdb
+-rwxr-xr-x. 1 root root  342809 Sep  4 12:48 cuda-gdbserver
+-rwxr-xr-x. 1 root root     665 Sep  4 12:49 cuda-install-samples-5.5.sh
+-rwxr-xr-x. 1 root root  348832 Sep  4 12:48 cuda-memcheck
+-rwxr-xr-x. 1 root root  230744 Sep  4 12:48 cuobjdump
+-rwxr-xr-x. 1 root root  163200 Sep  4 12:48 fatbin
+-rwxr-xr-x. 1 root root  125584 Sep  4 12:48 fatbinary
+-rwxr-xr-x. 1 root root   54584 Sep  4 12:48 filehash
+-rwxr-xr-x. 1 root root     219 Sep  4 12:48 nsight
+-rwxr-xr-x. 1 root root  164608 Sep  4 12:48 nvcc
+-rw-r--r--. 1 root root     377 Sep  4 12:48 nvcc.profile
+-rwxr-xr-x. 1 root root 3790843 Sep  4 12:48 nvdisasm
+-rwxr-xr-x. 1 root root 5895464 Sep  4 12:48 nvlink
+-rwxr-xr-x. 1 root root 3300720 Sep  4 12:48 nvprof
+-rwxr-xr-x. 1 root root     215 Sep  4 12:48 nvvp
+-rwxr-xr-x. 1 root root 5759328 Sep  4 12:48 ptxas
+</pre>
+          <h2>Compiler: nvcc & ptxas</h2>
+          <p>Analogue to GNU <code>cc</code>.</p>
+          <p><img class="img-responsive" src="http://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/graphics/cuda-compilation-from-cu-to-cu-cpp-ii.png" alt="nvcc"></p>
+          <p>The <code>-ptx</code> option generates ptx. The <code>-cubin</code> option generates cubin.</p>
+          <h2>Debugger: cuda-gdb & cuda-gdbserver</h2>
+          <p>debugger tools analogue to GNU <code>gdb</code> and <code>gdbserver</code>.</p>
+          <h2>Profiler: nvprof & nvvp</h2>
+          <p>analogue to GNU <code>gprof</code>.</p>
+<pre class="sh">
+<b class="text-info">hjli@P32-1:~></b> nvprof -o %h-%p.nvprof ~/idock/bin/idock --config idock.conf
+<b class="text-info">hjli@P32-1:~></b> nvprof -o %h-%p.nvprof --analysis-metrics ~/idock/bin/idock --config idock.conf
+<b class="text-info">hjli@P32-1:~></b> nvprof -i pc90124-26367.nvprof --print-gpu-trace
+<b class="text-info">hjli@P32-1:~></b> nvprof -i pc90124-26367.nvprof --print-api-trace
+</pre>
+          <p>File -> Import -> Nvprof</p>
+          <h2>cuda-memcheck</h2>
+          <p>cuda-memcheck is a tool analogue to <code>valgrind</code>.</p>
+<pre class="sh">
+<b class="text-info">hjli@P32-1:~></b> cuda-memcheck --leak-check full ~/idock/bin/idock --config idock.cfg
+<b class="text-info">hjli@P32-1:~></b> cuda-memcheck --tool racecheck ~/idock/bin/idock --config idock.cfg
+</pre>
+          <h2>IDE: Nsight</h2>
+          <p>Visual Studio and Eclipse</p>
+          <h2>Occupancy.xls</h2>
+          <p>There are a few easy ways to quickly get started with Bootstrap, each one appealing to a different skill level and use case. Read through to see what suits your particular needs.</p>
+          <h2>Monitor: nvidia-smi</h2>
+          <p>analogue to <code>top</code>.</p>
+<pre class="sh">
+<b class="text-info">hjli@P32-1:~></b> nvidia-smi
+Tue Sep 10 10:39:25 2013       
++------------------------------------------------------+                       
+| NVIDIA-SMI 5.319.37   Driver Version: 319.37         |                       
+|-------------------------------+----------------------+----------------------+
+| GPU  Name        Persistence-M| Bus-Id        Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp  Perf  Pwr:Usage/Cap|         Memory-Usage | GPU-Util  Compute M. |
+|===============================+======================+======================|
+|   0  Tesla K20m          Off  | 0000:08:00.0     Off |                    0 |
+| N/A   35C    P0    42W / 225W |       11MB /  4799MB |      0%      Default |
++-------------------------------+----------------------+----------------------+
+|   1  Tesla K20m          Off  | 0000:24:00.0     Off |                    0 |
+| N/A   41C    P0    44W / 225W |       11MB /  4799MB |      0%      Default |
++-------------------------------+----------------------+----------------------+
+|   2  Tesla K20m          Off  | 0000:27:00.0     Off |                    0 |
+| N/A   35C    P0    39W / 225W |       11MB /  4799MB |     78%      Default |
++-------------------------------+----------------------+----------------------+
+                                                                               
++-----------------------------------------------------------------------------+
+| Compute processes:                                               GPU Memory |
+|  GPU       PID  Process name                                     Usage      |
+|=============================================================================|
+|  No running compute processes found                                         |
++-----------------------------------------------------------------------------+
+</pre>
         </div>
       </div>
     </section>
