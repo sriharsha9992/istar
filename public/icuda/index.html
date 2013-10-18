@@ -72,7 +72,7 @@
           <h2>Contents</h2>
           <p>Seminar 1: This seminar gives a high-level overview of GPU hardware and CUDA programming philosophy. It covers four samples including <a href="#vectorAdd">vectorAdd</a>, <a href="#zeroCopy">zeroCopy</a>, <a href="bandwidthTest">bandwidthTest</a> and <a href="#checkError">checkError</a>, and two tools including <a href="#nvcc">nvcc</a> and <a href="#cuda-gdb">cuda-gdb</a>.</p>
           <p>Seminar 2: This seminar illustrates how to exploit single-device parallelism and GPU-specific hardware components. It covers four samples including <a href="#matrixMul">matrixMul</a>, <a href="#atomicAdd">atomicAdd</a>, <a href="#asyncEngine">asyncEngine</a> and <a href="#hyperQ">hyperQ</a>, and three tools including <a href="#nvprof">nvprof</a>, <a href="#nsight">nsight</a> and <a href="#CUDA_Occupancy_Calculator.xls">CUDA_Occupancy_Calculator.xls</a>.</p>
-          <p>Seminar 3: This seminar illustrates how to exploit multi-device parallelism and how to utilize libraries. It covers six samples including <a href="#deviceQuery">deviceQuery</a>, <a href="#multiDevice">multiDevice</a>, <a href="#openmp">openmp</a>, <a href="#mpi">mpi</a>, <a href="#cublas">cublas</a> and <a href="#thrust">thrust</a>, and two tools including <a href="#nvidia-smi">nvidia-smi</a> and <a href="#cuda-memcheck">cuda-memcheck</a>.</p>
+          <p>Seminar 3: This seminar illustrates how to exploit multi-device parallelism and how to utilize libraries. It covers six samples including <a href="#deviceQuery">deviceQuery</a>, <a href="#multiDevice">multiDevice</a>, <a href="#openmp">openmp</a>, <a href="#mpi">mpi</a>, <a href="#cublas">cublas</a> and <a href="#thrust">thrust</a>, and four tools including <a href="#nvidia-smi">nvidia-smi</a>, <a href="#cuda-memcheck">cuda-memcheck</a>, <a href="#nvdisasm">cuobjdump & nvdisasm</a>.</p>
           <h2>Time & venue</h2>
           <p>Seminar 1: 14 Nov 2013, 3:00pm - 4:30pm, SHB 904</p>
           <p>Seminar 2: 21 Nov 2013, 3:00pm - 4:30pm, SHB 904</p>
@@ -96,7 +96,7 @@
 </pre>
           <p>All the samples use the <a href="http://docs.nvidia.com/cuda/cuda-runtime-api/">CUDA Runtime API</a>.</p>
           <h2>Makefile</h2>
-          <p>A sample Makefile looks like this. Instead of <code>gcc</code>, it uses <code>nvcc</code> as CUDA compiler. The option <code>arch</code> specifies the name of the class of nVidia GPU architectures for which the cuda input files must be compiled. Our K20m GPU architecture is <code>sm_35</code>.</p>
+          <p>A sample Makefile looks like this. Instead of <code>gcc</code>, it uses <code>nvcc</code> as CUDA compiler. The option <code>-arch</code> specifies the name of the class of nVidia GPU architectures for which the cuda input files must be compiled. Our K20m GPU architecture is <code>sm_35</code>.</p>
 <pre class="makefile">
 CC=nvcc -arch=sm_35
 
@@ -1457,37 +1457,112 @@ int main(int argc, char* argv[])
           <h2 id="nvcc">Compiler: nvcc</h2>
           <p>This figure shows the internal structure of the various CUDA compilation phases. It is reprinted from <a href="http://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/graphics/cuda-compilation-from-cu-to-cu-cpp-ii.png">http://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/graphics/cuda-compilation-from-cu-to-cu-cpp-ii.png</a>.</p>
           <p><img class="img-responsive" src="http://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/graphics/cuda-compilation-from-cu-to-cu-cpp-ii.png" alt="nvcc"></p>
+          <p>The <code>cudafe++</code> front end preprocessor will be called multiple times.</p>
+<pre class="sh">
+<b class="text-info">hjli@P32-1:~></b> echo "int main() { int dummy; }" > test.cu
+<b class="text-info">hjli@P32-1:~></b> nvcc -arch=sm_35 test.cu
+test.cu(1): warning: variable "dummy" was declared but never referenced
+
+test.cu(1): warning: variable "dummy" was declared but never referenced
+
+</pre>
           <p>The <code>-ptx</code> option generates <a href="http://docs.nvidia.com/cuda/parallel-thread-execution/index.html">ptx</a>. The <code>-cubin</code> option generates cubin. The <code>-fatbin</code> option generates fatbin.</p>
 <pre class="sh">
 <b class="text-info">hjli@P32-1:/data/hjli/cudart/vectorAdd></b> nvcc -arch=sm_35 -ptx vectorAdd.cu
-<b class="text-info">hjli@P32-1:/data/hjli/cudart/vectorAdd></b> nvcc -arch=sm_35 -cubin vectorAdd.cu
-<b class="text-info">hjli@P32-1:/data/hjli/cudart/vectorAdd></b> nvcc -arch=sm_35 -fatbin vectorAdd.cu
+<b class="text-info">hjli@P32-1:/data/hjli/cudart/vectorAdd></b> nvcc -arch=sm_35 -cubin vectorAdd.ptx
+<b class="text-info">hjli@P32-1:/data/hjli/cudart/vectorAdd></b> nvcc -arch=sm_35 -fatbin vectorAdd.cubin
 <b class="text-info">hjli@P32-1:/data/hjli/cudart/vectorAdd></b> ls -l vectorAdd.*
--rw-r--r-- 1 hjli users   1883 Oct 18 11:20 vectorAdd.ptx
--rw-r--r-- 1 hjli users   1868 Oct 18 11:21 vectorAdd.cubin
--rw-r--r-- 1 hjli users   2672 Oct 18 11:22 vectorAdd.fatbin
+-rw-rw-r--. 1 hjli hjli   1893 Oct 18 03:17 vectorAdd.ptx
+-rw-rw-r--. 1 hjli hjli   1868 Oct 18 03:18 vectorAdd.cubin
+-rw-rw-r--. 1 hjli hjli   2680 Oct 18 03:20 vectorAdd.fatbin
 </pre>
-          <p>The <a href="http://docs.nvidia.com/cuda/cuda-driver-api/">CUDA Driver API</a> can JIT (Just-In-Time) compile ptx into fatbin for forward compatibility. It is much analogue to <a href="http://www.khronos.org/opencl">OpenCL</a>. Refer to <a href="https://github.com/HongjianLi/cuda">https://github.com/HongjianLi/cuda</a> for samples.</p>
+          <p><code>ptxas</code> assemblies ptx into object. The option <code>-v</code> prints code generation statistics.</p>
+<pre class="sh">
+<b class="text-info">hjli@P32-1:/data/hjli/cudart/vectorAdd></b> ptxas -arch=sm_35 -v vectorAdd.ptx
+ptxas info    : 0 bytes gmem
+ptxas info    : Compiling entry function '_Z9vectorAddPKfS0_Pfi' for 'sm_35'
+ptxas info    : Function properties for _Z9vectorAddPKfS0_Pfi
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 10 registers, 348 bytes cmem[0]
+</pre>
+          <p>The <a href="http://docs.nvidia.com/cuda/cuda-driver-api/">CUDA Driver API</a> can JIT (Just-In-Time) compile ptx for forward compatibility. It is much analogue to <a href="http://www.khronos.org/opencl">OpenCL</a>. Refer to <a href="https://github.com/HongjianLi/cuda">https://github.com/HongjianLi/cuda</a> for samples.</p>
 <pre class="sh">
 <b class="text-info">hjli@P32-1:/data/hjli></b> git clone https://github.com/HongjianLi/cuda.git
 </pre>
           <h2 id="cuda-gdb">Debugger: cuda-gdb & cuda-gdbserver</h2>
-          <p>Compile with <code>-g</code> and <code>-G</code>.</p>
+          <p>Compile an application with the options <code>-g</code> and <code>-G</code>. They embed debug information for the host code and the device code, respectively.</p>
 <pre class="sh">
 <b class="text-info">hjli@P32-1:/data/hjli/cudart/vectorAdd></b> nvcc -arch=sm_35 -g -G vectorAdd.cu
+<b class="text-info">hjli@P32-1:/data/hjli/cudart/vectorAdd></b> cuda-gdbserver :3001 ./vectorAdd
+Process ./vectorAdd created; pid = 48918
+Listening on port 3001
+<b class="text-info">hjli@pc90124:~/cudart/vectorAdd></b> cuda-gdb ./vectorAdd
+NVIDIA (R) CUDA Debugger
+5.5 release
+Portions Copyright (C) 2007-2013 NVIDIA Corporation
+GNU gdb (GDB) 7.2
+Copyright (C) 2010 Free Software Foundation, Inc.
+License GPLv3+: GNU GPL version 3 or later &lt;http://gnu.org/licenses/gpl.html&gt;
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.  Type "show copying"
+and "show warranty" for details.
+This GDB was configured as "x86_64-unknown-linux-gnu".
+For bug reporting instructions, please see:
+&lt;http://www.gnu.org/software/gdb/bugs/&gt;...
+Reading symbols from /home/hjli/cudart/vectorAdd/vectorAdd...done.
+(cuda-gdb) target remote tiger1:3001
 </pre>
-          <h2 id="nvprof">Profiler: nvprof & nvvp</h2>
+          <h2 id="nvprof">Profilers: nvprof & nvvp</h2>
           <p></p>
 <pre class="sh">
 <b class="text-info">hjli@P32-1:/data/hjli/cudart/asyncEngine></b> nvprof -o %h-%p.nvprof ./asyncEngine
-<b class="text-info">hjli@P32-1:/data/hjli/cudart/asyncEngine></b> nvprof -i pc90124-26367.nvprof --print-gpu-trace
-<b class="text-info">hjli@P32-1:/data/hjli/cudart/asyncEngine></b> nvprof -i pc90124-26367.nvprof --print-api-trace
+<b class="text-info">hjli@P32-1:/data/hjli/cudart/asyncEngine></b> nvprof -i P32-1-47304.nvprof --print-api-trace
+<b class="text-info">hjli@P32-1:/data/hjli/cudart/asyncEngine></b> nvprof -i P32-1-47304.nvprof --print-gpu-trace
+======== Profiling result:
+   Start  Duration            Grid Size      Block Size     Regs*    SSMem*    DSMem*      Size  Throughput           Device   Context    Stream  Name
+     0ns  1.0068ms                    -               -         -         -         -  6.2915MB  6.2493GB/s   Tesla K20m (0)         1         8  [CUDA memcpy HtoD]
+1.0097ms  1.0061ms                    -               -         -         -         -  6.2915MB  6.2530GB/s   Tesla K20m (0)         1         8  [CUDA memcpy HtoD]
+2.3197ms  1.0087ms           (6144 1 1)       (256 1 1)        10        0B        0B         -           -   Tesla K20m (0)         1         8  vectorAdd(float const *, float const *, float*, int) [260]
+3.1087ms  1.0721ms                    -               -         -         -         -  6.2915MB  5.8686GB/s   Tesla K20m (0)         1         9  [CUDA memcpy HtoD]
+3.3364ms  1.1404ms                    -               -         -         -         -  6.2915MB  5.5170GB/s   Tesla K20m (0)         1         8  [CUDA memcpy DtoH]
+4.1925ms  1.0492ms                    -               -         -         -         -  6.2915MB  5.9963GB/s   Tesla K20m (0)         1         9  [CUDA memcpy HtoD]
+5.5256ms  1.0195ms           (6144 1 1)       (256 1 1)        10        0B        0B         -           -   Tesla K20m (0)         1         9  vectorAdd(float const *, float const *, float*, int) [272]
+6.2483ms  1.0644ms                    -               -         -         -         -  6.2915MB  5.9109GB/s   Tesla K20m (0)         1        10  [CUDA memcpy HtoD]
+6.5525ms  1.1311ms                    -               -         -         -         -  6.2915MB  5.5621GB/s   Tesla K20m (0)         1         9  [CUDA memcpy DtoH]
+7.3243ms  1.0433ms                    -               -         -         -         -  6.2915MB  6.0304GB/s   Tesla K20m (0)         1        10  [CUDA memcpy HtoD]
+8.6571ms  1.0206ms           (6144 1 1)       (256 1 1)        10        0B        0B         -           -   Tesla K20m (0)         1        10  vectorAdd(float const *, float const *, float*, int) [284]
+9.4258ms  1.0687ms                    -               -         -         -         -  6.2915MB  5.8870GB/s   Tesla K20m (0)         1        11  [CUDA memcpy HtoD]
+9.6892ms  1.1271ms                    -               -         -         -         -  6.2915MB  5.5821GB/s   Tesla K20m (0)         1        10  [CUDA memcpy DtoH]
+10.500ms  1.0390ms                    -               -         -         -         -  6.2915MB  6.0553GB/s   Tesla K20m (0)         1        11  [CUDA memcpy HtoD]
+11.825ms  1.0113ms           (6144 1 1)       (256 1 1)        10        0B        0B         -           -   Tesla K20m (0)         1        11  vectorAdd(float const *, float const *, float*, int) [296]
+12.582ms  1.0635ms                    -               -         -         -         -  6.2915MB  5.9157GB/s   Tesla K20m (0)         1        12  [CUDA memcpy HtoD]
+12.844ms  1.1336ms                    -               -         -         -         -  6.2915MB  5.5500GB/s   Tesla K20m (0)         1        11  [CUDA memcpy DtoH]
+13.658ms  1.0523ms                    -               -         -         -         -  6.2915MB  5.9790GB/s   Tesla K20m (0)         1        12  [CUDA memcpy HtoD]
+14.996ms  1.0189ms           (6144 1 1)       (256 1 1)        10        0B        0B         -           -   Tesla K20m (0)         1        12  vectorAdd(float const *, float const *, float*, int) [308]
+15.768ms  1.0589ms                    -               -         -         -         -  6.2915MB  5.9413GB/s   Tesla K20m (0)         1        13  [CUDA memcpy HtoD]
+16.025ms  1.1395ms                    -               -         -         -         -  6.2915MB  5.5215GB/s   Tesla K20m (0)         1        12  [CUDA memcpy DtoH]
+16.832ms  1.0561ms                    -               -         -         -         -  6.2915MB  5.9575GB/s   Tesla K20m (0)         1        13  [CUDA memcpy HtoD]
+18.188ms  1.0209ms           (6144 1 1)       (256 1 1)        10        0B        0B         -           -   Tesla K20m (0)         1        13  vectorAdd(float const *, float const *, float*, int) [320]
+18.985ms  1.0678ms                    -               -         -         -         -  6.2915MB  5.8921GB/s   Tesla K20m (0)         1        14  [CUDA memcpy HtoD]
+19.218ms  1.1262ms                    -               -         -         -         -  6.2915MB  5.5863GB/s   Tesla K20m (0)         1        13  [CUDA memcpy DtoH]
+20.062ms  1.0418ms                    -               -         -         -         -  6.2915MB  6.0391GB/s   Tesla K20m (0)         1        14  [CUDA memcpy HtoD]
+21.375ms  1.0101ms           (6144 1 1)       (256 1 1)        10        0B        0B         -           -   Tesla K20m (0)         1        14  vectorAdd(float const *, float const *, float*, int) [332]
+22.029ms  1.1190ms                    -               -         -         -         -  6.2915MB  5.6225GB/s   Tesla K20m (0)         1        15  [CUDA memcpy HtoD]
+22.393ms  1.1847ms                    -               -         -         -         -  6.2915MB  5.3106GB/s   Tesla K20m (0)         1        14  [CUDA memcpy DtoH]
+23.154ms  1.0563ms                    -               -         -         -         -  6.2915MB  5.9560GB/s   Tesla K20m (0)         1        15  [CUDA memcpy HtoD]
+24.470ms  1.0200ms           (6144 1 1)       (256 1 1)        10        0B        0B         -           -   Tesla K20m (0)         1        15  vectorAdd(float const *, float const *, float*, int) [344]
+25.493ms  942.27us                    -               -         -         -         -  6.2915MB  6.6769GB/s   Tesla K20m (0)         1        15  [CUDA memcpy DtoH]
+
+Regs: Number of registers used per CUDA thread.
+SSMem: Static shared memory allocated per CUDA block.
+DSMem: Dynamic shared memory allocated per CUDA block.
 </pre>
-          <p>File -> Import -> Nvprof</p>
+          <p><code>nvvp</code> can import *.nvprof and visualize the timeline data. File -> Import -> Nvprof -> Timeline data file -> Finish. Zoom in the main part.</p>
+          <p><img class="img-responsive" src="P32-1-47304.png" alt="nvprof"></p>
           <h2 id="nsight">IDE: Nsight</h2>
-          <p>Visual Studio and Eclipse</p>
+          <p><a href="https://developer.nvidia.com/nvidia-nsight-visual-studio-edition">Visual Studio Edition for Windows</a> and <a href="https://developer.nvidia.com/nsight-eclipse-edition">Eclipse Edition for Linux</a></p>
           <h2 id="CUDA_Occupancy_Calculator.xls">CUDA_Occupancy_Calculator.xls</h2>
-          <p>There are a few easy ways to quickly get started with Bootstrap, each one appealing to a different skill level and use case. Read through to see what suits your particular needs.</p>
+          <p>It calculates the theoretical percentage for which kernels occupy a device. The higher the occupancy, the higher the GPU utilization. The Excel file is located in <code>/usr/local/cuda/tools</code>.</p>
           <h2 id="nvidia-smi">Monitor: nvidia-smi</h2>
           <p></p>
 <pre class="sh">
@@ -1516,11 +1591,342 @@ Tue Sep 10 10:39:25 2013
 |  No running compute processes found                                         |
 +-----------------------------------------------------------------------------+
 </pre>
-          <h2 id="cuda-memcheck">cuda-memcheck</h2>
-          <p></p>
+          <h2 id="cuda-memcheck">Sanitizer: cuda-memcheck</h2>
+          <p><a href="http://docs.nvidia.com/cuda/cuda-memcheck/">CUDA-MEMCHECK</a> is a functional correctness checking suite. The demo code here suffers from unaligned access and out-of-bound access.</p>
+<pre class="cpp">
+#include &lt;stdio.h&gt;
+
+__device__ int x;
+
+__global__ void unaligned_kernel()
+{
+	*(int*) ((char*)&x + 1) = 42;
+}
+
+__device__ void out_of_bounds_function()
+{
+	*(int*) 0x87654320 = 42;
+}
+
+__global__ void out_of_bounds_kernel()
+{
+	out_of_bounds_function();
+}
+
+void run_unaligned(void)
+{
+	printf("Running unaligned_kernel\n");
+	unaligned_kernel&lt;&lt;&lt;1,1&gt;&gt;&gt;();
+	printf("Ran unaligned_kernel: %s\n",
+	cudaGetErrorString(cudaGetLastError()));
+	printf("Sync: %s\n", cudaGetErrorString(cudaThreadSynchronize()));
+}
+
+void run_out_of_bounds(void)
+{
+	printf("Running out_of_bounds_kernel\n");
+	out_of_bounds_kernel&lt;&lt;&lt;1,1&gt;&gt;&gt;();
+	printf("Ran out_of_bounds_kernel: %s\n",
+	cudaGetErrorString(cudaGetLastError()));
+	printf("Sync: %s\n", cudaGetErrorString(cudaThreadSynchronize()));
+}
+
+int main()
+{
+	int *devMem;
+	printf("Mallocing memory\n");
+	cudaMalloc((void**)&devMem, 1024);
+	run_unaligned();
+	run_out_of_bounds();
+	cudaDeviceReset();
+	cudaFree(devMem);
+}
+</pre>
+          <p>Compile the demo code with option <code>-Xcompiler -rdynamic</code>, and invoke <code>cuda-memcheck</code>.</p>
 <pre class="sh">
-<b class="text-info">hjli@P32-1:~></b> cuda-memcheck --leak-check full ~/idock/bin/idock --config idock.cfg
-<b class="text-info">hjli@P32-1:~></b> cuda-memcheck --tool racecheck ~/idock/bin/idock --config idock.cfg
+<b class="text-info">hjli@P32-1:/data/hjli/cudart/memcheckDemo></b> cuda-memcheck ./memcheckDemo
+========= CUDA-MEMCHECK
+Mallocing memory
+Running unaligned_kernel
+Ran unaligned_kernel: no error
+========= Invalid __global__ write of size 4
+=========     at 0x00000028 in unaligned_kernel(void)
+=========     by thread (0,0,0) in block (0,0,0)
+=========     Address 0x2300200001 is misaligned
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========     Host Frame:/usr/lib64/libcuda.so (cuLaunchKernel + 0x331) [0xcd5d1]
+=========     Host Frame:./memcheckDemo [0x1bfb8]
+=========     Host Frame:./memcheckDemo [0x3b483]
+=========     Host Frame:./memcheckDemo (_ZN71_GLOBAL__N__47_tmpxft_0000c21b_00000000_6_memcheckDemo_cpp1_ii_a1aea87b10cudaLaunchIcEE9cudaErrorPT_ + 0x18) [0x325e]
+=========     Host Frame:./memcheckDemo (_Z35__device_stub__Z16unaligned_kernelvv + 0x19) [0x30c3]
+=========     Host Frame:./memcheckDemo (_Z16unaligned_kernelv + 0x9) [0x30ce]
+=========     Host Frame:./memcheckDemo (_Z13run_unalignedv + 0x75) [0x2f22]
+=========     Host Frame:./memcheckDemo (main + 0x28) [0x304f]
+=========     Host Frame:/lib64/libc.so.6 (__libc_start_main + 0xfd) [0x1ecdd]
+=========     Host Frame:./memcheckDemo [0x2c79]
+=========
+========= Program hit error 4 on CUDA API call to cudaThreadSynchronize 
+=========     Saved host backtrace up to driver entry point at error
+=========     Host Frame:/usr/lib64/libcuda.so [0x26d660]
+=========     Host Frame:./memcheckDemo [0x39f46]
+=========     Host Frame:./memcheckDemo (_Z13run_unalignedv + 0x98) [0x2f45]
+=========     Host Frame:./memcheckDemo (main + 0x28) [0x304f]
+=========     Host Frame:/lib64/libc.so.6 (__libc_start_main + 0xfd) [0x1ecdd]
+=========     Host Frame:./memcheckDemo [0x2c79]
+=========
+Sync: unspecified launch failure
+Running out_of_bounds_kernel
+========= Program hit error 4 on CUDA API call to cudaLaunch 
+=========     Saved host backtrace up to driver entry point at error
+=========     Host Frame:/usr/lib64/libcuda.so [0x26d660]
+=========     Host Frame:./memcheckDemo [0x3b4be]
+=========     Host Frame:./memcheckDemo (_ZN71_GLOBAL__N__47_tmpxft_0000c21b_00000000_6_memcheckDemo_cpp1_ii_a1aea87b10cudaLaunchIcEE9cudaErrorPT_ + 0x18) [0x325e]
+=========     Host Frame:./memcheckDemo (_Z39__device_stub__Z20out_of_bounds_kernelvv + 0x19) [0x30e9]
+=========     Host Frame:./memcheckDemo (_Z20out_of_bounds_kernelv + 0x9) [0x30f4]
+=========     Host Frame:./memcheckDemo (_Z17run_out_of_boundsv + 0x75) [0x2fdf]
+=========     Host Frame:./memcheckDemo (main + 0x2d) [0x3054]
+=========     Host Frame:/lib64/libc.so.6 (__libc_start_main + 0xfd) [0x1ecdd]
+=========     Host Frame:./memcheckDemo [0x2c79]
+=========
+========= Program hit error 4 on CUDA API call to cudaGetLastError 
+=========     Saved host backtrace up to driver entry point at error
+Ran out_of_bounds_kernel: unspecified launch failure
+=========     Host Frame:/usr/lib64/libcuda.so [0x26d660]
+=========     Host Frame:./memcheckDemo [0x39723]
+=========     Host Frame:./memcheckDemo (_Z17run_out_of_boundsv + 0x7a) [0x2fe4]
+=========     Host Frame:./memcheckDemo (main + 0x2d) [0x3054]
+=========     Host Frame:/lib64/libc.so.6 (__libc_start_main + 0xfd) [0x1ecdd]
+=========     Host Frame:./memcheckDemo [0x2c79]
+=========
+Sync: unspecified launch failure
+========= Program hit error 4 on CUDA API call to cudaThreadSynchronize 
+=========     Saved host backtrace up to driver entry point at error
+=========     Host Frame:/usr/lib64/libcuda.so [0x26d660]
+=========     Host Frame:./memcheckDemo [0x39f46]
+=========     Host Frame:./memcheckDemo (_Z17run_out_of_boundsv + 0x98) [0x3002]
+=========     Host Frame:./memcheckDemo (main + 0x2d) [0x3054]
+=========     Host Frame:/lib64/libc.so.6 (__libc_start_main + 0xfd) [0x1ecdd]
+=========     Host Frame:./memcheckDemo [0x2c79]
+=========
+========= Program hit error 17 on CUDA API call to cudaFree 
+=========     Saved host backtrace up to driver entry point at error
+=========     Host Frame:/usr/lib64/libcuda.so [0x26d660]
+=========     Host Frame:./memcheckDemo [0x43186]
+=========     Host Frame:./memcheckDemo (main + 0x3e) [0x3065]
+=========     Host Frame:/lib64/libc.so.6 (__libc_start_main + 0xfd) [0x1ecdd]
+=========     Host Frame:./memcheckDemo [0x2c79]
+=========
+========= ERROR SUMMARY: 6 errors
+</pre>
+          <p>Specify the option <code>--leak-check full</code> to print information about the allocations that have not been freed at the time the CUDA context is destroyed.</p>
+<pre class="sh">
+<b class="text-info">hjli@P32-1:/data/hjli/cudart/memcheckDemo></b> cuda-memcheck --leak-check full ./memcheckDemo
+</pre>
+          <p>Specify the option <code>--tool racecheck</code> to help identify memory access race conditions in CUDA applications that use shared memory.</p>
+<pre class="sh">
+<b class="text-info">hjli@P32-1:/data/hjli/cudart/memcheckDemo></b> cuda-memcheck --tool racecheck ./memcheckDemo
+</pre>
+          <h2 id="nvdisasm">Disassemblers: cuobjdump & nvdisasm</h2>
+          <p><a href="http://docs.nvidia.com/cuda/cuda-binary-utilities/index.html#cuobjdump">cuobjdump</a> extracts information from CUDA binary files (both standalone and those embedded in host binaries) and presents them in human readable format.</p>
+<pre class="sh">
+<b class="text-info">hjli@P32-1:/data/hjli/cudart/vectorAdd></b> cuobjdump ./vectorAdd.fatbin
+
+Fatbin elf code:
+================
+arch = sm_35
+code version = [1,7]
+producer = cuda
+host = linux
+compile_size = 64bit
+identifier = vectorAdd.cu
+
+Fatbin ptx code:
+================
+arch = sm_35
+code version = [3,2]
+producer = cuda
+host = linux
+compile_size = 64bit
+compressed
+identifier = vectorAdd.cu
+</pre>
+          <p><a href="http://docs.nvidia.com/cuda/cuda-binary-utilities/index.html#nvdisasm">nvdisasm</a> extracts information from standalone cubin files and presents them in human readable format.</p>
+<pre class="sh">
+<b class="text-info">hjli@P32-1:/data/hjli/cudart/vectorAdd></b> nvdisasm ./vectorAdd.cubin
+	.headerflags	@"EF_CUDA_TEXMODE_UNIFIED EF_CUDA_64BIT_ADDRESS EF_CUDA_SM35 EF_CUDA_PTX_SM(EF_CUDA_SM35) "
+
+
+//--------------------- .nv.info                  --------------------------
+	.section	.nv.info,"",@"SHT_CUDA_INFO "
+	.align	4
+
+
+	// ---- nvinfo : EIATTR_MIN_STACK_SIZE
+	.align		4
+	/*0000*/ 	.byte	0x04, 0x12
+	/*0002*/ 	.short	(.L_4 - .L_3)
+	.align		4
+.L_3:
+	/*0004*/ 	.word	index@(_Z9vectorAddPKfS0_Pfi)
+	/*0008*/ 	.word	0x00000000
+
+
+	// ---- nvinfo : EIATTR_FRAME_SIZE
+	.align		4
+.L_4:
+	/*000c*/ 	.byte	0x04, 0x11
+	/*000e*/ 	.short	(.L_6 - .L_5)
+	.align		4
+.L_5:
+	/*0010*/ 	.word	index@(_Z9vectorAddPKfS0_Pfi)
+	/*0014*/ 	.word	0x00000000
+.L_6:
+
+
+//--------------------- .nv.info._Z9vectorAddPKfS0_Pfi --------------------------
+	.section	.nv.info._Z9vectorAddPKfS0_Pfi,"",@"SHT_CUDA_INFO "
+	.align	4
+
+
+	// ---- nvinfo : EIATTR_PARAM_CBANK
+	.align		4
+	/*0000*/ 	.byte	0x04, 0x0a
+	/*0002*/ 	.short	(.L_8 - .L_7)
+	.align		4
+.L_7:
+	/*0004*/ 	.word	index@(.nv.constant0._Z9vectorAddPKfS0_Pfi)
+	/*0008*/ 	.short	0x0140
+	/*000a*/ 	.short	0x001c
+
+
+	// ---- nvinfo : EIATTR_CBANK_PARAM_SIZE
+	.align		4
+.L_8:
+	/*000c*/ 	.byte	0x03, 0x19
+	/*000e*/ 	.short	0x001c
+
+
+	// ---- nvinfo : EIATTR_KPARAM_INFO
+	.align		4
+	/*0010*/ 	.byte	0x04, 0x17
+	/*0012*/ 	.short	(.L_10 - .L_9)
+.L_9:
+	/*0014*/ 	.word	0x00000000
+	/*0018*/ 	.short	0x0003
+	/*001a*/ 	.short	0x0018
+	/*001c*/ 	.byte	0x00, 0xf0, 0x11, 0x00
+
+
+	// ---- nvinfo : EIATTR_KPARAM_INFO
+	.align		4
+.L_10:
+	/*0020*/ 	.byte	0x04, 0x17
+	/*0022*/ 	.short	(.L_12 - .L_11)
+.L_11:
+	/*0024*/ 	.word	0x00000000
+	/*0028*/ 	.short	0x0002
+	/*002a*/ 	.short	0x0010
+	/*002c*/ 	.byte	0x00, 0xf0, 0x21, 0x00
+
+
+	// ---- nvinfo : EIATTR_KPARAM_INFO
+	.align		4
+.L_12:
+	/*0030*/ 	.byte	0x04, 0x17
+	/*0032*/ 	.short	(.L_14 - .L_13)
+.L_13:
+	/*0034*/ 	.word	0x00000000
+	/*0038*/ 	.short	0x0001
+	/*003a*/ 	.short	0x0008
+	/*003c*/ 	.byte	0x00, 0xf0, 0x21, 0x00
+
+
+	// ---- nvinfo : EIATTR_KPARAM_INFO
+	.align		4
+.L_14:
+	/*0040*/ 	.byte	0x04, 0x17
+	/*0042*/ 	.short	(.L_16 - .L_15)
+.L_15:
+	/*0044*/ 	.word	0x00000000
+	/*0048*/ 	.short	0x0000
+	/*004a*/ 	.short	0x0000
+	/*004c*/ 	.byte	0x00, 0xf0, 0x21, 0x00
+
+
+	// ---- nvinfo : EIATTR_CRS_STACK_SIZE
+	.align		4
+.L_16:
+	/*0050*/ 	.byte	0x04, 0x1e
+	/*0052*/ 	.short	(.L_18 - .L_17)
+.L_17:
+	/*0054*/ 	.word	0x00000010
+
+
+	// ---- nvinfo : EIATTR_S2RCTAID_INSTR_OFFSETS
+	.align		4
+.L_18:
+	/*0058*/ 	.byte	0x04, 0x1d
+	/*005a*/ 	.short	(.L_20 - .L_19)
+
+
+	//   ....[0]....
+.L_19:
+	/*005c*/ 	.word	0x00000010
+
+
+	// ---- nvinfo : EIATTR_EXIT_INSTR_OFFSETS
+	.align		4
+.L_20:
+	/*0060*/ 	.byte	0x04, 0x1c
+	/*0062*/ 	.short	(.L_22 - .L_21)
+
+
+	//   ....[0]....
+.L_21:
+	/*0064*/ 	.word	0x000000a8
+.L_22:
+
+
+//--------------------- .nv.constant0._Z9vectorAddPKfS0_Pfi --------------------------
+	.section	.nv.constant0._Z9vectorAddPKfS0_Pfi,"a",@progbits
+	.align	4
+.nv.constant0._Z9vectorAddPKfS0_Pfi:
+	.zero		348
+
+
+//--------------------- .text._Z9vectorAddPKfS0_Pfi --------------------------
+	.section	.text._Z9vectorAddPKfS0_Pfi,"ax",@progbits
+	.sectioninfo	@"SHI_REGISTERS=10 "
+	.align	4
+	.global		_Z9vectorAddPKfS0_Pfi
+	.type		_Z9vectorAddPKfS0_Pfi,@function
+	.size		_Z9vectorAddPKfS0_Pfi,(.L_23 - _Z9vectorAddPKfS0_Pfi)
+	.other		_Z9vectorAddPKfS0_Pfi,@"STO_CUDA_ENTRY STV_DEFAULT "
+_Z9vectorAddPKfS0_Pfi:
+.text._Z9vectorAddPKfS0_Pfi:
+        /*0008*/                MOV R1, c[0x0][0x44];
+        /*0010*/                S2R R0, SR_CTAID.X;
+        /*0018*/                S2R R3, SR_TID.X;
+        /*0020*/                IMAD R0, R0, c[0x0][0x28], R3;
+        /*0028*/                ISETP.GE.AND P0, PT, R0, c[0x0][0x158], PT;
+        /*0030*/            @P0 BRA.U `(.L_1);
+        /*0038*/           @!P0 MOV32I R5, 0x4;
+        /*0048*/           @!P0 IMAD R6.CC, R0, R5, c[0x0][0x140];
+        /*0050*/           @!P0 IMAD.HI.X R7, R0, R5, c[0x0][0x144];
+        /*0058*/           @!P0 IMAD R8.CC, R0, R5, c[0x0][0x148];
+        /*0060*/           @!P0 LD.E R3, [R6];
+        /*0068*/           @!P0 IMAD.HI.X R9, R0, R5, c[0x0][0x14c];
+        /*0070*/           @!P0 LD.E R2, [R8];
+        /*0078*/           @!P0 IMAD R4.CC, R0, R5, c[0x0][0x150];
+        /*0088*/           @!P0 IMAD.HI.X R5, R0, R5, c[0x0][0x154];
+        /*0090*/           @!P0 FADD R0, R3, R2;
+        /*0098*/           @!P0 ST.E [R4], R0;
+.L_1:
+        /*00a0*/                MOV RZ, RZ;
+        /*00a8*/                EXIT ;
+.L_2:
+        /*00b0*/                BRA `(.L_2);
+.L_23:
 </pre>
         </div>
       </div>
