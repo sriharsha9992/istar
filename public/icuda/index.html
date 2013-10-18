@@ -70,9 +70,9 @@
         <div class="col-md-12">
           <p>This is a hands-on seminar series on pragmatic CUDA programming. It emphasizes <b>examples</b>, <b>libraries</b> and <b>tools</b>. This seminar series consists of 3 seminars.</p>
           <h2>Contents</h2>
-          <p>Seminar 1: This seminar gives a high-level overview of GPU hardware and CUDA programming philosophy. It covers four samples including <a href="#vectorAdd">vectorAdd</a>, <a href="#zeroCopy">zeroCopy</a>, <a href="bandwidthTest">bandwidthTest</a> and <a href="#checkError">checkError</a>.</p>
-          <p>Seminar 2: This seminar illustrates how to exploit single-device parallelism and GPU-specific hardware components. It covers four samples including <a href="#matrixMul">matrixMul</a>, <a href="#atomicAdd">atomicAdd</a>, <a href="#asyncEngine">asyncEngine</a> and <a href="#hyperQ">hyperQ</a>.</p>
-          <p>Seminar 3: This seminar illustrates how to exploit multi-device parallelism and how to utilize libraries and tools. It covers six samples including <a href="#deviceQuery">deviceQuery</a>, <a href="#multiDevice">multiDevice</a>, <a href="#openmp">openmp</a>, <a href="#mpi">mpi</a>, <a href="#cublas">cublas</a> and <a href="#thrust">thrust</a>.</p>
+          <p>Seminar 1: This seminar gives a high-level overview of GPU hardware and CUDA programming philosophy. It covers four samples including <a href="#vectorAdd">vectorAdd</a>, <a href="#zeroCopy">zeroCopy</a>, <a href="bandwidthTest">bandwidthTest</a> and <a href="#checkError">checkError</a>, and two tools including <a href="#nvcc">nvcc</a> and <a href="#cuda-gdb">cuda-gdb</a>.</p>
+          <p>Seminar 2: This seminar illustrates how to exploit single-device parallelism and GPU-specific hardware components. It covers four samples including <a href="#matrixMul">matrixMul</a>, <a href="#atomicAdd">atomicAdd</a>, <a href="#asyncEngine">asyncEngine</a> and <a href="#hyperQ">hyperQ</a>, and three tools including <a href="#nvprof">nvprof</a>, <a href="#nsight">nsight</a> and <a href="#CUDA_Occupancy_Calculator.xls">CUDA_Occupancy_Calculator.xls</a>.</p>
+          <p>Seminar 3: This seminar illustrates how to exploit multi-device parallelism and how to utilize libraries and tools. It covers six samples including <a href="#deviceQuery">deviceQuery</a>, <a href="#multiDevice">multiDevice</a>, <a href="#openmp">openmp</a>, <a href="#mpi">mpi</a>, <a href="#cublas">cublas</a> and <a href="#thrust">thrust</a>, and two tools including <a href="#nvidia-smi">nvidia-smi</a> and <a href="#cuda-memcheck">cuda-memcheck</a>.</p>
           <h2>Time & venue</h2>
           <p>Seminar 1: 14 Nov 2013, 3:00pm - 4:30pm, SHB 904</p>
           <p>Seminar 2: 21 Nov 2013, 3:00pm - 4:30pm, SHB 904</p>
@@ -635,11 +635,12 @@ __global__ void vectorAdd(const float *a, const float *b, float *c, int numEleme
 	{
 		c[i] = a[i] + b[i];
 	}
+	for (const clock_t threshold = clock() + 1e+4; clock() < threshold;);
 }
 
 int main(int argc, char *argv[])
 {
-	int numElements = 5e+4;
+	int numElements = 3 << 22;
 
 	// Allocate vectors a, b and c in host memory.
 	size_t numBytes = sizeof(float) * numElements;
@@ -895,11 +896,12 @@ __global__ void vectorAdd(const float *a, const float *b, float *c, int numEleme
 	{
 		c[i] = a[i] + b[i];
 	}
+	for (const clock_t threshold = clock() + 1e+4; clock() < threshold;);
 }
 
 int main(int argc, char *argv[])
 {
-	int numElements = 5e+4;
+	int numElements = 3 << 22;
 
 	// Allocate vectors a, b and c in host memory.
 	size_t numBytes = sizeof(float) * numElements;
@@ -1476,32 +1478,37 @@ drwxr-xr-x. 2 root root    4096 Sep  4 12:48 crt
 -rwxr-xr-x. 1 root root     215 Sep  4 12:48 nvvp
 -rwxr-xr-x. 1 root root 5759328 Sep  4 12:48 ptxas
 </pre>
-          <h2>Compiler: nvcc</h2>
-          <p></p>
+          <h2 id="nvcc">Compiler: nvcc</h2>
+          <p>This figure shows the internal structure of the various CUDA compilation phases. It is reprinted from <a href="http://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/graphics/cuda-compilation-from-cu-to-cu-cpp-ii.png">http://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/graphics/cuda-compilation-from-cu-to-cu-cpp-ii.png</a>.</p>
           <p><img class="img-responsive" src="http://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/graphics/cuda-compilation-from-cu-to-cu-cpp-ii.png" alt="nvcc"></p>
-          <p>The <code>-ptx</code> option generates ptx. The <code>-cubin</code> option generates cubin.</p>
-          <h2>Debugger: cuda-gdb & cuda-gdbserver</h2>
-          <p></p>
-          <h2>Profiler: nvprof & nvvp</h2>
+          <p>The <code>-ptx</code> option generates ptx. The <code>-cubin</code> option generates cubin. The <code>-fatbin</code> option generates fatbin.</p>
+<pre class="sh">
+<b class="text-info">hjli@P32-1:/data/hjli/cudart/vectorAdd></b> nvcc -arch=sm_35 -ptx vectorAdd.cu
+<b class="text-info">hjli@P32-1:/data/hjli/cudart/vectorAdd></b> nvcc -arch=sm_35 -cubin vectorAdd.cu
+<b class="text-info">hjli@P32-1:/data/hjli/cudart/vectorAdd></b> nvcc -arch=sm_35 -fatbin vectorAdd.cu
+<b class="text-info">hjli@P32-1:/data/hjli/cudart/vectorAdd></b> ls -l vectorAdd.*
+-rw-r--r-- 1 hjli users   1883 Oct 18 11:20 vectorAdd.ptx
+-rw-r--r-- 1 hjli users   1868 Oct 18 11:21 vectorAdd.cubin
+-rw-r--r-- 1 hjli users   2672 Oct 18 11:22 vectorAdd.fatbin
+</pre>
+          <h2 id="cuda-gdb">Debugger: cuda-gdb & cuda-gdbserver</h2>
+          <p>Compile with <code>-g</code> and <code>-G</code>.</p>
+<pre class="sh">
+<b class="text-info">hjli@P32-1:/data/hjli/cudart/vectorAdd></b> nvcc -arch=sm_35 -g -G vectorAdd.cu
+</pre>
+          <h2 id="nvprof">Profiler: nvprof & nvvp</h2>
           <p></p>
 <pre class="sh">
-<b class="text-info">hjli@P32-1:~></b> nvprof -o %h-%p.nvprof ~/idock/bin/idock --config idock.conf
-<b class="text-info">hjli@P32-1:~></b> nvprof -o %h-%p.nvprof --analysis-metrics ~/idock/bin/idock --config idock.conf
-<b class="text-info">hjli@P32-1:~></b> nvprof -i pc90124-26367.nvprof --print-gpu-trace
-<b class="text-info">hjli@P32-1:~></b> nvprof -i pc90124-26367.nvprof --print-api-trace
+<b class="text-info">hjli@P32-1:/data/hjli/cudart/asyncEngine></b> nvprof -o %h-%p.nvprof ./asyncEngine
+<b class="text-info">hjli@P32-1:/data/hjli/cudart/asyncEngine></b> nvprof -i pc90124-26367.nvprof --print-gpu-trace
+<b class="text-info">hjli@P32-1:/data/hjli/cudart/asyncEngine></b> nvprof -i pc90124-26367.nvprof --print-api-trace
 </pre>
           <p>File -> Import -> Nvprof</p>
-          <h2>cuda-memcheck</h2>
-          <p></p>
-<pre class="sh">
-<b class="text-info">hjli@P32-1:~></b> cuda-memcheck --leak-check full ~/idock/bin/idock --config idock.cfg
-<b class="text-info">hjli@P32-1:~></b> cuda-memcheck --tool racecheck ~/idock/bin/idock --config idock.cfg
-</pre>
-          <h2>IDE: Nsight</h2>
+          <h2 id="nsight">IDE: Nsight</h2>
           <p>Visual Studio and Eclipse</p>
-          <h2>Occupancy.xls</h2>
+          <h2 id="CUDA_Occupancy_Calculator.xls">CUDA_Occupancy_Calculator.xls</h2>
           <p>There are a few easy ways to quickly get started with Bootstrap, each one appealing to a different skill level and use case. Read through to see what suits your particular needs.</p>
-          <h2>Monitor: nvidia-smi</h2>
+          <h2 id="nvidia-smi">Monitor: nvidia-smi</h2>
           <p></p>
 <pre class="sh">
 <b class="text-info">hjli@P32-1:~></b> nvidia-smi
@@ -1528,6 +1535,12 @@ Tue Sep 10 10:39:25 2013
 |=============================================================================|
 |  No running compute processes found                                         |
 +-----------------------------------------------------------------------------+
+</pre>
+          <h2 id="cuda-memcheck">cuda-memcheck</h2>
+          <p></p>
+<pre class="sh">
+<b class="text-info">hjli@P32-1:~></b> cuda-memcheck --leak-check full ~/idock/bin/idock --config idock.cfg
+<b class="text-info">hjli@P32-1:~></b> cuda-memcheck --tool racecheck ~/idock/bin/idock --config idock.cfg
 </pre>
         </div>
       </div>
