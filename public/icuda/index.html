@@ -72,7 +72,7 @@
           <h2>Contents</h2>
           <p>Seminar 1: This seminar gives a high-level overview of GPU hardware and CUDA programming philosophy. It covers four samples including <a href="#vectorAdd">vectorAdd</a>, <a href="#zeroCopy">zeroCopy</a>, <a href="bandwidthTest">bandwidthTest</a> and <a href="#checkError">checkError</a>, and two tools including <a href="#nvcc">nvcc</a> and <a href="#cuda-gdb">cuda-gdb</a>.</p>
           <p>Seminar 2: This seminar illustrates how to exploit single-device parallelism and GPU-specific hardware components. It covers four samples including <a href="#matrixMul">matrixMul</a>, <a href="#atomicAdd">atomicAdd</a>, <a href="#asyncEngine">asyncEngine</a> and <a href="#hyperQ">hyperQ</a>, and three tools including <a href="#nvprof">nvprof</a>, <a href="#nsight">nsight</a> and <a href="#CUDA_Occupancy_Calculator.xls">CUDA_Occupancy_Calculator.xls</a>.</p>
-          <p>Seminar 3: This seminar illustrates how to exploit multi-device parallelism and how to utilize libraries and tools. It covers six samples including <a href="#deviceQuery">deviceQuery</a>, <a href="#multiDevice">multiDevice</a>, <a href="#openmp">openmp</a>, <a href="#mpi">mpi</a>, <a href="#cublas">cublas</a> and <a href="#thrust">thrust</a>, and two tools including <a href="#nvidia-smi">nvidia-smi</a> and <a href="#cuda-memcheck">cuda-memcheck</a>.</p>
+          <p>Seminar 3: This seminar illustrates how to exploit multi-device parallelism and how to utilize libraries. It covers six samples including <a href="#deviceQuery">deviceQuery</a>, <a href="#multiDevice">multiDevice</a>, <a href="#openmp">openmp</a>, <a href="#mpi">mpi</a>, <a href="#cublas">cublas</a> and <a href="#thrust">thrust</a>, and two tools including <a href="#nvidia-smi">nvidia-smi</a> and <a href="#cuda-memcheck">cuda-memcheck</a>.</p>
           <h2>Time & venue</h2>
           <p>Seminar 1: 14 Nov 2013, 3:00pm - 4:30pm, SHB 904</p>
           <p>Seminar 2: 21 Nov 2013, 3:00pm - 4:30pm, SHB 904</p>
@@ -94,6 +94,7 @@
 <pre class="sh">
 <b class="text-info">hjli@P32-1:/data/hjli></b> git clone https://github.com/HongjianLi/cudart.git
 </pre>
+          <p>All the samples use the <a href="http://docs.nvidia.com/cuda/cuda-runtime-api/">CUDA Runtime API</a>.</p>
           <h2>Makefile</h2>
           <p>A sample Makefile looks like this. Instead of <code>gcc</code>, it uses <code>nvcc</code> as CUDA compiler. The option <code>arch</code> specifies the name of the class of nVidia GPU architectures for which the cuda input files must be compiled. Our K20m GPU architecture is <code>sm_35</code>.</p>
 <pre class="makefile">
@@ -1453,35 +1454,10 @@ int main(int argc, char* argv[])
       </div>
       <div class="row">
         <div class="col-md-12">
-<pre class="sh">
-<b class="text-info">hjli@P32-1:~></b> ls -l /usr/local/cuda-5.5/bin
-total 32112
--rwxr-xr-x. 1 root root   63000 Sep  4 12:48 bin2c
-lrwxrwxrwx. 1 root root       4 Sep  4 12:48 computeprof -> nvvp
-drwxr-xr-x. 2 root root    4096 Sep  4 12:48 crt
--rwxr-xr-x. 1 root root 3415240 Sep  4 12:48 cudafe
--rwxr-xr-x. 1 root root 3081848 Sep  4 12:48 cudafe++
--rwxr-xr-x. 1 root root 6093856 Sep  4 12:48 cuda-gdb
--rwxr-xr-x. 1 root root  342809 Sep  4 12:48 cuda-gdbserver
--rwxr-xr-x. 1 root root     665 Sep  4 12:49 cuda-install-samples-5.5.sh
--rwxr-xr-x. 1 root root  348832 Sep  4 12:48 cuda-memcheck
--rwxr-xr-x. 1 root root  230744 Sep  4 12:48 cuobjdump
--rwxr-xr-x. 1 root root  163200 Sep  4 12:48 fatbin
--rwxr-xr-x. 1 root root  125584 Sep  4 12:48 fatbinary
--rwxr-xr-x. 1 root root   54584 Sep  4 12:48 filehash
--rwxr-xr-x. 1 root root     219 Sep  4 12:48 nsight
--rwxr-xr-x. 1 root root  164608 Sep  4 12:48 nvcc
--rw-r--r--. 1 root root     377 Sep  4 12:48 nvcc.profile
--rwxr-xr-x. 1 root root 3790843 Sep  4 12:48 nvdisasm
--rwxr-xr-x. 1 root root 5895464 Sep  4 12:48 nvlink
--rwxr-xr-x. 1 root root 3300720 Sep  4 12:48 nvprof
--rwxr-xr-x. 1 root root     215 Sep  4 12:48 nvvp
--rwxr-xr-x. 1 root root 5759328 Sep  4 12:48 ptxas
-</pre>
           <h2 id="nvcc">Compiler: nvcc</h2>
           <p>This figure shows the internal structure of the various CUDA compilation phases. It is reprinted from <a href="http://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/graphics/cuda-compilation-from-cu-to-cu-cpp-ii.png">http://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/graphics/cuda-compilation-from-cu-to-cu-cpp-ii.png</a>.</p>
           <p><img class="img-responsive" src="http://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/graphics/cuda-compilation-from-cu-to-cu-cpp-ii.png" alt="nvcc"></p>
-          <p>The <code>-ptx</code> option generates ptx. The <code>-cubin</code> option generates cubin. The <code>-fatbin</code> option generates fatbin.</p>
+          <p>The <code>-ptx</code> option generates <a href="http://docs.nvidia.com/cuda/parallel-thread-execution/index.html">ptx</a>. The <code>-cubin</code> option generates cubin. The <code>-fatbin</code> option generates fatbin.</p>
 <pre class="sh">
 <b class="text-info">hjli@P32-1:/data/hjli/cudart/vectorAdd></b> nvcc -arch=sm_35 -ptx vectorAdd.cu
 <b class="text-info">hjli@P32-1:/data/hjli/cudart/vectorAdd></b> nvcc -arch=sm_35 -cubin vectorAdd.cu
@@ -1490,6 +1466,10 @@ drwxr-xr-x. 2 root root    4096 Sep  4 12:48 crt
 -rw-r--r-- 1 hjli users   1883 Oct 18 11:20 vectorAdd.ptx
 -rw-r--r-- 1 hjli users   1868 Oct 18 11:21 vectorAdd.cubin
 -rw-r--r-- 1 hjli users   2672 Oct 18 11:22 vectorAdd.fatbin
+</pre>
+          <p>The <a href="http://docs.nvidia.com/cuda/cuda-driver-api/">CUDA Driver API</a> can JIT (Just-In-Time) compile ptx into fatbin for forward compatibility. It is much analogue to <a href="http://www.khronos.org/opencl">OpenCL</a>. Refer to <a href="https://github.com/HongjianLi/cuda">https://github.com/HongjianLi/cuda</a> for samples.</p>
+<pre class="sh">
+<b class="text-info">hjli@P32-1:/data/hjli></b> git clone https://github.com/HongjianLi/cuda.git
 </pre>
           <h2 id="cuda-gdb">Debugger: cuda-gdb & cuda-gdbserver</h2>
           <p>Compile with <code>-g</code> and <code>-G</code>.</p>
