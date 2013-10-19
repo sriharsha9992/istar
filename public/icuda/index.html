@@ -1017,16 +1017,16 @@ int main(int argc, char *argv[])
 	}
 </pre>
 <pre class="sh">
-==37040== HEAP SUMMARY:
-==37040==     in use at exit: 343,139 bytes in 119 blocks
-==37040==   total heap usage: 21,210 allocs, 21,091 frees, 15,801,350 bytes allocated
-==37040== 
-==37040== LEAK SUMMARY:
-==37040==    definitely lost: 0 bytes in 0 blocks
-==37040==    indirectly lost: 0 bytes in 0 blocks
-==37040==      possibly lost: 2,992 bytes in 22 blocks
-==37040==    still reachable: 340,147 bytes in 97 blocks
-==37040==         suppressed: 0 bytes in 0 blocks
+==53804== HEAP SUMMARY:
+==53804==     in use at exit: 343,139 bytes in 119 blocks
+==53804==   total heap usage: 21,298 allocs, 21,179 frees, 15,813,174 bytes allocated
+==53804== 
+==53804== LEAK SUMMARY:
+==53804==    definitely lost: 0 bytes in 0 blocks
+==53804==    indirectly lost: 0 bytes in 0 blocks
+==53804==      possibly lost: 2,992 bytes in 22 blocks
+==53804==    still reachable: 340,147 bytes in 97 blocks
+==53804==         suppressed: 0 bytes in 0 blocks
 </pre>
           <p>Case 2: <a href="http://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__DEVICE.html#group__CUDART__DEVICE_1gdcc2c6f914eb9461565b12648faa5e28">cudaDeviceReset</a> is called on one device.</p>
 <pre class="cpp">
@@ -1037,16 +1037,16 @@ int main(int argc, char *argv[])
 //	}
 </pre>
 <pre class="sh">
-==37095== HEAP SUMMARY:
-==37095==     in use at exit: 7,027,625 bytes in 11,751 blocks
-==37095==   total heap usage: 21,194 allocs, 9,443 frees, 15,801,110 bytes allocated
-==37095== 
-==37095== LEAK SUMMARY:
-==37095==    definitely lost: 0 bytes in 0 blocks
-==37095==    indirectly lost: 0 bytes in 0 blocks
-==37095==      possibly lost: 51,168 bytes in 374 blocks
-==37095==    still reachable: 6,976,457 bytes in 11,377 blocks
-==37095==         suppressed: 0 bytes in 0 blocks
+==53860== HEAP SUMMARY:
+==53860==     in use at exit: 7,031,081 bytes in 11,771 blocks
+==53860==   total heap usage: 21,282 allocs, 9,511 frees, 15,812,934 bytes allocated
+==53860== 
+==53860== LEAK SUMMARY:
+==53860==    definitely lost: 0 bytes in 0 blocks
+==53860==    indirectly lost: 0 bytes in 0 blocks
+==53860==      possibly lost: 51,984 bytes in 380 blocks
+==53860==    still reachable: 6,979,097 bytes in 11,391 blocks
+==53860==         suppressed: 0 bytes in 0 blocks
 </pre>
           <p>Case 3: <a href="http://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__DEVICE.html#group__CUDART__DEVICE_1gdcc2c6f914eb9461565b12648faa5e28">cudaDeviceReset</a> is not called at all.</p>
 <pre class="cpp">
@@ -1057,16 +1057,16 @@ int main(int argc, char *argv[])
 //	}
 </pre>
 <pre class="sh">
-==37143== HEAP SUMMARY:
-==37143==     in use at exit: 10,388,436 bytes in 17,712 blocks
-==37143==   total heap usage: 21,186 allocs, 3,474 frees, 15,800,990 bytes allocated
-==37143== 
-==37143== LEAK SUMMARY:
-==37143==    definitely lost: 0 bytes in 0 blocks
-==37143==    indirectly lost: 0 bytes in 0 blocks
-==37143==      possibly lost: 77,432 bytes in 566 blocks
-==37143==    still reachable: 10,311,004 bytes in 17,146 blocks
-==37143==         suppressed: 0 bytes in 0 blocks
+==53911== HEAP SUMMARY:
+==53911==     in use at exit: 10,393,620 bytes in 17,742 blocks
+==53911==   total heap usage: 21,274 allocs, 3,532 frees, 15,812,814 bytes allocated
+==53911== 
+==53911== LEAK SUMMARY:
+==53911==    definitely lost: 0 bytes in 0 blocks
+==53911==    indirectly lost: 0 bytes in 0 blocks
+==53911==      possibly lost: 78,656 bytes in 575 blocks
+==53911==    still reachable: 10,314,964 bytes in 17,167 blocks
+==53911==         suppressed: 0 bytes in 0 blocks
 </pre>
           <h2 id="openmp">openmp</h2>
           <p>This sample uses OpenMP to create multiple CPU threads to utilize multiple GPUs.</p>
