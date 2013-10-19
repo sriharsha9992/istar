@@ -965,7 +965,8 @@ var iview = (function () {
 		for (var i = 1, lim = p0.length; i < lim; ++i) {
 			var offset = 8 * i, color = new THREE.Color(colors[Math.round((i - 1) / div)]);
 			for (var j = 0; j < 4; ++j) {
-				fs.push(new THREE.Face4(offset + faces[j][0], offset + faces[j][1], offset + faces[j][2], offset + faces[j][3], undefined, color));
+				fs.push(new THREE.Face3(offset + faces[j][0], offset + faces[j][1], offset + faces[j][2], undefined, color));
+				fs.push(new THREE.Face3(offset + faces[j][3], offset + faces[j][0], offset + faces[j][2], undefined, color));
 			}
 		}
 		var vsize = vs.length - 8; // Cap
@@ -974,9 +975,11 @@ var iview = (function () {
 			vs.push(vs[vsize + i * 2]);
 		};
 		vsize += 8;
-		fs.push(new THREE.Face4(vsize, vsize + 2, vsize + 6, vsize + 4, undefined, fs[0].color));
-		fs.push(new THREE.Face4(vsize + 1, vsize + 5, vsize + 7, vsize + 3, undefined, fs[fs.length - 3].color));
-	geo.computeFaceNormals();
+		fs.push(new THREE.Face3(vsize, vsize + 2, vsize + 6, undefined, fs[0].color));
+		fs.push(new THREE.Face3(vsize + 4, vsize, vsize + 6, undefined, fs[0].color));
+		fs.push(new THREE.Face3(vsize + 1, vsize + 5, vsize + 7, undefined, fs[fs.length - 3].color));
+		fs.push(new THREE.Face3(vsize + 3, vsize + 1, vsize + 7, undefined, fs[fs.length - 3].color));
+		geo.computeFaceNormals();
 		geo.computeVertexNormals(false);
 		var mesh = new THREE.Mesh(geo, new THREE.MeshLambertMaterial({ vertexColors: THREE.FaceColors }));
 		mesh.doubleSided = true;
