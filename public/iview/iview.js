@@ -981,9 +981,7 @@ var iview = (function () {
 		fs.push(new THREE.Face3(vsize + 3, vsize + 1, vsize + 7, undefined, fs[fs.length - 3].color));
 		geo.computeFaceNormals();
 		geo.computeVertexNormals(false);
-		var mesh = new THREE.Mesh(geo, new THREE.MeshLambertMaterial({ vertexColors: THREE.FaceColors }));
-		mesh.doubleSided = true;
-		this.mdl.add(mesh);
+		this.mdl.add(new THREE.Mesh(geo, new THREE.MeshLambertMaterial({ vertexColors: THREE.FaceColors, side: THREE.DoubleSide })));
 	};
 
 	iview.prototype.createStrand = function (atoms, num, div, fill, coilWidth, helixSheetWidth, doNotSmoothen, thickness) {
@@ -1084,9 +1082,7 @@ var iview = (function () {
 		}
 		geo.computeFaceNormals();
 		geo.computeVertexNormals(false);
-		var mesh = new THREE.Mesh(geo, new THREE.MeshLambertMaterial({ vertexColors: THREE.FaceColors }));
-		mesh.doubleSided = true;
-		this.mdl.add(mesh);
+		this.mdl.add(new THREE.Mesh(geo, new THREE.MeshLambertMaterial({ vertexColors: THREE.FaceColors, side: THREE.DoubleSide })));
 	};
 
 	iview.prototype.createTube = function (atoms, atomName, radius) {
