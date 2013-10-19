@@ -946,47 +946,37 @@ var iview = (function () {
 		p0 = this.subdivide(p0, div);
 		p1 = this.subdivide(p1, div);
 		var geo = new THREE.Geometry();
-		if (!thickness) {
-			for (var i = 0, lim = p0.length; i < lim; ++i) {
-				geo.vertices.push(p0[i]); // 2i
-				geo.vertices.push(p1[i]); // 2i + 1
+		var vs = geo.vertices, fs = geo.faces;
+		var axis, p0v, p1v, a0v, a1v;
+		for (var i = 0, lim = p0.length; i < lim; ++i) {
+			vs.push(p0v = p0[i]); // 0
+			vs.push(p0v); // 1
+			vs.push(p1v = p1[i]); // 2
+			vs.push(p1v); // 3
+			if (i < lim - 1) {
+				axis = p1[i].clone().sub(p0[i]).cross(p0[i + 1].clone().sub(p0[i])).normalize().multiplyScalar(thickness);
 			}
-			for (var i = 1, lim = p0.length; i < lim; ++i) {
-				geo.faces.push(new THREE.Face4(2 * i, 2 * i + 1, 2 * i - 1, 2 * i - 2, undefined, new THREE.Color(colors[Math.round((i - 1) / div)])));
-			}
-		} else {
-			var vs = geo.vertices, fs = geo.faces;
-			var axis, p0v, p1v, a0v, a1v;
-			for (var i = 0, lim = p0.length; i < lim; ++i) {
-				vs.push(p0v = p0[i]); // 0
-				vs.push(p0v); // 1
-				vs.push(p1v = p1[i]); // 2
-				vs.push(p1v); // 3
-				if (i < lim - 1) {
-					axis = p1[i].clone().sub(p0[i]).cross(p0[i + 1].clone().sub(p0[i])).normalize().multiplyScalar(thickness);
-				}
-				vs.push(a0v = p0[i].clone().add(axis)); // 4
-				vs.push(a0v); // 5
-				vs.push(a1v = p1[i].clone().add(axis)); // 6
-				vs.push(a1v); // 7
-			}
-			var faces = [[0, 2, -6, -8], [-4, -2, 6, 4], [7, 3, -5, -1], [-3, -7, 1, 5]];
-			for (var i = 1, lim = p0.length; i < lim; ++i) {
-				var offset = 8 * i, color = new THREE.Color(colors[Math.round((i - 1) / div)]);
-				for (var j = 0; j < 4; ++j) {
-					fs.push(new THREE.Face4(offset + faces[j][0], offset + faces[j][1], offset + faces[j][2], offset + faces[j][3], undefined, color));
-				}
-			}
-			var vsize = vs.length - 8; // Cap
-			for (var i = 0; i < 4; ++i) {
-				vs.push(vs[i * 2]);
-				vs.push(vs[vsize + i * 2]);
-			};
-			vsize += 8;
-			fs.push(new THREE.Face4(vsize, vsize + 2, vsize + 6, vsize + 4, undefined, fs[0].color));
-			fs.push(new THREE.Face4(vsize + 1, vsize + 5, vsize + 7, vsize + 3, undefined, fs[fs.length - 3].color));
+			vs.push(a0v = p0[i].clone().add(axis)); // 4
+			vs.push(a0v); // 5
+			vs.push(a1v = p1[i].clone().add(axis)); // 6
+			vs.push(a1v); // 7
 		}
-		geo.computeFaceNormals();
+		var faces = [[0, 2, -6, -8], [-4, -2, 6, 4], [7, 3, -5, -1], [-3, -7, 1, 5]];
+		for (var i = 1, lim = p0.length; i < lim; ++i) {
+			var offset = 8 * i, color = new THREE.Color(colors[Math.round((i - 1) / div)]);
+			for (var j = 0; j < 4; ++j) {
+				fs.push(new THREE.Face4(offset + faces[j][0], offset + faces[j][1], offset + faces[j][2], offset + faces[j][3], undefined, color));
+			}
+		}
+		var vsize = vs.length - 8; // Cap
+		for (var i = 0; i < 4; ++i) {
+			vs.push(vs[i * 2]);
+			vs.push(vs[vsize + i * 2]);
+		};
+		vsize += 8;
+		fs.push(new THREE.Face4(vsize, vsize + 2, vsize + 6, vsize + 4, undefined, fs[0].color));
+		fs.push(new THREE.Face4(vsize + 1, vsize + 5, vsize + 7, vsize + 3, undefined, fs[fs.length - 3].color));
+	geo.computeFaceNormals();
 		geo.computeVertexNormals(false);
 		var mesh = new THREE.Mesh(geo, new THREE.MeshLambertMaterial({ vertexColors: THREE.FaceColors }));
 		mesh.doubleSided = true;
@@ -1107,7 +1097,7 @@ var iview = (function () {
 					points = []; colors = []; radii = [];
 				}
 				points.push(atom.coord);
-				radii.push(radius || atom.b > 0 ? atom.b * 0.01 : 0.3);
+				radii.push(radius || (atom.b > 0 ? atom.b * 0.01 : 0.3));
 				colors.push(atom.color);
 				currentChain = atom.chain;
 				currentResi = atom.resi;
@@ -1119,7 +1109,7 @@ var iview = (function () {
 	iview.prototype.createCylinderHelix = function (atoms, radius) {
 		var start = null;
 		var currentChain, currentResi;
-		var others = [], beta = [];
+		var others = {}, beta = {};
 		for (var i in atoms) {
 			var atom = atoms[i];
 			if (atom.het) continue;
