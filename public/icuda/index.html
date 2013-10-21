@@ -2045,6 +2045,11 @@ _Z9vectorAddPKfS0_Pfi:
         /*00b0*/                BRA `(.L_2);
 .L_23:
 </pre>
+          <p>Generate a PNG image of the control flow of vectorAdd.cubin with nvdisasm and Graphviz.</p>
+<pre class="sh">
+<b class="text-info">hjli@P32-1:/data/hjli/cudart/vectorAdd></b> nvdisasm -cfg ./vectorAdd.cubin | dot -Tpng -ovectorAdd.png
+</pre>
+          <p><img class="img-responsive" src="vectorAdd.png" alt="vectorAdd.png"></p>
         </div>
       </div>
     </section>
