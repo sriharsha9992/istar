@@ -659,7 +659,6 @@ var iview = (function () {
 					bonds: [],
 					ss: 'coil',
 				};
-				if (record[0] !== 'H') this.lastStdSerial = serial;
 			} else if (record === 'CONECT') {
 				var from = parseInt(line.substr(6, 5));
 				for (var j = 0; j < 4; ++j) {
@@ -667,6 +666,8 @@ var iview = (function () {
 					if (isNaN(to)) continue;
 					this.atoms[from].bonds.push(to);
 				}
+			} else if (record === 'TER   ') {
+				this.lastTerSerial = parseInt(line.substr(6, 5));
 			}
 		}
 		for (var i in this.atoms) {
@@ -730,7 +731,7 @@ var iview = (function () {
 		this.ions = {};
 		for (var i in this.atoms) {
 			var atom = this.atoms[i];
-			if (atom.serial <= this.lastStdSerial) {
+			if (atom.serial <= this.lastTerSerial) {
 				this.peptides[atom.serial] = atom;
 			} else {
 				if ((this.atoms[atom.serial - 1] === undefined || this.atoms[atom.serial - 1].resi !== atom.resi) && (this.atoms[atom.serial + 1] === undefined || this.atoms[atom.serial + 1].resi !== atom.resi)) {
@@ -805,7 +806,7 @@ var iview = (function () {
 			for (var j in atom0.bonds) {
 				var atom1 = this.atoms[atom0.bonds[j]];
 				if (atom1.serial < atom0.serial) continue;
-				if (atom1.chain === atom0.chain && ((atom0.serial <= this.lastStdSerial && atom1.serial <= this.lastStdSerial) || (atom1.resi === atom0.resi))) {
+				if (atom1.chain === atom0.chain && ((atom0.serial <= this.lastTerSerial && atom1.serial <= this.lastTerSerial) || (atom1.resi === atom0.resi))) {
 				} else {
 					ged.vertices.push(atom0.coord);
 					ged.vertices.push(atom1.coord);
@@ -826,7 +827,7 @@ var iview = (function () {
 			for (var j in atom0.bonds) {
 				var atom1 = this.atoms[atom0.bonds[j]];
 				if (atom1.serial < atom0.serial) continue;
-				if (atom1.chain === atom0.chain && ((atom0.serial <= this.lastStdSerial && atom1.serial <= this.lastStdSerial) || (atom1.resi === atom0.resi))) {
+				if (atom1.chain === atom0.chain && ((atom0.serial <= this.lastTerSerial && atom1.serial <= this.lastTerSerial) || (atom1.resi === atom0.resi))) {
 					var mp = atom0.coord.clone().add(atom1.coord).multiplyScalar(0.5);
 					this.createCylinder(atom0.coord, mp, bondR, atom0.color);
 					this.createCylinder(atom1.coord, mp, bondR, atom1.color);
@@ -851,7 +852,7 @@ var iview = (function () {
 			for (var j in atom0.bonds) {
 				var atom1 = this.atoms[atom0.bonds[j]];
 				if (atom1.serial < atom0.serial) continue;
-				if (atom1.chain === atom0.chain && ((atom0.serial <= this.lastStdSerial && atom1.serial <= this.lastStdSerial) || (atom1.resi === atom0.resi))) {
+				if (atom1.chain === atom0.chain && ((atom0.serial <= this.lastTerSerial && atom1.serial <= this.lastTerSerial) || (atom1.resi === atom0.resi))) {
 					var mp = atom0.coord.clone().add(atom1.coord).multiplyScalar(0.5);
 					geo.vertices.push(atom0.coord);
 					geo.vertices.push(mp);
@@ -1178,7 +1179,7 @@ var iview = (function () {
 				var idx = 0;
 				for (var i in this.atoms) {
 					var atom = this.atoms[i];
-					atom.color = atom.het ? this.atomColors[atom.elem] || this.defaultAtomColor : new THREE.Color().setHSL(2 / 3 * (1 - idx++ / this.lastStdSerial), 1, 0.45);
+					atom.color = atom.het ? this.atomColors[atom.elem] || this.defaultAtomColor : new THREE.Color().setHSL(2 / 3 * (1 - idx++ / this.lastTerSerial), 1, 0.45);
 				}
 				break;
 			case 'chain':
