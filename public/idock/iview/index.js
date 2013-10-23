@@ -732,7 +732,7 @@ $(function () {
 	};
 	var createSurfaceRepresentation = function (entity, type) {
 		var ps = new ProteinSurface();
-		ps.initparm(entity.extent, type > 1);
+		ps.initparm(entity.pmin, entity.pmax, type > 1);
 		ps.fillvoxels(entity.atoms);
 		ps.buildboundary();
 		if (type == 4 || type == 2) ps.fastdistancemap();
@@ -962,9 +962,9 @@ $(function () {
 				}
 			}, satoms = surface.atoms;
 			var hbondDonors = {}, hbondAcceptors = {};
-			var xsum = ysum = zsum = cnt = 0;
-			var xmin = ymin = zmin =  9999;
-			var xmax = ymax = zmax = -9999;
+			var pmin = new THREE.Vector3( 9999, 9999, 9999);
+			var pmax = new THREE.Vector3(-9999,-9999,-9999);
+			var psum = new THREE.Vector3();
 			for (var i in atoms) {
 				var atom = atoms[i];
 				if (atom.serial <= lastStdSerial) {
@@ -976,16 +976,9 @@ $(function () {
 						atom.solvent = true;
 					}
 				}
-				++cnt;
-				xsum += atom.coord.x;
-				ysum += atom.coord.y;
-				zsum += atom.coord.z;
-				if (atom.coord.x < xmin) xmin = atom.coord.x;
-				if (atom.coord.y < ymin) ymin = atom.coord.y;
-				if (atom.coord.z < zmin) zmin = atom.coord.z;
-				if (atom.coord.x > xmax) xmax = atom.coord.x;
-				if (atom.coord.y > ymax) ymax = atom.coord.y;
-				if (atom.coord.z > zmax) zmax = atom.coord.z;
+				psum.add(atom.coord);
+				pmin.min(atom.coord);
+				pmax.max(atom.coord);
 				if (!isHBondDonor(atom.elqt) && !isHBondAcceptor(atom.elqt)) continue;
 				var r2 = 0;
 				for (var j = 0; j < 3; ++j) {
@@ -1005,8 +998,9 @@ $(function () {
 					}
 				}
 			}
-			surface.extent = [[xmin, ymin, zmin], [xmax, ymax, zmax], [xsum / cnt, ysum / cnt, zsum / cnt]];
-			var maxD = new THREE.Vector3(xmax, ymax, zmax).distanceTo(new THREE.Vector3(xmin, ymin, zmin));
+			surface.pmin = pmin;
+			surface.pmax = pmax;
+			var maxD = pmax.distanceTo(pmin);
 			sn = -maxD / 2;
 			sf =  maxD / 4;
 			rot.position.z = maxD * 0.08 / Math.tan(Math.PI / 180.0 * 10) - 150;
