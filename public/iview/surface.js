@@ -202,11 +202,11 @@ var ProteinSurface = (function () {
 	};
 
 
-	this.initparm = function (extent, btype) {
+	this.initparm = function (pmin, pmax, btype) {
 		var margin = 2.5;
-		pminx = extent[0][0], pmaxx = extent[1][0];
-		pminy = extent[0][1], pmaxy = extent[1][1];
-		pminz = extent[0][2], pmaxz = extent[1][2];
+		pminx = pmin.x, pmaxx = pmax.x;
+		pminy = pmin.y, pmaxy = pmax.y;
+		pminz = pmin.z, pmaxz = pmax.z;
 
 		if (btype) {
 			pminx -= margin; pminy -= margin; pminz -= margin;
