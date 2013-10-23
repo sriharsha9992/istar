@@ -157,7 +157,7 @@ int main(int argc, char *argv[])
 	int numBlocksPerGrid = (numElements + numThreadsPerBlock - 1) / numThreadsPerBlock;
 
 	// Invoke the kernel on device asynchronously.
-	vectorAdd<<<numBlocksPerGrid, numThreadsPerBlock>>>(d_a, d_b, d_c, numElements);
+	vectorAdd&lt;&lt;&lt;numBlocksPerGrid, numThreadsPerBlock&gt;&gt;&gt;(d_a, d_b, d_c, numElements);
 
 	// Copy vector c from device memory to host memory synchronously.
 	cudaMemcpy(h_c, d_c, numBytes, cudaMemcpyDeviceToHost);
@@ -533,7 +533,7 @@ int main(int argc, char *argv[])
 	int numIterations = 300;
 	for (int i = 0; i < numIterations; ++i)
 	{
-		matrixMul<block_size><<<blocksPerGrid, threadsPerBlock>>>(d_C, d_A, d_B, dimsA.x, dimsB.x);
+		matrixMul&lt;block_size&gt;&lt;&lt;&lt;blocksPerGrid, threadsPerBlock&gt;&gt;&gt(d_C, d_A, d_B, dimsA.x, dimsB.x);
 	}
 
 	// Record an event in stream 0 after kernel invocations.
