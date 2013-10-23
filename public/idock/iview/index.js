@@ -845,17 +845,17 @@ $(function () {
 	});
 	$.get(path + 'box.conf', function (bsrc) {
 		var lines = bsrc.split('\n');
-		var bct = new THREE.Vector3(parseFloat(lines[0].substr(9)), parseFloat(lines[1].substr(9)), parseFloat(lines[2].substr(9)));
-		var bsz = new THREE.Vector3(parseFloat(lines[3].substr(7)), parseFloat(lines[4].substr(7)), parseFloat(lines[5].substr(7)));
-		var bhf = bsz.multiplyScalar(0.5);
-		var b000 = bct.clone().add(bhf.clone().multiply(new THREE.Vector3(-1, -1, -1)));
-		var b100 = bct.clone().add(bhf.clone().multiply(new THREE.Vector3( 1, -1, -1)));
-		var b010 = bct.clone().add(bhf.clone().multiply(new THREE.Vector3(-1,  1, -1)));
-		var b110 = bct.clone().add(bhf.clone().multiply(new THREE.Vector3( 1,  1, -1)));
-		var b001 = bct.clone().add(bhf.clone().multiply(new THREE.Vector3(-1, -1,  1)));
-		var b101 = bct.clone().add(bhf.clone().multiply(new THREE.Vector3( 1, -1,  1)));
-		var b011 = bct.clone().add(bhf.clone().multiply(new THREE.Vector3(-1,  1,  1)));
-		var b111 = bct.clone().add(bhf.clone().multiply(new THREE.Vector3( 1,  1,  1)));
+		var bctr = new THREE.Vector3(parseFloat(lines[0].substr(9)), parseFloat(lines[1].substr(9)), parseFloat(lines[2].substr(9)));
+		var bsiz = new THREE.Vector3(parseFloat(lines[3].substr(7)), parseFloat(lines[4].substr(7)), parseFloat(lines[5].substr(7)));
+		var bhlf = bsiz.multiplyScalar(0.5);
+		var b000 = bctr.clone().add(bhlf.clone().multiply(new THREE.Vector3(-1, -1, -1)));
+		var b100 = bctr.clone().add(bhlf.clone().multiply(new THREE.Vector3( 1, -1, -1)));
+		var b010 = bctr.clone().add(bhlf.clone().multiply(new THREE.Vector3(-1,  1, -1)));
+		var b110 = bctr.clone().add(bhlf.clone().multiply(new THREE.Vector3( 1,  1, -1)));
+		var b001 = bctr.clone().add(bhlf.clone().multiply(new THREE.Vector3(-1, -1,  1)));
+		var b101 = bctr.clone().add(bhlf.clone().multiply(new THREE.Vector3( 1, -1,  1)));
+		var b011 = bctr.clone().add(bhlf.clone().multiply(new THREE.Vector3(-1,  1,  1)));
+		var b111 = bctr.clone().add(bhlf.clone().multiply(new THREE.Vector3( 1,  1,  1)));
 		var bgeo = new THREE.Geometry();
 		bgeo.vertices.push(b000);
 		bgeo.vertices.push(b100);
@@ -883,7 +883,7 @@ $(function () {
 		bgeo.vertices.push(b111);
 		bgeo.computeLineDistances();
 		mdl.add(new THREE.Line(bgeo, new THREE.LineDashedMaterial({ linewidth: 4, color: defaultBoxColor, dashSize: 0.25, gapSize: 0.125 }), THREE.LinePieces));
-		mdl.position = bct.clone().multiplyScalar(-1);
+		mdl.position = bctr.clone().multiplyScalar(-1);
 		var entities = {};
 		$.get(path + 'receptor.pdbqt', function (psrc) {
 			var protein = entities.protein = {
