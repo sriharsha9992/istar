@@ -70,7 +70,8 @@ if (cluster.isMaster) {
 			var app = express();
 			app.configure(function() {
 				app.use(express.compress());
-				app.use(express.bodyParser());
+				app.use(express.json());
+				app.use(express.urlencoded());
 				app.use(app.router);
 				app.use(function(req, res, next) {
 					if (req.headers['user-agent'] && req.headers['user-agent'].indexOf('MSIE') > -1) {
