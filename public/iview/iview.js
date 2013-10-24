@@ -735,7 +735,7 @@ var iview = (function () {
 				this.peptides[atom.serial] = atom;
 			} else {
 				if ((this.atoms[atom.serial - 1] === undefined || this.atoms[atom.serial - 1].resi !== atom.resi) && (this.atoms[atom.serial + 1] === undefined || this.atoms[atom.serial + 1].resi !== atom.resi)) {
-					if (atom.resn === 'HOH') {
+					if (atom.elem === 'O') {
 						this.waters[atom.serial] = atom;
 					} else {
 						this.ions[atom.serial] = atom;
