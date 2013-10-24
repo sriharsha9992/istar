@@ -892,7 +892,7 @@ $(function () {
 				refresh: function () {
 					refreshMolecule(protein);
 				}
-			}, atoms = protein.atoms, lastStdSerial;
+			}, atoms = protein.atoms;
 			var lines = psrc.split('\n');
 			for (var i in lines) {
 				var line = lines[i];
@@ -916,7 +916,6 @@ $(function () {
 					if (elem) atom.elem = elem;
 					atom.color = atomColors[atom.elem] || defaultAtomColor;
 					atoms[atom.serial] = atom;
-					if (record[0] !== 'H') lastStdSerial = atom.serial;
 				}
 			}
 			var curChain, curResi, curInsc, curResAtoms = [];
@@ -967,13 +966,11 @@ $(function () {
 			var psum = new THREE.Vector3();
 			for (var i in atoms) {
 				var atom = atoms[i];
-				if (atom.serial <= lastStdSerial) {
+				if ((atoms[atom.serial - 1] === undefined || atoms[atom.serial - 1].resi !== atom.resi) && (atoms[atom.serial + 1] === undefined || atoms[atom.serial + 1].resi !== atom.resi)) {
+					atom.solvent = true;
+				} else {
 					if (atom.elem !== 'H') {
 						satoms[atom.serial] = atom;
-					}
-				} else {
-					if ((atoms[atom.serial - 1] === undefined || atoms[atom.serial - 1].resi !== atom.resi) && (atoms[atom.serial + 1] === undefined || atoms[atom.serial + 1].resi !== atom.resi)) {
-						atom.solvent = true;
 					}
 				}
 				psum.add(atom.coord);
@@ -990,12 +987,11 @@ $(function () {
 						r2 += d * d;
 					}
 				}
-				if (r2 < hbondCutoffSquared) {
-					if (isHBondDonor(atom.elqt)) {
-						hbondDonors[i] = atom;
-					} else {
-						hbondAcceptors[i] = atom;
-					}
+				if (r2 >= hbondCutoffSquared) continue;
+				if (isHBondAcceptor(atom.elqt)) {
+					hbondAcceptors[i] = atom;
+				} else {
+					hbondDonors[i] = atom;
 				}
 			}
 			surface.pmin = pmin;
