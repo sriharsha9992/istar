@@ -96,7 +96,7 @@
 </pre>
           <p>All the samples use the <a href="http://docs.nvidia.com/cuda/cuda-runtime-api/">CUDA Runtime API</a>.</p>
           <h2>Makefile</h2>
-          <p>A sample Makefile looks like this. Instead of <code>gcc</code>, it uses <code>nvcc</code> as CUDA compiler. The option <code>-arch</code> specifies the name of the class of nVidia GPU architectures for which the cuda input files must be compiled. Our K20m GPU architecture is <code>sm_35</code>.</p>
+          <p>A sample Makefile looks like this. Instead of <code>gcc</code>, it uses <code>nvcc</code> as CUDA compiler. The option <code>-arch</code> specifies the name of the class of nVidia GPU architectures for which the cuda input files must be compiled. Our K20m GPU architecture is <code>sm_35</code>. Refer to <a href="http://on-demand.gputechconf.com/gtc-express/2012/presentations/inside-tesla-kepler-k20-family.pdf">Inside the Kepler Tesla K20 Family</a> for more detail.</p>
 <pre class="makefile">
 CC=nvcc -arch=sm_35
 
@@ -745,7 +745,7 @@ int main(int argc, char *argv[])
 }
 </pre>
           <h2 id="hyperQ">hyperQ</h2>
-          <p>This sample uses multiple streams to overlap multiple kernel execution, known as the <a href="http://docs.nvidia.com/cuda/kepler-tuning-guide/index.html#hyperq">HyperQ</a> technology.</p>
+          <p>This sample uses multiple streams to overlap multiple kernel execution, known as the <a href="http://docs.nvidia.com/cuda/samples/6_Advanced/simpleHyperQ/doc/HyperQ.pdf">HyperQ</a> technology.</p>
 <pre class="cpp">
 #include &lt;stdio.h&gt;
 
@@ -1166,6 +1166,7 @@ clean:
 	rm -f openmp openmp.o
 </pre>
           <p>Try <code>omp_set_num_threads(numDevices*2);</code> to create twice as many CPU threads as there are CUDA devices. In this case two threads will be allocating resources and launching kernels on the same device.</p>
+          <p>Refer to <a href="http://on-demand.gputechconf.com/gtc/2013/webinar/gtc-express-webinar-openacc-vs-openmp.pdf">OpenACC 2.0 vs OpenMP 4.0 Programming Comparison</a> for more detail.</p>http://on-demand.gputechconf.com/gtc/2013/webinar/gtc-express-webinar-openacc-vs-openmp.pdf
           <h2 id="mpi">mpi</h2>
           <p>This sample uses MPI to create multiple CPU processes to utilize multiple GPUs.</p>
 <pre class="cpp">
@@ -1275,6 +1276,7 @@ clean:
 </pre>
           <p>Try using <code>float</code> instead of <code>int</code>.</p>
           <p>Try writing a reduce kernel to compute the sum of the current node.</p>
+          <p>Refer to <a href="http://on-demand.gputechconf.com/gtc/2013/presentations/S3047-Intro-CUDA-Aware-MPI-NVIDIA-GPUDirect.pdf">Introduction to CUDA-aware MPI and NVIDIA GPUDirect</a> <a href="http://on-demand.gputechconf.com/gtc/2013/webinar/gtc-express-gpudirect-rdma.pdf">Accelerating High Performance Computing with GPUDirect RDMA</a> for more detail.</p>
           <h2 id="cublas">cublas</h2>
           <p>This sample uses <a href="http://docs.nvidia.com/cuda/cublas/">CUBLAS</a>, a CUDA implementation of BLAS (Basic Linear Algebra Subprograms), for matrix multiplication.</p>
 <pre class="cpp">
@@ -1403,6 +1405,7 @@ int main(int argc, char *argv[])
           <p><a href="https://developer.nvidia.com/magma">MAGMA</a> is a third-party CUDA implementation of next generation LA (Linear Algebra) by the team that developed LAPACK and ScaLAPACK.</p>
           <p><a href="https://developer.nvidia.com/paralution">PARALUTION</a> is a third-party CUDA implementation of sparse iterative methods.</p>
           <p>More GPU-accelerated libraries can be found at <a href="https://developer.nvidia.com/gpu-accelerated-libraries">https://developer.nvidia.com/gpu-accelerated-libraries</a>.</p>
+          <p><a href="http://on-demand.gputechconf.com/gtc-express/2013/presentations/cuda--5.0-math-libraries-performance.pdf">CUDA 5 Math Library Performance Overview</a> for more detail.</p>
           <h2 id="thrust">thrust</h2>
           <p>This sample uses <a href="http://docs.nvidia.com/cuda/thrust/">thrust</a>, a CUDA implementation of STL (Standard Template Library), for vector reduction.</p>
 <pre class="cpp">
@@ -1448,6 +1451,7 @@ int main(int argc, char* argv[])
 	}
 }
 </pre>
+          <p><a href="http://www.accelereyes.com/products/arrayfire">ArrayFire</a> is a fast software library for GPU computing with an easy-to-use API. Refer to <a href="http://on-demand.gputechconf.com/gtc/2013/webinar/gtc-express-arrayfire-for-defense-intelligence-applications.pdf">ArrayFire: A Productive GPU Software Library for Defense and Intelligence Applications</a> for more detail.</p>
         </div>
       </div>
     </section>
@@ -1493,6 +1497,7 @@ ptxas info    : Used 10 registers, 348 bytes cmem[0]
 <b class="text-info">hjli@P32-1:/data/hjli></b> git clone https://github.com/HongjianLi/cuda.git
 <b class="text-info">hjli@P32-1:/data/hjli></b> git clone https://github.com/HongjianLi/opencl.git
 </pre>
+          <p>Refer to <a href="http://on-demand.gputechconf.com/gtc/2013/webinar/cuda-toolkit-as-build-tool.pdf">Introduction to the CUDA Toolkit as an Application Build Tool</a> and <a href="http://on-demand.gputechconf.com/gtc-express/2012/presentations/gpu-object-linking.pdf">GPU Object Linking: Usage and Benefits</a> for more detail.</p>
           <h2 id="cuda-gdb">Debugger: cuda-gdb & cuda-gdbserver</h2>
           <p>Compile an application with the options <code>-g</code> and <code>-G</code>. They embed debug information for the host code and the device code, respectively.</p>
 <pre class="sh">
@@ -1630,6 +1635,7 @@ For bug reporting instructions, please see:
 Reading symbols from /home/hjli/cudart/vectorAdd/vectorAdd...done.
 (cuda-gdb) target remote tiger1:3001
 </pre>
+          <p>Refer to <a href="http://on-demand.gputechconf.com/gtc/2013/presentations/S3037-S3038-Debugging-CUDA-Apps-Linux-Mac.pdf">Debugging CUDA Applications on Linux and Mac</a> for more detail.</p>
           <h2 id="nvprof">Profilers: nvprof & nvvp</h2>
           <p><code>nvprof</code> is a command-line profiler. <code>nvvp</code> is a visual profiler.</p>
 <pre class="sh">
@@ -1677,12 +1683,14 @@ DSMem: Dynamic shared memory allocated per CUDA block.
 </pre>
           <p><code>nvvp</code> can import *.nvprof and visualize the timeline data. File -> Import -> Nvprof -> Timeline data file -> Finish. Zoom in the main part.</p>
           <p><img class="img-responsive" src="P32-1-47304.png" alt="nvprof"></p>
+          <p>Refer to <a href="http://on-demand.gputechconf.com/gtc/2013/webinar/gtc-express-guided-analysis-nvidia-visual-profiler.pdf">Guided Performance Analysis with NVIDIA Visual Profiler</a>, <a href="http://on-demand.gputechconf.com/gtc/2012/presentations/S0419B-GTC2012-Profiling-Profiling-Tools.pdf">Optimizing Application Performance with CUDA Profiling Tools</a> and <a href="http://on-demand.gputechconf.com/gtc/2013/presentations/S3046-Performance-Optimization-Strategies-for-GPU-Accelerated-Apps.pdf">Performance Optimization Strategies For GPU-Accelerated Applications</a> for more detail.</p>
           <h2 id="nsight">IDE: Nsight</h2>
-          <p><a href="https://developer.nvidia.com/nvidia-nsight-visual-studio-edition">Visual Studio Edition for Windows</a> and <a href="https://developer.nvidia.com/nsight-eclipse-edition">Eclipse Edition for Linux</a></p>
+          <p><a href="https://developer.nvidia.com/nvidia-nsight-visual-studio-edition">Visual Studio Edition for Windows</a> and <a href="https://developer.nvidia.com/nsight-eclipse-edition">Eclipse Edition for Linux</a>.</p>
+          <p>Refer to <a href="http://on-demand.gputechconf.com/gtc/2013/presentations/S3011-CUDA-Optimization-With-Nsight-VSE.pdf">CUDA Optimization with NVIDIA Nsight Visual Studio Edition 3.0</a>, <a href="http://on-demand.gputechconf.com/gtc/2013/presentations/S3478-Debugging-CUDA-Kernel-Code.pdf">Debugging CUDA Kernel Code with NVIDIA Nsight Visual Studio Edition</a> and <a href="http://on-demand.gputechconf.com/gtc-express/2012/presentations/nsight-eclipse-edition.pdf">Nsight Eclipse Edition: High Productivity IDE for CUDA Development on Linux & MacOS</a> for more detail.</a></p>
           <h2 id="CUDA_Occupancy_Calculator.xls">CUDA_Occupancy_Calculator.xls</h2>
           <p>It calculates the theoretical percentage for which kernels occupy a device. The higher the occupancy, the higher the GPU utilization. The Excel file is located in <code>/usr/local/cuda/tools</code>.</p>
           <h2 id="nvidia-smi">Monitor: nvidia-smi</h2>
-          <p></p>
+          <p><a href="https://developer.nvidia.com/nvidia-system-management-interface">nvidia-smi</a> allows administrators to query GPU device state and with the appropriate privileges, permits administrators to modify GPU device state.</p>
 <pre class="sh">
 <b class="text-info">hjli@P32-1:~></b> nvidia-smi
 Tue Sep 10 10:39:25 2013       
@@ -1708,7 +1716,8 @@ Tue Sep 10 10:39:25 2013
 |=============================================================================|
 |  No running compute processes found                                         |
 +-----------------------------------------------------------------------------+
-</pre>
+</pre> 
+          <p><a href="https://developer.nvidia.com/nvidia-management-library-nvml">NVML</a> is a C-based API for monitoring and managing various states of the NVIDIA GPU devices. It provides a direct access to the queries and commands exposed via <a href="https://developer.nvidia.com/nvidia-system-management-interface">nvidia-smi</a>. They both are parts of the <a href="https://developer.nvidia.com/tesla-deployment-kit">Tesla Deployment Kit</a>. Refer to <a href="http://on-demand.gputechconf.com/gtc/2013/presentations/S3044-GPUs-in-Cluster-Environments.pdf">Monitoring and Managing NVIDIA GPUs in Cluster Environments</a> and <a href="http://on-demand.gputechconf.com/gtc-express/2012/presentations/deploying-managing-gpu-clusters.pdf">Best Practices for Deploying and Managing GPU Clusters</a> for more detail.</p>
           <h2 id="cuda-memcheck">Sanitizer: cuda-memcheck</h2>
           <p><a href="http://docs.nvidia.com/cuda/cuda-memcheck/">CUDA-MEMCHECK</a> is a functional correctness checking suite. The demo code here suffers from unaligned access and out-of-bound access.</p>
 <pre class="cpp">
