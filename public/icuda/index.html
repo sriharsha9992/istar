@@ -1168,7 +1168,7 @@ clean:
 	rm -f openmp openmp.o
 </pre>
           <p>Try <code>omp_set_num_threads(numDevices*2);</code> to create twice as many CPU threads as there are CUDA devices. In this case two threads will be allocating resources and launching kernels on the same device.</p>
-          <p>Refer to <a href="http://on-demand.gputechconf.com/gtc/2013/webinar/gtc-express-webinar-openacc-vs-openmp.pdf">OpenACC 2.0 vs OpenMP 4.0 Programming Comparison</a> for more detail.</p>http://on-demand.gputechconf.com/gtc/2013/webinar/gtc-express-webinar-openacc-vs-openmp.pdf
+          <p>Refer to <a href="http://on-demand.gputechconf.com/gtc/2013/webinar/gtc-express-webinar-openacc-vs-openmp.pdf">OpenACC 2.0 vs OpenMP 4.0 Programming Comparison</a> for more detail.</p>
           <h2 id="mpi">mpi</h2>
           <p>This sample uses MPI to create multiple CPU processes to utilize multiple GPUs.</p>
 <pre class="cpp">
