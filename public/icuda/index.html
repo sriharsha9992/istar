@@ -624,6 +624,7 @@ int main(int argc, char *argv[])
 </pre>
           <p>Try different numbers of threads per block and different numbers of blocks per grid.</p>
           <p>Try atomic functions on shared memory, and compare the performance to atomic functions on global memory.</p>
+          <p>Refer to <a href="http://on-demand.gputechconf.com/gtc/2013/presentations/S3101-Atomic-Memory-Operations.pdf">Understanding and Using Atomic Memory Operations</a> for more detail.</p>
           <h2 id="asyncEngine">asyncEngine</h2>
           <p>This sample uses asynchronous engines to overlap data transfer and kernel execution.</p>
 <pre class="cpp">
@@ -1068,6 +1069,7 @@ int main(int argc, char *argv[])
 ==53911==    still reachable: 10,314,964 bytes in 17,167 blocks
 ==53911==         suppressed: 0 bytes in 0 blocks
 </pre>
+          <p>Refer to <a href="http://on-demand.gputechconf.com/gtc/2013/presentations/S3465-Multi-GPU-Programming.pdf">Multi-GPU Programming</a> for more detail.</p>
           <h2 id="openmp">openmp</h2>
           <p>This sample uses OpenMP to create multiple CPU threads to utilize multiple GPUs.</p>
 <pre class="cpp">
@@ -1276,7 +1278,7 @@ clean:
 </pre>
           <p>Try using <code>float</code> instead of <code>int</code>.</p>
           <p>Try writing a reduce kernel to compute the sum of the current node.</p>
-          <p>Refer to <a href="http://on-demand.gputechconf.com/gtc/2013/presentations/S3047-Intro-CUDA-Aware-MPI-NVIDIA-GPUDirect.pdf">Introduction to CUDA-aware MPI and NVIDIA GPUDirect</a> <a href="http://on-demand.gputechconf.com/gtc/2013/webinar/gtc-express-gpudirect-rdma.pdf">Accelerating High Performance Computing with GPUDirect RDMA</a> for more detail.</p>
+          <p>Refer to <a href="http://on-demand.gputechconf.com/gtc/2013/presentations/S3047-Intro-CUDA-Aware-MPI-NVIDIA-GPUDirect.pdf">Introduction to CUDA-aware MPI and NVIDIA GPUDirect</a>, <a href="http://on-demand.gputechconf.com/gtc/2013/presentations/S3266-GPUDirect-RDMA-Green-Multi-GPU-Architectures.pdf">GPUDirect RDMA and Green Multi-GPU Architectures</a>, <a href="http://on-demand.gputechconf.com/gtc/2013/presentations/S3316-MVAPICH2-High-Performance-MPI-Library.pdf">MVAPICH2: A High Performance MPI Library for NVIDIA GPU Clusters with InfiniBand </a> and <a href="http://on-demand.gputechconf.com/gtc/2013/webinar/gtc-express-gpudirect-rdma.pdf">Accelerating High Performance Computing with GPUDirect RDMA</a> for more detail.</p>
           <h2 id="cublas">cublas</h2>
           <p>This sample uses <a href="http://docs.nvidia.com/cuda/cublas/">CUBLAS</a>, a CUDA implementation of BLAS (Basic Linear Algebra Subprograms), for matrix multiplication.</p>
 <pre class="cpp">
@@ -1405,7 +1407,7 @@ int main(int argc, char *argv[])
           <p><a href="https://developer.nvidia.com/magma">MAGMA</a> is a third-party CUDA implementation of next generation LA (Linear Algebra) by the team that developed LAPACK and ScaLAPACK.</p>
           <p><a href="https://developer.nvidia.com/paralution">PARALUTION</a> is a third-party CUDA implementation of sparse iterative methods.</p>
           <p>More GPU-accelerated libraries can be found at <a href="https://developer.nvidia.com/gpu-accelerated-libraries">https://developer.nvidia.com/gpu-accelerated-libraries</a>.</p>
-          <p><a href="http://on-demand.gputechconf.com/gtc-express/2013/presentations/cuda--5.0-math-libraries-performance.pdf">CUDA 5 Math Library Performance Overview</a> for more detail.</p>
+          <p>Refer to <a href="http://on-demand.gputechconf.com/gtc/2013/presentations/S3461-CUDA-Accelerated-Compute-Libraries.pdf">CUDA Accelerated Compute Libraries</a> and <a href="http://on-demand.gputechconf.com/gtc-express/2013/presentations/cuda--5.0-math-libraries-performance.pdf">CUDA 5 Math Library Performance Overview</a> for more detail.</p>
           <h2 id="thrust">thrust</h2>
           <p>This sample uses <a href="http://docs.nvidia.com/cuda/thrust/">thrust</a>, a CUDA implementation of STL (Standard Template Library), for vector reduction.</p>
 <pre class="cpp">
@@ -2055,7 +2057,7 @@ _Z9vectorAddPKfS0_Pfi:
         /*00b0*/                BRA `(.L_2);
 .L_23:
 </pre>
-          <p>Generate a PNG image of the control flow of vectorAdd.cubin with nvdisasm and Graphviz.</p>
+          <p>Generate a PNG image of the control flow of vectorAdd.cubin with <a href="http://docs.nvidia.com/cuda/cuda-binary-utilities/index.html#nvdisasm">nvdisasm</a> and <a href="http://www.graphviz.org">Graphviz</a>.</p>
 <pre class="sh">
 <b class="text-info">hjli@P32-1:/data/hjli/cudart/vectorAdd></b> nvdisasm -cfg ./vectorAdd.cubin | dot -Tpng -ovectorAdd.png
 </pre>
