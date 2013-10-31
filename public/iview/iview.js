@@ -617,7 +617,7 @@ var iview = (function () {
 
 	iview.prototype.hasCovalentBond = function (atom0, atom1) {
 		var r = this.covalentRadii[atom0.elem] + this.covalentRadii[atom1.elem];
-		return atom0.coord.distanceToSquared(atom1.coord) < 1.2 * r * r;
+		return atom0.coord.distanceToSquared(atom1.coord) < 1.3 * r * r;
 	}
 
 	iview.prototype.loadPDB = function (src) {
