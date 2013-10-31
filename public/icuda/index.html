@@ -92,7 +92,7 @@
         <div class="col-md-12">
           <p>All the samples are free and open source under Apache License 2.0. They are available at <a href="https://github.com/HongjianLi/cudart">https://github.com/HongjianLi/cudart</a>.</p>
 <pre class="sh">
-<b class="text-info">hjli@P32-1:/data/hjli></b> git clone https://github.com/HongjianLi/cudart.git
+<b class="text-info">hjli@hpc1:~></b> git clone https://github.com/HongjianLi/cudart.git
 </pre>
           <p>All the samples use the <a href="http://docs.nvidia.com/cuda/cuda-runtime-api/">CUDA Runtime API</a>.</p>
           <h2>Makefile</h2>
@@ -1007,7 +1007,7 @@ int main(int argc, char *argv[])
 </pre>
           <p>Try using <code>valgrind</code> to detect memory leak in the following 3 cases of cleanup.</p>
 <pre class="sh">
-<b class="text-info">hjli@P32-1:/data/hjli/cudart/multiDevice></b> valgrind ./multiDevice
+<b class="text-info">hjli@hpc1:~/cudart/multiDevice></b> valgrind ./multiDevice
 </pre>
           <p>Case 1: <a href="http://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__DEVICE.html#group__CUDART__DEVICE_1gdcc2c6f914eb9461565b12648faa5e28">cudaDeviceReset</a> is called on every device.</p>
 <pre class="cpp">
@@ -1274,7 +1274,7 @@ clean:
 </pre>
           <p>Run the executable with <code>mpirun</code>. Specify the number of processes to run with the option <code>-n</code>.</p>
 <pre class="sh">
-<b class="text-info">hjli@P32-1:/data/hjli/cudart/mpi></b> mpirun -n 4 ./mpi
+<b class="text-info">hjli@hpc1:~/cudart/mpi></b> mpirun -n 4 ./mpi
 </pre>
           <p>Try using <code>float</code> instead of <code>int</code>.</p>
           <p>Try writing a reduce kernel to compute the sum of the current node.</p>
@@ -1468,8 +1468,8 @@ int main(int argc, char* argv[])
           <p><img class="img-responsive" src="http://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/graphics/cuda-compilation-from-cu-to-cu-cpp-ii.png" alt="nvcc"></p>
           <p>The <code>cudafe++</code> front end preprocessor will be called multiple times.</p>
 <pre class="sh">
-<b class="text-info">hjli@P32-1:~></b> echo "int main() { int dummy; }" > test.cu
-<b class="text-info">hjli@P32-1:~></b> nvcc -arch=sm_35 test.cu
+<b class="text-info">hjli@hpc1:~></b> echo "int main() { int dummy; }" > test.cu
+<b class="text-info">hjli@hpc1:~></b> nvcc -arch=sm_35 test.cu
 test.cu(1): warning: variable "dummy" was declared but never referenced
 
 test.cu(1): warning: variable "dummy" was declared but never referenced
@@ -1477,17 +1477,17 @@ test.cu(1): warning: variable "dummy" was declared but never referenced
 </pre>
           <p>The <code>-ptx</code> option generates <a href="http://docs.nvidia.com/cuda/parallel-thread-execution/index.html">ptx</a>. The <code>-cubin</code> option generates cubin. The <code>-fatbin</code> option generates fatbin.</p>
 <pre class="sh">
-<b class="text-info">hjli@P32-1:/data/hjli/cudart/vectorAdd></b> nvcc -arch=sm_35 -ptx vectorAdd.cu
-<b class="text-info">hjli@P32-1:/data/hjli/cudart/vectorAdd></b> nvcc -arch=sm_35 -cubin vectorAdd.ptx
-<b class="text-info">hjli@P32-1:/data/hjli/cudart/vectorAdd></b> nvcc -arch=sm_35 -fatbin vectorAdd.cubin
-<b class="text-info">hjli@P32-1:/data/hjli/cudart/vectorAdd></b> ls -l vectorAdd.*
+<b class="text-info">hjli@hpc1:~/cudart/vectorAdd></b> nvcc -arch=sm_35 -ptx vectorAdd.cu
+<b class="text-info">hjli@hpc1:~/cudart/vectorAdd></b> nvcc -arch=sm_35 -cubin vectorAdd.ptx
+<b class="text-info">hjli@hpc1:~/cudart/vectorAdd></b> nvcc -arch=sm_35 -fatbin vectorAdd.cubin
+<b class="text-info">hjli@hpc1:~/cudart/vectorAdd></b> ls -l vectorAdd.*
 -rw-rw-r--. 1 hjli hjli   1893 Oct 18 03:17 vectorAdd.ptx
 -rw-rw-r--. 1 hjli hjli   1868 Oct 18 03:18 vectorAdd.cubin
 -rw-rw-r--. 1 hjli hjli   2680 Oct 18 03:20 vectorAdd.fatbin
 </pre>
           <p><code>ptxas</code> assemblies ptx into object. The option <code>-v</code> prints code generation statistics.</p>
 <pre class="sh">
-<b class="text-info">hjli@P32-1:/data/hjli/cudart/vectorAdd></b> ptxas -arch=sm_35 -v vectorAdd.ptx
+<b class="text-info">hjli@hpc1:~/cudart/vectorAdd></b> ptxas -arch=sm_35 -v vectorAdd.ptx
 ptxas info    : 0 bytes gmem
 ptxas info    : Compiling entry function '_Z9vectorAddPKfS0_Pfi' for 'sm_35'
 ptxas info    : Function properties for _Z9vectorAddPKfS0_Pfi
@@ -1496,15 +1496,15 @@ ptxas info    : Used 10 registers, 348 bytes cmem[0]
 </pre>
           <p>The <a href="http://docs.nvidia.com/cuda/cuda-driver-api/">CUDA Driver API</a> can JIT (Just-In-Time) compile ptx for forward compatibility. It is much analogue to <a href="http://www.khronos.org/opencl">OpenCL</a>. Refer to <a href="https://github.com/HongjianLi/cuda">https://github.com/HongjianLi/cuda</a> and <a href="https://github.com/HongjianLi/opencl">https://github.com/HongjianLi/opencl</a> for samples.</p>
 <pre class="sh">
-<b class="text-info">hjli@P32-1:/data/hjli></b> git clone https://github.com/HongjianLi/cuda.git
-<b class="text-info">hjli@P32-1:/data/hjli></b> git clone https://github.com/HongjianLi/opencl.git
+<b class="text-info">hjli@hpc1:~></b> git clone https://github.com/HongjianLi/cuda.git
+<b class="text-info">hjli@hpc1:~></b> git clone https://github.com/HongjianLi/opencl.git
 </pre>
           <p>Refer to <a href="http://on-demand.gputechconf.com/gtc/2013/webinar/cuda-toolkit-as-build-tool.pdf">Introduction to the CUDA Toolkit as an Application Build Tool</a> and <a href="http://on-demand.gputechconf.com/gtc-express/2012/presentations/gpu-object-linking.pdf">GPU Object Linking: Usage and Benefits</a> for more detail.</p>
           <h2 id="cuda-gdb">Debugger: cuda-gdb & cuda-gdbserver</h2>
           <p>Compile an application with the options <code>-g</code> and <code>-G</code>. They embed debug information for the host code and the device code, respectively.</p>
 <pre class="sh">
-<b class="text-info">hjli@P32-1:/data/hjli/cudart/vectorAdd></b> nvcc -arch=sm_35 -g -G vectorAdd.cu
-<b class="text-info">hjli@P32-1:/data/hjli/cudart/vectorAdd></b> cuda-gdb ./vectorAdd
+<b class="text-info">hjli@hpc1:~/cudart/vectorAdd></b> nvcc -arch=sm_35 -g -G vectorAdd.cu
+<b class="text-info">hjli@hpc1:~/cudart/vectorAdd></b> cuda-gdb ./vectorAdd
 NVIDIA (R) CUDA Debugger
 5.5 release
 Portions Copyright (C) 2007-2013 NVIDIA Corporation
@@ -1521,7 +1521,7 @@ Reading symbols from /home/hjli/cudart/vectorAdd/vectorAdd...done.
 (cuda-gdb) b vectorAdd
 Breakpoint 1 at 0x402dd9: file vectorAdd.cu, line 4.
 (cuda-gdb) r
-Starting program: /data/hjli/cudart/vectorAdd/vectorAdd 
+Starting program: ~/cudart/vectorAdd/vectorAdd 
 [Thread debugging using libthread_db enabled]
 [New Thread 0x7ffff6ca4700 (LWP 54366)]
 [Context Create of context 0x67f380 on Device 0]
@@ -1616,7 +1616,7 @@ Program exited normally.
 </pre>
           <p>Remote debugging is also possible.</p>
 <pre class="sh">
-<b class="text-info">hjli@P32-1:/data/hjli/cudart/vectorAdd></b> cuda-gdbserver :3001 ./vectorAdd
+<b class="text-info">hjli@hpc1:~/cudart/vectorAdd></b> cuda-gdbserver :3001 ./vectorAdd
 Process ./vectorAdd created; pid = 48918
 Listening on port 3001
 </pre>
@@ -1641,9 +1641,9 @@ Reading symbols from /home/hjli/cudart/vectorAdd/vectorAdd...done.
           <h2 id="nvprof">Profilers: nvprof & nvvp</h2>
           <p><code>nvprof</code> is a command-line profiler. <code>nvvp</code> is a visual profiler.</p>
 <pre class="sh">
-<b class="text-info">hjli@P32-1:/data/hjli/cudart/asyncEngine></b> nvprof -o %h-%p.nvprof ./asyncEngine
-<b class="text-info">hjli@P32-1:/data/hjli/cudart/asyncEngine></b> nvprof -i P32-1-47304.nvprof --print-api-trace
-<b class="text-info">hjli@P32-1:/data/hjli/cudart/asyncEngine></b> nvprof -i P32-1-47304.nvprof --print-gpu-trace
+<b class="text-info">hjli@hpc1:~/cudart/asyncEngine></b> nvprof -o %h-%p.nvprof ./asyncEngine
+<b class="text-info">hjli@hpc1:~/cudart/asyncEngine></b> nvprof -i hpc1-47304.nvprof --print-api-trace
+<b class="text-info">hjli@hpc1:~/cudart/asyncEngine></b> nvprof -i hpc1-47304.nvprof --print-gpu-trace
 ======== Profiling result:
    Start  Duration            Grid Size      Block Size     Regs*    SSMem*    DSMem*      Size  Throughput           Device   Context    Stream  Name
      0ns  1.0068ms                    -               -         -         -         -  6.2915MB  6.2493GB/s   Tesla K20m (0)         1         8  [CUDA memcpy HtoD]
@@ -1684,7 +1684,7 @@ SSMem: Static shared memory allocated per CUDA block.
 DSMem: Dynamic shared memory allocated per CUDA block.
 </pre>
           <p><code>nvvp</code> can import *.nvprof and visualize the timeline data. File -> Import -> Nvprof -> Timeline data file -> Finish. Zoom in the main part.</p>
-          <p><img class="img-responsive" src="P32-1-47304.png" alt="nvprof"></p>
+          <p><img class="img-responsive" src="hpc1-47304.png" alt="nvprof"></p>
           <p>Refer to <a href="http://on-demand.gputechconf.com/gtc/2013/webinar/gtc-express-guided-analysis-nvidia-visual-profiler.pdf">Guided Performance Analysis with NVIDIA Visual Profiler</a>, <a href="http://on-demand.gputechconf.com/gtc/2012/presentations/S0419B-GTC2012-Profiling-Profiling-Tools.pdf">Optimizing Application Performance with CUDA Profiling Tools</a> and <a href="http://on-demand.gputechconf.com/gtc/2013/presentations/S3046-Performance-Optimization-Strategies-for-GPU-Accelerated-Apps.pdf">Performance Optimization Strategies For GPU-Accelerated Applications</a> for more detail.</p>
           <h2 id="nsight">IDE: Nsight</h2>
           <p><a href="https://developer.nvidia.com/nvidia-nsight-visual-studio-edition">Visual Studio Edition for Windows</a> and <a href="https://developer.nvidia.com/nsight-eclipse-edition">Eclipse Edition for Linux</a>.</p>
@@ -1694,7 +1694,7 @@ DSMem: Dynamic shared memory allocated per CUDA block.
           <h2 id="nvidia-smi">Monitor: nvidia-smi</h2>
           <p><a href="https://developer.nvidia.com/nvidia-system-management-interface">nvidia-smi</a> allows administrators to query GPU device state and with the appropriate privileges, permits administrators to modify GPU device state.</p>
 <pre class="sh">
-<b class="text-info">hjli@P32-1:~></b> nvidia-smi
+<b class="text-info">hjli@hpc1:~></b> nvidia-smi
 Tue Sep 10 10:39:25 2013       
 +------------------------------------------------------+                       
 | NVIDIA-SMI 5.319.37   Driver Version: 319.37         |                       
@@ -1773,7 +1773,7 @@ int main()
 </pre>
           <p>Compile the demo code with option <code>-Xcompiler -rdynamic</code>, and invoke <code>cuda-memcheck</code>.</p>
 <pre class="sh">
-<b class="text-info">hjli@P32-1:/data/hjli/cudart/memcheckDemo></b> cuda-memcheck ./memcheckDemo
+<b class="text-info">hjli@hpc1:~/cudart/memcheckDemo></b> cuda-memcheck ./memcheckDemo
 ========= CUDA-MEMCHECK
 Mallocing memory
 Running unaligned_kernel
@@ -1849,16 +1849,16 @@ Sync: unspecified launch failure
 </pre>
           <p>Specify the option <code>--leak-check full</code> to print information about the allocations that have not been freed at the time the CUDA context is destroyed.</p>
 <pre class="sh">
-<b class="text-info">hjli@P32-1:/data/hjli/cudart/memcheckDemo></b> cuda-memcheck --leak-check full ./memcheckDemo
+<b class="text-info">hjli@hpc1:~/cudart/memcheckDemo></b> cuda-memcheck --leak-check full ./memcheckDemo
 </pre>
           <p>Specify the option <code>--tool racecheck</code> to help identify memory access race conditions in CUDA applications that use shared memory.</p>
 <pre class="sh">
-<b class="text-info">hjli@P32-1:/data/hjli/cudart/memcheckDemo></b> cuda-memcheck --tool racecheck ./memcheckDemo
+<b class="text-info">hjli@hpc1:~/cudart/memcheckDemo></b> cuda-memcheck --tool racecheck ./memcheckDemo
 </pre>
           <h2 id="nvdisasm">Disassemblers: cuobjdump & nvdisasm</h2>
           <p><a href="http://docs.nvidia.com/cuda/cuda-binary-utilities/index.html#cuobjdump">cuobjdump</a> extracts information from CUDA binary files (both standalone and those embedded in host binaries) and presents them in human readable format.</p>
 <pre class="sh">
-<b class="text-info">hjli@P32-1:/data/hjli/cudart/vectorAdd></b> cuobjdump ./vectorAdd.fatbin
+<b class="text-info">hjli@hpc1:~/cudart/vectorAdd></b> cuobjdump ./vectorAdd.fatbin
 
 Fatbin elf code:
 ================
@@ -1881,7 +1881,7 @@ identifier = vectorAdd.cu
 </pre>
           <p><a href="http://docs.nvidia.com/cuda/cuda-binary-utilities/index.html#nvdisasm">nvdisasm</a> extracts information from standalone cubin files and presents them in human readable format.</p>
 <pre class="sh">
-<b class="text-info">hjli@P32-1:/data/hjli/cudart/vectorAdd></b> nvdisasm ./vectorAdd.cubin
+<b class="text-info">hjli@hpc1:~/cudart/vectorAdd></b> nvdisasm ./vectorAdd.cubin
 	.headerflags	@"EF_CUDA_TEXMODE_UNIFIED EF_CUDA_64BIT_ADDRESS EF_CUDA_SM35 EF_CUDA_PTX_SM(EF_CUDA_SM35) "
 
 
@@ -2059,7 +2059,7 @@ _Z9vectorAddPKfS0_Pfi:
 </pre>
           <p>Generate a PNG image of the control flow of vectorAdd.cubin with <a href="http://docs.nvidia.com/cuda/cuda-binary-utilities/index.html#nvdisasm">nvdisasm</a> and <a href="http://www.graphviz.org">Graphviz</a>.</p>
 <pre class="sh">
-<b class="text-info">hjli@P32-1:/data/hjli/cudart/vectorAdd></b> nvdisasm -cfg ./vectorAdd.cubin | dot -Tpng -ovectorAdd.png
+<b class="text-info">hjli@hpc1:~/cudart/vectorAdd></b> nvdisasm -cfg ./vectorAdd.cubin | dot -Tpng -ovectorAdd.png
 </pre>
           <p><img class="img-responsive" src="vectorAdd.png" alt="vectorAdd.png"></p>
         </div>
