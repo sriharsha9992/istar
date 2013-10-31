@@ -703,7 +703,7 @@ var iview = (function () {
 							from.bonds.push(to.serial);
 						}
 					}
-					if (from.name === 'C' && atom.name === 'N' && this.hasCovalentBond(from, atom)) {
+					if (((from.name === 'C' && atom.name === 'N') || (from.name === 'O3\'' && atom.name === 'P')) && this.hasCovalentBond(from, atom)) {
 						from.bonds.push(atom.serial);
 						atom.bonds.push(from.serial);
 					}
