@@ -374,12 +374,14 @@ $(function () {
 	};
 	var defaultAtomColor  = new THREE.Color(0xCCCCCC);
 	var defaultBoxColor   = new THREE.Color(0x1FF01F);
+	var defaultBondColor  = new THREE.Color(0x2194D6);
 	var defaultHBondColor = new THREE.Color(0x94FFFF);
 	var defaultBackgroundColor = new THREE.Color(0x000000);
 	var sphereGeometry = new THREE.SphereGeometry(1, 64, 64);
 	var cylinderGeometry = new THREE.CylinderGeometry(1, 1, 1, 64, 1);
 	var sphereRadius = 1.5;
 	var cylinderRadius = 0.3;
+	var linewidth = 2;
 	var hbondCutoffSquared = 3.5 * 3.5;
 	var pdbqt2pdb = {
 		HD: 'H',
@@ -685,48 +687,85 @@ $(function () {
 	};
 	var createSphereRepresentation = function (atoms) {
 		var obj = new THREE.Object3D();
+		var ged = new THREE.Geometry();
 		for (var i in atoms) {
-			obj.add(createSphere(atoms[i], sphereRadius));
 		}
-		return obj;
-	};
-	var createStickRepresentation = function (atoms, atomR, bondR) {
-		var obj = new THREE.Object3D();
 		for (var i in atoms) {
 			var atom0 = atoms[i];
 			for (var j in atom0.bonds) {
 				var atom1 = atoms[atom0.bonds[j]];
 				if (atom1.serial < atom0.serial) continue;
-				var mp = atom0.coord.clone().add(atom1.coord).multiplyScalar(0.5);
-				obj.add(createCylinder(atom0.coord, mp, bondR, atom0.color));
-				obj.add(createCylinder(atom1.coord, mp, bondR, atom1.color));
+				if (atom1.chain === atom0.chain && ((atom1.resi === atom0.resi) || (atom0.name === 'C' && atom1.name === 'N') || (atom0.name === 'O3\'' && atom1.name === 'P'))) {
+				} else {
+					ged.vertices.push(atom0.coord);
+					ged.vertices.push(atom1.coord);
+				}
+			}
+			obj.add(createSphere(atom0, sphereRadius));
+		}
+		if (ged.vertices.length) {
+			ged.computeLineDistances();
+			obj.add(new THREE.Line(ged, new THREE.LineDashedMaterial({ linewidth: linewidth, color: defaultBondColor, dashSize: 0.25, gapSize: 0.125 }), THREE.LinePieces));
+		}
+		return obj;
+	};
+	var createStickRepresentation = function (atoms, atomR, bondR) {
+		var obj = new THREE.Object3D();
+		var ged = new THREE.Geometry();
+		for (var i in atoms) {
+			var atom0 = atoms[i];
+			for (var j in atom0.bonds) {
+				var atom1 = atoms[atom0.bonds[j]];
+				if (atom1.serial < atom0.serial) continue;
+				if (atom1.chain === atom0.chain && ((atom1.resi === atom0.resi) || (atom0.name === 'C' && atom1.name === 'N') || (atom0.name === 'O3\'' && atom1.name === 'P'))) {
+					var mp = atom0.coord.clone().add(atom1.coord).multiplyScalar(0.5);
+					obj.add(createCylinder(atom0.coord, mp, bondR, atom0.color));
+					obj.add(createCylinder(atom1.coord, mp, bondR, atom1.color));
+				} else {
+					ged.vertices.push(atom0.coord);
+					ged.vertices.push(atom1.coord);
+				}
 			}
 			obj.add(createSphere(atom0, atomR, true));
+		}
+		if (ged.vertices.length) {
+			ged.computeLineDistances();
+			obj.add(new THREE.Line(ged, new THREE.LineDashedMaterial({ linewidth: linewidth, color: defaultBondColor, dashSize: 0.25, gapSize: 0.125 }), THREE.LinePieces));
 		}
 		return obj;
 	};
 	var createLineRepresentation = function (atoms) {
 		var obj = new THREE.Object3D();
 		var geo = new THREE.Geometry();
-		obj.add(new THREE.Line(geo, new THREE.LineBasicMaterial({ linewidth: 2, vertexColors: true }), THREE.LinePieces));
+		var ged = new THREE.Geometry();
 		for (var i in atoms) {
 			var atom0 = atoms[i];
 			for (var j in atom0.bonds) {
 				var atom1 = atoms[atom0.bonds[j]];
 				if (atom1.serial < atom0.serial) continue;
-				var mp = atom0.coord.clone().add(atom1.coord).multiplyScalar(0.5);
-				geo.vertices.push(atom0.coord);
-				geo.vertices.push(mp);
-				geo.vertices.push(atom1.coord);
-				geo.vertices.push(mp);
-				geo.colors.push(atom0.color);
-				geo.colors.push(atom0.color);
-				geo.colors.push(atom1.color);
-				geo.colors.push(atom1.color);
+				if (atom1.chain === atom0.chain && ((atom1.resi === atom0.resi) || (atom0.name === 'C' && atom1.name === 'N') || (atom0.name === 'O3\'' && atom1.name === 'P'))) {
+					var mp = atom0.coord.clone().add(atom1.coord).multiplyScalar(0.5);
+					geo.vertices.push(atom0.coord);
+					geo.vertices.push(mp);
+					geo.vertices.push(atom1.coord);
+					geo.vertices.push(mp);
+					geo.colors.push(atom0.color);
+					geo.colors.push(atom0.color);
+					geo.colors.push(atom1.color);
+					geo.colors.push(atom1.color);
+				} else {
+					ged.vertices.push(atom0.coord);
+					ged.vertices.push(atom1.coord);
+				}
 			}
 			if (atom0.solvent) {
 				obj.add(createSphere(atom0, sphereRadius, false, 0.2));
 			}
+		}
+		obj.add(new THREE.Line(geo, new THREE.LineBasicMaterial({ linewidth: linewidth, vertexColors: true }), THREE.LinePieces));
+		if (ged.vertices.length) {
+			ged.computeLineDistances();
+			obj.add(new THREE.Line(ged, new THREE.LineDashedMaterial({ linewidth: linewidth, color: defaultBondColor, dashSize: 0.25, gapSize: 0.125 }), THREE.LinePieces));
 		}
 		return obj;
 	};
@@ -831,7 +870,7 @@ $(function () {
 	};
 	var hasCovalentBond = function (atom1, atom2) {
 		var r = covalentRadii[atom1.elem] + covalentRadii[atom2.elem];
-		return atom1.coord.distanceToSquared(atom2.coord) < 1.29 * r * r;
+		return atom1.coord.distanceToSquared(atom2.coord) < 1.3 * r * r;
 	};
 	var isHBondDonor = function (elqt) {
 		return elqt === 'HD' || elqt === 'Zn' || elqt === 'Fe' || elqt === 'Mg' || elqt === 'Ca' || elqt === 'Mn' || elqt === 'Cu' || elqt === 'Na' || elqt === 'K ' || elqt === 'Hg' || elqt === 'Ni' || elqt === 'Co' || elqt === 'Cd' || elqt === 'As' || elqt === 'Sr' || elqt === 'U ';
@@ -936,6 +975,16 @@ $(function () {
 							atom.bonds.push(from.serial);
 						}
 					}
+					if (curResAtoms.length == 1) {
+						var atom0 = atoms[curResAtoms[0]];
+						for (var j in atoms) {
+							var atom1 = atoms[j];
+							if (atom1 != atom0 && hasCovalentBond(atom1, atom0)) {
+								atom1.bonds.push(atom0.serial);
+								atom0.bonds.push(atom1.serial);
+							}
+						}
+					}
 					curChain = atom.chain;
 					curResi = atom.resi;
 					curInsc = atom.insc;
@@ -950,6 +999,16 @@ $(function () {
 					var to = atoms[curResAtoms[k]];
 					if (hasCovalentBond(from, to)) {
 						from.bonds.push(to.serial);
+					}
+				}
+			}
+			if (curResAtoms.length == 1) {
+				var atom0 = atoms[curResAtoms[0]];
+				for (var j in atoms) {
+					var atom1 = atoms[j];
+					if (atom1 != atom0 && hasCovalentBond(atom1, atom0)) {
+						atom1.bonds.push(atom0.serial);
+						atom0.bonds.push(atom1.serial);
 					}
 				}
 			}
