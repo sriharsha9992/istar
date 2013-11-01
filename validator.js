@@ -44,3 +44,7 @@ validator.Filter.prototype.toLowerCase = function() {
 	this.modify(this.str.toLowerCase());
 	return this.wrap(this.str);
 }
+validator.Filter.prototype.xss = function() {
+	this.modify(this.str.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;'));
+	return this.wrap(this.str);
+}
