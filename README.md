@@ -24,7 +24,7 @@ Components
 * [node.js] v0.10.21
 * [mongodb] v1.3.19
 * [express] v3.4.4
-* [validator] v1.5.1
+* [validator] v2.0.0
 * [spdy] v1.14.12
 
 ### Database
