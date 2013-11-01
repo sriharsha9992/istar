@@ -624,6 +624,27 @@ int main(int argc, char *argv[])
 	cudaDeviceReset();
 }
 </pre>
+          <p>Here are four possible output.</p>
+<pre class="sh">
+blockIdx.x = 0, sum = 1
+blockIdx.x = 1, sum = 4
+sum = 13
+</pre>
+<pre class="sh">
+blockIdx.x = 1, sum = 1
+blockIdx.x = 0, sum = 4
+sum = 13
+</pre>
+<pre class="sh">
+blockIdx.x = 0, sum = 4
+blockIdx.x = 1, sum = 1
+sum = 13
+</pre>
+<pre class="sh">
+blockIdx.x = 1, sum = 1
+blockIdx.x = 0, sum = 7
+sum = 13
+</pre>
           <p>Try different numbers of threads per block and different numbers of blocks per grid.</p>
           <p>Try atomic functions on shared memory, and compare the performance to atomic functions on global memory.</p>
           <p>Refer to <a href="http://on-demand.gputechconf.com/gtc/2013/presentations/S3101-Atomic-Memory-Operations.pdf">Understanding and Using Atomic Memory Operations</a> for more detail.</p>
