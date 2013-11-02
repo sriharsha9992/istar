@@ -1189,12 +1189,12 @@ $(function () {
 					mdl.remove(ligand.representations.hbond);
 					mdl.remove(ligand.representations[ligand.active]);
 					ligands.forEach(function(l) {
-						if (l.id.toString() === e.target.innerText) {
+						if (l.id.toString() === $(e.target).text().trim()) {
 							ligand = entities.ligand = l;
 						}
 					});
 					refreshLigand(ligand);
-					ligand.active = $('#ligand .active')[0].innerText;
+					ligand.active = $('#ligand .active').text().trim();
 					ligand.refresh();
 					render();
 				});
@@ -1202,13 +1202,13 @@ $(function () {
 			}).always(function() {
 				for (var key in entities) {
 					var entity = entities[key];
-					entity.active = $('#' + key + ' .active')[0].innerText;
+					entity.active = $('#' + key + ' .active').text().trim();
 					entity.refresh();
 					$('#' + key).click(function (e) {
 						var key = e.target.parentElement.id;
 						var entity = entities[key];
 						mdl.remove(entity.representations[entity.active]);
-						entity.active = e.target.innerText;
+						entity.active = $(e.target).text().trim();
 						entity.refresh();
 						render();
 					});
