@@ -55,7 +55,7 @@
 
 table img {
   height: 20px;
-  padding-right: 16px;
+  margin-right: 16px;
 }
 
 .pagination > li:nth-child(2) > a {
