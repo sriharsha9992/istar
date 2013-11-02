@@ -957,61 +957,48 @@ $(function () {
 					atoms[atom.serial] = atom;
 				}
 			}
-			var curChain, curResi, curInsc, curResAtoms = [];
+			var curChain, curResi, curInsc, curResAtoms = [], me = this;
+			var refreshBonds = function (f) {
+				var n = curResAtoms.length;
+				for (var j = 0; j < n; ++j) {
+					var atom0 = curResAtoms[j];
+					for (var k = j + 1; k < n; ++k) {
+						var atom1 = curResAtoms[k];
+						if (hasCovalentBond(atom0, atom1)) {
+							atom0.bonds.push(atom1.serial);
+							atom1.bonds.push(atom0.serial);
+						}
+					}
+					f && f(atom0);
+				}
+				if (n == 1) {
+					var atom0 = curResAtoms[0];
+					for (var j in atoms) {
+						var atom1 = atoms[j];
+						if (atom1 != atom0 && hasCovalentBond(atom1, atom0)) {
+							atom1.bonds.push(atom0.serial);
+							atom0.bonds.push(atom1.serial);
+						}
+					}
+				}
+			};
 			for (var i in atoms) {
 				var atom = atoms[i];
 				if (!(curChain == atom.chain && curResi == atom.resi && curInsc == atom.insc)) {
-					for (var j in curResAtoms) {
-						var from = atoms[curResAtoms[j]];
-						for (var k in curResAtoms) {
-							if (j === k) continue;
-							var to = atoms[curResAtoms[k]];
-							if (hasCovalentBond(from, to)) {
-								from.bonds.push(to.serial);
-							}
+					refreshBonds(function (atom0) {
+						if (atom0.name === 'C' && atom.name === 'N' && hasCovalentBond(atom0, atom)) {
+							atom0.bonds.push(atom.serial);
+							atom.bonds.push(atom0.serial);
 						}
-						if (from.name === 'C' && atom.name === 'N' && hasCovalentBond(from, atom)) {
-							from.bonds.push(atom.serial);
-							atom.bonds.push(from.serial);
-						}
-					}
-					if (curResAtoms.length == 1) {
-						var atom0 = atoms[curResAtoms[0]];
-						for (var j in atoms) {
-							var atom1 = atoms[j];
-							if (atom1 != atom0 && hasCovalentBond(atom1, atom0)) {
-								atom1.bonds.push(atom0.serial);
-								atom0.bonds.push(atom1.serial);
-							}
-						}
-					}
+					});
 					curChain = atom.chain;
 					curResi = atom.resi;
 					curInsc = atom.insc;
 					curResAtoms.length = 0;
 				}
-				curResAtoms.push(atom.serial);
+				curResAtoms.push(atom);
 			}
-			for (var j in curResAtoms) {
-				var from = atoms[curResAtoms[j]];
-				for (var k in curResAtoms) {
-					if (j === k) continue;
-					var to = atoms[curResAtoms[k]];
-					if (hasCovalentBond(from, to)) {
-						from.bonds.push(to.serial);
-					}
-				}
-			}
-			if (curResAtoms.length == 1) {
-				var atom0 = atoms[curResAtoms[0]];
-				for (var j in atoms) {
-					var atom1 = atoms[j];
-					if (atom1 != atom0 && hasCovalentBond(atom1, atom0)) {
-						atom1.bonds.push(atom0.serial);
-						atom0.bonds.push(atom1.serial);
-					}
-				}
-			}
+			refreshBonds();
 			var surface = entities.surface = {
 				atoms: {},
 				representations: {},
