@@ -94,6 +94,7 @@ if (cluster.isMaster) {
 				app.use(express.errorHandler());
 			});
 			// Define helper variables and functions
+			var child_process = require('child_process');
 			var validator = require('./validator');
 			var ligands;
 			function sync(callback) {
@@ -166,7 +167,7 @@ if (cluster.isMaster) {
 				var v = new validator.Validator();
 				if (v.init(req.body)
 					.chk('email', 'must be valid', true).isEmail()
-					.chk('receptor', 'must be provided', true).len(1, 10485760).regex(/^(((ATOM  |HETATM).{24}(.{3}\d\.\d{3}){3}.{25}\n){1,39999}TER   .{21,}\n){0,9}((ATOM  |HETATM).{24}(.{3}\d\.\d{3}){3}.{25}\n){1,39999}TER   .{21,}\n?$/g) // 10MB
+					.chk('receptor', 'must be provided', true).len(1, 10485760).regex(/^(((ATOM  |HETATM).{24}(.{3}\d\.\d{3}){3}.{26}\n){1,39999}TER   .{74}\n){1,26}(HETATM.{24}(.{3}\d\.\d{3}){3}.{26}\n){0,99}$/g) // 10MB
 					.chk('center_x', 'must be a decimal within [-999, 999]', true).isDecimal().min(-999).max(999)
 					.chk('center_y', 'must be a decimal within [-999, 999]', true).isDecimal().min(-999).max(999)
 					.chk('center_z', 'must be a decimal within [-999, 999]', true).isDecimal().min(-999).max(999)
@@ -266,13 +267,16 @@ if (cluster.isMaster) {
 						var dir = '/home/hjli/nfs/hjli/istar/public/idock/jobs/' + docs[0]._id;
 						fs.mkdir(dir, function (err) {
 							if (err) throw err;
-							fs.writeFile(dir + '/receptor.pdbqt', req.body['receptor'], function(err) {
+							fs.writeFile(dir + '/receptor.pdb', req.body['receptor'], function(err) {
 								if (err) throw err;
-								fs.writeFile(dir + '/box.conf', ['center_x', 'center_y', 'center_z', 'size_x', 'size_y', 'size_z'].map(function(key) {
-									return key + '=' + req.body[key] + '\n';
-								}).join(''), function(err) {
+								child_process.execFile('python2.5', [process.env.HOME + '/mgltools_x86_64Linux2_1.5.6/MGLToolsPckgs/AutoDockTools/Utilities24/prepare_receptor4.pyo', '-A', 'hydrogens', '-U', 'nphs_lps_waters_deleteAltB', '-r', 'receptor.pdb'], { cwd: dir }, function(err, stdout, stderr) {
 									if (err) throw err;
-									res.json({});
+									fs.writeFile(dir + '/box.conf', ['center_x', 'center_y', 'center_z', 'size_x', 'size_y', 'size_z'].map(function(key) {
+										return key + '=' + req.body[key] + '\n';
+									}).join(''), function(err) {
+										if (err) throw err;
+										res.json({});
+									});
 								});
 							});
 						});

@@ -80,8 +80,8 @@
         <div class="col-md-12">
           <p>The input to idock is threefold:</p>
           <ul>
-            <li>A receptor in PDBQT format. The receptor can contain one or more chains, which should start with ATOM records and end with a TER record. Refer to tutorial 1 on how to prepare a receptor in PDBQT format with MGLTools.</li>
-            <li>A search space defined by a center and a size in unit &Aring;. The search space should define a binding site (e.g. enzymatic site or allosteric site) of the receptor in cuboid shape. Refer to tutorial 2 on how to define a binding site with MGLTools, Chimera or PyMOL.</li>
+            <li>A protein in PDB format. It can be obtained from <a href="http://www.pdb.org">http://www.pdb.org</a>, or via <a href="http://en.wikipedia.org/wiki/Homology_modeling">homology modeling</a>.</li>
+            <li>A search space defined by a center and a size in unit &Aring;. The search space should define a binding site (e.g. enzymatic site or allosteric site) of the receptor in cuboid shape. Refer to the tutorial on how to define a binding site.</li>
             <li>A set of ligands to dock. Totally 17,224,424 ligands are collected from <a href="http://zinc.docking.org">ZINC</a>. Filtering conditions on 9 molecular properties (e.g. mwt, hbd, hba, nrb) can be specified as closed intervals. Only the ligands satisfying all the 9 filtering conditions will be docked.</li>
           </ul>
         </div>
@@ -96,53 +96,60 @@
         </div>
       </div>
       <div class="row" role="form">
-        <div class="col-md-6">
+        <div class="col-md-5">
           <div class="form-group">
-            <label for="receptor"><a title="must conform to PDBQT specification" id="receptor_label">Receptor in PDBQT</a></label> <input type="file">
-            <textarea class="form-control" id="receptor" rows="33" placeholder="ATOM      1  N   ASN A  21      63.845  98.298   0.035  1.00113.44    -0.066 N"></textarea>
+            <label for="receptor"><a title="must conform to PDB specification" id="receptor_label">Protein in PDB format</a></label> <input type="file">
           </div>
         </div>
-        <div class="col-md-6">
+        <div class="col-md-7">
+          <p id="status">Creating protein surface <img src="/loading.gif" alt="loading" style="width: 16px; height: 16px;"></p>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-12">
+          <canvas>Your browser does not support WebGL.</canvas>
+        </div>
+      </div>
+      <div class="row" role="form">
+        <div class="col-md-12">
           <div class="row">
-            <div class="col-md-2">
+            <div class="col-md-1">
               <div class="form-group">
                 <label for="center_x"><a title="within [-999, 999]" id="center_x_label">center_x</a></label>
-                <input type="text" class="form-control" id="center_x" placeholder="49.712">
+                <input type="number" class="form-control" id="center_x" placeholder="150">
               </div>
             </div>
-            <div class="col-md-2">
+            <div class="col-md-1">
               <div class="form-group">
                 <label for="center_y"><a title="within [-999, 999]" id="center_y_label">center_y</a></label>
-                <input type="text" class="form-control" id="center_y" placeholder="-28.923">
+                <input type="number" class="form-control" id="center_y" placeholder="109">
               </div>
             </div>
-            <div class="col-md-2">
+            <div class="col-md-1">
               <div class="form-group">
                 <label for="center_z"><a title="within [-999, 999]" id="center_z_label">center_z</a></label>
-                <input type="text" class="form-control" id="center_z" placeholder="36.824">
+                <input type="number" class="form-control" id="center_z" placeholder="22">
               </div>
             </div>
-            <div class="col-md-2">
+            <div class="col-md-1">
               <div class="form-group">
                 <label for="size_x"><a title="within [10, 30]" id="size_x_label">size_x</a></label>
-                <input type="text" class="form-control" id="size_x" placeholder="18">
+                <input type="number" class="form-control" id="size_x" placeholder="18" min="10" max="30">
               </div>
             </div>
-            <div class="col-md-2">
+            <div class="col-md-1">
               <div class="form-group">
                 <label for="size_y"><a title="within [10, 30]" id="size_y_label">size_y</a></label>
-                <input type="text" class="form-control" id="size_y" placeholder="18">
+                <input type="number" class="form-control" id="size_y" placeholder="17" min="10" max="30">
               </div>
             </div>
-            <div class="col-md-2">
+            <div class="col-md-1">
               <div class="form-group">
                 <label for="size_z"><a title="within [10, 30]" id="size_z_label">size_z</a></label>
-                <input type="text" class="form-control" id="size_z" placeholder="20">
+                <input type="number" class="form-control" id="size_z" placeholder="15" min="10" max="30">
               </div>
             </div>
-          </div>
-          <div class="row">
-            <div class="col-md-6">
+            <div class="col-md-3">
               <div class="form-group">
                 <label for="description"><a title="at most 20 characters" id="description_label">Briefly describe your job</a></label>
                 <div class="input-group">
@@ -151,7 +158,7 @@
                 </div>
               </div>
             </div>
-            <div class="col-md-6">
+            <div class="col-md-3">
               <div class="form-group">
                 <label for="email"><a title="compulsory" id="email_label">Email to receive completion notification</a></label>
                 <div class="input-group">
@@ -432,6 +439,7 @@ pythonsh MGLToolsPckgs\AutoDockTools\Utilities24\prepare_ligand4.py -l 2ZD1lig.p
   <script src="/jquery.lazyload.min.js"></script>
   <script src="/jquery.snippet.min.js"></script>
   <script src="/sh_sh.min.js"></script>
+  <script src="/iview/three.min.js"></script>
   <script src="/istar.js"></script>
   <script src="index.js"></script>
 </body>
