@@ -689,25 +689,31 @@ var iview = (function () {
 				}
 			}
 		}
-		var curChain, curResi, curInsc, curResAtoms = [];
+		var curChain, curResi, curInsc, curResAtoms = [], me = this;
+		var refreshBonds = function (f) {
+			var n = curResAtoms.length;
+			for (var j = 0; j < n; ++j) {
+				var atom0 = me.atoms[curResAtoms[j]];
+				for (var k = j + 1; k < n; ++k) {
+					var atom1 = me.atoms[curResAtoms[k]];
+					if (me.hasCovalentBond(atom0, atom1)) {
+						atom0.bonds.push(atom1.serial);
+						atom1.bonds.push(atom0.serial);
+					}
+				}
+				f && f(atom0);
+			}
+		};
 		for (var i in this.atoms) {
 			var atom = this.atoms[i];
 			if (atom.het) continue;
 			if (!(curChain == atom.chain && curResi == atom.resi && curInsc == atom.insc)) {
-				for (var j in curResAtoms) {
-					var from = this.atoms[curResAtoms[j]];
-					for (var k in curResAtoms) {
-						if (j === k) continue;
-						var to = this.atoms[curResAtoms[k]];
-						if (this.hasCovalentBond(from, to)) {
-							from.bonds.push(to.serial);
-						}
+				refreshBonds(function (atom0) {
+					if (((atom0.name === 'C' && atom.name === 'N') || (atom0.name === 'O3\'' && atom.name === 'P')) && me.hasCovalentBond(atom0, atom)) {
+						atom0.bonds.push(atom.serial);
+						atom.bonds.push(atom0.serial);
 					}
-					if (((from.name === 'C' && atom.name === 'N') || (from.name === 'O3\'' && atom.name === 'P')) && this.hasCovalentBond(from, atom)) {
-						from.bonds.push(atom.serial);
-						atom.bonds.push(from.serial);
-					}
-				}
+				});
 				curChain = atom.chain;
 				curResi = atom.resi;
 				curInsc = atom.insc;
@@ -715,16 +721,7 @@ var iview = (function () {
 			}
 			curResAtoms.push(atom.serial);
 		}
-		for (var j in curResAtoms) {
-			var from = this.atoms[curResAtoms[j]];
-			for (var k in curResAtoms) {
-				if (j === k) continue;
-				var to = this.atoms[curResAtoms[k]];
-				if (this.hasCovalentBond(from, to)) {
-					from.bonds.push(to.serial);
-				}
-			}
-		}
+		refreshBonds();
 		this.peptides = {};
 		this.ligands = {};
 		this.waters = {};
