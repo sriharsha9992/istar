@@ -531,11 +531,11 @@ $(function() {
 					elem: atom.elem,
 				};
 			});
-/*			surfacejs.postMessage({
+			surfacejs.postMessage({
 				min: pmin,
 				max: pmax,
 				atoms: patoms,
-			});*/
+			});
 			psrc = Object.keys(plines).map(function (chain) {
 				return plines[chain].map(function (line) {
 					return line + '\n';
@@ -608,19 +608,6 @@ $(function() {
 			for (var i in waters) {
 				mdl.add(createSphere(waters[i], sphereRadius));
 			}
-/*			var ps = new ProteinSurface();
-			ps.initparm(pmin, pmax, true);
-			ps.fillvoxels(peptides);
-			ps.buildboundary();
-			ps.fastdistancemap();
-			ps.marchingcube(4);
-			ps.laplaciansmooth(1);
-			ps.transformVertices();
-			mdl.add(new THREE.Mesh(ps.getModel(peptides), new THREE.MeshLambertMaterial({
-				vertexColors: THREE.VertexColors,
-				opacity: 0.9,
-				transparent: true,
-			})));*/
 			var lidx, lcnt = 0;
 			for (var i in resi) {
 				var r = resi[i];
