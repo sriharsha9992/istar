@@ -664,7 +664,7 @@ var iview = (function () {
 				for (var j = 0; j < 4; ++j) {
 					var to = parseInt(line.substr([11, 16, 21, 26][j], 5));
 					if (isNaN(to)) continue;
-					this.atoms[from].bonds.push(to);
+					this.atoms[from].bonds.push(this.atoms[to]);
 				}
 			} else if (record === 'TER   ') {
 				this.lastTerSerial = parseInt(line.substr(6, 5));
@@ -697,8 +697,8 @@ var iview = (function () {
 				for (var k = j + 1; k < n; ++k) {
 					var atom1 = me.atoms[curResAtoms[k]];
 					if (me.hasCovalentBond(atom0, atom1)) {
-						atom0.bonds.push(atom1.serial);
-						atom1.bonds.push(atom0.serial);
+						atom0.bonds.push(atom1);
+						atom1.bonds.push(atom0);
 					}
 				}
 				f && f(atom0);
@@ -710,8 +710,8 @@ var iview = (function () {
 			if (!(curChain == atom.chain && curResi == atom.resi && curInsc == atom.insc)) {
 				refreshBonds(function (atom0) {
 					if (((atom0.name === 'C' && atom.name === 'N') || (atom0.name === 'O3\'' && atom.name === 'P')) && me.hasCovalentBond(atom0, atom)) {
-						atom0.bonds.push(atom.serial);
-						atom.bonds.push(atom0.serial);
+						atom0.bonds.push(atom);
+						atom.bonds.push(atom0);
 					}
 				});
 				curChain = atom.chain;
@@ -794,7 +794,7 @@ var iview = (function () {
 		for (var i in atoms) {
 			var atom0 = atoms[i];
 			for (var j in atom0.bonds) {
-				var atom1 = this.atoms[atom0.bonds[j]];
+				var atom1 = atom0.bonds[j];
 				if (atom1.serial < atom0.serial) continue;
 				if (atom1.chain === atom0.chain && ((atom1.resi === atom0.resi) || (atom0.name === 'C' && atom1.name === 'N') || (atom0.name === 'O3\'' && atom1.name === 'P'))) {
 				} else {
@@ -815,7 +815,7 @@ var iview = (function () {
 		for (var i in atoms) {
 			var atom0 = atoms[i];
 			for (var j in atom0.bonds) {
-				var atom1 = this.atoms[atom0.bonds[j]];
+				var atom1 = atom0.bonds[j];
 				if (atom1.serial < atom0.serial) continue;
 				if (atom1.chain === atom0.chain && ((atom1.resi === atom0.resi) || (atom0.name === 'C' && atom1.name === 'N') || (atom0.name === 'O3\'' && atom1.name === 'P'))) {
 					var mp = atom0.coord.clone().add(atom1.coord).multiplyScalar(0.5);
@@ -840,7 +840,7 @@ var iview = (function () {
 		for (var i in atoms) {
 			var atom0 = atoms[i];
 			for (var j in atom0.bonds) {
-				var atom1 = this.atoms[atom0.bonds[j]];
+				var atom1 = atom0.bonds[j];
 				if (atom1.serial < atom0.serial) continue;
 				if (atom1.chain === atom0.chain && ((atom1.resi === atom0.resi) || (atom0.name === 'C' && atom1.name === 'N') || (atom0.name === 'O3\'' && atom1.name === 'P'))) {
 					var mp = atom0.coord.clone().add(atom1.coord).multiplyScalar(0.5);
