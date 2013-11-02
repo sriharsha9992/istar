@@ -671,25 +671,10 @@ var iview = (function () {
 				this.lastTerSerial = parseInt(line.substr(6, 5));
 			}
 		}
-		for (var i in this.atoms) {
-			var atom = this.atoms[i];
-			for (var j in helices) {
-				var helix = helices[j];
-				if (atom.chain == helix.chain && (atom.resi > helix.initialResidue || (atom.resi == helix.initialResidue && atom.insc >= helix.initialInscode)) && (atom.resi < helix.terminalResidue || (atom.resi == helix.terminalResidue && atom.insc <= helix.terminalInscode))) {
-					atom.ss = 'helix';
-					if (atom.resi == helix.initialResidue && atom.insc == helix.initialInscode) atom.ssbegin = true;
-					if (atom.resi == helix.terminalResidue && atom.insc == helix.terminalInscode) atom.ssend = true;
-				}
-			}
-			for (var j in sheets) {
-				var sheet = sheets[j];
-				if (atom.chain == sheet.chain && (atom.resi > sheet.initialResidue || (atom.resi == sheet.initialResidue && atom.insc >= sheet.initialInscode)) && (atom.resi < sheet.terminalResidue || (atom.resi == sheet.terminalResidue && atom.insc <= sheet.terminalInscode))) {
-					atom.ss = 'sheet';
-					if (atom.resi == sheet.initialResidue && atom.insc == sheet.initialInscode) atom.ssbegin = true;
-					if (atom.resi == sheet.terminalResidue && atom.insc == sheet.terminalInscode) atom.ssend = true;
-				}
-			}
-		}
+		this.peptides = {};
+		this.ligands = {};
+		this.waters = {};
+		this.ions = {};
 		var curChain, curResi, curInsc, curResAtoms = [], me = this;
 		var refreshBonds = function (f) {
 			var n = curResAtoms.length;
@@ -705,32 +690,45 @@ var iview = (function () {
 				f && f(atom0);
 			}
 		};
-		for (var i in this.atoms) {
-			var atom = this.atoms[i];
-			if (atom.het) continue;
-			if (!(curChain == atom.chain && curResi == atom.resi && curInsc == atom.insc)) {
-				refreshBonds(function (atom0) {
-					if (((atom0.name === 'C' && atom.name === 'N') || (atom0.name === 'O3\'' && atom.name === 'P')) && me.hasCovalentBond(atom0, atom)) {
-						atom0.bonds.push(atom);
-						atom.bonds.push(atom0);
-					}
-				});
-				curChain = atom.chain;
-				curResi = atom.resi;
-				curInsc = atom.insc;
-				curResAtoms.length = 0;
-			}
-			curResAtoms.push(atom);
-		}
-		refreshBonds();
-		this.peptides = {};
-		this.ligands = {};
-		this.waters = {};
-		this.ions = {};
+		var pmin = new THREE.Vector3( 9999, 9999, 9999);
+		var pmax = new THREE.Vector3(-9999,-9999,-9999);
+		var psum = new THREE.Vector3();
+		var cnt = 0;
 		for (var i in this.atoms) {
 			var atom = this.atoms[i];
 			if (atom.serial <= this.lastTerSerial) {
 				this.peptides[atom.serial] = atom;
+				for (var j in helices) {
+					var helix = helices[j];
+					if (atom.chain == helix.chain && (atom.resi > helix.initialResidue || (atom.resi == helix.initialResidue && atom.insc >= helix.initialInscode)) && (atom.resi < helix.terminalResidue || (atom.resi == helix.terminalResidue && atom.insc <= helix.terminalInscode))) {
+						atom.ss = 'helix';
+						if (atom.resi == helix.initialResidue && atom.insc == helix.initialInscode) atom.ssbegin = true;
+						if (atom.resi == helix.terminalResidue && atom.insc == helix.terminalInscode) atom.ssend = true;
+					}
+				}
+				for (var j in sheets) {
+					var sheet = sheets[j];
+					if (atom.chain == sheet.chain && (atom.resi > sheet.initialResidue || (atom.resi == sheet.initialResidue && atom.insc >= sheet.initialInscode)) && (atom.resi < sheet.terminalResidue || (atom.resi == sheet.terminalResidue && atom.insc <= sheet.terminalInscode))) {
+						atom.ss = 'sheet';
+						if (atom.resi == sheet.initialResidue && atom.insc == sheet.initialInscode) atom.ssbegin = true;
+						if (atom.resi == sheet.terminalResidue && atom.insc == sheet.terminalInscode) atom.ssend = true;
+					}
+				}
+				if (!atom.het) {
+					if (!(curChain == atom.chain && curResi == atom.resi && curInsc == atom.insc)) {
+						refreshBonds(function (atom0) {
+							if (((atom0.name === 'C' && atom.name === 'N') || (atom0.name === 'O3\'' && atom.name === 'P')) && me.hasCovalentBond(atom0, atom)) {
+								atom0.bonds.push(atom);
+								atom.bonds.push(atom0);
+							}
+						});
+						curChain = atom.chain;
+						curResi = atom.resi;
+						curInsc = atom.insc;
+						curResAtoms.length = 0;
+					}
+					curResAtoms.push(atom);
+				}
 			} else {
 				if ((this.atoms[atom.serial - 1] === undefined || this.atoms[atom.serial - 1].resi !== atom.resi) && (this.atoms[atom.serial + 1] === undefined || this.atoms[atom.serial + 1].resi !== atom.resi)) {
 					if (atom.elem === 'O') {
@@ -742,26 +740,21 @@ var iview = (function () {
 					this.ligands[atom.serial] = atom;
 				}
 			}
+			var coord = atom.coord;
+			psum.add(coord);
+			pmin.min(coord);
+			pmax.max(coord);
+			++cnt;
 		}
+		refreshBonds();
+		this.pmin = pmin;
+		this.pmax = pmax;
 		this.surfaces = {
 			1: undefined,
 			2: undefined,
 			3: undefined,
 			4: undefined,
 		};
-		var pmin = new THREE.Vector3( 9999, 9999, 9999);
-		var pmax = new THREE.Vector3(-9999,-9999,-9999);
-		var psum = new THREE.Vector3();
-		var cnt = 0;
-		for (var i in this.atoms) {
-			var coord = this.atoms[i].coord;
-			psum.add(coord);
-			pmin.min(coord);
-			pmax.max(coord);
-			++cnt;
-		}
-		this.pmin = pmin;
-		this.pmax = pmax;
 		this.rebuildScene();
 		this.mdl.position = psum.clone().multiplyScalar(-1 / cnt);
 		var maxD = pmax.distanceTo(pmin);
