@@ -693,9 +693,9 @@ var iview = (function () {
 		var refreshBonds = function (f) {
 			var n = curResAtoms.length;
 			for (var j = 0; j < n; ++j) {
-				var atom0 = me.atoms[curResAtoms[j]];
+				var atom0 = curResAtoms[j];
 				for (var k = j + 1; k < n; ++k) {
-					var atom1 = me.atoms[curResAtoms[k]];
+					var atom1 = curResAtoms[k];
 					if (me.hasCovalentBond(atom0, atom1)) {
 						atom0.bonds.push(atom1);
 						atom1.bonds.push(atom0);
@@ -719,7 +719,7 @@ var iview = (function () {
 				curInsc = atom.insc;
 				curResAtoms.length = 0;
 			}
-			curResAtoms.push(atom.serial);
+			curResAtoms.push(atom);
 		}
 		refreshBonds();
 		this.peptides = {};
