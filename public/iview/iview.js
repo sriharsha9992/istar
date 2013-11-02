@@ -649,6 +649,7 @@ var iview = (function () {
 					het: record[0] === 'H',
 					serial: serial,
 					name: line.substr(12, 4).replace(/ /g, ''),
+					alt: line.substr(16, 1),
 					resn: line.substr(17, 3),
 					chain: line.substr(21, 1),
 					resi: parseInt(line.substr(22, 4)),
@@ -696,7 +697,7 @@ var iview = (function () {
 				var atom0 = curResAtoms[j];
 				for (var k = j + 1; k < n; ++k) {
 					var atom1 = curResAtoms[k];
-					if (me.hasCovalentBond(atom0, atom1)) {
+					if (atom0.alt === atom1.alt && me.hasCovalentBond(atom0, atom1)) {
 						atom0.bonds.push(atom1);
 						atom1.bonds.push(atom0);
 					}
