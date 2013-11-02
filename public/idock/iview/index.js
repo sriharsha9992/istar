@@ -693,7 +693,7 @@ $(function () {
 		for (var i in atoms) {
 			var atom0 = atoms[i];
 			for (var j in atom0.bonds) {
-				var atom1 = atoms[atom0.bonds[j]];
+				var atom1 = atom0.bonds[j];
 				if (atom1.serial < atom0.serial) continue;
 				if (atom1.chain === atom0.chain && ((atom1.resi === atom0.resi) || (atom0.name === 'C' && atom1.name === 'N') || (atom0.name === 'O3\'' && atom1.name === 'P'))) {
 				} else {
@@ -715,7 +715,7 @@ $(function () {
 		for (var i in atoms) {
 			var atom0 = atoms[i];
 			for (var j in atom0.bonds) {
-				var atom1 = atoms[atom0.bonds[j]];
+				var atom1 = atom0.bonds[j];
 				if (atom1.serial < atom0.serial) continue;
 				if (atom1.chain === atom0.chain && ((atom1.resi === atom0.resi) || (atom0.name === 'C' && atom1.name === 'N') || (atom0.name === 'O3\'' && atom1.name === 'P'))) {
 					var mp = atom0.coord.clone().add(atom1.coord).multiplyScalar(0.5);
@@ -741,7 +741,7 @@ $(function () {
 		for (var i in atoms) {
 			var atom0 = atoms[i];
 			for (var j in atom0.bonds) {
-				var atom1 = atoms[atom0.bonds[j]];
+				var atom1 = atom0.bonds[j];
 				if (atom1.serial < atom0.serial) continue;
 				if (atom1.chain === atom0.chain && ((atom1.resi === atom0.resi) || (atom0.name === 'C' && atom1.name === 'N') || (atom0.name === 'O3\'' && atom1.name === 'P'))) {
 					var mp = atom0.coord.clone().add(atom1.coord).multiplyScalar(0.5);
@@ -965,8 +965,8 @@ $(function () {
 					for (var k = j + 1; k < n; ++k) {
 						var atom1 = curResAtoms[k];
 						if (hasCovalentBond(atom0, atom1)) {
-							atom0.bonds.push(atom1.serial);
-							atom1.bonds.push(atom0.serial);
+							atom0.bonds.push(atom1);
+							atom1.bonds.push(atom0);
 						}
 					}
 					f && f(atom0);
@@ -976,8 +976,8 @@ $(function () {
 					for (var j in atoms) {
 						var atom1 = atoms[j];
 						if (atom1 != atom0 && hasCovalentBond(atom1, atom0)) {
-							atom1.bonds.push(atom0.serial);
-							atom0.bonds.push(atom1.serial);
+							atom1.bonds.push(atom0);
+							atom0.bonds.push(atom1);
 						}
 					}
 				}
@@ -987,8 +987,8 @@ $(function () {
 				if (!(curChain == atom.chain && curResi == atom.resi && curInsc == atom.insc)) {
 					refreshBonds(function (atom0) {
 						if (atom0.name === 'C' && atom.name === 'N' && hasCovalentBond(atom0, atom)) {
-							atom0.bonds.push(atom.serial);
-							atom.bonds.push(atom0.serial);
+							atom0.bonds.push(atom);
+							atom.bonds.push(atom0);
 						}
 					});
 					curChain = atom.chain;
@@ -1115,8 +1115,8 @@ $(function () {
 						for (var j = start_frame; j < atom.serial; ++j) {
 							var a = atoms[j];
 							if (a && hasCovalentBond(a, atom)) {
-								a.bonds.push(atom.serial);
-								atom.bonds.push(a.serial);
+								a.bonds.push(atom);
+								atom.bonds.push(a);
 							}
 						}
 					} else if (record === 'BRANCH') {
@@ -1128,8 +1128,8 @@ $(function () {
 					} else if (record === 'TORSDO') {
 						for (var j in rotors) {
 							var r = rotors[j];
-							atoms[r.x].bonds.push(r.y);
-							atoms[r.y].bonds.push(r.x);
+							atoms[r.x].bonds.push(atoms[r.y]);
+							atoms[r.y].bonds.push(atoms[r.x]);
 						}
 						var hbonds = ligand.hbonds = [], ds;
 						for (var pi in hbondDonors) {
