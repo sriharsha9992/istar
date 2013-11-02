@@ -1269,7 +1269,7 @@ $(function () {
 		}
 		render();
 	});
-	canvas.bind('mousewheel', function (e) {
+	canvas.bind('DOMMouseScroll mousewheel', function (e) {
 		e.preventDefault();
 		var scaleFactor = (rot.position.z - camera.position.z) * 0.85;
 		if (e.originalEvent.detail) { // Webkit
