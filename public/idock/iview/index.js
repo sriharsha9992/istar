@@ -957,7 +957,15 @@ $(function () {
 					atoms[atom.serial] = atom;
 				}
 			}
-			var curChain, curResi, curInsc, curResAtoms = [], me = this;
+			var surface = entities.surface = {
+				atoms: {},
+				representations: {},
+				refresh: function () {
+					refreshSurface(surface);
+				}
+			}, satoms = surface.atoms;
+			var hbondDonors = {}, hbondAcceptors = {};
+			var curChain, curResi, curInsc, curResAtoms = [];
 			var refreshBonds = function (f) {
 				var n = curResAtoms.length;
 				for (var j = 0; j < n; ++j) {
@@ -982,8 +990,18 @@ $(function () {
 					}
 				}
 			};
+			var pmin = new THREE.Vector3( 9999, 9999, 9999);
+			var pmax = new THREE.Vector3(-9999,-9999,-9999);
+			var psum = new THREE.Vector3();
 			for (var i in atoms) {
 				var atom = atoms[i];
+				if ((atoms[atom.serial - 1] === undefined || atoms[atom.serial - 1].resi !== atom.resi) && (atoms[atom.serial + 1] === undefined || atoms[atom.serial + 1].resi !== atom.resi)) {
+					atom.solvent = true;
+				} else {
+					if (atom.elem !== 'H') {
+						satoms[atom.serial] = atom;
+					}
+				}
 				if (!(curChain == atom.chain && curResi == atom.resi && curInsc == atom.insc)) {
 					refreshBonds(function (atom0) {
 						if (atom0.name === 'C' && atom.name === 'N' && hasCovalentBond(atom0, atom)) {
@@ -997,39 +1015,18 @@ $(function () {
 					curResAtoms.length = 0;
 				}
 				curResAtoms.push(atom);
-			}
-			refreshBonds();
-			var surface = entities.surface = {
-				atoms: {},
-				representations: {},
-				refresh: function () {
-					refreshSurface(surface);
-				}
-			}, satoms = surface.atoms;
-			var hbondDonors = {}, hbondAcceptors = {};
-			var pmin = new THREE.Vector3( 9999, 9999, 9999);
-			var pmax = new THREE.Vector3(-9999,-9999,-9999);
-			var psum = new THREE.Vector3();
-			for (var i in atoms) {
-				var atom = atoms[i];
-				if ((atoms[atom.serial - 1] === undefined || atoms[atom.serial - 1].resi !== atom.resi) && (atoms[atom.serial + 1] === undefined || atoms[atom.serial + 1].resi !== atom.resi)) {
-					atom.solvent = true;
-				} else {
-					if (atom.elem !== 'H') {
-						satoms[atom.serial] = atom;
-					}
-				}
-				psum.add(atom.coord);
-				pmin.min(atom.coord);
-				pmax.max(atom.coord);
+				var coord = atom.coord;
+				psum.add(coord);
+				pmin.min(coord);
+				pmax.max(coord);
 				if (!isHBondDonor(atom.elqt) && !isHBondAcceptor(atom.elqt)) continue;
 				var r2 = 0;
 				for (var j = 0; j < 3; ++j) {
-					if (atom.coord.getComponent(j) < b000.getComponent(j)) {
-						var d = atom.coord.getComponent(j) - b000.getComponent(j);
+					if (coord.getComponent(j) < b000.getComponent(j)) {
+						var d = coord.getComponent(j) - b000.getComponent(j);
 						r2 += d * d;
-					} else if (atom.coord.getComponent(j) > b111.getComponent(j)) {
-						var d = atom.coord.getComponent(j) - b111.getComponent(j);
+					} else if (coord.getComponent(j) > b111.getComponent(j)) {
+						var d = coord.getComponent(j) - b111.getComponent(j);
 						r2 += d * d;
 					}
 				}
@@ -1040,6 +1037,7 @@ $(function () {
 					hbondDonors[i] = atom;
 				}
 			}
+			refreshBonds();
 			surface.pmin = pmin;
 			surface.pmax = pmax;
 			var maxD = pmax.distanceTo(pmin);
