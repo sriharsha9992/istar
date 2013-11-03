@@ -427,6 +427,12 @@ $(function() {
 					$('#description').val(line.substr(62, 4));
 				}
 			}
+			plines.ions = [];
+			var peptides = {}, patoms = {};
+			var ligands = {};
+			var waters = {};
+			var ions = {}, cidx = 0;
+			var resi = {};
 			var curChain, curResi, curInsc, curResAtoms = [];
 			var refreshBonds = function (f) {
 				var n = curResAtoms.length;
@@ -442,38 +448,39 @@ $(function() {
 					f && f(atom0);
 				}
 			};
-			for (var i in atoms) {
-				var atom = atoms[i];
-				if (atom.het) continue;
-				if (!(curChain == atom.chain && curResi == atom.resi && curInsc == atom.insc)) {
-					refreshBonds(function (atom0) {
-						if (((atom0.name === 'C' && atom.name === 'N') || (atom0.name === 'O3\'' && atom.name === 'P')) && hasCovalentBond(atom0, atom)) {
-							atom0.bonds.push(atom);
-							atom.bonds.push(atom0);
-						}
-					});
-					curChain = atom.chain;
-					curResi = atom.resi;
-					curInsc = atom.insc;
-					curResAtoms.length = 0;
-				}
-				curResAtoms.push(atom);
-			}
-			refreshBonds();
-			plines.ions = [];
-			var peptides = {};
-			var ligands = {};
-			var waters = {};
-			var ions = {}, cidx = 0;
-			var resi = {};
 			var pmin = new THREE.Vector3( 9999, 9999, 9999);
 			var pmax = new THREE.Vector3(-9999,-9999,-9999);
 			var psum = new THREE.Vector3();
 			var cnt = 0;
 			for (var i in atoms) {
 				var atom = atoms[i];
+				var coord = atom.coord;
+				psum.add(coord);
+				pmin.min(coord);
+				pmax.max(coord);
+				++cnt;
 				if (atom.serial <= lastTerSerial) {
 					peptides[atom.serial] = atom;
+					patoms[atom.serial] = {
+						serial: atom.serial,
+						name: atom.name,
+						coord: atom.coord,
+						elem: atom.elem,
+					};
+					if (atom.het) continue;
+					if (!(curChain == atom.chain && curResi == atom.resi && curInsc == atom.insc)) {
+						refreshBonds(function (atom0) {
+							if (((atom0.name === 'C' && atom.name === 'N') || (atom0.name === 'O3\'' && atom.name === 'P')) && hasCovalentBond(atom0, atom)) {
+								atom0.bonds.push(atom);
+								atom.bonds.push(atom0);
+							}
+						});
+						curChain = atom.chain;
+						curResi = atom.resi;
+						curInsc = atom.insc;
+						curResAtoms.length = 0;
+					}
+					curResAtoms.push(atom);
 				} else {
 					if ((atoms[atom.serial - 1] === undefined || atoms[atom.serial - 1].resi !== atom.resi) && (atoms[atom.serial + 1] === undefined || atoms[atom.serial + 1].resi !== atom.resi)) {
 						if (atom.elem === 'O') {
@@ -495,11 +502,8 @@ $(function() {
 						}
 					}
 				}
-				++cnt;
-				psum.add(atom.coord);
-				pmin.min(atom.coord);
-				pmax.max(atom.coord);
 			}
+			refreshBonds();
 			surfacejs.onmessage = function (e) {
 				var verts = e.data.verts;
 				var faces = e.data.faces;
@@ -521,16 +525,6 @@ $(function() {
 				status.hide();
 			};
 			status.show();
-			var patoms = {};
-			Object.keys(peptides).forEach(function (serial) {
-				var atom = peptides[serial];
-				patoms[serial] = {
-					serial: atom.serial,
-					name: atom.name,
-					coord: atom.coord,
-					elem: atom.elem,
-				};
-			});
 			surfacejs.postMessage({
 				min: pmin,
 				max: pmax,
