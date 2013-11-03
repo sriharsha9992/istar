@@ -647,8 +647,6 @@ $(function () {
 	};
 
 	var canvas = $('canvas');
-	canvas.width('100%');
-	canvas.height('800px');
 	var renderer = new THREE.WebGLRenderer({
 		canvas: canvas.get(0),
 		antialias: true,

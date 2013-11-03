@@ -267,8 +267,6 @@ $(function() {
 	var linewidth = 2;
 
 	var canvas = $('canvas');
-	canvas.width('100%');
-	canvas.height('800px');
 	canvas.bind('contextmenu', function (e) {
 		e.preventDefault();
 	});
