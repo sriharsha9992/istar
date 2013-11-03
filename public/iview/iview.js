@@ -1266,21 +1266,21 @@ var iview = (function () {
 				break;
 		}
 
-		switch (this.options.waters) {
-			case 'sphere':
-				this.createSphereRepresentation(this.waters, this.sphereRadius);
-				break;
-			case 'dot':
-				this.createSphereRepresentation(this.waters, this.sphereRadius, false, 0.3);
-				break;
-		}
-
 		switch (this.options.ions) {
 			case 'sphere':
 				this.createSphereRepresentation(this.ions, this.sphereRadius);
 				break;
 			case 'dot':
 				this.createSphereRepresentation(this.ions, this.sphereRadius, false, 0.3);
+				break;
+		}
+
+		switch (this.options.waters) {
+			case 'sphere':
+				this.createSphereRepresentation(this.waters, this.sphereRadius);
+				break;
+			case 'dot':
+				this.createSphereRepresentation(this.waters, this.sphereRadius, false, 0.3);
 				break;
 		}
 
