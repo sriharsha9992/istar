@@ -600,15 +600,18 @@ var iview = (function () {
 			}
 			me.render();
 		});
-		this.container.bind('DOMMouseScroll mousewheel', function (e) {
+		this.container.bind('mousewheel', function (e) {
 			e.preventDefault();
 			if (!me.scene) return;
 			var scaleFactor = (me.rot.position.z - me.camera_z) * 0.85;
-			if (e.originalEvent.detail) { // Firefox
-				me.rot.position.z += scaleFactor * e.originalEvent.detail * 0.1;
-			} else if (e.originalEvent.wheelDelta) { // Webkit
-				me.rot.position.z -= scaleFactor * e.originalEvent.wheelDelta * 0.0025;
-			}
+			me.rot.position.z -= scaleFactor * e.originalEvent.wheelDelta * 0.0025;
+			me.render();
+		});
+		this.container.bind('DOMMouseScroll', function (e) {
+			e.preventDefault();
+			if (!me.scene) return;
+			var scaleFactor = (me.rot.position.z - me.camera_z) * 0.85;
+			me.rot.position.z += scaleFactor * e.originalEvent.detail * 0.1;
 			me.render();
 		});
 	}
