@@ -430,7 +430,7 @@ $(function() {
 			plines.ions = [];
 			var peptides = {}, patoms = {};
 			var ligands = {}, resi = {};
-			var ions = {}, aidx = 0;
+			var ions = {}, aidx = 0, ilines = {};
 			var waters = {};
 			var curChain, curResi, curInsc, curResAtoms = [];
 			var refreshBonds = function (f) {
@@ -486,7 +486,12 @@ $(function() {
 					} else {
 						ions[atom.serial] = atom;
 						while (parseInt(alines[aidx].substr(6, 5)) != atom.serial) ++aidx;
-						plines.ions.push(alines[aidx++]);
+						var line = alines[aidx++];
+						var chain = line.substr(21, 1);
+						if (ilines[chain] === undefined) {
+							ilines[chain] = [];
+						}
+						ilines[chain].push(line);
 					}
 				} else {
 					ligands[atom.serial] = atom;
@@ -527,11 +532,15 @@ $(function() {
 				max: pmax,
 				atoms: patoms,
 			});
-			psrc = Object.keys(plines).map(function (chain) {
-				return plines[chain].map(function (line) {
-					return line + '\n';
+			var concat = function (lines) {
+				return Object.keys(lines).map(function (chain) {
+					return lines[chain].map(function (line) {
+						return line + '\n';
+					}).join('');
 				}).join('');
-			}).join('');
+			};
+			psrc = concat(plines) + concat(ilines);
+			console.log(psrc);
 			var pavg = psum.clone().multiplyScalar(1 / cnt);
 			var maxD = pmax.distanceTo(pmin);
 			sn = -maxD / 2;
