@@ -395,6 +395,7 @@ $(function() {
 				var line = lines[i];
 				var record = line.substr(0, 6);
 				if (record === 'ATOM  ' || record === 'HETATM') {
+					alines.push(line);
 					var atom = {
 						het: record[0] === 'H',
 						serial: parseInt(line.substr(6, 5)),
@@ -407,7 +408,6 @@ $(function() {
 						elem: line.substr(76, 2).replace(/ /g, ''),
 						bonds: [],
 					};
-					alines.push(line);
 					if (atom.elem === 'H') continue;
 					atom.color = atomColors[atom.elem] || defaultAtomColor;
 					atoms[atom.serial] = atom;
@@ -419,10 +419,10 @@ $(function() {
 						atoms[from].bonds.push(atoms[to]);
 					}
 				} else if (record === 'TER   ') {
-					lastTerSerial = parseInt(line.substr(6, 5));
 					alines.push(line);
 					plines[line.substr(21, 1)] = alines;
 					alines = [];
+					lastTerSerial = parseInt(line.substr(6, 5));
 				} else if (record === 'HEADER') {
 					$('#description').val(line.substr(62, 4));
 				}
