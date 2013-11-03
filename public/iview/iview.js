@@ -543,11 +543,11 @@ var iview = (function () {
 		};
 
 		var me = this;
-		this.container.bind('mouseup touchend', function (e) {
-			me.isDragging = false;
-		});
 		this.container.bind('contextmenu', function (e) {
 			e.preventDefault();
+		});
+		this.container.bind('mouseup touchend', function (e) {
+			me.isDragging = false;
 		});
 		this.container.bind('mousedown touchstart', function (e) {
 			e.preventDefault();
@@ -557,7 +557,6 @@ var iview = (function () {
 				x = e.originalEvent.targetTouches[0].pageX;
 				y = e.originalEvent.targetTouches[0].pageY;
 			}
-			if (x === undefined) return;
 			me.isDragging = true;
 			me.mouseButton = e.which;
 			me.mouseStartX = x;
@@ -568,17 +567,6 @@ var iview = (function () {
 			me.cslabNear = me.slabNear;
 			me.cslabFar = me.slabFar;
 		});
-		this.container.bind('DOMMouseScroll mousewheel', function (e) { // Zoom
-			e.preventDefault();
-			if (!me.scene) return;
-			var scaleFactor = (me.rot.position.z - me.camera_z) * 0.85;
-			if (e.originalEvent.detail) { // Webkit
-				me.rot.position.z += scaleFactor * e.originalEvent.detail * 0.1;
-			} else if (e.originalEvent.wheelDelta) { // Firefox
-				me.rot.position.z -= scaleFactor * e.originalEvent.wheelDelta * 0.0025;
-			}
-			me.render();
-		});
 		this.container.bind('mousemove touchmove', function (e) {
 			e.preventDefault();
 			if (!me.scene) return;
@@ -588,7 +576,6 @@ var iview = (function () {
 				x = e.originalEvent.targetTouches[0].pageX;
 				y = e.originalEvent.targetTouches[0].pageY;
 			}
-			if (x === undefined) return;
 			var dx = (x - me.mouseStartX) / me.container.width();
 			var dy = (y - me.mouseStartY) / me.container.height();
 			if (!dx && !dy) return;
@@ -610,6 +597,17 @@ var iview = (function () {
 					var rs = Math.sin(r * Math.PI) / r;
 					me.rot.quaternion = new THREE.Quaternion(1, 0, 0, 0).multiply(new THREE.Quaternion(Math.cos(r * Math.PI), 0, rs * dx, rs * dy)).multiply(me.cq);
 				}
+			}
+			me.render();
+		});
+		this.container.bind('DOMMouseScroll mousewheel', function (e) {
+			e.preventDefault();
+			if (!me.scene) return;
+			var scaleFactor = (me.rot.position.z - me.camera_z) * 0.85;
+			if (e.originalEvent.detail) { // Firefox
+				me.rot.position.z += scaleFactor * e.originalEvent.detail * 0.1;
+			} else if (e.originalEvent.wheelDelta) { // Webkit
+				me.rot.position.z -= scaleFactor * e.originalEvent.wheelDelta * 0.0025;
 			}
 			me.render();
 		});
