@@ -685,88 +685,64 @@ $(function () {
 		mesh.matrix.multiply(new THREE.Matrix4().makeScale(radius, radius, p0.distanceTo(p1))).multiply(new THREE.Matrix4().makeRotationX(Math.PI * 0.5));
 		return mesh;
 	};
-	var createSphereRepresentation = function (atoms) {
-		var obj = new THREE.Object3D();
+	var createRepresentationSub = function (atoms, f0, f01) {
 		var ged = new THREE.Geometry();
 		for (var i in atoms) {
-		}
-		for (var i in atoms) {
 			var atom0 = atoms[i];
+			f0 && f0(atom0);
 			for (var j in atom0.bonds) {
 				var atom1 = atom0.bonds[j];
 				if (atom1.serial < atom0.serial) continue;
 				if (atom1.chain === atom0.chain && ((atom1.resi === atom0.resi) || (atom0.name === 'C' && atom1.name === 'N') || (atom0.name === 'O3\'' && atom1.name === 'P'))) {
+					f01 && f01(atom0, atom1);
 				} else {
 					ged.vertices.push(atom0.coord);
 					ged.vertices.push(atom1.coord);
 				}
 			}
-			obj.add(createSphere(atom0, sphereRadius));
 		}
 		if (ged.vertices.length) {
 			ged.computeLineDistances();
-			obj.add(new THREE.Line(ged, new THREE.LineDashedMaterial({ linewidth: linewidth, color: defaultBondColor, dashSize: 0.25, gapSize: 0.125 }), THREE.LinePieces));
+			return new THREE.Line(ged, new THREE.LineDashedMaterial({ linewidth: linewidth, color: defaultBondColor, dashSize: 0.25, gapSize: 0.125 }), THREE.LinePieces);
 		}
+	};
+	var createSphereRepresentation = function (atoms) {
+		var obj = new THREE.Object3D();
+		obj.add(createRepresentationSub(atoms, function (atom0) {
+			obj.add(createSphere(atom0, sphereRadius));
+		}));
 		return obj;
 	};
 	var createStickRepresentation = function (atoms, atomR, bondR) {
 		var obj = new THREE.Object3D();
-		var ged = new THREE.Geometry();
-		for (var i in atoms) {
-			var atom0 = atoms[i];
-			for (var j in atom0.bonds) {
-				var atom1 = atom0.bonds[j];
-				if (atom1.serial < atom0.serial) continue;
-				if (atom1.chain === atom0.chain && ((atom1.resi === atom0.resi) || (atom0.name === 'C' && atom1.name === 'N') || (atom0.name === 'O3\'' && atom1.name === 'P'))) {
-					var mp = atom0.coord.clone().add(atom1.coord).multiplyScalar(0.5);
-					obj.add(createCylinder(atom0.coord, mp, bondR, atom0.color));
-					obj.add(createCylinder(atom1.coord, mp, bondR, atom1.color));
-				} else {
-					ged.vertices.push(atom0.coord);
-					ged.vertices.push(atom1.coord);
-				}
-			}
+		obj.add(createRepresentationSub(atoms, function (atom0) {
 			obj.add(createSphere(atom0, atomR, true));
-		}
-		if (ged.vertices.length) {
-			ged.computeLineDistances();
-			obj.add(new THREE.Line(ged, new THREE.LineDashedMaterial({ linewidth: linewidth, color: defaultBondColor, dashSize: 0.25, gapSize: 0.125 }), THREE.LinePieces));
-		}
+		}, function (atom0, atom1) {
+			var mp = atom0.coord.clone().add(atom1.coord).multiplyScalar(0.5);
+			obj.add(createCylinder(atom0.coord, mp, bondR, atom0.color));
+			obj.add(createCylinder(atom1.coord, mp, bondR, atom1.color));
+		}));
 		return obj;
 	};
 	var createLineRepresentation = function (atoms) {
 		var obj = new THREE.Object3D();
 		var geo = new THREE.Geometry();
-		var ged = new THREE.Geometry();
-		for (var i in atoms) {
-			var atom0 = atoms[i];
-			for (var j in atom0.bonds) {
-				var atom1 = atom0.bonds[j];
-				if (atom1.serial < atom0.serial) continue;
-				if (atom1.chain === atom0.chain && ((atom1.resi === atom0.resi) || (atom0.name === 'C' && atom1.name === 'N') || (atom0.name === 'O3\'' && atom1.name === 'P'))) {
-					var mp = atom0.coord.clone().add(atom1.coord).multiplyScalar(0.5);
-					geo.vertices.push(atom0.coord);
-					geo.vertices.push(mp);
-					geo.vertices.push(atom1.coord);
-					geo.vertices.push(mp);
-					geo.colors.push(atom0.color);
-					geo.colors.push(atom0.color);
-					geo.colors.push(atom1.color);
-					geo.colors.push(atom1.color);
-				} else {
-					ged.vertices.push(atom0.coord);
-					ged.vertices.push(atom1.coord);
-				}
-			}
+		obj.add(new THREE.Line(geo, new THREE.LineBasicMaterial({ linewidth: linewidth, vertexColors: true }), THREE.LinePieces));
+		obj.add(createRepresentationSub(atoms, function (atom0) {
 			if (atom0.solvent) {
 				obj.add(createSphere(atom0, sphereRadius, false, 0.2));
 			}
-		}
-		obj.add(new THREE.Line(geo, new THREE.LineBasicMaterial({ linewidth: linewidth, vertexColors: true }), THREE.LinePieces));
-		if (ged.vertices.length) {
-			ged.computeLineDistances();
-			obj.add(new THREE.Line(ged, new THREE.LineDashedMaterial({ linewidth: linewidth, color: defaultBondColor, dashSize: 0.25, gapSize: 0.125 }), THREE.LinePieces));
-		}
+		}, function (atom0, atom1) {
+			var mp = atom0.coord.clone().add(atom1.coord).multiplyScalar(0.5);
+			geo.vertices.push(atom0.coord);
+			geo.vertices.push(mp);
+			geo.vertices.push(atom1.coord);
+			geo.vertices.push(mp);
+			geo.colors.push(atom0.color);
+			geo.colors.push(atom0.color);
+			geo.colors.push(atom1.color);
+			geo.colors.push(atom1.color);
+		}));
 		return obj;
 	};
 	var createSurfaceRepresentation = function (entity, type) {
