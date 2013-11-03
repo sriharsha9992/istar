@@ -550,59 +550,46 @@ $(function() {
 			rot.position.z = maxD * 0.35 / Math.tan(Math.PI / 180.0 * 10) - 150;
 			rot.quaternion = new THREE.Quaternion(1, 0, 0, 0);
 			mdl.position = pavg.clone().multiplyScalar(-1);
-			var geo = new THREE.Geometry();
 			var ged = new THREE.Geometry();
-			for (var i in peptides) {
-				var atom0 = peptides[i];
-				for (var j in atom0.bonds) {
-					var atom1 = atom0.bonds[j];
-					if (atom1.serial < atom0.serial) continue;
-					if (atom1.chain === atom0.chain && ((atom1.resi === atom0.resi) || (atom0.name === 'C' && atom1.name === 'N') || (atom0.name === 'O3\'' && atom1.name === 'P'))) {
-						var mp = atom0.coord.clone().add(atom1.coord).multiplyScalar(0.5);
-						geo.vertices.push(atom0.coord);
-						geo.vertices.push(mp);
-						geo.vertices.push(atom1.coord);
-						geo.vertices.push(mp);
-						geo.colors.push(atom0.color);
-						geo.colors.push(atom0.color);
-						geo.colors.push(atom1.color);
-						geo.colors.push(atom1.color);
-					} else {
-						ged.vertices.push(atom0.coord);
-						ged.vertices.push(atom1.coord);
+			var model = function (atoms, f0, f01) {
+				for (var i in atoms) {
+					var atom0 = atoms[i];
+					f0 && f0(atom0);
+					for (var j in atom0.bonds) {
+						var atom1 = atom0.bonds[j];
+						if (atom1.serial < atom0.serial) continue;
+						if (atom1.chain === atom0.chain && ((atom1.resi === atom0.resi) || (atom0.name === 'C' && atom1.name === 'N') || (atom0.name === 'O3\'' && atom1.name === 'P'))) {
+							f01 && f01(atom0, atom1);
+						} else {
+							ged.vertices.push(atom0.coord);
+							ged.vertices.push(atom1.coord);
+						}
 					}
 				}
-			}
+			};
+			var geo = new THREE.Geometry();
+			model(peptides, undefined, function (atom0, atom1) {
+				var mp = atom0.coord.clone().add(atom1.coord).multiplyScalar(0.5);
+				geo.vertices.push(atom0.coord);
+				geo.vertices.push(mp);
+				geo.vertices.push(atom1.coord);
+				geo.vertices.push(mp);
+				geo.colors.push(atom0.color);
+				geo.colors.push(atom0.color);
+				geo.colors.push(atom1.color);
+				geo.colors.push(atom1.color);
+			});
 			mdl.add(new THREE.Line(geo, new THREE.LineBasicMaterial({ linewidth: linewidth, vertexColors: true }), THREE.LinePieces));
-			for (var i in ligands) {
-				var atom0 = ligands[i];
-				for (var j in atom0.bonds) {
-					var atom1 = atom0.bonds[j];
-					if (atom1.serial < atom0.serial) continue;
-					if (atom1.chain === atom0.chain && ((atom1.resi === atom0.resi) || (atom0.name === 'C' && atom1.name === 'N') || (atom0.name === 'O3\'' && atom1.name === 'P'))) {
-						var mp = atom0.coord.clone().add(atom1.coord).multiplyScalar(0.5);
-						mdl.add(createCylinder(atom0.coord, mp, cylinderRadius, atom0.color));
-						mdl.add(createCylinder(atom1.coord, mp, cylinderRadius, atom1.color));
-					} else {
-						ged.vertices.push(atom0.coord);
-						ged.vertices.push(atom1.coord);
-					}
-				}
+			model(ligands, function (atom0) {
 				mdl.add(createSphere(atom0, cylinderRadius));
-			}
-			for (var i in ions) {
-				var atom0 = ions[i];
-				for (var j in atom0.bonds) {
-					var atom1 = atom0.bonds[j];
-					if (atom1.serial < atom0.serial) continue;
-					if (atom1.chain === atom0.chain && ((atom1.resi === atom0.resi) || (atom0.name === 'C' && atom1.name === 'N') || (atom0.name === 'O3\'' && atom1.name === 'P'))) {
-					} else {
-						ged.vertices.push(atom0.coord);
-						ged.vertices.push(atom1.coord);
-					}
-				}
-				mdl.add(createSphere(ions[i], sphereRadius));
-			}
+			}, function (atom0, atom1) {
+				var mp = atom0.coord.clone().add(atom1.coord).multiplyScalar(0.5);
+				mdl.add(createCylinder(atom0.coord, mp, cylinderRadius, atom0.color));
+				mdl.add(createCylinder(atom1.coord, mp, cylinderRadius, atom1.color));
+			});
+			model(ions, function (atom0) {
+				mdl.add(createSphere(atom0, sphereRadius));
+			});
 			for (var i in waters) {
 				mdl.add(createSphere(waters[i], sphereRadius));
 			}
