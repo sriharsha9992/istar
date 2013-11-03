@@ -579,24 +579,21 @@ var iview = (function () {
 			var dx = (x - me.mouseStartX) / me.container.width();
 			var dy = (y - me.mouseStartY) / me.container.height();
 			if (!dx && !dy) return;
-			if (e.ctrlKey) { // Apply to ligand only
-			} else {
-				if (me.mouseButton == 3 && e.shiftKey) { // Slab
-					me.slabNear = me.cslabNear + dx * 100;
-					me.slabFar = me.cslabFar + dy * 100;
-				} else if (me.mouseButton == 3) { // Translate
-					var scaleFactor = (me.rot.position.z - me.camera_z) * 0.85;
-					if (scaleFactor < 20) scaleFactor = 20;
-					me.mdl.position = me.cp.clone().add(new THREE.Vector3(-dx * scaleFactor, -dy * scaleFactor, 0).applyQuaternion(me.rot.quaternion.clone().inverse().normalize()));
-				} else if (me.mouseButton == 2) { // Zoom
-					var scaleFactor = (me.rot.position.z - me.camera_z) * 0.85;
-					if (scaleFactor < 80) scaleFactor = 80;
-					me.rot.position.z = me.cz - dy * scaleFactor;
-				} else if (me.mouseButton == 1) { // Rotate
-					var r = Math.sqrt(dx * dx + dy * dy);
-					var rs = Math.sin(r * Math.PI) / r;
-					me.rot.quaternion = new THREE.Quaternion(1, 0, 0, 0).multiply(new THREE.Quaternion(Math.cos(r * Math.PI), 0, rs * dx, rs * dy)).multiply(me.cq);
-				}
+			if (e.ctrlKey && e.shiftKey) { // Slab
+				me.slabNear = me.cslabNear + dx * 100;
+				me.slabFar  = me.cslabFar  + dy * 100;
+			} else if (e.ctrlKey || me.mouseButton == 3) { // Translate
+				var scaleFactor = (me.rot.position.z - me.camera_z) * 0.85;
+				if (scaleFactor < 20) scaleFactor = 20;
+				me.mdl.position = me.cp.clone().add(new THREE.Vector3(-dx * scaleFactor, -dy * scaleFactor, 0).applyQuaternion(me.rot.quaternion.clone().inverse().normalize()));
+			} else if (e.shiftKey || me.mouseButton == 2) { // Zoom
+				var scaleFactor = (me.rot.position.z - me.camera_z) * 0.85;
+				if (scaleFactor < 80) scaleFactor = 80;
+				me.rot.position.z = me.cz - dy * scaleFactor;
+			} else { // Rotate
+				var r = Math.sqrt(dx * dx + dy * dy);
+				var rs = Math.sin(r * Math.PI) / r;
+				me.rot.quaternion = new THREE.Quaternion(1, 0, 0, 0).multiply(new THREE.Quaternion(Math.cos(r * Math.PI), 0, rs * dx, rs * dy)).multiply(me.cq);
 			}
 			me.render();
 		});
