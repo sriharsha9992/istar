@@ -390,7 +390,7 @@ $(function() {
 			rot.remove(mdl);
 			mdl = new THREE.Object3D();
 			rot.add(mdl);
-			var lines = reader.result.split('\n'), atoms = {}, lastTerSerial, clines = [], plines = {};
+			var lines = reader.result.split('\n'), atoms = {}, lastTerSerial, alines = [], plines = {};
 			for (var i in lines) {
 				var line = lines[i];
 				var record = line.substr(0, 6);
@@ -407,7 +407,7 @@ $(function() {
 						elem: line.substr(76, 2).replace(/ /g, ''),
 						bonds: [],
 					};
-					clines.push(line);
+					alines.push(line);
 					if (atom.elem === 'H') continue;
 					atom.color = atomColors[atom.elem] || defaultAtomColor;
 					atoms[atom.serial] = atom;
@@ -420,9 +420,9 @@ $(function() {
 					}
 				} else if (record === 'TER   ') {
 					lastTerSerial = parseInt(line.substr(6, 5));
-					clines.push(line);
-					plines[line.substr(21, 1)] = clines;
-					clines = [];
+					alines.push(line);
+					plines[line.substr(21, 1)] = alines;
+					alines = [];
 				} else if (record === 'HEADER') {
 					$('#description').val(line.substr(62, 4));
 				}
@@ -430,7 +430,7 @@ $(function() {
 			plines.ions = [];
 			var peptides = {}, patoms = {};
 			var ligands = {}, resi = {};
-			var ions = {}, cidx = 0;
+			var ions = {}, aidx = 0;
 			var waters = {};
 			var curChain, curResi, curInsc, curResAtoms = [];
 			var refreshBonds = function (f) {
@@ -485,8 +485,8 @@ $(function() {
 						waters[atom.serial] = atom;
 					} else {
 						ions[atom.serial] = atom;
-						while (parseInt(clines[cidx].substr(6, 5)) != atom.serial) ++cidx;
-						plines.ions.push(clines[cidx++]);
+						while (parseInt(alines[aidx].substr(6, 5)) != atom.serial) ++aidx;
+						plines.ions.push(alines[aidx++]);
 					}
 				} else {
 					ligands[atom.serial] = atom;
