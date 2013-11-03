@@ -429,10 +429,9 @@ $(function() {
 			}
 			plines.ions = [];
 			var peptides = {}, patoms = {};
-			var ligands = {};
-			var waters = {};
+			var ligands = {}, resi = {};
 			var ions = {}, cidx = 0;
-			var resi = {};
+			var waters = {};
 			var curChain, curResi, curInsc, curResAtoms = [];
 			var refreshBonds = function (f) {
 				var n = curResAtoms.length;
@@ -481,25 +480,23 @@ $(function() {
 						curResAtoms.length = 0;
 					}
 					curResAtoms.push(atom);
+				} else if ((atoms[atom.serial - 1] === undefined || atoms[atom.serial - 1].resi !== atom.resi) && (atoms[atom.serial + 1] === undefined || atoms[atom.serial + 1].resi !== atom.resi)) {
+					if (atom.elem === 'O') {
+						waters[atom.serial] = atom;
+					} else {
+						ions[atom.serial] = atom;
+						while (parseInt(clines[cidx].substr(6, 5)) != atom.serial) ++cidx;
+						plines.ions.push(clines[cidx++]);
+					}
 				} else {
-					if ((atoms[atom.serial - 1] === undefined || atoms[atom.serial - 1].resi !== atom.resi) && (atoms[atom.serial + 1] === undefined || atoms[atom.serial + 1].resi !== atom.resi)) {
-						if (atom.elem === 'O') {
-							waters[atom.serial] = atom;
-						} else {
-							ions[atom.serial] = atom;
-							while (parseInt(clines[cidx].substr(6, 5)) != atom.serial) ++cidx;
-							plines.ions.push(clines[cidx++]);
+					ligands[atom.serial] = atom;
+					var key = atom.chain + atom.resi;
+					if (resi[key] === undefined) {
+						resi[key] = {
+							beg: atom.serial,
 						}
 					} else {
-						ligands[atom.serial] = atom;
-						var key = atom.chain + atom.resi;
-						if (resi[key] === undefined) {
-							resi[key] = {
-								beg: atom.serial,
-							}
-						} else {
-							resi[key].end = atom.serial;
-						}
+						resi[key].end = atom.serial;
 					}
 				}
 			}

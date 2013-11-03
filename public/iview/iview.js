@@ -673,8 +673,8 @@ var iview = (function () {
 		}
 		this.peptides = {};
 		this.ligands = {};
-		this.waters = {};
 		this.ions = {};
+		this.waters = {};
 		var curChain, curResi, curInsc, curResAtoms = [], me = this;
 		var refreshBonds = function (f) {
 			var n = curResAtoms.length;
