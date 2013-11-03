@@ -427,7 +427,6 @@ $(function() {
 					$('#description').val(line.substr(62, 4));
 				}
 			}
-			plines.ions = [];
 			var peptides = {}, patoms = {};
 			var ligands = {}, resi = {};
 			var ions = {}, aidx = 0, ilines = {};
