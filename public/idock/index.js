@@ -390,7 +390,7 @@ $(function() {
 			rot.remove(mdl);
 			mdl = new THREE.Object3D();
 			rot.add(mdl);
-			var lines = reader.result.split('\n'), atoms = {}, lastTerSerial, alines = [], plines = {};
+			var lines = reader.result.split('\n'), atoms = {}, lastTerSerial, alines = [], clines = [], plines = {};
 			for (var i in lines) {
 				var line = lines[i];
 				var record = line.substr(0, 6);
@@ -412,6 +412,7 @@ $(function() {
 					atom.color = atomColors[atom.elem] || defaultAtomColor;
 					atoms[atom.serial] = atom;
 				} else if (record === 'CONECT') {
+					clines.push(line);
 					var from = parseInt(line.substr(6, 5));
 					for (var j = 0; j < 4; ++j) {
 						var to = parseInt(line.substr([11, 16, 21, 26][j], 5));
@@ -532,14 +533,16 @@ $(function() {
 				atoms: patoms,
 			});
 			var concat = function (lines) {
-				return Object.keys(lines).map(function (chain) {
-					return lines[chain].map(function (line) {
-						return line + '\n';
-					}).join('');
+				return lines.map(function (line) {
+					return line + '\n';
 				}).join('');
 			};
-			psrc = concat(plines) + concat(ilines);
-			console.log(psrc);
+			var concat2 = function (lines) {
+				return Object.keys(lines).map(function (chain) {
+					return concat(lines[chain]);
+				}).join('');
+			};
+			psrc = concat2(plines) + concat2(ilines) + concat(clines);
 			var pavg = psum.clone().multiplyScalar(1 / cnt);
 			var maxD = pmax.distanceTo(pmin);
 			sn = -maxD / 2;
