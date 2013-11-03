@@ -780,80 +780,61 @@ var iview = (function () {
 		this.mdl.add(mesh);
 	};
 
-	iview.prototype.createSphereRepresentation = function (atoms, defaultRadius, forceDefault, scale) {
+	iview.prototype.createRepresentationSub = function (atoms, f0, f01) {
 		var ged = new THREE.Geometry();
 		for (var i in atoms) {
 			var atom0 = atoms[i];
+			f0 && f0(atom0);
 			for (var j in atom0.bonds) {
 				var atom1 = atom0.bonds[j];
 				if (atom1.serial < atom0.serial) continue;
 				if (atom1.chain === atom0.chain && ((atom1.resi === atom0.resi) || (atom0.name === 'C' && atom1.name === 'N') || (atom0.name === 'O3\'' && atom1.name === 'P'))) {
+					f01 && f01(atom0, atom1);
 				} else {
 					ged.vertices.push(atom0.coord);
 					ged.vertices.push(atom1.coord);
 				}
 			}
-			this.createSphere(atom0, defaultRadius, forceDefault, scale);
 		}
 		if (ged.vertices.length) {
 			ged.computeLineDistances();
 			this.mdl.add(new THREE.Line(ged, new THREE.LineDashedMaterial({ linewidth: this.linewidth, color: this.defaultBondColor, dashSize: 0.25, gapSize: 0.125 }), THREE.LinePieces));
 		}
+	};
+
+	iview.prototype.createSphereRepresentation = function (atoms, defaultRadius, forceDefault, scale) {
+		var me = this;
+		this.createRepresentationSub(atoms, function (atom0) {
+			me.createSphere(atom0, defaultRadius, forceDefault, scale);
+		});
 	};
 
 	iview.prototype.createStickRepresentation = function (atoms, atomR, bondR, scale) {
-		var ged = new THREE.Geometry();
-		for (var i in atoms) {
-			var atom0 = atoms[i];
-			for (var j in atom0.bonds) {
-				var atom1 = atom0.bonds[j];
-				if (atom1.serial < atom0.serial) continue;
-				if (atom1.chain === atom0.chain && ((atom1.resi === atom0.resi) || (atom0.name === 'C' && atom1.name === 'N') || (atom0.name === 'O3\'' && atom1.name === 'P'))) {
-					var mp = atom0.coord.clone().add(atom1.coord).multiplyScalar(0.5);
-					this.createCylinder(atom0.coord, mp, bondR, atom0.color);
-					this.createCylinder(atom1.coord, mp, bondR, atom1.color);
-				} else {
-					ged.vertices.push(atom0.coord);
-					ged.vertices.push(atom1.coord);
-				}
-			}
-			this.createSphere(atom0, atomR, !scale, scale);
-		}
-		if (ged.vertices.length) {
-			ged.computeLineDistances();
-			this.mdl.add(new THREE.Line(ged, new THREE.LineDashedMaterial({ linewidth: this.linewidth, color: this.defaultBondColor, dashSize: 0.25, gapSize: 0.125 }), THREE.LinePieces));
-		}
+		var me = this;
+		this.createRepresentationSub(atoms, function (atom0) {
+			me.createSphere(atom0, atomR, !scale, scale);
+		}, function (atom0, atom1) {
+			var mp = atom0.coord.clone().add(atom1.coord).multiplyScalar(0.5);
+			me.createCylinder(atom0.coord, mp, bondR, atom0.color);
+			me.createCylinder(atom1.coord, mp, bondR, atom1.color);
+		});
 	};
 
 	iview.prototype.createLineRepresentation = function (atoms) {
+		var me = this;
 		var geo = new THREE.Geometry();
-		var ged = new THREE.Geometry();
-		for (var i in atoms) {
-			var atom0 = atoms[i];
-			for (var j in atom0.bonds) {
-				var atom1 = atom0.bonds[j];
-				if (atom1.serial < atom0.serial) continue;
-				if (atom1.chain === atom0.chain && ((atom1.resi === atom0.resi) || (atom0.name === 'C' && atom1.name === 'N') || (atom0.name === 'O3\'' && atom1.name === 'P'))) {
-					var mp = atom0.coord.clone().add(atom1.coord).multiplyScalar(0.5);
-					geo.vertices.push(atom0.coord);
-					geo.vertices.push(mp);
-					geo.vertices.push(atom1.coord);
-					geo.vertices.push(mp);
-					geo.colors.push(atom0.color);
-					geo.colors.push(atom0.color);
-					geo.colors.push(atom1.color);
-					geo.colors.push(atom1.color);
-				} else {
-					ged.vertices.push(atom0.coord);
-					ged.vertices.push(atom1.coord);
-				}
-			}
-		}
+		this.createRepresentationSub(atoms, undefined, function (atom0, atom1) {
+			var mp = atom0.coord.clone().add(atom1.coord).multiplyScalar(0.5);
+			geo.vertices.push(atom0.coord);
+			geo.vertices.push(mp);
+			geo.vertices.push(atom1.coord);
+			geo.vertices.push(mp);
+			geo.colors.push(atom0.color);
+			geo.colors.push(atom0.color);
+			geo.colors.push(atom1.color);
+			geo.colors.push(atom1.color);
+		});
 		this.mdl.add(new THREE.Line(geo, new THREE.LineBasicMaterial({ linewidth: this.linewidth, vertexColors: true }), THREE.LinePieces));
-		if (ged.vertices.length) {
-			ged.computeLineDistances();
-			this.mdl.add(new THREE.Line(ged, new THREE.LineDashedMaterial({ linewidth: this.linewidth, color: this.defaultBondColor, dashSize: 0.25, gapSize: 0.125 }), THREE.LinePieces));
-		}
 	};
 
 	iview.prototype.subdivide = function (_points, DIV) { // Catmull-Rom subdivision
