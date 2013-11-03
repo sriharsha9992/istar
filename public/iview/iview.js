@@ -696,6 +696,11 @@ var iview = (function () {
 		var cnt = 0;
 		for (var i in this.atoms) {
 			var atom = this.atoms[i];
+			var coord = atom.coord;
+			psum.add(coord);
+			pmin.min(coord);
+			pmax.max(coord);
+			++cnt;
 			if (atom.serial <= this.lastTerSerial) {
 				this.peptides[atom.serial] = atom;
 				for (var j in helices) {
@@ -714,37 +719,29 @@ var iview = (function () {
 						if (atom.resi == sheet.terminalResidue && atom.insc == sheet.terminalInscode) atom.ssend = true;
 					}
 				}
-				if (!atom.het) {
-					if (!(curChain == atom.chain && curResi == atom.resi && curInsc == atom.insc)) {
-						refreshBonds(function (atom0) {
-							if (((atom0.name === 'C' && atom.name === 'N') || (atom0.name === 'O3\'' && atom.name === 'P')) && me.hasCovalentBond(atom0, atom)) {
-								atom0.bonds.push(atom);
-								atom.bonds.push(atom0);
-							}
-						});
-						curChain = atom.chain;
-						curResi = atom.resi;
-						curInsc = atom.insc;
-						curResAtoms.length = 0;
-					}
-					curResAtoms.push(atom);
+				if (atom.het) continue;
+				if (!(curChain == atom.chain && curResi == atom.resi && curInsc == atom.insc)) {
+					refreshBonds(function (atom0) {
+						if (((atom0.name === 'C' && atom.name === 'N') || (atom0.name === 'O3\'' && atom.name === 'P')) && me.hasCovalentBond(atom0, atom)) {
+							atom0.bonds.push(atom);
+							atom.bonds.push(atom0);
+						}
+					});
+					curChain = atom.chain;
+					curResi = atom.resi;
+					curInsc = atom.insc;
+					curResAtoms.length = 0;
+				}
+				curResAtoms.push(atom);
+			} else if ((this.atoms[atom.serial - 1] === undefined || this.atoms[atom.serial - 1].resi !== atom.resi) && (this.atoms[atom.serial + 1] === undefined || this.atoms[atom.serial + 1].resi !== atom.resi)) {
+				if (atom.elem === 'O') {
+					this.waters[atom.serial] = atom;
+				} else {
+					this.ions[atom.serial] = atom;
 				}
 			} else {
-				if ((this.atoms[atom.serial - 1] === undefined || this.atoms[atom.serial - 1].resi !== atom.resi) && (this.atoms[atom.serial + 1] === undefined || this.atoms[atom.serial + 1].resi !== atom.resi)) {
-					if (atom.elem === 'O') {
-						this.waters[atom.serial] = atom;
-					} else {
-						this.ions[atom.serial] = atom;
-					}
-				} else {
-					this.ligands[atom.serial] = atom;
-				}
+				this.ligands[atom.serial] = atom;
 			}
-			var coord = atom.coord;
-			psum.add(coord);
-			pmin.min(coord);
-			pmax.max(coord);
-			++cnt;
 		}
 		refreshBonds();
 		this.pmin = pmin;
