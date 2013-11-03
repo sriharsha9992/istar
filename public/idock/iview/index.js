@@ -1188,7 +1188,6 @@ $(function () {
 			x = e.originalEvent.targetTouches[0].pageX;
 			y = e.originalEvent.targetTouches[0].pageY;
 		}
-		if (x === undefined) return;
 		dg = true;
 		wh = e.which;
 		cx = x;
@@ -1207,33 +1206,34 @@ $(function () {
 			x = e.originalEvent.targetTouches[0].pageX;
 			y = e.originalEvent.targetTouches[0].pageY;
 		}
-		if (x === undefined) return;
 		var dx = (x - cx) / canvas.width();
 		var dy = (y - cy) / canvas.height();
-		if (wh == 3 && e.shiftKey) { // Slab
+		if (e.ctrlKey && e.shiftKey) { // Slab
 			sn = cn + dx * 100;
 			sf = cf + dy * 100;
-		} else if (wh == 3) { // Translate
+		} else if (e.ctrlKey || wh == 3) { // Translate
 			var scaleFactor = Math.max((rot.position.z - camera.position.z) * 0.85, 20);
 			mdl.position = cp.clone().add(new THREE.Vector3(-dx * scaleFactor, -dy * scaleFactor, 0).applyQuaternion(rot.quaternion.clone().inverse().normalize()));
-		} else if (wh == 2) { // Zoom
+		} else if (e.shiftKey || wh == 2) { // Zoom
 			var scaleFactor = Math.max((rot.position.z - camera.position.z) * 0.85, 80);
 			rot.position.z = cz - dy * scaleFactor;
-		} else if (wh == 1) { // Rotate
+		} else { // Rotate
 			var r = Math.sqrt(dx * dx + dy * dy);
 			var rs = Math.sin(r * Math.PI) / r;
 			rot.quaternion = new THREE.Quaternion(1, 0, 0, 0).multiply(new THREE.Quaternion(Math.cos(r * Math.PI), 0, rs * dx, rs * dy)).multiply(cq);
 		}
 		render();
 	});
-	canvas.bind('DOMMouseScroll mousewheel', function (e) {
+	canvas.bind('mousewheel', function (e) {
 		e.preventDefault();
 		var scaleFactor = (rot.position.z - camera.position.z) * 0.85;
-		if (e.originalEvent.detail) { // Webkit
-			rot.position.z += scaleFactor * e.originalEvent.detail * 0.1;
-		} else if (e.originalEvent.wheelDelta) { // Firefox
-			rot.position.z -= scaleFactor * e.originalEvent.wheelDelta * 0.0025;
-		}
+		rot.position.z -= scaleFactor * e.originalEvent.wheelDelta * 0.0025;
+		render();
+	});
+	canvas.bind('DOMMouseScroll', function (e) {
+		e.preventDefault();
+		var scaleFactor = (rot.position.z - camera.position.z) * 0.85;
+		rot.position.z += scaleFactor * e.originalEvent.detail * 0.1;
 		render();
 	});
 	$('#exportCanvas').click(function (e) {
