@@ -550,8 +550,8 @@ $(function() {
 			rot.position.z = maxD * 0.35 / Math.tan(Math.PI / 180.0 * 10) - 150;
 			rot.quaternion = new THREE.Quaternion(1, 0, 0, 0);
 			mdl.position = pavg.clone().multiplyScalar(-1);
-			var pgeo = new THREE.Geometry();
-			var pged = new THREE.Geometry();
+			var geo = new THREE.Geometry();
+			var ged = new THREE.Geometry();
 			for (var i in peptides) {
 				var atom0 = peptides[i];
 				for (var j in atom0.bonds) {
@@ -559,26 +559,21 @@ $(function() {
 					if (atom1.serial < atom0.serial) continue;
 					if (atom1.chain === atom0.chain && ((atom1.resi === atom0.resi) || (atom0.name === 'C' && atom1.name === 'N') || (atom0.name === 'O3\'' && atom1.name === 'P'))) {
 						var mp = atom0.coord.clone().add(atom1.coord).multiplyScalar(0.5);
-						pgeo.vertices.push(atom0.coord);
-						pgeo.vertices.push(mp);
-						pgeo.vertices.push(atom1.coord);
-						pgeo.vertices.push(mp);
-						pgeo.colors.push(atom0.color);
-						pgeo.colors.push(atom0.color);
-						pgeo.colors.push(atom1.color);
-						pgeo.colors.push(atom1.color);
+						geo.vertices.push(atom0.coord);
+						geo.vertices.push(mp);
+						geo.vertices.push(atom1.coord);
+						geo.vertices.push(mp);
+						geo.colors.push(atom0.color);
+						geo.colors.push(atom0.color);
+						geo.colors.push(atom1.color);
+						geo.colors.push(atom1.color);
 					} else {
-						pged.vertices.push(atom0.coord);
-						pged.vertices.push(atom1.coord);
+						ged.vertices.push(atom0.coord);
+						ged.vertices.push(atom1.coord);
 					}
 				}
 			}
-			mdl.add(new THREE.Line(pgeo, new THREE.LineBasicMaterial({ linewidth: linewidth, vertexColors: true }), THREE.LinePieces));
-			if (pged.vertices.length) {
-				pged.computeLineDistances();
-				mdl.add(new THREE.Line(pged, new THREE.LineDashedMaterial({ linewidth: linewidth, color: defaultBondColor, dashSize: 0.25, gapSize: 0.125 }), THREE.LinePieces));
-			}
-			var lged = new THREE.Geometry();
+			mdl.add(new THREE.Line(geo, new THREE.LineBasicMaterial({ linewidth: linewidth, vertexColors: true }), THREE.LinePieces));
 			for (var i in ligands) {
 				var atom0 = ligands[i];
 				for (var j in atom0.bonds) {
@@ -589,17 +584,12 @@ $(function() {
 						mdl.add(createCylinder(atom0.coord, mp, cylinderRadius, atom0.color));
 						mdl.add(createCylinder(atom1.coord, mp, cylinderRadius, atom1.color));
 					} else {
-						lged.vertices.push(atom0.coord);
-						lged.vertices.push(atom1.coord);
+						ged.vertices.push(atom0.coord);
+						ged.vertices.push(atom1.coord);
 					}
 				}
 				mdl.add(createSphere(atom0, cylinderRadius));
 			}
-			if (lged.vertices.length) {
-				lged.computeLineDistances();
-				mdl.add(new THREE.Line(lged, new THREE.LineDashedMaterial({ linewidth: linewidth, color: defaultBondColor, dashSize: 0.25, gapSize: 0.125 }), THREE.LinePieces));
-			}
-			var iged = new THREE.Geometry();
 			for (var i in ions) {
 				var atom0 = ions[i];
 				for (var j in atom0.bonds) {
@@ -607,18 +597,18 @@ $(function() {
 					if (atom1.serial < atom0.serial) continue;
 					if (atom1.chain === atom0.chain && ((atom1.resi === atom0.resi) || (atom0.name === 'C' && atom1.name === 'N') || (atom0.name === 'O3\'' && atom1.name === 'P'))) {
 					} else {
-						iged.vertices.push(atom0.coord);
-						iged.vertices.push(atom1.coord);
+						ged.vertices.push(atom0.coord);
+						ged.vertices.push(atom1.coord);
 					}
 				}
 				mdl.add(createSphere(ions[i], sphereRadius));
 			}
-			if (iged.vertices.length) {
-				iged.computeLineDistances();
-				mdl.add(new THREE.Line(iged, new THREE.LineDashedMaterial({ linewidth: linewidth, color: defaultBondColor, dashSize: 0.25, gapSize: 0.125 }), THREE.LinePieces));
-			}
 			for (var i in waters) {
 				mdl.add(createSphere(waters[i], sphereRadius));
+			}
+			if (ged.vertices.length) {
+				ged.computeLineDistances();
+				mdl.add(new THREE.Line(ged, new THREE.LineDashedMaterial({ linewidth: linewidth, color: defaultBondColor, dashSize: 0.25, gapSize: 0.125 }), THREE.LinePieces));
 			}
 			var lidx, lcnt = 0;
 			for (var i in resi) {
