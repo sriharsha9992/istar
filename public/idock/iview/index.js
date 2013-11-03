@@ -995,12 +995,14 @@ $(function () {
 			var psum = new THREE.Vector3();
 			for (var i in atoms) {
 				var atom = atoms[i];
+				var coord = atom.coord;
+				psum.add(coord);
+				pmin.min(coord);
+				pmax.max(coord);
 				if ((atoms[atom.serial - 1] === undefined || atoms[atom.serial - 1].resi !== atom.resi) && (atoms[atom.serial + 1] === undefined || atoms[atom.serial + 1].resi !== atom.resi)) {
 					atom.solvent = true;
-				} else {
-					if (atom.elem !== 'H') {
-						satoms[atom.serial] = atom;
-					}
+				} else if (atom.elem !== 'H') {
+					satoms[atom.serial] = atom;
 				}
 				if (!(curChain == atom.chain && curResi == atom.resi && curInsc == atom.insc)) {
 					refreshBonds(function (atom0) {
@@ -1015,10 +1017,6 @@ $(function () {
 					curResAtoms.length = 0;
 				}
 				curResAtoms.push(atom);
-				var coord = atom.coord;
-				psum.add(coord);
-				pmin.min(coord);
-				pmax.max(coord);
 				if (!isHBondDonor(atom.elqt) && !isHBondAcceptor(atom.elqt)) continue;
 				var r2 = 0;
 				for (var j = 0; j < 3; ++j) {
