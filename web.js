@@ -269,7 +269,7 @@ if (cluster.isMaster) {
 							if (err) throw err;
 							fs.writeFile(dir + '/receptor.pdb', req.body['receptor'], function(err) {
 								if (err) throw err;
-								child_process.execFile('python2.5', [process.env.HOME + '/mgltools_x86_64Linux2_1.5.6/MGLToolsPckgs/AutoDockTools/Utilities24/prepare_receptor4.pyo', '-A', 'hydrogens', '-U', 'nphs_lps_waters_deleteAltB', '-r', 'receptor.pdb'], { cwd: dir }, function(err, stdout, stderr) {
+								child_process.execFile('python2.5', [process.env.HOME + '/mgltools_x86_64Linux2_1.5.6/MGLToolsPckgs/AutoDockTools/Utilities24/prepare_receptor4.pyo', '-A', 'checkhydrogens', '-U', 'nphs_lps_waters_deleteAltB', '-r', 'receptor.pdb'], { cwd: dir }, function(err, stdout, stderr) {
 									if (err) throw err;
 									fs.writeFile(dir + '/box.conf', ['center_x', 'center_y', 'center_z', 'size_x', 'size_y', 'size_z'].map(function(key) {
 										return key + '=' + req.body[key] + '\n';
