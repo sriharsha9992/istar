@@ -386,7 +386,7 @@ if (cluster.isMaster) {
 					.snt('taxid').toInt()
 					.snt('queries').copy()
 					.res.submitted = new Date();
-				igrep.insert(f.res);
+				igrep.insert(f.res, {w: 0});
 				res.json({});
 			});
 			// Start listening
