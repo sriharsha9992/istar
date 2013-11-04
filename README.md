@@ -53,17 +53,15 @@ REST API for idock
 
 ### Submit a new job via HTTP POST
 
-    curl -d $'email=Jacky@cuhk.edu.hk&receptor=
-    ATOM      1  N   ASN A  21      63.845  98.298   0.035  1.00113.44    -0.066 N \n
-    ATOM      2  HN1 ASN A  21      64.058  99.036  -0.636  1.00  0.00     0.275 HD\n
-    TER    5500      VAL A 552 &
-    center_x=1.234&center_y=5.678&center_z=9.012&
-    size_x=20&size_y=18&size_z=22&
-    description=HIV RT (PDB 2ZD1)&
-    email=Jacky@cuhk.edu.hk&
-    mwt_lb=400&mwt_ub=500&lgp_lb=0&lgp_ub=5&nrb_lb=2&nrb_ub=8&
-    hbd_lb=2&hbd_ub=5&hba_lb=2&hba_ub=10&chg_lb=0&chg_ub=0&
-    ads_lb=0&ads_ub=12&pds_lb=-50&pds_ub=0&psa_lb=20&psa_ub=100'
+    curl -d $'receptor=
+    ATOM      1  N   PRO A  19     148.930 114.148   5.178  1.00138.31           N  \n
+    ATOM      2  CA  PRO A  19     149.869 115.263   5.360  1.00138.99           C  \n
+    TER    2743      GLN A 313                                                      \n
+    &center_x=150&center_y=109&center_z=22&size_x=18&size_y=17&size_z=15
+    &description=4MBS&email=Jacky@cuhk.edu.hk
+    &mwt_lb=400&mwt_ub=420&lgp_lb=0&lgp_ub=2&nrb_lb=4&nrb_ub=6
+    &hbd_lb=2&hbd_ub=4&hba_lb=4&hba_ub=6&chg_lb=0&chg_ub=0
+    &ads_lb=0&ads_ub=5&pds_lb=-20&pds_ub=0&psa_lb=60&psa_ub=80'
     http://istar.cse.cuhk.edu.hk/idock/jobs
 
 ### Obtain existing jobs via HTTP GET
@@ -96,7 +94,7 @@ REST API for igrep
 Licenses
 --------
 
-* istar, idock, igrep and iview are licensed under [Apache License 2.0].
+* Source code is licensed under [Apache License 2.0].
 * Documentation is licensed under [CC BY 3.0].
 
 
