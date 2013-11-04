@@ -41,11 +41,11 @@ Components
 Supported browsers
 ------------------
 
-* Google Chrome 19+
-* Mozilla Firefox 12+
-* Microsoft Internet Explorer 9+
-* Apple Safari 5+
-* Opera 12+
+* Google Chrome 30
+* Mozilla Firefox 25
+* Microsoft Internet Explorer 11
+* Apple Safari 6.1
+* Opera 17
 
 
 REST API for idock
