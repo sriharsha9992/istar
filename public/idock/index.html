@@ -81,7 +81,7 @@
           <p>The input to idock is threefold:</p>
           <ul>
             <li>A protein in PDB format. It can be obtained from <a href="http://www.pdb.org">http://www.pdb.org</a>, or via <a href="http://en.wikipedia.org/wiki/Homology_modeling">homology modeling</a>.</li>
-            <li>A search space defined by a center and a size in unit &Aring;. The search space should define a binding site (e.g. enzymatic site or allosteric site) of the receptor in cuboid shape. Refer to the tutorial on how to define a binding site.</li>
+            <li>A search space defined by a center and a size in unit &Aring;. The search space should define a binding site (e.g. enzymatic site or allosteric site) of the protein in cuboid shape.</li>
             <li>A set of ligands to dock. Totally 17,224,424 ligands are collected from <a href="http://zinc.docking.org">ZINC</a>. Filtering conditions on 9 molecular properties (e.g. mwt, hbd, hba, nrb) can be specified as closed intervals. Only the ligands satisfying all the 9 filtering conditions will be docked.</li>
           </ul>
         </div>
@@ -330,86 +330,31 @@
       <div class="row">
         <div class="col-md-12">
           <div class="ui-accordion">
-            <h3>Tutorial 1: prepare a receptor in PDBQT format with MGLTools</h3>
+            <h3>How to submit a new job</h3>
             <div>
-              <p>Download a receptor at PDB. Take HIV-1 reverse transcriptase (<a href="http://www.pdb.org/pdb/explore/explore.do?structureId=2ZD1">2ZD1</a>) as an example.</p>
-              <img class="img-responsive" src="/grey.gif" data-original="pdb.png" alt="PDB 2ZD1">
-              <p>Retain only the "ATOM" or "HETATM" records of necessary chain(s) where the binding site of interest resides. In <code>2ZD1.pdb</code>, the ligand TMC278 binds at the allosteric site, which resides in chain A. Chain A atoms start at line 613 and end at line 5118 with the "TER" record. Save lines 613 - 5118 to a new file <code>2ZD1rec.pdb</code>.</p>
-              <img class="img-responsive" src="/grey.gif" data-original="2zd1rec.png" alt="2ZD1 receptor chain A">
-              <p>Download MGLTools at <a href="http://mgltools.scripps.edu/downloads">http://mgltools.scripps.edu/downloads</a> and install it.
-              <img class="img-responsive" src="/grey.gif" data-original="mgltools.png" alt="MGLTools">
-              <p>Use the <code>prepare_receptor4.py</code> script to convert a receptor into PDBQT format.</p>
-              <ul>
-                <li>The <code>-r 2ZD1rec.pdb</code> option specifies a receptor for input.</li>
-                <li>The <code>-o 2ZD1rec.pdbqt</code> option specifies a receptor for output.</li>
-                <li>The <code>-A hydrogens</code> option adds both polar and non-polar hydrogens.</li>
-                <li>The <code>-U nphs_lps_waters_deleteAltB</code> option removes non-polar hydrogens, lone pairs, water residues, and XX@B atoms.</li>
-              </ul>
-              <p>On Windows</p>
-<pre class="sh">
-cd C:\Program Files (x86)\MGLTools-1.5.6
-python Lib\site-packages\AutoDockTools\Utilities24\prepare_receptor4.py -r 2ZD1rec.pdb -o 2ZD1rec.pdbqt -A hydrogens -U lps_waters_deleteAltB
-</pre>
-              <p>On Linux</p>
-<pre class="sh">
-cd ~/mgltools_x86_64Linux2_1.5.6
-pythonsh MGLToolsPckgs\AutoDockTools\Utilities24\prepare_receptor4.py -r 2ZD1rec.pdb -o 2ZD1rec.pdbqt -A hydrogens -U lps_waters_deleteAltB
-</pre>
-              <p>Copy the content of <code>2ZD1rec.pdbqt</code> and paste it into <a href="#receptor_label">Receptor in PDBQT</a></p>
-            </div>
-            <h3>Tutorial 2: define a binding site with MGLTools, Chimera or PyMOL</h3>
-            <div>
-              <p>A binding site can be defined by:</p>
-              <ul>
-                <li><a href="#mgltools">MGLTools</a></li>
-                <li><a href="#chimera">Chimera</a></li>
-                <li><a href="#pymol">PyMOL</a></li>
-              </ul>
-              <h4 id="mgltools">MGLTools</h4>
-              <p>Save the ligand TMC278 (lines 8533 - 8560) to a new file <code>2ZD1lig.pdb</code>.</p>
-              <img class="img-responsive" src="/grey.gif" data-original="2zd1lig.png" alt="2ZD1 ligand TMC278">
-              <p>Use the <code>prepare_ligand4.py</code> script to convert a ligand into PDBQT format.</p>
-              <ul>
-                <li>The <code>-l 2ZD1lig.pdb</code> option specifies a ligand for input.</li>
-                <li>The <code>-o 2ZD1lig.pdbqt</code> option specifies a ligand for output.</li>
-                <li>The <code>-A hydrogens</code> option adds both polar and non-polar hydrogens.</li>
-                <li>The <code>-U ''</code> option removes nothing, i.e. retains non-polar hydrogens and lone pairs.</li>
-              </ul>
-              <p>On Windows</p>
-<pre class="sh">
-cd C:\Program Files (x86)\MGLTools-1.5.6
-python Lib\site-packages\AutoDockTools\Utilities24\prepare_ligand4.py -l 2ZD1lig.pdb -o 2ZD1lig.pdbqt -A hydrogens -U ''
-</pre>
-              <p>On Linux</p>
-<pre class="sh">
-cd ~/mgltools_x86_64Linux2_1.5.6
-pythonsh MGLToolsPckgs\AutoDockTools\Utilities24\prepare_ligand4.py -l 2ZD1lig.pdb -o 2ZD1lig.pdbqt -A hydrogens -U ''
-</pre>
-              <p>Run AutoDockTools, which is a component of MGLTools. From the menu of ADT4.2</p>
-              <ul>
-                <li>Grid -> Macromolecule -> Open -> <code>2ZD1rec.pdbqt</code>. Ignore all the warnings about charge, because idock ignores charge.</li>
-                <li>Grid -> Set Map Types -> Open Ligand -> <code>2ZD1lig.pdbqt</code>.</li>
-                <li>Grid -> Grid Box.</li>
-              </ul>
-              <img class="img-responsive" src="/grey.gif" data-original="adt.png" alt="AutoDock Tools">
-              <p>The "Grid Options" dialog pops out.</p>
-              <ul>
-                <li>From the menu, click Center -> Center on ligand.</li>
-                <li>Scroll "Spacing (angstrom)" from 0.375 to 1.000.</li>
-                <li>Manually adjust number of points in x-, y-, z- dimension and x y z center, so that the grid box fully covers the ligand.</li>
-              </ul>
-              <p>Paste the corresponding values into <a href="#center_x_label">center_x</a>, <a href="#center_y_label">center_y</a>, <a href="#center_z_label">center_z</a>, <a href="#size_x_label">size_x</a>, <a href="#size_y_label">size_y</a>, <a href="#size_z_label">size_z</a>.</p>
-              <h4 id="chimera">Chimera</h4>
-              <p>Download Chimera at <a href="http://www.cgl.ucsf.edu/chimera/download.html#daily">http://www.cgl.ucsf.edu/chimera/download.html#daily</a> and install it. Note that the AutoDock Vina plugin is only available in daily builds. It is not available in Chimera 1.6.2 or earlier versions.</p>
-              <p>File -> Fetch by ID. By default PDB is chosen. Enter 2ZD1 and click Fetch.</p>
-              <p>Tools -> Surface/Binding Analysis -> AutoDock Vina. Check "Resize search volume using". Use button 2 to manually adjust the grid box.</p>
-              <img class="img-responsive" src="/grey.gif" data-original="chimera.png" alt="UCSF Chimera">
-              <h4 id="pymol">PyMOL</h4>
-              <p>Download PyMOL at <a href="http://pymol.org">http://pymol.org</a> and install it. An educational version is available at no cost for educational use only.</p>
-              <p>Download the AutoDock plugin at <a href="https://github.com/Pymol-Scripts/Pymol-script-repo/raw/master/plugins/autodock_plugin.py"> https://github.com/Pymol-Scripts/Pymol-script-repo/raw/master/plugins/autodock_plugin.py</a></p>
-              <p>Plugin -> Manage Plugins -> Install... -> Choose autodock_plugin.py. Restart PyMOL. Note that the AutoDock plugin can only be installed by PyMOL 1.2r1. It is not supported by PyMOL 1.3r1 or later versions.</p>
-              <p>Plugin -> PDB Loader Service -> Enter 2ZD1. Plugin -> Autodock/Vina -> Grid Settings. Set Spacing to 1. Manually adjust X-, Y-, Z-points and Grid Center Coordinates.</p>
-              <img class="img-responsive" src="/grey.gif" data-original="pymol.png" alt="PyMOL">
+              <p>Take the CCR5 chemokine receptor (PDB code: <a href="http://www.pdb.org/pdb/explore/explore.do?structureId=4MBS">4MBS</a>) as an example.</p>
+		      <p>Open <a href="http://www.pdb.org/pdb/files/4MBS.pdb">4MBS.pdb</a>.</p>
+		      <ul>
+		        <li>The protein chains will be rendered as lines.</li>
+		        <li>The ligands will be rendered as sticks.</li>
+		        <li>The ions and waters will be rendered as dots.</li>
+		        <li>The protein surface will be constructed asynchronously.</li>
+		      </ul>
+		      <p>The WebGL canvas supports following keyrings:</p>
+		      <ul>
+		        <li>Default: rotate</li>
+		        <li>Ctrl: translate</li>
+		        <li>Shift: zoom in/out</li>
+		        <li>Ctrl + shift: slab</li>
+		      </ul>
+              <img class="img-responsive" src="/grey.gif" data-original="4MBS.png" alt="4MBS">
+              <p>Adjust the center and the size so that the search space covers your desired binding site just right.</p>
+              <p>Fill in your email to receive notification upon job completion. Fill in any anonymous email should you not want to receive notification.</p>
+              <p>Filter ligands according to your application. Avoid choosing too many ligands to make sure your job can be done within a reasonable time. Current docking speed is 1 second per ligand.</p>
+              <p>Submit your job. Only protein chains and ions will be sent to the server. Ligands and waters will be discarded.</p>
+              <p>Check your job status in the topmost table.</p>
+              <p>In some cases we do not want to send all protein chains to the server. Take the influenza A virus nucleoprotein (PDB code: <a href="http://www.pdb.org/pdb/explore/explore.do?structureId=2IQH">2IQH</a>) as an example. It is a trimer and contains three chains. The binding site of a chain is occupied by the tail loop of a neighboring chain. Therefore use a text editor to manually remove two chains in advance, and repeat the above procedure.</p>
+              <img class="img-responsive" src="/grey.gif" data-original="2IQH.png" alt="2IQH">
             </div>
           </div>
         </div>
