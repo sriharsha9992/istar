@@ -288,7 +288,7 @@ $(function() {
 	var camera = new THREE.PerspectiveCamera(20, canvas.width() / canvas.height(), 1, 800), sn, sf;
 	camera.position = new THREE.Vector3(0, 0, -150);
 	camera.lookAt(new THREE.Vector3(0, 0, 0));
-	var surfacejs = new Worker('surface.js');
+	var surfacejs = new Worker('surface.min.js');
 
 	var hasCovalentBond = function (atom0, atom1) {
 		var r = covalentRadii[atom0.elem] + covalentRadii[atom1.elem];
