@@ -220,10 +220,6 @@ int main(int argc, char* argv[])
 			job_path = jobs_path / _id.str();
 			receptor_path = job_path / "receptor.pdbqt";
 			box_path = job_path / "box.conf";
-			while (!(exists(job_path) && exists(receptor_path) && exists(box_path)))
-			{
-				this_thread::sleep_for(chrono::seconds(1));
-			}
 			variables_map vm;
 			boost::filesystem::ifstream box_ifs(box_path);
 			store(parse_config_file(box_ifs, input_options), vm);

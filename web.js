@@ -262,22 +262,30 @@ if (cluster.isMaster) {
 						f.res[i.toString()] = 0;
 					}
 					f.res.submitted = new Date();
-					idock.insert(f.res, {safe: true}, function(err, docs) {
+					f.res._id = new mongodb.ObjectID();
+					var dir = '/home/hjli/nfs/hjli/istar/public/idock/jobs/' + f.res._id;
+					fs.mkdir(dir, function (err) {
 						if (err) throw err;
-						var dir = '/home/hjli/nfs/hjli/istar/public/idock/jobs/' + docs[0]._id;
-						fs.mkdir(dir, function (err) {
+						fs.writeFile(dir + '/receptor.pdb', req.body['receptor'], function(err) {
 							if (err) throw err;
-							fs.writeFile(dir + '/receptor.pdb', req.body['receptor'], function(err) {
-								if (err) throw err;
-								child_process.execFile('python2.5', [process.env.HOME + '/mgltools_x86_64Linux2_1.5.6/MGLToolsPckgs/AutoDockTools/Utilities24/prepare_receptor4.pyo', '-A', 'checkhydrogens', '-U', 'nphs_lps_waters_deleteAltB', '-r', 'receptor.pdb'], { cwd: dir }, function(err, stdout, stderr) {
-									if (err) throw err;
+							child_process.execFile('python2.5', [process.env.HOME + '/mgltools_x86_64Linux2_1.5.6/MGLToolsPckgs/AutoDockTools/Utilities24/prepare_receptor4.pyo', '-A', 'checkhydrogens', '-U', 'nphs_lps_waters_deleteAltB', '-r', 'receptor.pdb'], { cwd: dir }, function(err, stdout, stderr) {
+								if (err) {
+									fs.unlink(dir + '/receptor.pdb', function(err) {
+										if (err) throw err;
+										fs.rmdir(dir, function (err) {
+											if (err) throw err;
+											res.json({ receptor: 'must conform to PDB specification' });
+										});
+									});
+								} else {
 									fs.writeFile(dir + '/box.conf', ['center_x', 'center_y', 'center_z', 'size_x', 'size_y', 'size_z'].map(function(key) {
 										return key + '=' + req.body[key] + '\n';
 									}).join(''), function(err) {
 										if (err) throw err;
+										idock.insert(f.res, { w: 0 });
 										res.json({});
 									});
-								});
+								}
 							});
 						});
 					});
