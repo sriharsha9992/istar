@@ -853,9 +853,4 @@ $(function() {
 		event: 'expand',
 		effect: 'fadeIn',
 	});
-	// Make code pretty
-	$('pre.sh').snippet('sh', {
-		style: 'typical',
-		menu: false,
-	});
 });
