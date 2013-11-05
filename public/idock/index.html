@@ -110,146 +110,142 @@
         </div>
       </div>
       <div class="row" role="form">
+        <div class="col-md-1">
+          <div class="form-group">
+            <label for="center_x"><a title="within [-999, 999]" id="center_x_label">center_x</a></label>
+            <input type="number" class="form-control" id="center_x" placeholder="150">
+          </div>
+        </div>
+        <div class="col-md-1">
+          <div class="form-group">
+            <label for="center_y"><a title="within [-999, 999]" id="center_y_label">center_y</a></label>
+            <input type="number" class="form-control" id="center_y" placeholder="109">
+          </div>
+        </div>
+        <div class="col-md-1">
+          <div class="form-group">
+            <label for="center_z"><a title="within [-999, 999]" id="center_z_label">center_z</a></label>
+            <input type="number" class="form-control" id="center_z" placeholder="22">
+          </div>
+        </div>
+        <div class="col-md-1">
+          <div class="form-group">
+            <label for="size_x"><a title="within [10, 30]" id="size_x_label">size_x</a></label>
+            <input type="number" class="form-control" id="size_x" placeholder="18" min="10" max="30">
+          </div>
+        </div>
+        <div class="col-md-1">
+          <div class="form-group">
+            <label for="size_y"><a title="within [10, 30]" id="size_y_label">size_y</a></label>
+            <input type="number" class="form-control" id="size_y" placeholder="17" min="10" max="30">
+          </div>
+        </div>
+        <div class="col-md-1">
+          <div class="form-group">
+            <label for="size_z"><a title="within [10, 30]" id="size_z_label">size_z</a></label>
+            <input type="number" class="form-control" id="size_z" placeholder="15" min="10" max="30">
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="form-group">
+            <label for="description"><a title="at most 20 characters" id="description_label">Briefly describe your job</a></label>
+            <div class="input-group">
+              <span class="input-group-addon"><span class="glyphicon glyphicon-book"></span></span>
+              <input type="text" class="form-control" id="description" placeholder="HIV RT (PDB 2ZD1)">
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="form-group">
+            <label for="email"><a title="compulsory" id="email_label">Email to receive completion notification</a></label>
+            <div class="input-group">
+              <span class="input-group-addon"><span class="glyphicon glyphicon-envelope"></span></span>
+              <input type="email" class="form-control" id="email" placeholder="Jacky@cuhk.edu.hk">
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="row">
         <div class="col-md-12">
-          <div class="row">
-            <div class="col-md-1">
-              <div class="form-group">
-                <label for="center_x"><a title="within [-999, 999]" id="center_x_label">center_x</a></label>
-                <input type="number" class="form-control" id="center_x" placeholder="150">
-              </div>
-            </div>
-            <div class="col-md-1">
-              <div class="form-group">
-                <label for="center_y"><a title="within [-999, 999]" id="center_y_label">center_y</a></label>
-                <input type="number" class="form-control" id="center_y" placeholder="109">
-              </div>
-            </div>
-            <div class="col-md-1">
-              <div class="form-group">
-                <label for="center_z"><a title="within [-999, 999]" id="center_z_label">center_z</a></label>
-                <input type="number" class="form-control" id="center_z" placeholder="22">
-              </div>
-            </div>
-            <div class="col-md-1">
-              <div class="form-group">
-                <label for="size_x"><a title="within [10, 30]" id="size_x_label">size_x</a></label>
-                <input type="number" class="form-control" id="size_x" placeholder="18" min="10" max="30">
-              </div>
-            </div>
-            <div class="col-md-1">
-              <div class="form-group">
-                <label for="size_y"><a title="within [10, 30]" id="size_y_label">size_y</a></label>
-                <input type="number" class="form-control" id="size_y" placeholder="17" min="10" max="30">
-              </div>
-            </div>
-            <div class="col-md-1">
-              <div class="form-group">
-                <label for="size_z"><a title="within [10, 30]" id="size_z_label">size_z</a></label>
-                <input type="number" class="form-control" id="size_z" placeholder="15" min="10" max="30">
-              </div>
-            </div>
-            <div class="col-md-3">
-              <div class="form-group">
-                <label for="description"><a title="at most 20 characters" id="description_label">Briefly describe your job</a></label>
-                <div class="input-group">
-                  <span class="input-group-addon"><span class="glyphicon glyphicon-book"></span></span>
-                  <input type="text" class="form-control" id="description" placeholder="HIV RT (PDB 2ZD1)">
-                </div>
-              </div>
-            </div>
-            <div class="col-md-3">
-              <div class="form-group">
-                <label for="email"><a title="compulsory" id="email_label">Email to receive completion notification</a></label>
-                <div class="input-group">
-                  <span class="input-group-addon"><span class="glyphicon glyphicon-envelope"></span></span>
-                  <input type="email" class="form-control" id="email" placeholder="Jacky@cuhk.edu.hk">
-                </div>
-              </div>
-            </div>
+          <p>Number of ligands satisfying all the 9 filtering conditions: <span id="ligands">29</span></p>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-12">
+          <div class="form-group">
+            <label>Molecular weight (g/mol): [<span id="mwt_lb">400</span>, <span id="mwt_ub">420</span>]</label>
+            <div class="form-control slider" id="mwt"></div>
           </div>
-          <div class="row">
-            <div class="col-md-12">
-              <p>Number of ligands satisfying all the 9 filtering conditions: <span id="ligands">29</span></p>
-            </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-12">
+          <div class="form-group">
+            <label>Partition coefficient xlogP: [<span id="lgp_lb">0</span>, <span id="lgp_ub">2</span>]</label>
+            <div class="form-control slider" id="lgp"></div>
           </div>
-          <div class="row">
-            <div class="col-md-12">
-              <div class="form-group">
-                <label>Molecular weight (g/mol): [<span id="mwt_lb">400</span>, <span id="mwt_ub">420</span>]</label>
-                <div class="form-control slider" id="mwt"></div>
-              </div>
-            </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-12">
+          <div class="form-group">
+            <label>Rotatable bonds: [<span id="nrb_lb">4</span>, <span id="nrb_ub">6</span>]</label>
+            <div class="form-control slider" id="nrb"></div>
           </div>
-          <div class="row">
-            <div class="col-md-12">
-              <div class="form-group">
-                <label>Partition coefficient xlogP: [<span id="lgp_lb">0</span>, <span id="lgp_ub">2</span>]</label>
-                <div class="form-control slider" id="lgp"></div>
-              </div>
-            </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-12">
+          <div class="form-group">
+            <label>Hydrogen bond donors: [<span id="hbd_lb">2</span>, <span id="hbd_ub">4</span>]</label>
+            <div class="form-control slider" id="hbd"></div>
           </div>
-          <div class="row">
-            <div class="col-md-12">
-              <div class="form-group">
-                <label>Rotatable bonds: [<span id="nrb_lb">4</span>, <span id="nrb_ub">6</span>]</label>
-                <div class="form-control slider" id="nrb"></div>
-              </div>
-            </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-12">
+          <div class="form-group">
+            <label>Hydrogen bond acceptors: [<span id="hba_lb">4</span>, <span id="hba_ub">6</span>]</label>
+            <div class="form-control slider" id="hba"></div>
           </div>
-          <div class="row">
-            <div class="col-md-12">
-              <div class="form-group">
-                <label>Hydrogen bond donors: [<span id="hbd_lb">2</span>, <span id="hbd_ub">4</span>]</label>
-                <div class="form-control slider" id="hbd"></div>
-              </div>
-            </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-12">
+          <div class="form-group">
+            <label>Net charge: [<span id="chg_lb">0</span>, <span id="chg_ub">0</span>]</label>
+            <div class="form-control slider" id="chg"></div>
           </div>
-          <div class="row">
-            <div class="col-md-12">
-              <div class="form-group">
-                <label>Hydrogen bond acceptors: [<span id="hba_lb">4</span>, <span id="hba_ub">6</span>]</label>
-                <div class="form-control slider" id="hba"></div>
-              </div>
-            </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-12">
+          <div class="form-group">
+            <label>Apolar desolvation (kcal/mol): [<span id="ads_lb">0</span>, <span id="ads_ub">5</span>]</label>
+            <div class="form-control slider" id="ads"></div>
           </div>
-          <div class="row">
-            <div class="col-md-12">
-              <div class="form-group">
-                <label>Net charge: [<span id="chg_lb">0</span>, <span id="chg_ub">0</span>]</label>
-                <div class="form-control slider" id="chg"></div>
-              </div>
-            </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-12">
+          <div class="form-group">
+            <label>Polar desolvation (kcal/mol): [<span id="pds_lb">-20</span>, <span id="pds_ub">0</span>]</label>
+            <div class="form-control slider" id="pds"></div>
           </div>
-          <div class="row">
-            <div class="col-md-12">
-              <div class="form-group">
-                <label>Apolar desolvation (kcal/mol): [<span id="ads_lb">0</span>, <span id="ads_ub">5</span>]</label>
-                <div class="form-control slider" id="ads"></div>
-              </div>
-            </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-12">
+          <div class="form-group">
+            <label>Polar surface area tPSA (&Aring;<sup>2</sup>): [<span id="psa_lb">60</span>, <span id="psa_ub">80</span>]</label>
+            <div class="form-control slider" id="psa"></div>
           </div>
-          <div class="row">
-            <div class="col-md-12">
-              <div class="form-group">
-                <label>Polar desolvation (kcal/mol): [<span id="pds_lb">-20</span>, <span id="pds_ub">0</span>]</label>
-                <div class="form-control slider" id="pds"></div>
-              </div>
-            </div>
-          </div>
-          <div class="row">
-            <div class="col-md-12">
-              <div class="form-group">
-                <label>Polar surface area tPSA (&Aring;<sup>2</sup>): [<span id="psa_lb">60</span>, <span id="psa_ub">80</span>]</label>
-                <div class="form-control slider" id="psa"></div>
-              </div>
-            </div>
-          </div>
-          <div class="row">
-            <div class="col-md-12">
-              <div class="form-group">
-                <button class="btn btn-primary" id="submit"><span class="glyphicon glyphicon-cloud-upload"></span> Submit</button>
-              </div>
-            </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-12">
+          <div class="form-group">
+            <button class="btn btn-primary" id="submit"><span class="glyphicon glyphicon-cloud-upload"></span> Submit</button>
           </div>
         </div>
       </div>
