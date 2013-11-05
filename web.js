@@ -73,12 +73,6 @@ if (cluster.isMaster) {
 				app.use(express.json());
 				app.use(express.urlencoded());
 				app.use(app.router);
-				app.use(function(req, res, next) {
-					if (req.headers['user-agent'] && req.headers['user-agent'].indexOf('MSIE') > -1) {
-						res.setHeader('X-UA-Compatible', 'IE=Edge');
-					}
-					next();
-				});
 			});
 			app.configure('development', function() {
 				app.use(express.static(__dirname + '/public'));
