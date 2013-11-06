@@ -3,19 +3,21 @@ $(function() {
 //		event: 'expand',
 		effect: 'fadeIn',
 	});
-	$('pre.sh').snippet('sh', {
-		style: 'typical',
-		showNum: false,
-		menu: false,
-	});
-	$('pre.makefile').snippet('makefile', {
-		style: 'typical',
-		showNum: true,
-		menu: false,
-	});
-	$('pre.cpp').snippet('cpp', {
-		style: 'typical',
-		showNum: true,
-		menu: false,
+	var style = function (lang) {
+		return $.extend({
+			style: 'typical',
+			menu: false,
+		}, lang === 'sh' ? {showNum: false} : undefined);
+	};
+	$('pre[id]').each(function (index, pre) {
+		$.get('cudart/' + pre.id, function (src) {
+			var lang = pre.id.match(/.(cu|h)$/) ? 'cpp' : pre.id.match(/Makefile$/) ? 'makefile' : 'sh';
+			$(pre).append($('<div/>').text(src).html()).snippet(lang, style(lang));
+		});
+	});;
+	$('pre[class]').each(function () {
+		var me = $(this);
+		var lang = me.attr('class');
+		me.snippet(lang, style(lang));
 	});
 });
