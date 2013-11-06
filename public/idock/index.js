@@ -620,9 +620,13 @@ $(function() {
 				bsiz = bmax.clone().sub(bmin).multiplyScalar(1.5);
 			}
 			bsiz.clamp(bsizmin, bsizmax);
+			var r = function () {
+				refreshBox();
+				render();
+			};
 			['x', 'y', 'z'].forEach(function(d) {
-				$('#center_' + d).val(bctr[d] = Math.round(bctr[d]));
-				$('#size_'   + d).val(bsiz[d] = Math.round(bsiz[d]));
+				$('#center_' + d).change(r).val(bctr[d] = Math.round(bctr[d]));
+				$('#size_'   + d).change(r).val(bsiz[d] = Math.round(bsiz[d]));
 			});
 			mdl.position = bctr.clone().multiplyScalar(-1);
 			refreshBox();
@@ -688,15 +692,6 @@ $(function() {
 			});
 		};
 		reader.readAsText(file);
-	});
-
-	var r = function () {
-		refreshBox();
-		render();
-	};
-	['x', 'y', 'z'].forEach(function(d) {
-		$('#center_' + d).change(r);
-		$('#size_'   + d).change(r);
 	});
 
 	// Initialize sliders
