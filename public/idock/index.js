@@ -631,8 +631,7 @@ $(function() {
 				$('#size_'   + d).change(r).val(bsiz[d] = Math.round(bsiz[d]));
 			});
 			mdl.position = bctr.clone().multiplyScalar(-1);
-			refreshBox();
-			render();
+			r();
 			var dg, wh, cx, cy, cq, cz, cp, cn, cf;
 			canvas.bind('mouseup touchend', function (e) {
 				dg = false;
