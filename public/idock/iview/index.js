@@ -938,7 +938,7 @@ $(function () {
 					refreshSurface(surface);
 				}
 			}, satoms = surface.atoms;
-			var hbondDonors = {}, hbondAcceptors = {};
+			var phbd = {}, phba = {};
 			var curChain, curResi, curInsc, curResAtoms = [];
 			var refreshBonds = function (f) {
 				var n = curResAtoms.length;
@@ -1004,9 +1004,9 @@ $(function () {
 				}
 				if (r2 >= hbondCutoffSquared) continue;
 				if (isHBondAcceptor(atom.elqt)) {
-					hbondAcceptors[i] = atom;
+					phba[i] = atom;
 				} else {
-					hbondDonors[i] = atom;
+					phbd[i] = atom;
 				}
 			}
 			refreshBonds();
@@ -1102,8 +1102,8 @@ $(function () {
 							atoms[r.y].bonds.push(atoms[r.x]);
 						}
 						var hbonds = ligand.hbonds = [], ds;
-						for (var pi in hbondDonors) {
-							var pa = hbondDonors[pi];
+						for (var pi in phbd) {
+							var pa = phbd[pi];
 							for (var li in atoms) {
 								var la = atoms[li];
 								if (isHBondAcceptor(la.elqt) && (ds = la.coord.distanceToSquared(pa.coord)) < hbondCutoffSquared) {
@@ -1115,8 +1115,8 @@ $(function () {
 								}
 							}
 						}
-						for (var pi in hbondAcceptors) {
-							var pa = hbondAcceptors[pi];
+						for (var pi in phba) {
+							var pa = phba[pi];
 							for (var li in atoms) {
 								var la = atoms[li];
 								if (isHBondDonor(la.elqt) && (ds = la.coord.distanceToSquared(pa.coord)) < hbondCutoffSquared) {
