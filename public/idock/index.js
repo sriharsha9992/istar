@@ -512,7 +512,9 @@ $(function() {
 					return new THREE.Vector3(v.x, v.y, v.z);
 				});
 				geo.faces = faces.map(function (f) {
-					return new THREE.Face3(f.a, f.b, f.c, undefined, [peptides[verts[f.a].atomid].color, peptides[verts[f.b].atomid].color, peptides[verts[f.c].atomid].color]);
+					return new THREE.Face3(f.a, f.b, f.c, undefined, Object.keys(f).map(function (d) {
+						return peptides[verts[f[d]].atomid].color;
+					}));
 				});
 				geo.computeFaceNormals();
 				geo.computeVertexNormals(false);
