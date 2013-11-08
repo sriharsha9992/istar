@@ -1113,14 +1113,12 @@ var iview = (function () {
 			ps.transformVertices();
 			this.surfaces[type] = ps;
 		}
-		var mesh = new THREE.Mesh(this.surfaces[type].getModel(atoms), new THREE.MeshLambertMaterial({
+		this.mdl.add(new THREE.Mesh(this.surfaces[type].getModel(atoms), new THREE.MeshLambertMaterial({
 			vertexColors: THREE.VertexColors,
 			wireframe: wireframe,
 			opacity: opacity,
 			transparent: true,
-		}));
-		mesh.doubleSided = true;
-		this.mdl.add(mesh);
+		})));
 	};
 
 	iview.prototype.rebuildScene = function (options) {
