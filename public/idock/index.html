@@ -240,6 +240,43 @@
     </section>
     <section>
       <div class="page-header">
+        <h1>Tutorials</h1>
+      </div>
+      <div class="row">
+        <div class="col-md-12">
+          <div class="ui-accordion">
+            <h3>How to submit a new job</h3>
+            <div>
+              <p>Take the CCR5 chemokine receptor (PDB code: <a href="http://www.pdb.org/pdb/explore/explore.do?structureId=4MBS">4MBS</a>) as an example.</p>
+		      <p>Open <a href="http://www.pdb.org/pdb/files/4MBS.pdb">4MBS.pdb</a>.</p>
+		      <ul>
+		        <li>The protein chains will be rendered as lines.</li>
+		        <li>The ligands will be rendered as sticks.</li>
+		        <li>The ions and waters will be rendered as dots.</li>
+		        <li>The protein surface will be constructed asynchronously.</li>
+		      </ul>
+		      <p>The WebGL canvas supports the following keyrings:</p>
+		      <ul>
+		        <li>Default: rotate</li>
+		        <li>Ctrl: translate</li>
+		        <li>Shift: zoom in/out</li>
+		        <li>Ctrl + shift: slab</li>
+		      </ul>
+              <img class="img-responsive" src="/grey.gif" data-original="4MBS.png" alt="4MBS">
+              <p>Adjust the center and the size so that the search space covers your desired binding site just right.</p>
+              <p>Fill in your email to receive notification upon job completion. Fill in any anonymous email should you not want to receive notification.</p>
+              <p>Filter ligands according to your application. Avoid choosing too many ligands to make sure your job can be done within a reasonable time. Current docking speed is 1 second per ligand.</p>
+              <p>Submit your job. Only protein chains and ions will be sent to the server. Ligands and waters will be discarded.</p>
+              <p>Check your job status in the topmost table.</p>
+              <p>In some cases we do not want to send all protein chains to the server. Take the influenza A virus nucleoprotein (PDB code: <a href="http://www.pdb.org/pdb/explore/explore.do?structureId=2IQH">2IQH</a>) as an example. It is a trimer and contains three chains. The binding site of a chain is occupied by the tail loop of a neighboring chain. Therefore use a text editor to manually remove two chains in advance, and repeat the above procedure.</p>
+              <img class="img-responsive" src="/grey.gif" data-original="2IQH.png" alt="2IQH">
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+    <section>
+      <div class="page-header">
         <h1>ZINC ligands</h1>
       </div>
       <div class="row">
@@ -303,43 +340,6 @@
         <div class="col-md-12">
           <p>RF-Score is a machine learning approach to predicting protein–ligand binding affinity. It has been integrated into the idock daemon as an alternative option for rescoring predicted conformations. RF-Score is licensed under <a href="http://creativecommons.org/licenses/by-sa/3.0">CC BY-SA 3.0</a>. We thank <a href="http://www.pedroballester.com">Dr. Pedro J. Ballester</a> for sharing with us the code and documentation of RF-Score.</p>
           <p>Pedro J. Ballester and John B. O. Mitchell. A machine learning approach to predicting protein-ligand binding affinity with applications to molecular docking. <em>Bioinformatics</em>, 26(9):1169–1175,2010. <a href="http://dx.doi.org/10.1093/bioinformatics/btq112">DOI: 10.1093/bioinformatics/btq112</a></p>
-        </div>
-      </div>
-    </section>
-    <section>
-      <div class="page-header">
-        <h1>Tutorials</h1>
-      </div>
-      <div class="row">
-        <div class="col-md-12">
-          <div class="ui-accordion">
-            <h3>How to submit a new job</h3>
-            <div>
-              <p>Take the CCR5 chemokine receptor (PDB code: <a href="http://www.pdb.org/pdb/explore/explore.do?structureId=4MBS">4MBS</a>) as an example.</p>
-		      <p>Open <a href="http://www.pdb.org/pdb/files/4MBS.pdb">4MBS.pdb</a>.</p>
-		      <ul>
-		        <li>The protein chains will be rendered as lines.</li>
-		        <li>The ligands will be rendered as sticks.</li>
-		        <li>The ions and waters will be rendered as dots.</li>
-		        <li>The protein surface will be constructed asynchronously.</li>
-		      </ul>
-		      <p>The WebGL canvas supports the following keyrings:</p>
-		      <ul>
-		        <li>Default: rotate</li>
-		        <li>Ctrl: translate</li>
-		        <li>Shift: zoom in/out</li>
-		        <li>Ctrl + shift: slab</li>
-		      </ul>
-              <img class="img-responsive" src="/grey.gif" data-original="4MBS.png" alt="4MBS">
-              <p>Adjust the center and the size so that the search space covers your desired binding site just right.</p>
-              <p>Fill in your email to receive notification upon job completion. Fill in any anonymous email should you not want to receive notification.</p>
-              <p>Filter ligands according to your application. Avoid choosing too many ligands to make sure your job can be done within a reasonable time. Current docking speed is 1 second per ligand.</p>
-              <p>Submit your job. Only protein chains and ions will be sent to the server. Ligands and waters will be discarded.</p>
-              <p>Check your job status in the topmost table.</p>
-              <p>In some cases we do not want to send all protein chains to the server. Take the influenza A virus nucleoprotein (PDB code: <a href="http://www.pdb.org/pdb/explore/explore.do?structureId=2IQH">2IQH</a>) as an example. It is a trimer and contains three chains. The binding site of a chain is occupied by the tail loop of a neighboring chain. Therefore use a text editor to manually remove two chains in advance, and repeat the above procedure.</p>
-              <img class="img-responsive" src="/grey.gif" data-original="2IQH.png" alt="2IQH">
-            </div>
-          </div>
         </div>
       </div>
     </section>
