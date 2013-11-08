@@ -716,9 +716,13 @@ $(function () {
 		obj.add(createRepresentationSub(atoms, function (atom0) {
 			obj.add(createSphere(atom0, atomR, true));
 		}, function (atom0, atom1) {
-			var mp = atom0.coord.clone().add(atom1.coord).multiplyScalar(0.5);
-			obj.add(createCylinder(atom0.coord, mp, bondR, atom0.color));
-			obj.add(createCylinder(atom1.coord, mp, bondR, atom1.color));
+			if (atom0.color === atom1.color) {
+				obj.add(createCylinder(atom0.coord, atom1.coord, bondR, atom0.color));
+			} else {
+				var mp = atom0.coord.clone().add(atom1.coord).multiplyScalar(0.5);
+				obj.add(createCylinder(atom0.coord, mp, bondR, atom0.color));
+				obj.add(createCylinder(atom1.coord, mp, bondR, atom1.color));
+			}
 		}));
 		return obj;
 	};
@@ -731,15 +735,22 @@ $(function () {
 				obj.add(createSphere(atom0, sphereRadius, false, 0.2));
 			}
 		}, function (atom0, atom1) {
-			var mp = atom0.coord.clone().add(atom1.coord).multiplyScalar(0.5);
-			geo.vertices.push(atom0.coord);
-			geo.vertices.push(mp);
-			geo.vertices.push(atom1.coord);
-			geo.vertices.push(mp);
-			geo.colors.push(atom0.color);
-			geo.colors.push(atom0.color);
-			geo.colors.push(atom1.color);
-			geo.colors.push(atom1.color);
+			if (atom0.color === atom1.color) {
+				geo.vertices.push(atom0.coord);
+				geo.vertices.push(atom1.coord);
+				geo.colors.push(atom0.color);
+				geo.colors.push(atom1.color);
+			} else {
+				var mp = atom0.coord.clone().add(atom1.coord).multiplyScalar(0.5);
+				geo.vertices.push(atom0.coord);
+				geo.vertices.push(mp);
+				geo.vertices.push(atom1.coord);
+				geo.vertices.push(mp);
+				geo.colors.push(atom0.color);
+				geo.colors.push(atom0.color);
+				geo.colors.push(atom1.color);
+				geo.colors.push(atom1.color);
+			}
 		}));
 		return obj;
 	};

@@ -569,23 +569,34 @@ $(function() {
 			};
 			var geo = new THREE.Geometry();
 			model(peptides, undefined, function (atom0, atom1) {
-				var mp = atom0.coord.clone().add(atom1.coord).multiplyScalar(0.5);
-				geo.vertices.push(atom0.coord);
-				geo.vertices.push(mp);
-				geo.vertices.push(atom1.coord);
-				geo.vertices.push(mp);
-				geo.colors.push(atom0.color);
-				geo.colors.push(atom0.color);
-				geo.colors.push(atom1.color);
-				geo.colors.push(atom1.color);
+				if (atom0.color === atom1.color) {
+					geo.vertices.push(atom0.coord);
+					geo.vertices.push(atom1.coord);
+					geo.colors.push(atom0.color);
+					geo.colors.push(atom1.color);
+				} else {
+					var mp = atom0.coord.clone().add(atom1.coord).multiplyScalar(0.5);
+					geo.vertices.push(atom0.coord);
+					geo.vertices.push(mp);
+					geo.vertices.push(atom1.coord);
+					geo.vertices.push(mp);
+					geo.colors.push(atom0.color);
+					geo.colors.push(atom0.color);
+					geo.colors.push(atom1.color);
+					geo.colors.push(atom1.color);
+				}
 			});
 			mdl.add(new THREE.Line(geo, new THREE.LineBasicMaterial({ linewidth: linewidth, vertexColors: true }), THREE.LinePieces));
 			model(ligands, function (atom0) {
 				mdl.add(createSphere(atom0, cylinderRadius));
 			}, function (atom0, atom1) {
-				var mp = atom0.coord.clone().add(atom1.coord).multiplyScalar(0.5);
-				mdl.add(createCylinder(atom0.coord, mp, cylinderRadius, atom0.color));
-				mdl.add(createCylinder(atom1.coord, mp, cylinderRadius, atom1.color));
+				if (atom0.color === atom1.color) {
+					mdl.add(createCylinder(atom0.coord, atom1.coord, cylinderRadius, atom0.color));
+				} else {
+					var mp = atom0.coord.clone().add(atom1.coord).multiplyScalar(0.5);
+					mdl.add(createCylinder(atom0.coord, mp, cylinderRadius, atom0.color));
+					mdl.add(createCylinder(atom1.coord, mp, cylinderRadius, atom1.color));
+				}
 			});
 			model(ions, function (atom0) {
 				mdl.add(createSphere(atom0, sphereRadius));

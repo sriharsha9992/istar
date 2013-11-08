@@ -812,9 +812,13 @@ var iview = (function () {
 		this.createRepresentationSub(atoms, function (atom0) {
 			me.createSphere(atom0, atomR, !scale, scale);
 		}, function (atom0, atom1) {
-			var mp = atom0.coord.clone().add(atom1.coord).multiplyScalar(0.5);
-			me.createCylinder(atom0.coord, mp, bondR, atom0.color);
-			me.createCylinder(atom1.coord, mp, bondR, atom1.color);
+			if (atom0.color === atom1.color) {
+				me.createCylinder(atom0.coord, atom1.coord, bondR, atom0.color);
+			} else {
+				var mp = atom0.coord.clone().add(atom1.coord).multiplyScalar(0.5);
+				me.createCylinder(atom0.coord, mp, bondR, atom0.color);
+				me.createCylinder(atom1.coord, mp, bondR, atom1.color);
+			}
 		});
 	};
 
@@ -822,15 +826,22 @@ var iview = (function () {
 		var me = this;
 		var geo = new THREE.Geometry();
 		this.createRepresentationSub(atoms, undefined, function (atom0, atom1) {
-			var mp = atom0.coord.clone().add(atom1.coord).multiplyScalar(0.5);
-			geo.vertices.push(atom0.coord);
-			geo.vertices.push(mp);
-			geo.vertices.push(atom1.coord);
-			geo.vertices.push(mp);
-			geo.colors.push(atom0.color);
-			geo.colors.push(atom0.color);
-			geo.colors.push(atom1.color);
-			geo.colors.push(atom1.color);
+			if (atom0.color === atom1.color) {
+				geo.vertices.push(atom0.coord);
+				geo.vertices.push(atom1.coord);
+				geo.colors.push(atom0.color);
+				geo.colors.push(atom1.color);
+			} else {
+				var mp = atom0.coord.clone().add(atom1.coord).multiplyScalar(0.5);
+				geo.vertices.push(atom0.coord);
+				geo.vertices.push(mp);
+				geo.vertices.push(atom1.coord);
+				geo.vertices.push(mp);
+				geo.colors.push(atom0.color);
+				geo.colors.push(atom0.color);
+				geo.colors.push(atom1.color);
+				geo.colors.push(atom1.color);
+			}
 		});
 		this.mdl.add(new THREE.Line(geo, new THREE.LineBasicMaterial({ linewidth: this.linewidth, vertexColors: true }), THREE.LinePieces));
 	};
