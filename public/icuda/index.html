@@ -255,11 +255,15 @@ sum = 13
           <h2 id="mpi">mpi</h2>
           <p>This sample uses MPI to create multiple CPU processes to utilize multiple GPUs.</p>
           <pre id="mpi/mpi.cu"></pre>
-          <p>In the Makefile, pass the compiler option <code>-L /usr/lib/openmpi -lmpi -lmpi_cxx</code> to <code>nvcc</code> in linking.</p>
+          <p>In the Makefile, pass the compiler option <code>-I /opt/mvapich2-2.0b/include</code> to <code>nvcc</code> in compilation and <code>-L /opt/mvapich2-2.0b/lib -lmpich</code> to <code>nvcc</code> in linking.</p>
           <pre id="mpi/Makefile"></pre>
-          <p>Run the executable with <code>mpirun</code>. Specify the number of processes to run with the option <code>-n</code>.</p>
+          <p>Specify the hosts to use in a host file.</p>
+<pre id="mpi/hosts">
+<b class="text-info">hjli@hpc1:~/cudart/mpi></b> cat hosts
+</pre>
+          <p>Run the executable with <code>mpirun_rsh</code>. Specify the host file and the number of processes to run with the option <code>-n</code>.</p>
 <pre class="sh">
-<b class="text-info">hjli@hpc1:~/cudart/mpi></b> mpirun -n 4 ./mpi
+<b class="text-info">hjli@hpc1:~/cudart/mpi></b> mpirun_rsh -hostfile hosts -n 4 ./mpi
 </pre>
           <p>Try using <code>float</code> instead of <code>int</code>.</p>
           <p>Try writing a reduce kernel to compute the sum of the current node.</p>
