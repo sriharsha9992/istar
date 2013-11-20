@@ -15,13 +15,13 @@ Components
 
 ### Web client
 
-* [Twitter Bootstrap] v3.0.1
+* [Twitter Bootstrap] v3.0.2
 * [jQuery] v2.0.3
 * [jQuery UI] v1.10.3
 
 ### Web server
 
-* [node.js] v0.10.21
+* [node.js] v0.10.22
 * [mongodb] v1.3.19
 * [express] v3.4.4
 * [validator] v2.0.0
@@ -29,7 +29,7 @@ Components
 
 ### Database
 
-* [MongoDB] v2.4.7
+* [MongoDB] v2.4.8
 
 ### Workstations and daemons
 
