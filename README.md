@@ -22,10 +22,10 @@ Components
 ### Web server
 
 * [node.js] v0.10.22
-* [mongodb] v1.3.19
+* [mongodb] v1.3.20
 * [express] v3.4.4
 * [validator] v2.0.0
-* [spdy] v1.16.5
+* [spdy] v1.16.9
 
 ### Database
 
