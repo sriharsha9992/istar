@@ -2,6 +2,10 @@
 var d3 = /(\d+)(\d{3})/;
 Number.prototype.comma = function() {
     var s = this.toString();
-    while (d3.test(s)) s = s.replace(d3, '$1' + ',' + '$2');
+    while (d3.test(s)) s = s.replace(d3, '$1,$2');
     return s;
+};
+// Remove commas
+String.prototype.uncomma = function() {
+	return parseInt(this.replace(/,/g, ''));
 };

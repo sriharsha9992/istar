@@ -379,7 +379,7 @@ $(function() {
 		bsizmin[d] = parseFloat(bsiz.attr('min'));
 		bsizmax[d] = parseFloat(bsiz.attr('max'));
 	});
-	var psrc;
+	var receptor;
 	$('input[type="file"]').change(function() {
 		var file = this.files[0];
 		if (file === undefined) return;
@@ -542,7 +542,7 @@ $(function() {
 					return concat(lines[chain]);
 				}).join('');
 			};
-			psrc = concat2(plines) + concat2(ilines) + concat(clines);
+			receptor = concat2(plines) + concat2(ilines) + concat(clines);
 			var pavg = psum.clone().multiplyScalar(1 / cnt);
 			var maxD = pmax.distanceTo(pmin);
 			sn = -maxD / 2;
@@ -798,21 +798,68 @@ $(function() {
 	// Process submission
 	var submit = $('#submit');
 	submit.click(function() {
-		// Disable the submit button for a while
-		submit.prop('disabled', true);
 		// Hide tooltips
 		$('.form-group a').tooltip('hide');
-		// Post a new job without client side validation
+		// Do client side validation
+		var err = [];
+		if (receptor === undefined || receptor.length < 1 || receptor.length > 10485760 || !receptor.match(/^(((ATOM  |HETATM).{24}(.{3}\d\.\d{3}){3}.{26}\n){1,39999}TER   .{74}\n){1,26}(HETATM.{24}(.{3}\d\.\d{3}){3}.{26}\n){0,99}(CONECT(.{4}\d){2}.{64}\n){0,999}$/g)) {
+			err.push('receptor');
+		}
+		var center_x = parseInt($('#center_x').val());
+		if (isNaN(center_x) || center_x < -999 || center_x > 999) {
+			err.push('center_x');
+		}
+		var center_y = parseInt($('#center_y').val());
+		if (isNaN(center_y) || center_y < -999 || center_y > 999) {
+			err.push('center_y');
+		}
+		var center_z = parseInt($('#center_z').val());
+		if (isNaN(center_z) || center_z < -999 || center_z > 999) {
+			err.push('center_z');
+		}
+		var size_x = $('#size_x').val();
+		if (isNaN(size_x) || size_x < 10 || size_x > 30) {
+			err.push('size_x');
+		}
+		var size_y = $('#size_y').val();
+		if (isNaN(size_y) || size_y < 10 || size_y > 30) {
+			err.push('size_y');
+		}
+		var size_z = $('#size_z').val();
+		if (isNaN(size_z) || size_z < 10 || size_z > 30) {
+			err.push('size_z');
+		}
+		var description = $('#description').val();
+		if (description.length < 1 || description > 20) {
+			err.push('description');
+		}
+		var email = $('#email').val();
+		if (!email.match(/^(?:[\w\!\#\$\%\&\'\*\+\-\/\=\?\^\`\{\|\}\~]+\.)*[\w\!\#\$\%\&\'\*\+\-\/\=\?\^\`\{\|\}\~]+@(?:(?:(?:[a-zA-Z0-9](?:[a-zA-Z0-9\-](?!\.)){0,61}[a-zA-Z0-9]?\.)+[a-zA-Z0-9](?:[a-zA-Z0-9\-](?!$)){0,61}[a-zA-Z0-9]?)|(?:\[(?:(?:[01]?\d{1,2}|2[0-4]\d|25[0-5])\.){3}(?:[01]?\d{1,2}|2[0-4]\d|25[0-5])\]))$/)) {
+			err.push('email');
+		}
+		var ligands = $('#ligands').text().uncomma();
+		if (ligands < 1) {
+			err.push('ligands');
+		}
+		if (err.length) {
+			err.forEach(function(key) {
+				$('#' + key + '_label').tooltip('show');
+			});
+			return;
+		}
+		// Disable the submit button for a while
+		submit.prop('disabled', true);
+		// Post a new job with server side validation
 		$.post('jobs', {
-			receptor: psrc,
-			center_x: $('#center_x').val(),
-			center_y: $('#center_y').val(),
-			center_z: $('#center_z').val(),
-			size_x: $('#size_x').val(),
-			size_y: $('#size_y').val(),
-			size_z: $('#size_z').val(),
-			description: $('#description').val(),
-			email: $('#email').val(),
+			receptor: receptor,
+			center_x: center_x,
+			center_y: center_y,
+			center_z: center_z,
+			size_x: size_x,
+			size_y: size_y,
+			size_z: size_z,
+			description: description,
+			email: email,
 			mwt_lb: $('#mwt_lb').text(),
 			mwt_ub: $('#mwt_ub').text(),
 			lgp_lb: $('#lgp_lb').text(),
