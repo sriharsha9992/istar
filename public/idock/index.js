@@ -845,6 +845,7 @@ $(function() {
 			err.forEach(function(key) {
 				$('#' + key + '_label').tooltip('show');
 			});
+			$('#' + err[0]).focus();
 			return;
 		}
 		// Disable the submit button for a while
