@@ -249,6 +249,9 @@ if (cluster.isMaster) {
 					nrb_ub: f.res.nrb_ub
 				});
 				sync(function() {
+					if (ligands < 1) {
+						res.json({'ligands': 'the number of filtered ligands must be at least 1'});
+					}
 					f.res.ligands = ligands;
 					f.res.scheduled = 0;
 					f.res.completed = 0;
