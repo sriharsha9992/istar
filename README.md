@@ -18,6 +18,8 @@ Components
 * [Twitter Bootstrap] v3.0.3
 * [jQuery] v2.0.3
 * [jQuery UI] v1.10.3
+* [three.js] r64
+* [zlib.js] v0.1.7
 
 ### Web server
 
@@ -118,6 +120,8 @@ Logo
 [Twitter Bootstrap]: https://github.com/twitter/bootstrap
 [jQuery]: https://github.com/jquery/jquery
 [jQuery UI]: https://github.com/jquery/jquery-ui
+[three.js]: https://github.com/mrdoob/three.js
+[zlib.js]: https://github.com/imaya/zlib.js
 [node.js]: https://github.com/joyent/node
 [mongodb]: https://github.com/mongodb/node-mongodb-native
 [express]: https://github.com/visionmedia/express
