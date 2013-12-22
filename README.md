@@ -23,7 +23,7 @@ Components
 
 ### Web server
 
-* [node.js] v0.10.23
+* [node.js] v0.10.24
 * [mongodb] v1.3.23
 * [express] v3.4.7
 * [validator] v2.0.0
