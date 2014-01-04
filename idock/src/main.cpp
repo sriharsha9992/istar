@@ -152,7 +152,7 @@ int main(int argc, char* argv[])
 
 	// Load a random forest from file.
 	forest f;
-	f.load("pdbbind2013-refined-x41.rf");
+	f.load("pdbbind2013-refined-x42.rf");
 
 	// Initialize a MT19937 random number generator.
 	mt19937eng rng(seed);
@@ -324,7 +324,7 @@ int main(int argc, char* argv[])
 				const result& r = results.front();
 
 				// Rescore conformations with random forest.
-				vector<float> v(41);
+				vector<float> v(42);
 				for (size_t i = 0; i < lig.num_heavy_atoms; ++i)
 				{
 					const auto& la = lig.heavy_atoms[i];
@@ -342,6 +342,7 @@ int main(int argc, char* argv[])
 						}
 					}
 				}
+				v.back() = lig.flexibility_penalty_factor;
 				const auto rfscore = f(v);
 
 				// Find hydrogen bonds.
