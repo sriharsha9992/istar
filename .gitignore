@@ -1,11 +1,8 @@
 node_modules
 mongodb
-*.log
-*.csv
-.dep.inc
-nbproject
-build
-dist
+jobs
 16_*
-*.data
+web.log
+rf.data
 genomes
+cudart
