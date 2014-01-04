@@ -152,7 +152,7 @@ int main(int argc, char* argv[])
 
 	// Load a random forest from file.
 	forest f;
-	f.load("rf.data");
+	f.load("pdbbind2013-refined-x41.rf");
 
 	// Initialize a MT19937 random number generator.
 	mt19937eng rng(seed);

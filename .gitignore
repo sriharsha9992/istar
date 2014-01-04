@@ -3,6 +3,6 @@ mongodb
 jobs
 16_*
 web.log
-rf.data
+pdbbind2013-refined-x41.rf
 genomes
 cudart
