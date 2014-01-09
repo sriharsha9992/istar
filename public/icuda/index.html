@@ -334,7 +334,7 @@ ptxas info    : Used 10 registers, 348 bytes cmem[0]
 </pre>
           <p>Refer to <a href="http://on-demand.gputechconf.com/gtc/2013/webinar/cuda-toolkit-as-build-tool.pdf">Introduction to the CUDA Toolkit as an Application Build Tool</a> and <a href="http://on-demand.gputechconf.com/gtc-express/2012/presentations/gpu-object-linking.pdf">GPU Object Linking: Usage and Benefits</a> for more detail.</p>
           <h2 id="cuda-gdb">Debugger: cuda-gdb & cuda-gdbserver</h2>
-          <p>Compile an application with the options <code>-g</code> and <code>-G</code>. They embed debug information for the host code and the device code, respectively.</p>
+          <p>Compiling an application with the options <code>-g</code> and <code>-G</code> embeds debug information for the host code and the device code, respectively.</p>
 <pre id="vectorAdd/vectorAdd.gdb">
 <b class="text-info">hjli@hpc1:~/cudart/vectorAdd></b> nvcc -arch=sm_35 -g -G vectorAdd.cu
 <b class="text-info">hjli@hpc1:~/cudart/vectorAdd></b> cuda-gdb ./vectorAdd
