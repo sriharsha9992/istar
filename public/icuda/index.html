@@ -129,7 +129,7 @@
           <p>The <code>checkCudaErrors</code> macro, as listed below, is defined in <code>/usr/local/cuda/samples/common/inc/helper_cuda.h</code>. In case a CUDA host call returns an error, it will output the proper CUDA error string to stderr, calls <a href="http://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__DEVICE.html#group__CUDART__DEVICE_1gdcc2c6f914eb9461565b12648faa5e28">cudaDeviceReset</a> to destroy all allocations and reset all state on the current device in the current process, and exits the program. Try to define your own <code>checkCudaErrors</code> macro for your particular applications.</p>
           <pre id="checkError/checkCudaErrors.h"></pre>
           <h2 id="matrixMul">matrixMul</h2>
-          <p>This sample uses shared memory to accelerate matrix multiplication.</p>
+          <p>This sample uses <a href="http://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#global-memory-3-0">global memory</a> in a coalesced way and <a href="http://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#shared-memory-3-0">shared memory</a> in a bank conflict-free way to accelerate matrix multiplication.</p>
           <pre id="matrixMul/matrixMul.cu"></pre>
           <p>Try using <code>double</code> instead of <code>float</code>.</p>
           <p>Try using <a href="http://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__DEVICE.html#group__CUDART__DEVICE_1gac27b566beee1aa9175373bb9e29b8d1">cudaDeviceSetCacheConfig</a> or <a href="http://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__EXECUTION.html#group__CUDART__EXECUTION_1g4f35d04be20a41c5df96613a748eecc1">cudaFuncSetCacheConfig</a> to set the sizes of L1 cache and shared memory out of 64KB.</p>
