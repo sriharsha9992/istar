@@ -69,21 +69,29 @@
       <div class="row">
         <div class="col-md-12">
           <p>This is a hands-on seminar series on pragmatic CUDA programming. It emphasizes <b>samples</b>, <b>libraries</b> and <b>tools</b>. This seminar series consists of 3 seminars.</p>
-          <h2>Contents</h2>
+          <h2>Contents in 2013/14 term 1</h2>
           <p>Seminar 1: This seminar gives a high-level overview of GPU hardware and CUDA programming philosophy. It covers four samples including <a href="#vectorAdd">vectorAdd</a>, <a href="#zeroCopy">zeroCopy</a>, <a href="#bandwidthTest">bandwidthTest</a> and <a href="#checkError">checkError</a>, and two tools including <a href="#nvcc">nvcc</a> and <a href="#cuda-gdb">cuda-gdb</a>.</p>
           <p>Seminar 2: This seminar illustrates how to exploit single-device parallelism and GPU-specific hardware components. It covers four samples including <a href="#matrixMul">matrixMul</a>, <a href="#atomicAdd">atomicAdd</a>, <a href="#asyncEngine">asyncEngine</a> and <a href="#hyperQ">hyperQ</a>, and three tools including <a href="#nvprof">nvprof</a>, <a href="#nsight">nsight</a> and <a href="#CUDA_Occupancy_Calculator.xls">CUDA_Occupancy_Calculator.xls</a>.</p>
           <p>Seminar 3: This seminar illustrates how to exploit multi-device parallelism and how to utilize libraries. It covers six samples including <a href="#deviceQuery">deviceQuery</a>, <a href="#multiDevice">multiDevice</a>, <a href="#openmp">openmp</a>, <a href="#mpi">mpi</a>, <a href="#cublas">cublas</a> and <a href="#thrust">thrust</a>, and four tools including <a href="#nvidia-smi">nvidia-smi</a>, <a href="#cuda-memcheck">cuda-memcheck</a>, <a href="#nvdisasm">cuobjdump & nvdisasm</a>.</p>
-          <h2>Time & venue</h2>
+          <h2>Contents in 2013/14 term 2</h2>
+          <p>Seminar 1: This seminar introduces the productivity-oriented library <a href="http://docs.nvidia.com/cuda/thrust/">thrust</a>, a CUDA implementation of C++ STL (Standard Template Library). It covers eight samples including <a href="#saxpy">saxpy</a>, <a href="#sum">sum</a>, <a href="#norm">norm</a>, <a href="#piEstimate">piEstimate</a>, <a href="#maxSquaredDiff">maxSquaredDiff</a>, <a href="#wordCount">wordCount</a>, <a href="#conditionalCopy">conditionalCopy</a> and <a href="#arbitraryTransformation">arbitraryTransformation</a>.</p>
+          <p>Seminar 2: This seminar gives a high-level overview of GPU hardware and CUDA programming philosophy. It covers seven samples including <a href="#vectorAdd">vectorAdd</a>, <a href="#zeroCopy">zeroCopy</a>, <a href="#bandwidthTest">bandwidthTest</a>, <a href="#checkError">checkError</a>, <a href="#atomicAdd">atomicAdd</a>, <a href="#matrixMul">matrixMul</a> and <a href="#cublas">cublas</a>, and two tools including <a href="#nvcc">nvcc</a> and <a href="#cuda-gdb">cuda-gdb</a>.</p>
+          <p>Seminar 3: This seminar illustrates how to exploit single-device and multi-device parallelisms. It covers six samples including <a href="#deviceQuery">deviceQuery</a>, <a href="#asyncEngine">asyncEngine</a>, <a href="#hyperQ">hyperQ</a>, <a href="#multiDevice">multiDevice</a>, <a href="#openmp">openmp</a> and <a href="#mpi">mpi</a>, and six tools including <a href="#nvprof">nvprof</a>, <a href="#nsight">nsight</a>, <a href="#CUDA_Occupancy_Calculator.xls">CUDA_Occupancy_Calculator.xls</a>, <a href="#nvidia-smi">nvidia-smi</a>, <a href="#cuda-memcheck">cuda-memcheck</a>, <a href="#nvdisasm">cuobjdump & nvdisasm</a>.</p>
+          <h2>Time & venue in 2013/14 term 1</h2>
           <p>Seminar 1: 08 Nov 2013, 2:00pm - 4:00pm, SHB 123</p>
           <p>Seminar 2: 14 Nov 2013, 2:00pm - 4:00pm, SHB 123</p>
           <p>Seminar 3: 21 Nov 2013, 2:00pm - 4:00pm, SHB 123</p>
+          <h2>Time & venue in 2013/14 term 2</h2>
+          <p>Seminar 1: 20 Jan 2014, 2:00pm - 4:00pm, SHB 123</p>
+          <p>Seminar 2: 27 Jan 2014, 2:00pm - 4:00pm, SHB 123</p>
+          <p>Seminar 3: 03 Feb 2014, 2:00pm - 4:00pm, SHB 123</p>
           <h2>Forms</h2>
           <p><a href="GPGPU-Account.pdf">GPGPU System ACCOUNT REQUEST FORM</a></p>
           <h2>References</h2>
           <p><a href="https://developer.nvidia.com/category/zone/cuda-zone">CUDA zone</a></p>
           <p><a href="http://docs.nvidia.com/cuda">CUDA toolkit documentation</a></p>
           <p><a href="http://appsrv.cse.cuhk.edu.hk/~hjli/pptx/icuda.pptx">Seminar slides</a></p>
-          <p>Videos of <a href="seminar1.m2ts">seminar 1</a>, <a href="seminar2.m2ts">seminar 2</a> and <a href="seminar3.m2ts">seminar 3</a></p>
+          <p>Videos of <a href="seminar1.m2ts">seminar 1</a>, <a href="seminar2.m2ts">seminar 2</a> and <a href="seminar3.m2ts">seminar 3</a> in 2013/14 term 1</p>
           <p><a href="http://courses.engr.illinois.edu/ece408">UIUC course ECE408/CS483: Applied Parallel Programming</a></p>
         </div>
       </div>
@@ -287,6 +295,36 @@ sum = 13
           <p><a href="http://www.accelereyes.com/products/arrayfire">ArrayFire</a> is a fast software library for GPU computing with an easy-to-use API. Refer to <a href="http://on-demand.gputechconf.com/gtc/2013/webinar/gtc-express-arrayfire-for-defense-intelligence-applications.pdf">ArrayFire: A Productive GPU Software Library for Defense and Intelligence Applications</a> for more detail.</p>
           <p><a href="https://github.com/ddemidov/vexcl">VexCL</a> is a vector expression template library for OpenCL/CUDA.</p>
           <p><a href="https://github.com/kylelutz/compute">Boost.Compute</a> is a GPU/parallel-computing library for C++ based on OpenCL.</p>
+          <h2 id="saxpy">saxpy</h2>
+          <p>This sample uses <a href="http://docs.nvidia.com/cuda/thrust/">thrust</a> to implement the SAXPY operation Y[i] = a * X[i] + Y[i] where X and Y are vectors and a is a scalar constant.</p>
+          <pre id="saxpy/saxpy.cu"></pre>
+          <h2 id="sum">sum</h2>
+          <p>This sample uses <a href="http://docs.nvidia.com/cuda/thrust/">thrust</a> to compute the sum of a vector.</p>
+          <pre id="sum/sum.cu"></pre>
+          <h2 id="norm">norm</h2>
+          <p>This sample uses <a href="http://docs.nvidia.com/cuda/thrust/">thrust</a> to compute the norm of a vector. The norm is computed by squaring all numbers in the vector, summing the squares, and taking the square root of the sum of squares.</p>
+          <pre id="norm/norm.cu"></pre>
+          <h2 id="piEstimate">piEstimate</h2>
+          <p>This sample uses <a href="http://docs.nvidia.com/cuda/thrust/">thrust</a> to estimate the value of π through tremendous Monte Carlo simulations.</p>
+          <pre id="piEstimate/piEstimate.cu"></pre>
+          <h2 id="maxSquaredDiff">maxSquaredDiff</h2>
+          <p>This sample uses <a href="http://docs.nvidia.com/cuda/thrust/">thrust</a> to compute the maximum squared difference between the elements of two vectors.</p>
+          <pre id="maxSquaredDiff/maxSquaredDiff.cu"></pre>
+          <h2 id="wordCount">wordCount</h2>
+          <p>This sample uses <a href="http://docs.nvidia.com/cuda/thrust/">thrust</a> to count the number of words in a text sample. A word has the characteristic that text[i] is an alphabetical character and text[i-1] is not an alphabetical character.</p>
+          <pre id="wordCount/wordCount.cu"></pre>
+          <h2 id="conditionalCopy">conditionalCopy</h2>
+          <p>This sample uses <a href="http://docs.nvidia.com/cuda/thrust/">thrust</a> to compute indices for all the nonzero values in a sequence.</p>
+          <pre id="conditionalCopy/conditionalCopy.cu"></pre>
+          <h2 id="arbitraryTransformation">arbitraryTransformation</h2>
+          <p>This sample uses <a href="http://docs.nvidia.com/cuda/thrust/">thrust</a> to implement an arbitrary transformation of at most 10 elements.</p>
+          <pre id="arbitraryTransformation/arbitraryTransformation.cu"></pre>
+          <p>Refer to the thrust wiki for a <a href="https://github.com/thrust/thrust/wiki/Quick-Start-Guide">quick start guide</a>.</p>
+          <p>There are 3 backend implementations of host_vector: CPP, OMP and TBB. Refer to <code>${CUDA_ROOT}/include/thrust/detail/config/host_systme.h</code> for their definitions.</p>
+          <p>There are 4 backend implementations of device_vector: CUDA, OMP, TBB and CPP. Refer to <code>${CUDA_ROOT}/include/thrust/detail/config/device_systme.h</code> for their definitions.</p>
+          <p>Redefining THRUST_HOST_SYSTEM and THRUST_DEVICE_SYSTEM switches the backend implementations of host_vector and device_vector respectively. <code>nvcc</code> is required only when the CUDA backend is requested. Otherwise <code>g++</code> will do and the <code>.cu</code> extension should be changed to <code>.cpp</code>.</p>
+          <p><code>g++ -I${CUDA_ROOT}/include -DTHRUST_DEVICE_SYSTEM=THRUST_DEVICE_SYSTEM_OMP arbitraryTransformation.cpp -fopenmp</code></p>
+          <p><code>g++ -I${CUDA_ROOT}/include -DTHRUST_DEVICE_SYSTEM=THRUST_DEVICE_SYSTEM_TBB arbitraryTransformation.cpp -ltbb</code>.</p>
         </div>
       </div>
     </section>
