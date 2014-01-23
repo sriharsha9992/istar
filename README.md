@@ -18,7 +18,7 @@ Components
 * [Twitter Bootstrap] v3.0.3
 * [jQuery] v2.0.3
 * [jQuery UI] v1.10.3
-* [three.js] r64
+* [three.js] r65
 * [zlib.js] v0.1.7
 
 ### Web server
