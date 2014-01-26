@@ -823,8 +823,7 @@ $(function() {
 			ligands: ligands,
 		});
 		if (v
-			.field('email').message('must be valid').email()
-			.field('receptor').message('must conform to PDB specification').length(1, 10485760).regex(/^(((ATOM  |HETATM).{24}(.{3}\d\.\d{3}){3}.{26}\n){1,39999}TER   .{74}\n){1,26}(HETATM.{24}(.{3}\d\.\d{3}){3}.{26}\n){0,99}(CONECT(.{4}\d){2}.{64}\n){0,999}$/g)
+			.field('receptor').message('must conform to PDB specification').length(1, 10485760).receptor()
 			.field('description').message('must be provided, at most 20 characters').length(1, 20)
 			.field('center_x').message('must be a decimal within [-999, 999]').float().min(-999).max(999)
 			.field('center_y').message('must be a decimal within [-999, 999]').float().min(-999).max(999)
@@ -832,12 +831,14 @@ $(function() {
 			.field('size_x').message('must be an integer within [10, 30]').float().min(10).max(30)
 			.field('size_y').message('must be an integer within [10, 30]').float().min(10).max(30)
 			.field('size_z').message('must be an integer within [10, 30]').float().min(10).max(30)
+			.field('email').message('must be valid').email()
 			.field('ligands').message('must be a positive integer').int().min(1)
 			.failed()) {
 			var keys = Object.keys(v.err);
 			keys.forEach(function(key) {
 				$('#' + key + '_label').tooltip('show');
 			});
+			console.log(keys)
 			$('#' + keys[0]).focus();
 			return;
 		}

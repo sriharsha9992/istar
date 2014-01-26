@@ -154,7 +154,7 @@ if (cluster.isMaster) {
 				var v = new validator(req.body);
 				if (v
 					.field('email').message('must be valid').email().copy()
-					.field('receptor').message('must conform to PDB specification').length(1, 10485760).regex(/^(((ATOM  |HETATM).{24}(.{3}\d\.\d{3}){3}.{26}\n){1,39999}TER   .{74}\n){1,26}(HETATM.{24}(.{3}\d\.\d{3}){3}.{26}\n){0,99}(CONECT(.{4}\d){2}.{64}\n){0,999}$/g).copy()
+					.field('receptor').message('must conform to PDB specification').length(1, 10485760).receptor().copy()
 					.field('description').message('must be provided, at most 20 characters').length(1, 20).xss()
 					.field('center_x').message('must be a decimal within [-999, 999]').float().min(-999).max(999)
 					.field('center_y').message('must be a decimal within [-999, 999]').float().min(-999).max(999)
@@ -323,7 +323,7 @@ if (cluster.isMaster) {
 				if (v
 					.field('email').message('must be valid').email().copy()
 					.field('taxid').message('must be the taxonomy id of one of the 26 genomes').int().in([13616, 9598, 9606, 9601, 10116, 9544, 9483, 10090, 9913, 9823, 9796, 9615, 9986, 7955, 28377, 9103, 59729, 9031, 3847, 9258, 29760, 15368, 7460, 30195, 7425, 7070])
-					.field('queries').message('must conform to the specifications').length(2, 66000).regex(/^([ACGTN]{1,64}\d\n){0,9999}[ACGTN]{1,64}\d\n?$/ig).copy()
+					.field('queries').message('must conform to the specifications').length(2, 66000).queries().copy()
 					.failed()) {
 					return res.json(v.err);
 				}
