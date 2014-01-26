@@ -89,7 +89,7 @@ if (cluster.isMaster) {
 			});
 			// Define helper variables and functions
 			var child_process = require('child_process');
-			var validator = require('./validator');
+			var validator = require('./public/validator');
 			var ligands;
 			function sync(callback) {
 				if (ligands == -1) setImmediate(function() {

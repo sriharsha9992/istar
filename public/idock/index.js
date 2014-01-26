@@ -801,51 +801,44 @@ $(function() {
 		// Hide tooltips
 		$('.form-group a').tooltip('hide');
 		// Do client side validation
-		var err = [];
-		if (receptor === undefined || receptor.length < 1 || receptor.length > 10485760 || !/^(((ATOM  |HETATM).{24}(.{3}\d\.\d{3}){3}.{26}\n){1,39999}TER   .{74}\n){1,26}(HETATM.{24}(.{3}\d\.\d{3}){3}.{26}\n){0,99}(CONECT(.{4}\d){2}.{64}\n){0,999}$/g.test(receptor)) {
-			err.push('receptor');
-		}
 		var center_x = parseInt($('#center_x').val());
-		if (isNaN(center_x) || center_x < -999 || center_x > 999) {
-			err.push('center_x');
-		}
 		var center_y = parseInt($('#center_y').val());
-		if (isNaN(center_y) || center_y < -999 || center_y > 999) {
-			err.push('center_y');
-		}
 		var center_z = parseInt($('#center_z').val());
-		if (isNaN(center_z) || center_z < -999 || center_z > 999) {
-			err.push('center_z');
-		}
 		var size_x = $('#size_x').val();
-		if (isNaN(size_x) || size_x < 10 || size_x > 30) {
-			err.push('size_x');
-		}
 		var size_y = $('#size_y').val();
-		if (isNaN(size_y) || size_y < 10 || size_y > 30) {
-			err.push('size_y');
-		}
 		var size_z = $('#size_z').val();
-		if (isNaN(size_z) || size_z < 10 || size_z > 30) {
-			err.push('size_z');
-		}
 		var description = $('#description').val();
-		if (description.length < 1 || description > 20) {
-			err.push('description');
-		}
 		var email = $('#email').val();
-		if (!/^(?:[\w\!\#\$\%\&\'\*\+\-\/\=\?\^\`\{\|\}\~]+\.)*[\w\!\#\$\%\&\'\*\+\-\/\=\?\^\`\{\|\}\~]+@(?:(?:(?:[a-zA-Z0-9](?:[a-zA-Z0-9\-](?!\.)){0,61}[a-zA-Z0-9]?\.)+[a-zA-Z0-9](?:[a-zA-Z0-9\-](?!$)){0,61}[a-zA-Z0-9]?)|(?:\[(?:(?:[01]?\d{1,2}|2[0-4]\d|25[0-5])\.){3}(?:[01]?\d{1,2}|2[0-4]\d|25[0-5])\]))$/.test(email)) {
-			err.push('email');
-		}
 		var ligands = $('#ligands').text().uncomma();
-		if (ligands < 1) {
-			err.push('ligands');
-		}
-		if (err.length) {
-			err.forEach(function(key) {
+		var v = new validator({
+			email: email,
+			receptor: receptor,
+			description: description,
+			center_x: center_x,
+			center_y: center_y,
+			center_z: center_z,
+			size_x: size_x,
+			size_y: size_y,
+			size_z: size_z,
+			ligands: ligands,
+		});
+		if (v
+			.field('email').message('must be valid').email()
+			.field('receptor').message('must conform to PDB specification').length(1, 10485760).regex(/^(((ATOM  |HETATM).{24}(.{3}\d\.\d{3}){3}.{26}\n){1,39999}TER   .{74}\n){1,26}(HETATM.{24}(.{3}\d\.\d{3}){3}.{26}\n){0,99}(CONECT(.{4}\d){2}.{64}\n){0,999}$/g)
+			.field('description').message('must be provided, at most 20 characters').length(1, 20)
+			.field('center_x').message('must be a decimal within [-999, 999]').float().min(-999).max(999)
+			.field('center_y').message('must be a decimal within [-999, 999]').float().min(-999).max(999)
+			.field('center_z').message('must be a decimal within [-999, 999]').float().min(-999).max(999)
+			.field('size_x').message('must be an integer within [10, 30]').float().min(10).max(30)
+			.field('size_y').message('must be an integer within [10, 30]').float().min(10).max(30)
+			.field('size_z').message('must be an integer within [10, 30]').float().min(10).max(30)
+			.field('ligands').message('must be a positive integer').int().min(1)
+			.failed()) {
+			var keys = Object.keys(v.err);
+			keys.forEach(function(key) {
 				$('#' + key + '_label').tooltip('show');
 			});
-			$('#' + err[0]).focus();
+			$('#' + keys[0]).focus();
 			return;
 		}
 		// Disable the submit button for a while
