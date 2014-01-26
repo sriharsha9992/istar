@@ -122,34 +122,27 @@ if (cluster.isMaster) {
 			}
 			// Get idock jobs
 			app.get('/idock/jobs', function(req, res) {
-				var v = new validator.Validator();
-				if (v.init(req.query)
-					.chk('skip', 'must be a non-negative integer', false).isInt()
-					.chk('count', 'must be a non-negative integer', false).isInt()
-					.failed()) {
-					return res.json(v.err);
-				}
-				var f = new validator.Filter();
-				if (v.init(f.init(req.query)
-					.snt('skip', 0).toInt()
-					.snt('count', 0).toInt()
-					.res)
-					.rng('skip', 'count')
+				var v = new validator(req.query);
+				if (v
+					.field('skip').message('must be a non-negative integer').int(0).min(0)
+					.field('count').message('must be a non-negative integer').int(0).min(0)
+					.failed() || v
+					.range('skip', 'count')
 					.failed()) {
 					return res.json(v.err);
 				};
 				idock.count(function(err, count) {
 					if (err) throw err;
-					if (v.init(f.res)
-						.chk('count', 'must be no greater than ' + count, true).max(count)
+					if (v
+						.field('count').message('must be no greater than ' + count).max(count)
 						.failed()) {
 						return res.json(v.err);
 					}
 					idock.find({}, {
-						fields: f.res.count == count ? idockProgressFields : idockJobFields,
+						fields: v.res.count == count ? idockProgressFields : idockJobFields,
 						sort: {'submitted': 1},
-						skip: f.res.skip,
-						limit: count - f.res.skip
+						skip: v.res.skip,
+						limit: count - v.res.skip
 					}).toArray(function(err, docs) {
 						if (err) throw err;
 						res.json(docs);
@@ -158,70 +151,45 @@ if (cluster.isMaster) {
 			});
 			// Post a new idock job
 			app.post('/idock/jobs', function(req, res) {
-				var v = new validator.Validator();
-				if (v.init(req.body)
-					.chk('email', 'must be valid', true).isEmail()
-					.chk('receptor', 'must conform to PDB specification', true).len(1, 10485760).regex(/^(((ATOM  |HETATM).{24}(.{3}\d\.\d{3}){3}.{26}\n){1,39999}TER   .{74}\n){1,26}(HETATM.{24}(.{3}\d\.\d{3}){3}.{26}\n){0,99}(CONECT(.{4}\d){2}.{64}\n){0,999}$/g) // 10MB
-					.chk('center_x', 'must be a decimal within [-999, 999]', true).isDecimal().min(-999).max(999)
-					.chk('center_y', 'must be a decimal within [-999, 999]', true).isDecimal().min(-999).max(999)
-					.chk('center_z', 'must be a decimal within [-999, 999]', true).isDecimal().min(-999).max(999)
-					.chk('size_x', 'must be an integer within [10, 30]', true).isDecimal().min(10).max(30)
-					.chk('size_y', 'must be an integer within [10, 30]', true).isDecimal().min(10).max(30)
-					.chk('size_z', 'must be an integer within [10, 30]', true).isDecimal().min(10).max(30)
-					.chk('description', 'must be provided, at most 20 characters', true).len(1, 20)
-					.chk('mwt_lb', 'must be a decimal within [55, 567]', false).isDecimal().min(55).max(567)
-					.chk('mwt_ub', 'must be a decimal within [55, 567]', false).isDecimal().min(55).max(567)
-					.chk('lgp_lb', 'must be a decimal within [-6, 12]', false).isDecimal().min(-6).max(12)
-					.chk('lgp_ub', 'must be a decimal within [-6, 12]', false).isDecimal().min(-6).max(12)
-					.chk('ads_lb', 'must be a decimal within [-25, 29]', false).isDecimal().min(-25).max(29)
-					.chk('ads_ub', 'must be a decimal within [-25, 29]', false).isDecimal().min(-25).max(29)
-					.chk('pds_lb', 'must be a decimal within [-504, 1]', false).isDecimal().min(-504).max(1)
-					.chk('pds_ub', 'must be a decimal within [-504, 1]', false).isDecimal().min(-504).max(1)
-					.chk('hbd_lb', 'must be an integer within [0, 20]', false).isInt().min(0).max(20)
-					.chk('hbd_ub', 'must be an integer within [0, 20]', false).isInt().min(0).max(20)
-					.chk('hba_lb', 'must be an integer within [0, 18]', false).isInt().min(0).max(18)
-					.chk('hba_ub', 'must be an integer within [0, 18]', false).isInt().min(0).max(18)
-					.chk('psa_lb', 'must be an integer within [0, 317]', false).isInt().min(0).max(317)
-					.chk('psa_ub', 'must be an integer within [0, 317]', false).isInt().min(0).max(317)
-					.chk('chg_lb', 'must be an integer within [-5, 5]', false).isInt().min(-5).max(5)
-					.chk('chg_ub', 'must be an integer within [-5, 5]', false).isInt().min(-5).max(5)
-					.chk('nrb_lb', 'must be an integer within [0, 35]', false).isInt().min(0).max(35)
-					.chk('nrb_ub', 'must be an integer within [0, 35]', false).isInt().min(0).max(35)
-					.failed()) {
-					return res.json(v.err);
-				}
-				var f = new validator.Filter();
-				if (v.init(f.init(req.body)
-					.snt('email').copy()
-					.snt('description').xss()
-					.snt('mwt_lb', 400).toFloat()
-					.snt('mwt_ub', 420).toFloat()
-					.snt('lgp_lb', 0).toFloat()
-					.snt('lgp_ub', 2).toFloat()
-					.snt('ads_lb', 0).toFloat()
-					.snt('ads_ub', 5).toFloat()
-					.snt('pds_lb', -20).toFloat()
-					.snt('pds_ub', 0).toFloat()
-					.snt('hbd_lb', 2).toInt()
-					.snt('hbd_ub', 4).toInt()
-					.snt('hba_lb', 4).toInt()
-					.snt('hba_ub', 6).toInt()
-					.snt('psa_lb', 60).toInt()
-					.snt('psa_ub', 80).toInt()
-					.snt('chg_lb', 0).toInt()
-					.snt('chg_ub', 0).toInt()
-					.snt('nrb_lb', 4).toInt()
-					.snt('nrb_ub', 6).toInt()
-					.res)
-					.rng('mwt_lb', 'mwt_ub')
-					.rng('lgp_lb', 'lgp_ub')
-					.rng('ads_lb', 'ads_ub')
-					.rng('pds_lb', 'pds_ub')
-					.rng('hbd_lb', 'hbd_ub')
-					.rng('hba_lb', 'hba_ub')
-					.rng('psa_lb', 'psa_ub')
-					.rng('chg_lb', 'chg_ub')
-					.rng('nrb_lb', 'nrb_ub')
+				var v = new validator(req.body);
+				if (v
+					.field('email').message('must be valid').email().copy()
+					.field('receptor').message('must conform to PDB specification').length(1, 10485760).regex(/^(((ATOM  |HETATM).{24}(.{3}\d\.\d{3}){3}.{26}\n){1,39999}TER   .{74}\n){1,26}(HETATM.{24}(.{3}\d\.\d{3}){3}.{26}\n){0,99}(CONECT(.{4}\d){2}.{64}\n){0,999}$/g).copy()
+					.field('description').message('must be provided, at most 20 characters').length(1, 20).xss()
+					.field('center_x').message('must be a decimal within [-999, 999]').float().min(-999).max(999)
+					.field('center_y').message('must be a decimal within [-999, 999]').float().min(-999).max(999)
+					.field('center_z').message('must be a decimal within [-999, 999]').float().min(-999).max(999)
+					.field('size_x').message('must be an integer within [10, 30]').float().min(10).max(30)
+					.field('size_y').message('must be an integer within [10, 30]').float().min(10).max(30)
+					.field('size_z').message('must be an integer within [10, 30]').float().min(10).max(30)
+					.field('mwt_lb').message('must be a decimal within [55, 567]').float(400).min(55).max(567)
+					.field('mwt_ub').message('must be a decimal within [55, 567]').float(420).min(55).max(567)
+					.field('lgp_lb').message('must be a decimal within [-6, 12]').float(0).min(-6).max(12)
+					.field('lgp_ub').message('must be a decimal within [-6, 12]').float(2).min(-6).max(12)
+					.field('ads_lb').message('must be a decimal within [-25, 29]').float(0).min(-25).max(29)
+					.field('ads_ub').message('must be a decimal within [-25, 29]').float(5).min(-25).max(29)
+					.field('pds_lb').message('must be a decimal within [-504, 1]').float(-20).min(-504).max(1)
+					.field('pds_ub').message('must be a decimal within [-504, 1]').float(0).min(-504).max(1)
+					.field('hbd_lb').message('must be an integer within [0, 20]').int(2).min(0).max(20)
+					.field('hbd_ub').message('must be an integer within [0, 20]').int(4).min(0).max(20)
+					.field('hba_lb').message('must be an integer within [0, 18]').int(4).min(0).max(18)
+					.field('hba_ub').message('must be an integer within [0, 18]').int(6).min(0).max(18)
+					.field('psa_lb').message('must be an integer within [0, 317]').int(60).min(0).max(317)
+					.field('psa_ub').message('must be an integer within [0, 317]').int(80).min(0).max(317)
+					.field('chg_lb').message('must be an integer within [-5, 5]').int(0).min(-5).max(5)
+					.field('chg_ub').message('must be an integer within [-5, 5]').int(0).min(-5).max(5)
+					.field('nrb_lb').message('must be an integer within [0, 35]').int(4).min(0).max(35)
+					.field('nrb_ub').message('must be an integer within [0, 35]').int(6).min(0).max(35)
+					.failed() || v
+					.range('mwt_lb', 'mwt_ub')
+					.range('lgp_lb', 'lgp_ub')
+					.range('ads_lb', 'ads_ub')
+					.range('pds_lb', 'pds_ub')
+					.range('hbd_lb', 'hbd_ub')
+					.range('hba_lb', 'hba_ub')
+					.range('psa_lb', 'psa_ub')
+					.range('chg_lb', 'chg_ub')
+					.range('nrb_lb', 'nrb_ub')
 					.failed()) {
 					return res.json(v.err);
 				}
@@ -229,38 +197,38 @@ if (cluster.isMaster) {
 				ligands = -1;
 				process.send({
 					query: '/idock/ligands',
-					mwt_lb: f.res.mwt_lb,
-					mwt_ub: f.res.mwt_ub,
-					lgp_lb: f.res.lgp_lb,
-					lgp_ub: f.res.lgp_ub,
-					ads_lb: f.res.ads_lb,
-					ads_ub: f.res.ads_ub,
-					pds_lb: f.res.pds_lb,
-					pds_ub: f.res.pds_ub,
-					hbd_lb: f.res.hbd_lb,
-					hbd_ub: f.res.hbd_ub,
-					hba_lb: f.res.hba_lb,
-					hba_ub: f.res.hba_ub,
-					psa_lb: f.res.psa_lb,
-					psa_ub: f.res.psa_ub,
-					chg_lb: f.res.chg_lb,
-					chg_ub: f.res.chg_ub,
-					nrb_lb: f.res.nrb_lb,
-					nrb_ub: f.res.nrb_ub
+					mwt_lb: v.res.mwt_lb,
+					mwt_ub: v.res.mwt_ub,
+					lgp_lb: v.res.lgp_lb,
+					lgp_ub: v.res.lgp_ub,
+					ads_lb: v.res.ads_lb,
+					ads_ub: v.res.ads_ub,
+					pds_lb: v.res.pds_lb,
+					pds_ub: v.res.pds_ub,
+					hbd_lb: v.res.hbd_lb,
+					hbd_ub: v.res.hbd_ub,
+					hba_lb: v.res.hba_lb,
+					hba_ub: v.res.hba_ub,
+					psa_lb: v.res.psa_lb,
+					psa_ub: v.res.psa_ub,
+					chg_lb: v.res.chg_lb,
+					chg_ub: v.res.chg_ub,
+					nrb_lb: v.res.nrb_lb,
+					nrb_ub: v.res.nrb_ub
 				});
 				sync(function() {
 					if (ligands < 1) {
 						res.json({'ligands': 'the number of filtered ligands must be at least 1'});
 					}
-					f.res.ligands = ligands;
-					f.res.scheduled = 0;
-					f.res.completed = 0;
+					v.res.ligands = ligands;
+					v.res.scheduled = 0;
+					v.res.completed = 0;
 					for (var i = 0; i < 10; ++i) {
-						f.res[i.toString()] = 0;
+						v.res[i.toString()] = 0;
 					}
-					f.res.submitted = new Date();
-					f.res._id = new mongodb.ObjectID();
-					var dir = '/home/hjli/nfs/hjli/istar/public/idock/jobs/' + f.res._id;
+					v.res.submitted = new Date();
+					v.res._id = new mongodb.ObjectID();
+					var dir = '/home/hjli/nfs/hjli/istar/public/idock/jobs/' + v.res._id;
 					fs.mkdir(dir, function (err) {
 						if (err) throw err;
 						fs.writeFile(dir + '/receptor.pdb', req.body['receptor'], function(err) {
@@ -279,7 +247,7 @@ if (cluster.isMaster) {
 										return key + '=' + req.body[key] + '\n';
 									}).join(''), function(err) {
 										if (err) throw err;
-										idock.insert(f.res, { w: 0 });
+										idock.insert(v.res, { w: 0 });
 										res.json({});
 									});
 								}
@@ -291,85 +259,59 @@ if (cluster.isMaster) {
 			// Get the number of ligands satisfying filtering conditions
 			app.get('/idock/ligands', function(req, res) {
 				// Validate and sanitize user input
-				var v = new validator.Validator();
-				if (v.init(req.query)
-					.chk('mwt_lb', 'must be a decimal within [55, 567]', true).isDecimal().min(55).max(567)
-					.chk('mwt_ub', 'must be a decimal within [55, 567]', true).isDecimal().min(55).max(567)
-					.chk('lgp_lb', 'must be a decimal within [-6, 12]', true).isDecimal().min(-6).max(12)
-					.chk('lgp_ub', 'must be a decimal within [-6, 12]', true).isDecimal().min(-6).max(12)
-					.chk('ads_lb', 'must be a decimal within [-25, 29]', true).isDecimal().min(-25).max(29)
-					.chk('ads_ub', 'must be a decimal within [-25, 29]', true).isDecimal().min(-25).max(29)
-					.chk('pds_lb', 'must be a decimal within [-504, 1]', true).isDecimal().min(-504).max(1)
-					.chk('pds_ub', 'must be a decimal within [-504, 1]', true).isDecimal().min(-504).max(1)
-					.chk('hbd_lb', 'must be an integer within [0, 20]', true).isInt().min(0).max(20)
-					.chk('hbd_ub', 'must be an integer within [0, 20]', true).isInt().min(0).max(20)
-					.chk('hba_lb', 'must be an integer within [0, 18]', true).isInt().min(0).max(18)
-					.chk('hba_ub', 'must be an integer within [0, 18]', true).isInt().min(0).max(18)
-					.chk('psa_lb', 'must be an integer within [0, 317]', true).isInt().min(0).max(317)
-					.chk('psa_ub', 'must be an integer within [0, 317]', true).isInt().min(0).max(317)
-					.chk('chg_lb', 'must be an integer within [-5, 5]', true).isInt().min(-5).max(5)
-					.chk('chg_ub', 'must be an integer within [-5, 5]', true).isInt().min(-5).max(5)
-					.chk('nrb_lb', 'must be an integer within [0, 35]', true).isInt().min(0).max(35)
-					.chk('nrb_ub', 'must be an integer within [0, 35]', true).isInt().min(0).max(35)
-					.failed()) {
-					return res.json(v.err);
-				}
-				var f = new validator.Filter();
-				if (v.init(f.init(req.query)
-					.snt('mwt_lb').toFloat()
-					.snt('mwt_ub').toFloat()
-					.snt('lgp_lb').toFloat()
-					.snt('lgp_ub').toFloat()
-					.snt('ads_lb').toFloat()
-					.snt('ads_ub').toFloat()
-					.snt('pds_lb').toFloat()
-					.snt('pds_ub').toFloat()
-					.snt('hbd_lb').toInt()
-					.snt('hbd_ub').toInt()
-					.snt('hba_lb').toInt()
-					.snt('hba_ub').toInt()
-					.snt('psa_lb').toInt()
-					.snt('psa_ub').toInt()
-					.snt('chg_lb').toInt()
-					.snt('chg_ub').toInt()
-					.snt('nrb_lb').toInt()
-					.snt('nrb_ub').toInt()
-					.res)
-					.rng('mwt_lb', 'mwt_ub')
-					.rng('lgp_lb', 'lgp_ub')
-					.rng('ads_lb', 'ads_ub')
-					.rng('pds_lb', 'pds_ub')
-					.rng('hbd_lb', 'hbd_ub')
-					.rng('hba_lb', 'hba_ub')
-					.rng('psa_lb', 'psa_ub')
-					.rng('chg_lb', 'chg_ub')
-					.rng('nrb_lb', 'nrb_ub')
+				var v = new validator(req.query);
+				if (v
+					.field('mwt_lb').message('must be a decimal within [55, 567]').float().min(55).max(567)
+					.field('mwt_ub').message('must be a decimal within [55, 567]').float().min(55).max(567)
+					.field('lgp_lb').message('must be a decimal within [-6, 12]').float().min(-6).max(12)
+					.field('lgp_ub').message('must be a decimal within [-6, 12]').float().min(-6).max(12)
+					.field('ads_lb').message('must be a decimal within [-25, 29]').float().min(-25).max(29)
+					.field('ads_ub').message('must be a decimal within [-25, 29]').float().min(-25).max(29)
+					.field('pds_lb').message('must be a decimal within [-504, 1]').float().min(-504).max(1)
+					.field('pds_ub').message('must be a decimal within [-504, 1]').float().min(-504).max(1)
+					.field('hbd_lb').message('must be an integer within [0, 20]').int().min(0).max(20)
+					.field('hbd_ub').message('must be an integer within [0, 20]').int().min(0).max(20)
+					.field('hba_lb').message('must be an integer within [0, 18]').int().min(0).max(18)
+					.field('hba_ub').message('must be an integer within [0, 18]').int().min(0).max(18)
+					.field('psa_lb').message('must be an integer within [0, 317]').int().min(0).max(317)
+					.field('psa_ub').message('must be an integer within [0, 317]').int().min(0).max(317)
+					.field('chg_lb').message('must be an integer within [-5, 5]').int().min(-5).max(5)
+					.field('chg_ub').message('must be an integer within [-5, 5]').int().min(-5).max(5)
+					.field('nrb_lb').message('must be an integer within [0, 35]').int().min(0).max(35)
+					.field('nrb_ub').message('must be an integer within [0, 35]').int().min(0).max(35)
+					.failed() || v
+					.range('mwt_lb', 'mwt_ub')
+					.range('lgp_lb', 'lgp_ub')
+					.range('ads_lb', 'ads_ub')
+					.range('pds_lb', 'pds_ub')
+					.range('hbd_lb', 'hbd_ub')
+					.range('hba_lb', 'hba_ub')
+					.range('psa_lb', 'psa_ub')
+					.range('chg_lb', 'chg_ub')
+					.range('nrb_lb', 'nrb_ub')
 					.failed()) {
 					return res.json(v.err);
 				}
 				// Send query to master process
 				ligands = -1;
-				f.res.query = '/idock/ligands';
-				process.send(f.res);
+				v.res.query = '/idock/ligands';
+				process.send(v.res);
 				sync(function() {
 					res.json(ligands);
 				});
 			});
 			// Get igrep jobs
 			app.get('/igrep/jobs', function(req, res) {
-				var v = new validator.Validator();
-				if (v.init(req.query)
-					.chk('skip', 'must be a non-negative integer', false).isInt()
+				var v = new validator(req.query);
+				if (v
+					.field('skip').message('must be a non-negative integer').int(0).min(0)
 					.failed()) {
 					return res.json(v.err);
-				}
-				var f = new validator.Filter();
-				f.init(req.query)
-					.snt('skip', 0).toInt();
+				};
 				igrep.find({}, {
 					fields: {'taxid': 1, 'submitted': 1, 'done': 1},
 					sort: {'submitted': 1},
-					skip: f.res.skip
+					skip: v.res.skip
 				}).toArray(function(err, docs) {
 					if (err) throw err;
 					res.json(docs);
@@ -377,21 +319,16 @@ if (cluster.isMaster) {
 			});
 			// Post a new igrep job
 			app.post('/igrep/jobs', function(req, res) {
-				var v = new validator.Validator();
-				if (v.init(req.body)
-					.chk('email', 'must be valid', true).isEmail()
-					.chk('taxid', 'must be the taxonomy id of one of the 26 genomes', true).isIn(['13616', '9598', '9606', '9601', '10116', '9544', '9483', '10090', '9913', '9823', '9796', '9615', '9986', '7955', '28377', '9103', '59729', '9031', '3847', '9258', '29760', '15368', '7460', '30195', '7425', '7070'])
-					.chk('queries', 'must conform to the specifications', true).len(2, 66000).regex(/^([ACGTN]{1,64}\d\n){0,9999}[ACGTN]{1,64}\d\n?$/ig)
+				var v = new validator(req.body);
+				if (v
+					.field('email').message('must be valid').email().copy()
+					.field('taxid').message('must be the taxonomy id of one of the 26 genomes').int().in([13616, 9598, 9606, 9601, 10116, 9544, 9483, 10090, 9913, 9823, 9796, 9615, 9986, 7955, 28377, 9103, 59729, 9031, 3847, 9258, 29760, 15368, 7460, 30195, 7425, 7070])
+					.field('queries').message('must conform to the specifications').length(2, 66000).regex(/^([ACGTN]{1,64}\d\n){0,9999}[ACGTN]{1,64}\d\n?$/ig).copy()
 					.failed()) {
 					return res.json(v.err);
 				}
-				var f = new validator.Filter();
-				f.init(req.body)
-					.snt('email').copy()
-					.snt('taxid').toInt()
-					.snt('queries').copy()
-					.res.submitted = new Date();
-				igrep.insert(f.res, {w: 0});
+				v.res.submitted = new Date();
+				igrep.insert(v.res, {w: 0});
 				res.json({});
 			});
 			// Start listening

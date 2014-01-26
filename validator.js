@@ -1,50 +1,68 @@
-var validator = module.exports = require('validator');
-validator.Validator.prototype.init = function(obj) {
+var validator = function(obj) {
 	this.obj = obj;
 	this.err = {};
-	return this;
-}
-validator.Validator.prototype.chk = function(key, fail_msg, compulsory) {
-	this.error = function(msg) {
-		if ((this.obj.hasOwnProperty(key) || compulsory) && (!this.err.hasOwnProperty(key))) {
-			this.err[key] = msg;
-		}
-		return this;
-	}
-	return this.check(this.obj[key], fail_msg);
-}
-validator.Validator.prototype.failed = function() {
-	return Object.keys(this.err).length;
-}
-validator.Validator.prototype.rng = function(lb, ub) {
-	if (!(this.obj[lb] <= this.obj[ub])) {
-		this.err[lb] = lb + ' must be less than or equal to ' + ub;
-	}
-	return this;
-}
-validator.Filter.prototype.init = function(obj) {
-	this.obj = obj;
 	this.res = {};
 	return this;
-}
-validator.Filter.prototype.snt = function(key, def) {
-	this.modify = function(value) {
-		this.res[key] = value;
-	}
-	return this.sanitize(this.obj.hasOwnProperty(key) ? this.obj[key] : def);
-}
-validator.Filter.prototype.wrap = function(value) {
+};
+validator.prototype.field = function(key) {
+	this.key = key;
+	this.val = this.res[key] === undefined ? this.obj[key] : this.res[key];
 	return this;
-}
-validator.Filter.prototype.copy = function() {
-	this.modify(this.str);
-	return this.wrap(this.str);
-}
-validator.Filter.prototype.toLowerCase = function() {
-	this.modify(this.str.toLowerCase());
-	return this.wrap(this.str);
-}
-validator.Filter.prototype.xss = function() {
-	this.modify(this.str.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;'));
-	return this.wrap(this.str);
-}
+};
+validator.prototype.message = function(msg) {
+	this.msg = msg;
+	return this;
+};
+validator.prototype.error = function() {
+	this.err[this.key] = this.msg;
+};
+validator.prototype.length = function(min, max) {
+	if (this.val === undefined || !(min <= this.val.length && this.val.length <= max)) this.error();
+	return this;
+};
+validator.prototype.min = function(val) {
+	if (this.val < val) this.error();
+	return this;
+};
+validator.prototype.max = function(val) {
+	if (this.val > val) this.error();
+	return this;
+};
+validator.prototype.in = function(options) {
+	if (!options.indexOf(this.val) == -1) this.error();
+	return this;
+};
+validator.prototype.regex = function(regex) {
+	if (!regex.test(this.val)) this.error();
+	return this;
+};
+validator.prototype.email = function() {
+	return this.regex(/^(?:[\w\!\#\$\%\&\'\*\+\-\/\=\?\^\`\{\|\}\~]+\.)*[\w\!\#\$\%\&\'\*\+\-\/\=\?\^\`\{\|\}\~]+@(?:(?:(?:[a-zA-Z0-9](?:[a-zA-Z0-9\-](?!\.)){0,61}[a-zA-Z0-9]?\.)+[a-zA-Z0-9](?:[a-zA-Z0-9\-](?!$)){0,61}[a-zA-Z0-9]?)|(?:\[(?:(?:[01]?\d{1,2}|2[0-4]\d|25[0-5])\.){3}(?:[01]?\d{1,2}|2[0-4]\d|25[0-5])\]))$/);
+};
+validator.prototype.range = function(key0, key1) {
+	if (!(this.res[key0] <= this.res[key1])) {
+		this.err[key0] = this.err[key1] = key0 + ' must be less than or equal to ' + key1;
+	}
+	return this;
+};
+validator.prototype.failed = function() {
+	return Object.keys(this.err).length;
+};
+validator.prototype.int = function(def) {
+	this.val = this.res[this.key] = this.val === undefined ? def : parseInt(this.val);
+	return this;
+};
+validator.prototype.float = function(def) {
+	this.val = this.res[this.key] = this.val === undefined ? def : parseFloat(this.val);
+	if (isNaN(this.val)) this.error();
+	return this;
+};
+validator.prototype.copy = function() {
+	this.res[this.key] = this.val;
+	return this;
+};
+validator.prototype.xss = function() {
+	this.res[this.key] = this.val.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+	return this;
+};
+module.exports = validator;
