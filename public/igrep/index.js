@@ -2602,16 +2602,29 @@ $(function() {
 	// Process submission
 	var submit = $('#submit');
 	submit.click(function() {
-		// Disable the submit button for a while
-		submit.prop('disabled', true);
 		// Hide tooltips
 		$('.form-group a').tooltip('hide');
-		// Post a new job without client side validation
-		$.post('jobs', {
+		// Do client side validation
+		var v = new validator({
 			email: $('#email').val(),
 			taxid: $('#taxid').val(),
 			queries: $('#queries').val()
-		}, function(res) {
+		});
+		if (v
+			.field('email').message('must be valid').email()
+			.field('queries').message('must conform to the specifications').length(2, 66000).queries()
+			.failed()) {
+			var keys = Object.keys(v.err);
+			keys.forEach(function(key) {
+				$('#' + key + '_label').tooltip('show');
+			});
+			$('#' + keys[0]).focus();
+			return;
+		}
+		// Disable the submit button for a while
+		submit.prop('disabled', true);
+		// Post a new job with server side validation
+		$.post('jobs', v.obj, function(res) {
 			var keys = Object.keys(res);
 			// If server side validation fails, show tooltips
 			if (keys.length) {

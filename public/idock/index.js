@@ -838,7 +838,6 @@ $(function() {
 			keys.forEach(function(key) {
 				$('#' + key + '_label').tooltip('show');
 			});
-			console.log(keys)
 			$('#' + keys[0]).focus();
 			return;
 		}
