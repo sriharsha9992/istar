@@ -2,13 +2,17 @@ $(function () {
 	var iv = new iview('iview');
 	var code = location.search.substr(1);
 	if (!code.length) code = '3KFN';
-	$.get('http://www.pdb.org/pdb/files/' + code + '.pdb', function (src) {
-		iv.loadPDB(src);
-	});
-	$('#loadPDB').change(function () {
-		$.get('http://www.pdb.org/pdb/files/' + $(this).val() + '.pdb', function (src) {
+	var loadPDB = function (code) {
+		$.get('http://www.pdb.org/pdb/files/' + code + '.pdb', function (src) {
 			iv.loadPDB(src);
 		});
+	};
+	loadPDB(code);
+	$('#loadPDB').change(function () {
+		loadPDB($(this).val());
+	});
+	$('#OK').click(function () {
+		loadPDB($('#loadPDB').val());
 	});
 	$('input[type="file"]').change(function() {
 		var file = this.files[0];
