@@ -612,14 +612,15 @@ void main()\n\
 			var dx = (x - me.mouseStartX) / me.container.width();
 			var dy = (y - me.mouseStartY) / me.container.height();
 			if (!dx && !dy) return;
-			if (e.ctrlKey && e.shiftKey) { // Slab
+			var mode = $('#mode .active').text().trim();
+			if (mode === 'slab' || e.ctrlKey && e.shiftKey) { // Slab
 				me.slabNear = me.cslabNear + dx * 100;
 				me.slabFar  = me.cslabFar  + dy * 100;
-			} else if (e.ctrlKey || me.mouseButton == 3) { // Translate
+			} else if (mode === 'translate' || e.ctrlKey || me.mouseButton == 3) { // Translate
 				var scaleFactor = (me.rot.position.z - me.camera_z) * 0.85;
 				if (scaleFactor < 20) scaleFactor = 20;
 				me.mdl.position = me.cp.clone().add(new THREE.Vector3(-dx * scaleFactor, -dy * scaleFactor, 0).applyQuaternion(me.rot.quaternion.clone().inverse().normalize()));
-			} else if (e.shiftKey || me.mouseButton == 2) { // Zoom
+			} else if (mode === 'zoom' || e.shiftKey || me.mouseButton == 2) { // Zoom
 				var scaleFactor = (me.rot.position.z - me.camera_z) * 0.85;
 				if (scaleFactor < 80) scaleFactor = 80;
 				me.rot.position.z = me.cz - dy * scaleFactor;
