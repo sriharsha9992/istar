@@ -2,7 +2,7 @@
 iview is an interactive WebGL visualizer of protein-ligand complex.
   http://github.com/HongjianLi/istar
 
-  Copyright (c) 2012-2013 Chinese University of Hong Kong
+  Copyright (c) 2012-2014 Chinese University of Hong Kong
 
   License: Apache License 2.0
 
