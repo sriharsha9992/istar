@@ -539,8 +539,41 @@ var iview = (function () {
 			ligands: 'stick',
 			waters: 'dot',
 			ions: 'dot',
+			labels: 'no',
 			effect: 'none',
 		};
+		this.labelVertexShader = "\
+uniform float width, height;\n\
+varying vec2 vUv;\n\
+void main()\n\
+{\n\
+	mat4 mv = modelViewMatrix;\n\
+	mv[0][0] = mv[1][1] = mv[2][2] = 1.0;\n\
+	mv[0][1] = mv[0][2] = mv[1][0] = mv[1][2] = mv[2][0] =  mv[2][1] = 0.0;\n\
+	mat4 mat = projectionMatrix * mv;\n\
+	vUv = uv;\n\
+	float aspect = projectionMatrix[1][1] / projectionMatrix[0][0];\n\
+	gl_Position = mat * vec4(position, 1.0);\n\
+	gl_Position /= gl_Position.w;\n\
+	gl_Position += vec4(uv.x * width / 1000.0, uv.y * height * aspect / 1000.0, 0.0, 0.0);\n\
+	gl_Position.z = -0.9;\n\
+}";
+		this.labelFragmentShader = "\
+uniform sampler2D map;\n\
+varying vec2 vUv;\n\
+void main()\n\
+{\n\
+	gl_FragColor = texture2D(map, vec2(vUv.x, 1.0 - vUv.y));\n\
+	if (gl_FragColor.a < 0.5) discard;\n\
+}";
+		this.labelGeo = new THREE.Geometry();
+		for (var i = 0; i < 6; ++i) {
+			this.labelGeo.vertices.push(new THREE.Vector3(0, 0, 0));
+		}
+		this.labelGeo.faces.push(new THREE.Face3(0, 1, 2));
+		this.labelGeo.faces.push(new THREE.Face3(0, 2, 3));
+		this.labelGeo.faceVertexUvs[0].push([new THREE.Vector2(0, 0), new THREE.Vector2(1, 1), new THREE.Vector2(0, 1)]);
+		this.labelGeo.faceVertexUvs[0].push([new THREE.Vector2(0, 0), new THREE.Vector2(1, 0), new THREE.Vector2(1, 1)]);
 
 		var me = this;
 		this.container.bind('contextmenu', function (e) {
@@ -1121,6 +1154,48 @@ var iview = (function () {
 		})));
 	};
 
+	iview.prototype.createLabel = function (text, size, color) {
+		var canvas = document.createElement("canvas");
+		canvas.style.backgroundColor = "rgba(0, 0, 0, 0.0)";
+		var ctx = canvas.getContext("2d");
+		ctx.font = size + "px Arial";
+		canvas.width = ctx.measureText(text).width;
+		canvas.height = size;
+		ctx.font = size + "px Arial";
+		ctx.fillStyle = color;
+		ctx.fillText(text, 0, size);
+		var tex = new THREE.Texture(canvas);
+		tex.flipY = false;
+		tex.needsUpdate = true;
+		return new THREE.Mesh(this.labelGeo, new THREE.ShaderMaterial({
+			vertexShader: this.labelVertexShader,
+			fragmentShader: this.labelFragmentShader,
+			uniforms: {
+				map: {
+					type: 't',
+					value: tex,
+				},
+				width: {
+					type: 'f',
+					value: tex.image.width,
+				},
+				height: {
+					type: 'f',
+					value: tex.image.height,
+				},
+			},
+		}));
+	};
+
+	iview.prototype.createLabelRepresentation = function (atoms) {
+		for (var i in atoms) {
+			var atom = atoms[i];
+			var bb = this.createLabel(/*atom.chain + ":" + atom.resn + ":" + atom.resi + ":" + */atom.name, 24, "#dddddd");
+			bb.position = atom.coord;
+			this.mdl.add(bb);
+		}
+	};
+
 	iview.prototype.rebuildScene = function (options) {
 		$.extend(this.options, options);
 		this.scene = new THREE.Scene();
@@ -1290,6 +1365,13 @@ var iview = (function () {
 				break;
 			case 'dot':
 				this.createSphereRepresentation(this.waters, this.sphereRadius, false, 0.3);
+				break;
+		}
+
+		switch (this.options.labels) {
+			case 'yes':
+				this.createLabelRepresentation(this.ligands);
+				this.createLabelRepresentation(this.ions);
 				break;
 		}
 

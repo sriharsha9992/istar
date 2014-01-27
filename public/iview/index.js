@@ -11,7 +11,7 @@ $(function () {
 		});
 	});
 
-	['camera', 'background', 'colorBy', 'primaryStructure', 'secondaryStructure', 'surface', 'opacity', 'wireframe', 'ligands', 'waters', 'ions', 'effect'].forEach(function (opt) {
+	['camera', 'background', 'colorBy', 'primaryStructure', 'secondaryStructure', 'surface', 'opacity', 'wireframe', 'ligands', 'waters', 'ions', 'labels', 'effect'].forEach(function (opt) {
 		$('#' + opt).click(function (e) {
 			var options = {};
 			options[opt] = $(e.target).text().trim();
