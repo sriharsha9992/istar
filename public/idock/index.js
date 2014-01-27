@@ -411,10 +411,11 @@ $(function() {
 					atoms[atom.serial] = atom;
 				} else if (record === 'CONECT') {
 					clines.push(line);
+					if (atoms[from] === undefined) continue;
 					var from = parseInt(line.substr(6, 5));
 					for (var j = 0; j < 4; ++j) {
 						var to = parseInt(line.substr([11, 16, 21, 26][j], 5));
-						if (isNaN(to)) continue;
+						if (isNaN(to) || atoms[to] === undefined) continue;
 						atoms[from].bonds.push(atoms[to]);
 					}
 				} else if (record === 'TER   ') {
