@@ -542,7 +542,7 @@ var iview = (function () {
 			labels: 'no',
 			effect: 'none',
 		};
-		this.labelVertexShader = "\
+		this.labelVertexShader = '\
 uniform float width, height;\n\
 varying vec2 vUv;\n\
 void main()\n\
@@ -557,15 +557,15 @@ void main()\n\
 	gl_Position /= gl_Position.w;\n\
 	gl_Position += vec4(uv.x * width / 1000.0, uv.y * height * aspect / 1000.0, 0.0, 0.0);\n\
 	gl_Position.z = -0.9;\n\
-}";
-		this.labelFragmentShader = "\
+}';
+		this.labelFragmentShader = '\
 uniform sampler2D map;\n\
 varying vec2 vUv;\n\
 void main()\n\
 {\n\
 	gl_FragColor = texture2D(map, vec2(vUv.x, 1.0 - vUv.y));\n\
 	if (gl_FragColor.a < 0.5) discard;\n\
-}";
+}';
 		this.labelGeo = new THREE.Geometry();
 		for (var i = 0; i < 6; ++i) {
 			this.labelGeo.vertices.push(new THREE.Vector3(0, 0, 0));
@@ -1155,13 +1155,13 @@ void main()\n\
 	};
 
 	iview.prototype.createLabel = function (text, size, color) {
-		var canvas = document.createElement("canvas");
-		canvas.style.backgroundColor = "rgba(0, 0, 0, 0.0)";
-		var ctx = canvas.getContext("2d");
-		ctx.font = size + "px Arial";
+		var canvas = document.createElement('canvas');
+		canvas.style.backgroundColor = 'rgba(0, 0, 0, 0.0)';
+		var ctx = canvas.getContext('2d');
+		ctx.font = size + 'px Arial';
 		canvas.width = ctx.measureText(text).width;
 		canvas.height = size;
-		ctx.font = size + "px Arial";
+		ctx.font = size + 'px Arial';
 		ctx.fillStyle = color;
 		ctx.fillText(text, 0, size);
 		var tex = new THREE.Texture(canvas);
@@ -1190,7 +1190,7 @@ void main()\n\
 	iview.prototype.createLabelRepresentation = function (atoms) {
 		for (var i in atoms) {
 			var atom = atoms[i];
-			var bb = this.createLabel(/*atom.chain + ":" + atom.resn + ":" + atom.resi + ":" + */atom.name, 24, "#dddddd");
+			var bb = this.createLabel(/*atom.chain + ':' + atom.resn + ':' + atom.resi + ':' + */atom.name, 24, '#dddddd');
 			bb.position = atom.coord;
 			this.mdl.add(bb);
 		}
