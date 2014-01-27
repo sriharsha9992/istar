@@ -10,6 +10,15 @@ $(function () {
 			iv.loadPDB(src);
 		});
 	});
+	$('input[type="file"]').change(function() {
+		var file = this.files[0];
+		if (file === undefined) return;
+		var reader = new FileReader();
+		reader.onload = function () {
+			iv.loadPDB(reader.result);
+		};
+		reader.readAsText(file);
+	});
 
 	['camera', 'background', 'colorBy', 'primaryStructure', 'secondaryStructure', 'surface', 'opacity', 'wireframe', 'ligands', 'waters', 'ions', 'labels', 'effect'].forEach(function (opt) {
 		$('#' + opt).click(function (e) {
