@@ -574,6 +574,12 @@ void main()\n\
 		this.labelGeo.faces.push(new THREE.Face3(0, 2, 3));
 		this.labelGeo.faceVertexUvs[0].push([new THREE.Vector2(0, 0), new THREE.Vector2(1, 1), new THREE.Vector2(0, 1)]);
 		this.labelGeo.faceVertexUvs[0].push([new THREE.Vector2(0, 0), new THREE.Vector2(1, 0), new THREE.Vector2(1, 1)]);
+		this.labelByResn = function (atom) {
+			return atom.chain + ':' + atom.resn + ':' + atom.resi;
+		};
+		this.labelByName = function (atom) {
+			return atom.name;
+		};
 
 		var me = this;
 		this.container.bind('contextmenu', function (e) {
@@ -707,6 +713,7 @@ void main()\n\
 		this.ligands = {};
 		this.ions = {};
 		this.waters = {};
+		this.calphas = {};
 		var curChain, curResi, curInsc, curResAtoms = [], me = this;
 		var refreshBonds = function (f) {
 			var n = curResAtoms.length;
@@ -735,6 +742,7 @@ void main()\n\
 			++cnt;
 			if (atom.serial <= this.lastTerSerial) {
 				this.peptides[atom.serial] = atom;
+				if (atom.name === 'CA') this.calphas[atom.serial] = atom;
 				for (var j in helices) {
 					var helix = helices[j];
 					if (atom.chain == helix.chain && (atom.resi > helix.initialResidue || (atom.resi == helix.initialResidue && atom.insc >= helix.initialInscode)) && (atom.resi < helix.terminalResidue || (atom.resi == helix.terminalResidue && atom.insc <= helix.terminalInscode))) {
@@ -1188,10 +1196,10 @@ void main()\n\
 		}));
 	};
 
-	iview.prototype.createLabelRepresentation = function (atoms) {
+	iview.prototype.createLabelRepresentation = function (atoms, label) {
 		for (var i in atoms) {
 			var atom = atoms[i];
-			var bb = this.createLabel(/*atom.chain + ':' + atom.resn + ':' + atom.resi + ':' + */atom.name, 24, '#dddddd');
+			var bb = this.createLabel(label(atom), 20, '#dddddd');
 			bb.position = atom.coord;
 			this.mdl.add(bb);
 		}
@@ -1371,8 +1379,9 @@ void main()\n\
 
 		switch (this.options.labels) {
 			case 'yes':
-				this.createLabelRepresentation(this.ligands);
-				this.createLabelRepresentation(this.ions);
+				this.createLabelRepresentation(this.calphas, this.labelByResn);
+				this.createLabelRepresentation(this.ligands, this.labelByName);
+				this.createLabelRepresentation(this.ions, this.labelByName);
 				break;
 		}
 
