@@ -600,7 +600,7 @@ void main()\n\
 			me.mouseButton = e.which;
 			me.mouseStartX = x;
 			me.mouseStartY = y;
-			me.cq = me.rot.quaternion;
+			me.cq = me.rot.quaternion.clone();
 			me.cz = me.rot.position.z;
 			me.cp = me.mdl.position.clone();
 			me.cslabNear = me.slabNear;
