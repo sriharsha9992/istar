@@ -154,7 +154,7 @@ if (cluster.isMaster) {
 				var v = new validator(req.body);
 				if (v
 					.field('email').message('must be valid').email().copy()
-					.field('receptor').message('must conform to PDB specification').length(1, 10485760).receptor().copy()
+					.field('receptor').message('must conform to PDB specification').length(1, 10485760).receptor()
 					.field('description').message('must be provided, at most 20 characters').length(1, 20).xss()
 					.field('center_x').message('must be a decimal within [-999, 999]').float().min(-999).max(999)
 					.field('center_y').message('must be a decimal within [-999, 999]').float().min(-999).max(999)
