@@ -4,7 +4,7 @@ var fs = require('fs'),
 	cluster = require('cluster');
 if (cluster.isMaster) {
 	// Allocate arrays to hold ligand properties
-	var num_ligands = 17224424,
+	var num_ligands = 23129083,
 		mwt = new Float32Array(num_ligands),
 		lgp = new Float32Array(num_ligands),
 		ads = new Float32Array(num_ligands),
@@ -166,10 +166,10 @@ if (cluster.isMaster) {
 					.field('mwt_ub').message('must be a decimal within [55, 567]').float(420).min(55).max(567)
 					.field('lgp_lb').message('must be a decimal within [-6, 12]').float(0).min(-6).max(12)
 					.field('lgp_ub').message('must be a decimal within [-6, 12]').float(2).min(-6).max(12)
-					.field('ads_lb').message('must be a decimal within [-25, 29]').float(0).min(-25).max(29)
-					.field('ads_ub').message('must be a decimal within [-25, 29]').float(5).min(-25).max(29)
-					.field('pds_lb').message('must be a decimal within [-504, 1]').float(-20).min(-504).max(1)
-					.field('pds_ub').message('must be a decimal within [-504, 1]').float(0).min(-504).max(1)
+					.field('ads_lb').message('must be a decimal within [-57, 29]').float(0).min(-25).max(29)
+					.field('ads_ub').message('must be a decimal within [-57, 29]').float(5).min(-25).max(29)
+					.field('pds_lb').message('must be a decimal within [-543, 1]').float(-20).min(-504).max(1)
+					.field('pds_ub').message('must be a decimal within [-543, 1]').float(0).min(-504).max(1)
 					.field('hbd_lb').message('must be an integer within [0, 20]').int(2).min(0).max(20)
 					.field('hbd_ub').message('must be an integer within [0, 20]').int(4).min(0).max(20)
 					.field('hba_lb').message('must be an integer within [0, 18]').int(4).min(0).max(18)
@@ -265,10 +265,10 @@ if (cluster.isMaster) {
 					.field('mwt_ub').message('must be a decimal within [55, 567]').float().min(55).max(567)
 					.field('lgp_lb').message('must be a decimal within [-6, 12]').float().min(-6).max(12)
 					.field('lgp_ub').message('must be a decimal within [-6, 12]').float().min(-6).max(12)
-					.field('ads_lb').message('must be a decimal within [-25, 29]').float().min(-25).max(29)
-					.field('ads_ub').message('must be a decimal within [-25, 29]').float().min(-25).max(29)
-					.field('pds_lb').message('must be a decimal within [-504, 1]').float().min(-504).max(1)
-					.field('pds_ub').message('must be a decimal within [-504, 1]').float().min(-504).max(1)
+					.field('ads_lb').message('must be a decimal within [-57, 29]').float().min(-25).max(29)
+					.field('ads_ub').message('must be a decimal within [-57, 29]').float().min(-25).max(29)
+					.field('pds_lb').message('must be a decimal within [-543, 1]').float().min(-504).max(1)
+					.field('pds_ub').message('must be a decimal within [-543, 1]').float().min(-504).max(1)
 					.field('hbd_lb').message('must be an integer within [0, 20]').int().min(0).max(20)
 					.field('hbd_ub').message('must be an integer within [0, 20]').int().min(0).max(20)
 					.field('hba_lb').message('must be an integer within [0, 18]').int().min(0).max(18)

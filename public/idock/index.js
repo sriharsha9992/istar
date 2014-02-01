@@ -722,13 +722,13 @@ $(function() {
 	});
 	$('#ads').slider({
 		range: true,
-		min: -25,
+		min: -57,
 		max: 29,
 		values: [ 0, 5 ]
 	});
 	$('#pds').slider({
 		range: true,
-		min: -504,
+		min: -543,
 		max: 1,
 		values: [ -20, 0 ]
 	});
