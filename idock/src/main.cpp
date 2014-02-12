@@ -8,7 +8,8 @@
 #include <Poco/Net/MailMessage.h>
 #include <Poco/Net/MailRecipient.h>
 #include <Poco/Net/SMTPClientSession.h>
-#include "thread_pool.hpp"
+#include "io_service_pool.hpp"
+#include "safe_counter.hpp"
 #include "receptor.hpp"
 #include "ligand.hpp"
 #include "grid_map_task.hpp"
@@ -108,8 +109,9 @@ int main(int argc, char* argv[])
 		("size_z", value<double>(&size[2])->required())
 		;
 
-	// Initialize a thread pool and create worker threads for later use.
-	thread_pool tp(num_threads);
+	// Initialize an io service pool and create worker threads for later use.
+	io_service_pool io(num_threads);
+	safe_counter<size_t> cnt;
 
 	// Precalculate the scoring function in parallel.
 	scoring_function sf;
@@ -124,14 +126,19 @@ int main(int argc, char* argv[])
 		BOOST_ASSERT(rs.back() == scoring_function::Cutoff);
 
 		// Populate the scoring function task container.
+		cnt.init(XS_TYPE_SIZE * (XS_TYPE_SIZE + 1) >> 1);
 		for (size_t t1 =  0; t1 < XS_TYPE_SIZE; ++t1)
 		for (size_t t2 = t1; t2 < XS_TYPE_SIZE; ++t2)
 		{
-			tp.push_back(packaged_task<void()>(bind(&scoring_function::precalculate, std::ref(sf), t1, t2, cref(rs))));
+			io.post([&,t1,t2]()
+			{
+				sf.precalculate(t1, t2, rs);
+				cnt.increment();
+			});
 		}
 
 		// Wait until all the scoring function tasks are completed.
-		tp.sync();
+		cnt.wait();
 	}
 
 	// Load a random forest from file.
@@ -276,22 +283,35 @@ int main(int argc, char* argv[])
 			}
 			if (atom_types_to_populate.size())
 			{
+				cnt.init(num_gm_tasks);
 				for (size_t x = 0; x < num_gm_tasks; ++x)
 				{
-					tp.push_back(packaged_task<void()>(bind(grid_map_task, std::ref(grid_maps), cref(atom_types_to_populate), x, cref(sf), cref(b), cref(rec))));
+//					tp.push_back(packaged_task<void()>(bind(grid_map_task, std::ref(grid_maps), cref(atom_types_to_populate), x, cref(sf), cref(b), cref(rec))));
+					io.post([&,x]()
+					{
+						grid_map_task(grid_maps, atom_types_to_populate, x, sf, b, rec);
+						cnt.increment();
+					});
 				}
-				tp.sync();
+				cnt.wait();
 				atom_types_to_populate.clear();
 			}
 
 			// Run Monte Carlo tasks in parallel.
+			cnt.init(num_mc_tasks);
 			for (size_t i = 0; i < num_mc_tasks; ++i)
 			{
 				BOOST_ASSERT(result_containers[i].empty());
 				BOOST_ASSERT(result_containers[i].capacity() == 1);
-				tp.push_back(packaged_task<void()>(bind(monte_carlo_task, std::ref(result_containers[i]), cref(lig), rng(), cref(alphas), cref(sf), cref(b), cref(grid_maps))));
+				const size_t s = rng();
+//				tp.push_back(packaged_task<void()>(bind(monte_carlo_task, std::ref(result_containers[i]), cref(lig), rng(), cref(alphas), cref(sf), cref(b), cref(grid_maps))));
+				io.post([&,i,s]()
+				{
+					monte_carlo_task(result_containers[i], lig, s, alphas, sf, b, grid_maps);
+					cnt.increment();
+				});
 			}
-			tp.sync();
+			cnt.wait();
 
 			// Merge results from all the tasks into one single result container.
 			BOOST_ASSERT(results.empty());
@@ -495,11 +515,17 @@ int main(int argc, char* argv[])
 				}
 				if (atom_types_to_populate.size())
 				{
+					cnt.init(num_gm_tasks);
 					for (size_t x = 0; x < num_gm_tasks; ++x)
 					{
-						tp.push_back(packaged_task<void()>(bind(grid_map_task, std::ref(grid_maps), cref(atom_types_to_populate), x, cref(sf), cref(b), cref(rec))));
+//						tp.push_back(packaged_task<void()>(bind(grid_map_task, std::ref(grid_maps), cref(atom_types_to_populate), x, cref(sf), cref(b), cref(rec))));
+						io.post([&,x]()
+						{
+							grid_map_task(grid_maps, atom_types_to_populate, x, sf, b, rec);
+							cnt.increment();
+						});
 					}
-					tp.sync();
+					cnt.wait();
 					atom_types_to_populate.clear();
 				}
 
