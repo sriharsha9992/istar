@@ -4,7 +4,7 @@ bin/idock: obj/scoring_function.o obj/box.o obj/quaternion.o obj/thread_pool.o o
 	$(CC) -o $@ $^ -pthread -lboost_thread -lboost_program_options -lboost_system -lboost_filesystem -lboost_iostreams -lboost_date_time -L${POCO_ROOT}/lib/Linux/x86_64 -lPocoFoundation -lPocoNet -L${MONGODB_ROOT}/build/linux2/64/release/use-system-all/client_build -lmongoclient
 
 obj/main.o: src/main.cpp 
-	$(CC) -o $@ $< -c -I${MONGODB_ROOT}/src -I${POCO_ROOT}/Net/include
+	$(CC) -o $@ $< -c -I${MONGODB_ROOT}/src -I${POCO_ROOT}/Net/include -Wno-deprecated-declarations
 
 obj/%.o: src/%.cpp 
 	$(CC) -o $@ $< -c
