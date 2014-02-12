@@ -69,6 +69,7 @@ int main(int argc, char* argv[])
 	const size_t num_threads = thread::hardware_concurrency();
 	const size_t num_mc_tasks = 32;
 	const fl grid_granularity = 0.08;
+//	const fl max_ligands_per_job = 1e+6;
 	const auto epoch = boost::gregorian::date(1970, 1, 1);
 
 	// Calculate the slice split points on the fly.
@@ -88,6 +89,7 @@ int main(int argc, char* argv[])
 	path job_path, receptor_path, box_path;
 	double mwt_lb, mwt_ub, lgp_lb, lgp_ub, ads_lb, ads_ub, pds_lb, pds_ub;
 	int num_ligands, hbd_lb, hbd_ub, hba_lb, hba_ub, psa_lb, psa_ub, chg_lb, chg_ub, nrb_lb, nrb_ub;
+//	fl filtering_probability;
 	box b;
 	receptor rec;
 	size_t num_gm_tasks;
@@ -138,6 +140,7 @@ int main(int argc, char* argv[])
 
 	// Initialize a MT19937 random number generator.
 	mt19937eng rng(seed);
+//	boost::random::uniform_real_distribution<fl> u01(0, 1);
 
 	// Precalculate alpha values for determining step size in BFGS.
 	array<fl, num_alphas> alphas;
@@ -198,6 +201,9 @@ int main(int argc, char* argv[])
 			nrb_lb = param["nrb_lb"].Int();
 			nrb_ub = param["nrb_ub"].Int();
 
+			// Refresh filtering_probability.
+//			filtering_probability = max_ligands_per_job / num_ligands;
+
 			// Load box and receptor from hard disk.
 			job_path = jobs_path / _id.str();
 			receptor_path = job_path / "receptor.pdbqt";
@@ -247,6 +253,9 @@ int main(int argc, char* argv[])
 			const auto chg = right_cast<int>(property, 69, 71);
 			const auto nrb = right_cast<int>(property, 73, 75);
 			if (!((mwt_lb <= mwt) && (mwt <= mwt_ub) && (lgp_lb <= lgp) && (lgp <= lgp_ub) && (ads_lb <= ads) && (ads <= ads_ub) && (pds_lb <= pds) && (pds <= pds_ub) && (hbd_lb <= hbd) && (hbd <= hbd_ub) && (hba_lb <= hba) && (hba <= hba_ub) && (psa_lb <= psa) && (psa <= psa_ub) && (chg_lb <= chg) && (chg <= chg_ub) && (nrb_lb <= nrb) && (nrb <= nrb_ub))) continue;
+
+			// Filtering out the ligand randomly according to the maximum number of ligands per job.
+//			if (u01(rng) > filtering_probability) continue;
 
 			// Obtain ligand ID. ZINC IDs are 8-character long.
 			const auto lig_id = property.substr(11, 8);
